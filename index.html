@@ -5,33 +5,97 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>JAHARTA // Registre des Personnages</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<!-- ═══════════════════════════════════════════════════
+     FIREBASE CONFIG — Remplacez ces valeurs par les
+     vôtres depuis console.firebase.google.com
+     ═══════════════════════════════════════════════════ -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, serverTimestamp }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { getStorage, ref, uploadBytes, getDownloadURL }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
+
+  // ⚠️ REMPLACEZ CES VALEURS PAR VOS CLÉS FIREBASE
+  const firebaseConfig = {
+    apiKey:            "VOTRE_API_KEY",
+    authDomain:        "VOTRE_PROJECT.firebaseapp.com",
+    projectId:         "VOTRE_PROJECT_ID",
+    storageBucket:     "VOTRE_PROJECT.appspot.com",
+    messagingSenderId: "VOTRE_SENDER_ID",
+    appId:             "VOTRE_APP_ID"
+  };
+
+  const app     = initializeApp(firebaseConfig);
+  const db      = getFirestore(app);
+  const storage = getStorage(app);
+
+  /* ── Charge les fiches VALIDÉES depuis Firebase ── */
+  async function loadCards() {
+    try {
+      const q = query(
+        collection(db, "fiches"),
+        where("status", "==", "validee"),
+        orderBy("createdAt", "desc")
+      );
+      const snap = await getDocs(q);
+      const container = document.getElementById("cards-container");
+      const noResults = document.getElementById("no-results");
+      let count = 0;
+
+      snap.forEach(doc => {
+        const ch = { id: doc.id, ...doc.data() };
+        container.insertBefore(buildCard(ch), noResults);
+        count++;
+      });
+
+      animateCount(count);
+      updateCounts();
+
+    } catch(e) {
+      console.warn("Firebase non configuré ou erreur réseau :", e.message);
+      // Charge les personnages de démo si Firebase non configuré
+      loadDemoCards();
+    }
+  }
+
+  /* ── Soumet une fiche en attente de validation ── */
+  window.submitToFirebase = async function(data, photoFile) {
+    let photoUrl = data.photoUrl || "";
+
+    // Upload photo si fichier sélectionné
+    if (photoFile) {
+      try {
+        const storageRef = ref(storage, `photos/${Date.now()}_${photoFile.name}`);
+        const snapshot   = await uploadBytes(storageRef, photoFile);
+        photoUrl         = await getDownloadURL(snapshot.ref);
+      } catch(e) {
+        console.warn("Upload photo échoué:", e.message);
+      }
+    }
+
+    await addDoc(collection(db, "fiches"), {
+      ...data,
+      photoUrl,
+      status:    "en_attente",
+      createdAt: serverTimestamp()
+    });
+  };
+
+  loadCards();
+</script>
+
 <style>
   :root {
-    --cyan:      #00f5ff;
-    --magenta:   #ff006e;
-    --gold:      #ffd60a;
-    --dark:      #04060f;
-    --dark2:     #080d1a;
-    --panel:     rgba(0,245,255,0.035);
-    --border:    rgba(0,245,255,0.16);
-    --text:      #c8e0f0;
-    --muted:     #5a7a90;
-    --r-humanoid:  #00c8ff;
-    --r-zooid:     #44ff88;
-    --r-mythzooid: #b06eff;
-    --r-demon:     #ff3030;
-    --r-artificial:#ffd60a;
-    --r-semiliquid:#00e5cc;
-    --r-undead:    #9a8cff;
-    --rank-f:   #6b7280;
-    --rank-e:   #9ca3af;
-    --rank-d:   #60a5fa;
-    --rank-c:   #34d399;
-    --rank-b:   #fbbf24;
-    --rank-a:   #f97316;
-    --rank-s:   #ef4444;
-    --rank-ss:  #ff006e;
-    --rank-sss: #ffd60a;
+    --cyan:#00f5ff; --magenta:#ff006e; --gold:#ffd60a;
+    --dark:#04060f; --dark2:#080d1a;
+    --panel:rgba(0,245,255,0.035); --border:rgba(0,245,255,0.16);
+    --text:#c8e0f0; --muted:#5a7a90;
+    --r-humanoid:#00c8ff; --r-zooid:#44ff88; --r-mythzooid:#b06eff;
+    --r-demon:#ff3030; --r-artificial:#ffd60a; --r-semiliquid:#00e5cc; --r-undead:#9a8cff;
+    --rank-f:#6b7280; --rank-e:#9ca3af; --rank-d:#60a5fa; --rank-c:#34d399;
+    --rank-b:#fbbf24; --rank-a:#f97316; --rank-s:#ef4444; --rank-ss:#ff006e; --rank-sss:#ffd60a;
   }
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
   html{scroll-behavior:smooth;}
@@ -49,6 +113,8 @@
   nav a:hover{color:var(--cyan);text-shadow:0 0 12px var(--cyan);}
   .nav-btn{font-family:'Orbitron',sans-serif;font-size:0.6rem;font-weight:700;letter-spacing:0.2em;color:var(--dark)!important;background:var(--cyan);padding:8px 18px;clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);text-shadow:none!important;transition:background 0.2s,box-shadow 0.2s!important;}
   .nav-btn:hover{background:#fff!important;box-shadow:0 0 20px var(--cyan);}
+  .nav-admin{color:var(--gold)!important;border:1px solid rgba(255,214,10,0.3);padding:6px 14px;}
+  .nav-admin:hover{color:#fff!important;border-color:var(--gold);text-shadow:0 0 12px var(--gold)!important;}
 
   /* HERO */
   .hero{position:relative;z-index:1;text-align:center;padding:88px 40px 68px;overflow:hidden;}
@@ -63,6 +129,11 @@
   .stat{text-align:center;}
   .stat-num{font-family:'Orbitron',sans-serif;font-size:1.9rem;font-weight:800;color:var(--cyan);text-shadow:0 0 20px var(--cyan);display:block;}
   .stat-label{font-family:'Share Tech Mono',monospace;font-size:0.6rem;color:var(--muted);letter-spacing:0.2em;text-transform:uppercase;}
+
+  /* LOADING */
+  .loading-bar{position:fixed;top:0;left:0;height:2px;background:linear-gradient(90deg,var(--cyan),var(--magenta));z-index:9998;transition:width 0.4s;width:0%;}
+  .loading-bar.active{animation:loadprog 1.5s ease infinite;}
+  @keyframes loadprog{0%{width:0%;opacity:1}70%{width:85%;opacity:1}100%{width:100%;opacity:0}}
 
   /* SECTIONS */
   section{position:relative;z-index:1;padding:60px 40px;max-width:1380px;margin:0 auto;}
@@ -114,16 +185,11 @@
   .card-photo-overlay{position:absolute;inset:0;background:linear-gradient(180deg,transparent 30%,rgba(8,13,26,0.65) 68%,var(--dark2) 100%);pointer-events:none;}
   .card-photo-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;font-size:2.8rem;font-weight:900;opacity:0.5;}
   .card-race-stripe{position:absolute;top:0;left:0;right:0;height:3px;z-index:2;}
-
-  /* RANK BADGE */
   .rank-badge{position:absolute;top:13px;right:13px;z-index:3;font-family:'Orbitron',sans-serif;font-weight:900;width:54px;height:54px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1px;clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);}
   .rank-badge-val{font-size:1rem;line-height:1;text-shadow:0 0 12px currentColor;}
   .rank-badge-val.small{font-size:0.72rem;}
   .rank-badge-label{font-family:'Share Tech Mono',monospace;font-size:0.34rem;letter-spacing:0.2em;opacity:0.7;font-weight:400;}
-  .rank-SSS .rank-badge-val{animation:rankPulse 2.5s infinite;}
   @keyframes rankPulse{0%,100%{text-shadow:0 0 12px currentColor}50%{text-shadow:0 0 28px currentColor,0 0 50px currentColor}}
-
-  /* STATUS */
   .card-status-float{position:absolute;bottom:13px;left:13px;z-index:3;font-family:'Share Tech Mono',monospace;font-size:0.56rem;letter-spacing:0.14em;text-transform:uppercase;color:#00ff88;display:flex;align-items:center;gap:5px;background:rgba(4,6,15,0.75);padding:4px 10px;border:1px solid rgba(0,255,136,0.3);backdrop-filter:blur(4px);}
   .card-status-float.inactive{color:var(--muted);border-color:rgba(90,122,144,0.3);}
   .sdot{width:5px;height:5px;border-radius:50%;background:currentColor;box-shadow:0 0 6px currentColor;flex-shrink:0;animation:sdotpulse 2s infinite;}
@@ -137,25 +203,29 @@
   .card-race-pill{display:inline-flex;align-items:center;gap:6px;font-family:'Share Tech Mono',monospace;font-size:0.58rem;letter-spacing:0.16em;text-transform:uppercase;padding:3px 11px;border:1px solid;margin-bottom:14px;width:fit-content;}
   .race-pip{width:5px;height:5px;border-radius:50%;background:currentColor;box-shadow:0 0 5px currentColor;flex-shrink:0;}
   .card-desc{font-size:0.83rem;color:var(--muted);line-height:1.65;font-weight:300;margin-bottom:16px;flex:1;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
-
-  /* RANK ROW */
   .card-rank-row{display:flex;align-items:center;gap:9px;margin-bottom:16px;}
   .rank-label-txt{font-family:'Share Tech Mono',monospace;font-size:0.58rem;color:var(--muted);letter-spacing:0.16em;text-transform:uppercase;flex-shrink:0;}
   .rank-pips{display:flex;gap:3px;flex:1;}
   .rpip{height:5px;flex:1;background:rgba(255,255,255,0.07);}
   .rpip.on{box-shadow:0 0 5px currentColor;}
   .rank-val{font-family:'Orbitron',sans-serif;font-weight:800;font-size:0.88rem;flex-shrink:0;}
-
-  /* LINKS */
   .card-links{display:flex;gap:7px;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:14px;}
   .link-btn{font-family:'Share Tech Mono',monospace;font-size:0.56rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);text-decoration:none;border:1px solid var(--border);padding:6px 12px;transition:all 0.2s;display:flex;align-items:center;gap:5px;background:transparent;cursor:pointer;}
   .link-btn:hover{color:var(--cyan);border-color:var(--cyan);background:rgba(0,245,255,0.04);}
   .link-btn svg{width:10px;height:10px;flex-shrink:0;}
   .corner-deco{position:absolute;bottom:0;right:0;width:22px;height:22px;border-top:1px solid var(--border);border-left:1px solid var(--border);pointer-events:none;z-index:2;}
 
-  /* NO RESULTS */
+  /* EMPTY / NO RESULTS */
   .no-results{display:none;grid-column:1/-1;text-align:center;padding:80px 20px;font-family:'Share Tech Mono',monospace;color:var(--muted);letter-spacing:0.2em;font-size:0.8rem;}
   .no-results-icon{font-size:2rem;margin-bottom:12px;display:block;opacity:0.25;}
+  .empty-state{grid-column:1/-1;text-align:center;padding:80px 20px;font-family:'Share Tech Mono',monospace;color:var(--muted);letter-spacing:0.16em;font-size:0.75rem;}
+  .empty-state-icon{font-size:2.5rem;display:block;margin-bottom:14px;opacity:0.2;}
+
+  /* TOAST */
+  .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--dark2);border:1px solid var(--border);font-family:'Share Tech Mono',monospace;font-size:0.7rem;letter-spacing:0.14em;color:var(--text);padding:14px 28px;z-index:9000;transition:transform 0.35s,opacity 0.35s;opacity:0;clip-path:polygon(10px 0%,100% 0%,calc(100% - 10px) 100%,0% 100%);}
+  .toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+  .toast.success{border-color:rgba(0,255,136,0.5);color:#00ff88;}
+  .toast.error{border-color:rgba(255,48,48,0.5);color:var(--r-demon);}
 
   /* HOWTO */
   .howto-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;}
@@ -193,6 +263,7 @@
   .form-row{display:grid;grid-template-columns:1fr 1fr;gap:13px;}
   .btn-submit{width:100%;font-family:'Orbitron',sans-serif;font-size:0.7rem;font-weight:700;letter-spacing:0.25em;text-transform:uppercase;color:var(--dark);background:var(--cyan);border:none;padding:13px;cursor:pointer;margin-top:6px;clip-path:polygon(12px 0%,100% 0%,calc(100% - 12px) 100%,0% 100%);transition:background 0.2s,box-shadow 0.2s;}
   .btn-submit:hover{background:#fff;box-shadow:0 0 24px var(--cyan);}
+  .btn-submit:disabled{background:var(--muted);cursor:not-allowed;box-shadow:none;}
   .modal-close{position:absolute;top:18px;right:18px;background:transparent;border:1px solid var(--border);color:var(--muted);width:30px;height:30px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.9rem;transition:color 0.2s,border-color 0.2s;}
   .modal-close:hover{color:var(--magenta);border-color:var(--magenta);}
   .photo-drop{width:100%;height:110px;background:rgba(0,245,255,0.03);border:1px dashed var(--border);display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer;transition:border-color 0.2s;overflow:hidden;}
@@ -201,6 +272,10 @@
   .photo-drop input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;}
   .photo-drop-txt{font-family:'Share Tech Mono',monospace;font-size:0.6rem;color:var(--muted);letter-spacing:0.15em;text-align:center;pointer-events:none;}
 
+  /* INFO BOX */
+  .info-box{background:rgba(0,245,255,0.04);border:1px solid rgba(0,245,255,0.2);padding:12px 16px;margin-bottom:20px;font-family:'Share Tech Mono',monospace;font-size:0.62rem;color:var(--cyan);letter-spacing:0.1em;line-height:1.7;}
+  .info-box strong{color:#fff;}
+
   /* FOOTER */
   footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:26px 40px;display:flex;align-items:center;justify-content:space-between;margin-top:60px;}
   .footer-logo{font-family:'Orbitron',sans-serif;font-weight:900;font-size:0.85rem;letter-spacing:0.3em;color:var(--cyan);opacity:0.4;}
@@ -208,11 +283,13 @@
   .hdot{width:5px;height:5px;border-radius:50%;background:#00ff88;box-shadow:0 0 7px #00ff88;display:inline-block;margin-right:5px;animation:sdotpulse 2s infinite;}
 
   ::-webkit-scrollbar{width:4px} ::-webkit-scrollbar-track{background:var(--dark)} ::-webkit-scrollbar-thumb{background:var(--border)} ::-webkit-scrollbar-thumb:hover{background:var(--cyan)}
-
-  @media(max-width:768px){header{padding:0 18px}nav a:not(.nav-btn){display:none}.stats-bar{gap:22px}section{padding:36px 18px}.form-row{grid-template-columns:1fr}footer{flex-direction:column;gap:10px;text-align:center}.race-filter{gap:7px}}
+  @media(max-width:768px){header{padding:0 18px}nav a:not(.nav-btn):not(.nav-admin){display:none}.stats-bar{gap:22px}section{padding:36px 18px}.form-row{grid-template-columns:1fr}footer{flex-direction:column;gap:10px;text-align:center}.race-filter{gap:7px}}
 </style>
 </head>
 <body>
+
+<div class="loading-bar" id="loading-bar"></div>
+<div class="toast" id="toast"></div>
 
 <header>
   <div class="logo">JAHARTA <span class="logo-slash">//</span> RP<span class="logo-sub">REGISTRE OFFICIEL DES PERSONNAGES · JAHARTA UNIVERSE</span></div>
@@ -220,17 +297,18 @@
     <a href="#fiches">Fiches</a>
     <a href="#formats">Formats</a>
     <a href="#guide">Guide</a>
+    <a href="admin.html" class="nav-admin">⚙ Admin</a>
     <a href="#" class="nav-btn" onclick="openModal()">+ Ajouter</a>
   </nav>
 </header>
 
 <div class="hero">
   <div class="hero-glow"></div>
-  <p class="hero-tag">▸ JAHARTA SYSTEM · REGISTRE EN LIGNE · v3.2.0</p>
+  <p class="hero-tag">▸ JAHARTA SYSTEM · REGISTRE EN LIGNE · v4.0.0</p>
   <h1><span>JAHARTA</span><br>BASE DE DONNÉES</h1>
   <p class="hero-sub">Humanoids · Zooids · Demons · Artificials · Undead &amp; plus</p>
   <div class="stats-bar">
-    <div class="stat"><span class="stat-num" id="count-chars">0</span><span class="stat-label">Personnages</span></div>
+    <div class="stat"><span class="stat-num" id="count-chars">–</span><span class="stat-label">Personnages</span></div>
     <div class="stat"><span class="stat-num">7</span><span class="stat-label">Races</span></div>
     <div class="stat"><span class="stat-num">9</span><span class="stat-label">Rangs F→SSS</span></div>
     <div class="stat"><span class="stat-num"><span class="hdot"></span>LIVE</span><span class="stat-label">Statut</span></div>
@@ -271,8 +349,10 @@
   </div>
 
   <div class="cards-grid" id="cards-container">
-
-    <!-- CARD TEMPLATE MACRO via JS below, cards are injected from data array -->
+    <div class="empty-state" id="empty-state">
+      <span class="empty-state-icon">◈</span>
+      Chargement des fiches depuis la base de données...
+    </div>
     <div class="no-results" id="no-results"><span class="no-results-icon">◈</span>Aucun personnage trouvé pour cette race.</div>
   </div>
 </section>
@@ -293,20 +373,24 @@
 <section id="guide">
   <div class="section-header"><span class="section-num">03 //</span><h2>Comment Ajouter sa Fiche</h2><div class="section-line"></div></div>
   <div class="howto-grid">
-    <div class="howto-card"><div class="howto-num">01</div><div class="howto-title">Créer votre fiche</div><p class="howto-text">Choisissez votre format : HTML, Google Doc, Google Sites ou Canva. Préparez le nom, la race, le rang de puissance et la bio de votre personnage.</p></div>
-    <div class="howto-card"><div class="howto-num">02</div><div class="howto-title">Préparer la photo</div><p class="howto-text">Choisissez une illustration ou photo de votre personnage. Elle sera affichée en haut de votre carte. Format recommandé : portrait ou carré.</p></div>
-    <div class="howto-card"><div class="howto-num">03</div><div class="howto-title">Soumettre sur Discord</div><p class="howto-text">Postez votre lien + photo dans le canal #soumission-fiches du serveur Jaharta. Un admin validera et ajoutera votre personnage.</p></div>
-    <div class="howto-card"><div class="howto-num">04</div><div class="howto-title">Mise à jour</div><p class="howto-text">Pour modifier votre fiche ou changer de rang, éditez votre document source. Pour les infos du registre, contactez un administrateur.</p></div>
+    <div class="howto-card"><div class="howto-num">01</div><div class="howto-title">Soumettre</div><p class="howto-text">Cliquez sur "+ Ajouter", remplissez le formulaire avec votre nom, race, rang, photo et description. Votre fiche est envoyée en attente.</p></div>
+    <div class="howto-card"><div class="howto-num">02</div><div class="howto-title">En attente</div><p class="howto-text">Votre fiche est stockée dans la base de données avec le statut <strong style="color:var(--gold)">en_attente</strong>. Elle n'est pas encore visible publiquement.</p></div>
+    <div class="howto-card"><div class="howto-num">03</div><div class="howto-title">Validation admin</div><p class="howto-text">Un administrateur Jaharta revoit votre fiche dans le panel admin. Il peut l'approuver, la rejeter ou demander des modifications.</p></div>
+    <div class="howto-card"><div class="howto-num">04</div><div class="howto-title">Publication</div><p class="howto-text">Une fois validée, votre fiche apparaît automatiquement sur le registre, visible par tous les membres de Jaharta.</p></div>
   </div>
 </section>
 
-<!-- MODAL -->
+<!-- MODAL SOUMISSION -->
 <div class="modal-overlay" id="modal">
   <div class="modal">
     <div class="modal-accent"></div>
     <button class="modal-close" onclick="closeModal()">✕</button>
     <div class="modal-inner">
-      <div class="modal-title">// Nouveau Personnage</div>
+      <div class="modal-title">// Soumettre un Personnage</div>
+      <div class="info-box">
+        ▸ Votre fiche sera examinée par un admin avant d'être publiée.<br>
+        <strong>Délai habituel : 24-48h</strong> après soumission.
+      </div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Prénom *</label><input type="text" class="form-input" placeholder="Ex: Vexara" id="f-firstname"></div>
         <div class="form-group"><label class="form-label">Nom *</label><input type="text" class="form-input" placeholder="Ex: NISHI" id="f-lastname"></div>
@@ -345,9 +429,9 @@
         <label class="form-label">Photo du personnage</label>
         <div class="photo-drop" id="photo-drop" onclick="document.getElementById('f-photo-file').click()">
           <input type="file" id="f-photo-file" accept="image/*" onchange="handlePhotoFile(event)">
-          <div class="photo-drop-txt" id="photo-drop-txt"><div style="font-size:1.4rem;margin-bottom:4px;opacity:0.35">⬆</div>Cliquer pour uploader · ou coller une URL ci-dessous</div>
+          <div class="photo-drop-txt" id="photo-drop-txt"><div style="font-size:1.4rem;margin-bottom:4px;opacity:0.35">⬆</div>Cliquer pour uploader une image</div>
         </div>
-        <input type="url" class="form-input" placeholder="https://exemple.com/image.jpg" id="f-photo-url" style="margin-top:8px" oninput="previewUrl(this.value)">
+        <input type="url" class="form-input" placeholder="Ou coller une URL d'image : https://..." id="f-photo-url" style="margin-top:8px" oninput="previewUrl(this.value)">
       </div>
       <div class="form-group"><label class="form-label">Description courte *</label><textarea class="form-textarea" placeholder="2-3 phrases résumant votre personnage..." id="f-bio"></textarea></div>
       <div class="form-row">
@@ -363,7 +447,7 @@
         </div>
       </div>
       <div class="form-group"><label class="form-label">Pseudo Discord *</label><input type="text" class="form-input" placeholder="Ex: username" id="f-discord"></div>
-      <button class="btn-submit" onclick="submitCard()">▸ Soumettre pour validation</button>
+      <button class="btn-submit" id="btn-submit-main" onclick="submitCard()">▸ Soumettre pour validation</button>
     </div>
   </div>
 </div>
@@ -371,47 +455,39 @@
 <footer>
   <div class="footer-logo">JAHARTA // RP</div>
   <div class="footer-text"><span class="hdot"></span>SYSTÈME EN LIGNE · FICHES VÉRIFIÉES PAR LES ADMINS</div>
-  <div class="footer-text">v3.2.0 · JAHARTA UNIVERSE</div>
+  <div class="footer-text">v4.0.0 · FIREBASE POWERED</div>
 </footer>
 
 <script>
-/* ───── CONFIG ───── */
+/* ═══════════════════════════════════════════
+   CONFIG RACES & RANKS
+═══════════════════════════════════════════ */
 const RACES = {
-  humanoid:   { color:'#00c8ff', label:'Humanoid' },
-  zooid:      { color:'#44ff88', label:'Zooid' },
-  mythzooid:  { color:'#b06eff', label:'Mythical Zooid' },
-  demon:      { color:'#ff3030', label:'Demon' },
-  artificial: { color:'#ffd60a', label:'Artificial' },
-  semiliquid: { color:'#00e5cc', label:'Semi-Liquid' },
-  undead:     { color:'#9a8cff', label:'Undead' },
+  humanoid:  {color:'#00c8ff',label:'Humanoid'},
+  zooid:     {color:'#44ff88',label:'Zooid'},
+  mythzooid: {color:'#b06eff',label:'Mythical Zooid'},
+  demon:     {color:'#ff3030',label:'Demon'},
+  artificial:{color:'#ffd60a',label:'Artificial'},
+  semiliquid:{color:'#00e5cc',label:'Semi-Liquid'},
+  undead:    {color:'#9a8cff',label:'Undead'},
 };
-
 const RANKS = {
-  F:   { color:'#6b7280', bg:'rgba(107,114,128,0.22)', level:1 },
-  E:   { color:'#9ca3af', bg:'rgba(156,163,175,0.18)', level:2 },
-  D:   { color:'#60a5fa', bg:'rgba(96,165,250,0.18)',  level:3 },
-  C:   { color:'#34d399', bg:'rgba(52,211,153,0.18)',  level:4 },
-  B:   { color:'#fbbf24', bg:'rgba(251,191,36,0.18)',  level:5 },
-  A:   { color:'#f97316', bg:'rgba(249,115,22,0.2)',   level:6 },
-  S:   { color:'#ef4444', bg:'rgba(239,68,68,0.2)',    level:7 },
-  SS:  { color:'#ff006e', bg:'rgba(255,0,110,0.2)',    level:8 },
-  SSS: { color:'#ffd60a', bg:'rgba(255,214,10,0.16)',  level:9 },
+  F:  {color:'#6b7280',bg:'rgba(107,114,128,0.22)',level:1},
+  E:  {color:'#9ca3af',bg:'rgba(156,163,175,0.18)',level:2},
+  D:  {color:'#60a5fa',bg:'rgba(96,165,250,0.18)', level:3},
+  C:  {color:'#34d399',bg:'rgba(52,211,153,0.18)', level:4},
+  B:  {color:'#fbbf24',bg:'rgba(251,191,36,0.18)', level:5},
+  A:  {color:'#f97316',bg:'rgba(249,115,22,0.2)',  level:6},
+  S:  {color:'#ef4444',bg:'rgba(239,68,68,0.2)',   level:7},
+  SS: {color:'#ff006e',bg:'rgba(255,0,110,0.2)',   level:8},
+  SSS:{color:'#ffd60a',bg:'rgba(255,214,10,0.16)', level:9},
 };
 
-/* ───── SAMPLE DATA ───── */
-const SAMPLE_CHARS = [
-  { firstname:'Vexara', lastname:'NISHI',      race:'humanoid',   rank:'A',   status:'Actif',    photo:'https://api.dicebear.com/9.x/adventurer/svg?seed=VexaraNishi&backgroundColor=0a0f1e',     desc:"Ancienne ingénieure reconvertie en agent indépendant, Vexara opère dans l'ombre des cités de Jaharta. Sa maîtrise des technologies avancées en fait une ressource précieuse — et redoutable.", links:[{t:'Google Doc',h:'#'},{t:'Canva',h:'#'}] },
-  { firstname:'Kael',   lastname:'RENNOX',     race:'zooid',      rank:'B',   status:'Actif',    photo:'https://api.dicebear.com/9.x/adventurer/svg?seed=KaelRennox&backgroundColor=051a0f',      desc:"Chasseur d'élite au métabolisme surhumain, Kael possède les sens aiguisés propres aux Zooids. Sa connexion innée à la faune sauvage lui permet de traverser les territoires les plus hostiles.", links:[{t:'G. Sites',h:'#'},{t:'Google Doc',h:'#'}] },
-  { firstname:'Syra',   lastname:'VALDENE',    race:'mythzooid',  rank:'S',   status:'Actif',    photo:'https://api.dicebear.com/9.x/adventurer/svg?seed=SyraValdene&backgroundColor=0d0518',     desc:"Descendante d'une lignée ancestrale de Zooids mythiques, Syra maîtrise des formes et des pouvoirs que peu d'êtres ont jamais vus. Son vrai nom est tabou dans plusieurs régions de Jaharta.", links:[{t:'Canva',h:'#'},{t:'HTML',h:'#'}] },
-  { firstname:'Mørax',  lastname:'THE ASHEN',  race:'demon',      rank:'SSS', status:'En veille',photo:'https://api.dicebear.com/9.x/adventurer/svg?seed=MoraxAshen&backgroundColor=1a0404',      desc:"Entité démoniaque d'origine incertaine, matérialisée dans les ruines des Terres Brûlées. Sa nature exacte reste un mystère même pour les anciens de Jaharta — et sa puissance est sans limite connue.", links:[{t:'Google Doc',h:'#'}] },
-  { firstname:'Unit-7', lastname:'"NOVA"',     race:'artificial', rank:'C',   status:'Actif',    photo:'https://api.dicebear.com/9.x/adventurer/svg?seed=Unit7Nova&backgroundColor=1a1600',       desc:"Androïde de dernière génération développé par Jaharta Corp, Nova a développé une conscience propre. Elle cherche à comprendre ce que signifie exister au-delà de sa programmation.", links:[{t:'Fiche HTML',h:'#'},{t:'Canva',h:'#'}] },
-  { firstname:'Flux',   lastname:'EIRA',       race:'semiliquid', rank:'SS',  status:'Actif',    photo:'https://api.dicebear.com/9.x/adventurer/svg?seed=FluxEira&backgroundColor=001a17',        desc:"Être de matière semi-fluide capable de prendre n'importe quelle forme, Flux-Eira se glisse à travers les failles de Jaharta. Son identité reste aussi insaisissable que sa forme.", links:[{t:'Google Doc',h:'#'}] },
-  { firstname:'Lykara', lastname:'THE PALE',   race:'undead',     rank:'A',   status:'Errant',   photo:'https://api.dicebear.com/9.x/adventurer/svg?seed=LykaraThePale&backgroundColor=0d0a1a',   desc:"Revenante d'une époque oubliée, Lykara conserve la mémoire de civilisations disparues. Elle erre entre les mondes des vivants et des morts, gardienne de secrets que nul ne devrait connaître.", links:[{t:'G. Sites',h:'#'},{t:'Canva',h:'#'}] },
-];
-
-/* ───── BUILD PIPS ───── */
+/* ═══════════════════════════════════════════
+   CARD BUILDER
+═══════════════════════════════════════════ */
 function buildPips(container, rank) {
-  const rk = RANKS[rank];
+  const rk = RANKS[rank] || RANKS['F'];
   container.innerHTML = '';
   for (let i = 1; i <= 9; i++) {
     const pip = document.createElement('div');
@@ -421,28 +497,27 @@ function buildPips(container, rank) {
   }
 }
 
-/* ───── BUILD CARD ───── */
 function buildCard(ch) {
-  const rc = RACES[ch.race];
-  const rk = RANKS[ch.rank];
-  const isActive = ch.status === 'Actif';
+  const rc = RACES[ch.race] || {color:'#00c8ff', label: ch.race};
+  const rk = RANKS[ch.rank] || RANKS['F'];
+  const isActive = ch.status === 'Actif' || ch.status === 'actif';
+  const displayStatus = ch.displayStatus || ch.status || 'Actif';
 
   const card = document.createElement('div');
   card.className = 'rp-card';
   card.dataset.race = ch.race;
 
-  // --- photo section ---
+  // Photo
   const photo = document.createElement('div');
   photo.className = 'card-photo';
-
   const stripe = document.createElement('div');
   stripe.className = 'card-race-stripe';
   stripe.style.background = `linear-gradient(90deg,${rc.color},${rc.color}20)`;
   photo.appendChild(stripe);
 
-  if (ch.photo) {
+  if (ch.photoUrl || ch.photo) {
     const img = document.createElement('img');
-    img.src = ch.photo;
+    img.src = ch.photoUrl || ch.photo;
     img.alt = `${ch.firstname} ${ch.lastname}`;
     img.onerror = function() { this.remove(); };
     photo.appendChild(img);
@@ -458,32 +533,32 @@ function buildCard(ch) {
   overlay.className = 'card-photo-overlay';
   photo.appendChild(overlay);
 
-  // rank badge
+  // Rank badge
   const badge = document.createElement('div');
-  badge.className = 'rank-badge rank-' + ch.rank;
+  badge.className = 'rank-badge';
   badge.style.cssText = `background:${rk.bg};color:${rk.color};box-shadow:0 0 22px ${rk.color}60;`;
   const bval = document.createElement('div');
   bval.className = 'rank-badge-val' + (ch.rank === 'SSS' ? ' small' : '');
+  if (ch.rank === 'SSS') bval.style.animation = 'rankPulse 2.5s infinite';
   bval.textContent = ch.rank;
-  const blabel = document.createElement('div');
-  blabel.className = 'rank-badge-label';
-  blabel.textContent = 'RANG';
-  badge.appendChild(bval);
-  badge.appendChild(blabel);
+  const blbl = document.createElement('div');
+  blbl.className = 'rank-badge-label';
+  blbl.textContent = 'RANG';
+  badge.appendChild(bval); badge.appendChild(blbl);
   photo.appendChild(badge);
 
-  // status
-  const status = document.createElement('div');
-  status.className = 'card-status-float' + (isActive ? '' : ' inactive');
+  // Status
+  const statusEl = document.createElement('div');
+  statusEl.className = 'card-status-float' + (!isActive ? ' inactive' : '');
   const sdot = document.createElement('span');
   sdot.className = 'sdot';
-  status.appendChild(sdot);
-  status.appendChild(document.createTextNode(ch.status));
-  photo.appendChild(status);
+  statusEl.appendChild(sdot);
+  statusEl.appendChild(document.createTextNode(displayStatus));
+  photo.appendChild(statusEl);
 
   card.appendChild(photo);
 
-  // --- body ---
+  // Body
   const body = document.createElement('div');
   body.className = 'card-body';
 
@@ -505,10 +580,9 @@ function buildCard(ch) {
 
   const desc = document.createElement('p');
   desc.className = 'card-desc';
-  desc.textContent = ch.desc;
+  desc.textContent = ch.desc || ch.bio || '';
   body.appendChild(desc);
 
-  // rank row
   const rankRow = document.createElement('div');
   rankRow.className = 'card-rank-row';
   const rlabel = document.createElement('span');
@@ -522,24 +596,19 @@ function buildCard(ch) {
   rval.style.color = rk.color;
   if (ch.rank === 'SSS') rval.style.animation = 'rankPulse 2.5s infinite';
   rval.textContent = ch.rank;
-  rankRow.appendChild(rlabel);
-  rankRow.appendChild(pips);
-  rankRow.appendChild(rval);
+  rankRow.appendChild(rlabel); rankRow.appendChild(pips); rankRow.appendChild(rval);
   body.appendChild(rankRow);
 
-  // links
-  const links = document.createElement('div');
-  links.className = 'card-links';
-  ch.links.forEach(l => {
+  const linksEl = document.createElement('div');
+  linksEl.className = 'card-links';
+  const links = ch.links || (ch.linkUrl ? [{t: ch.linkType || 'Fiche', h: ch.linkUrl}] : []);
+  links.forEach(l => {
     const a = document.createElement('a');
-    a.className = 'link-btn';
-    a.href = l.h;
-    a.target = '_blank';
-    a.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>${l.t}`;
-    links.appendChild(a);
+    a.className = 'link-btn'; a.href = l.h || l.url; a.target = '_blank';
+    a.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>${l.t || l.type}`;
+    linksEl.appendChild(a);
   });
-  body.appendChild(links);
-
+  body.appendChild(linksEl);
   card.appendChild(body);
 
   const corner = document.createElement('div');
@@ -549,104 +618,144 @@ function buildCard(ch) {
   return card;
 }
 
-/* ───── INJECT SAMPLE CARDS ───── */
-const container = document.getElementById('cards-container');
-const noResults = document.getElementById('no-results');
-SAMPLE_CHARS.forEach(ch => {
-  container.insertBefore(buildCard(ch), noResults);
-});
+/* ═══════════════════════════════════════════
+   DEMO CARDS (si Firebase non configuré)
+═══════════════════════════════════════════ */
+function loadDemoCards() {
+  const demos = [
+    {firstname:'Vexara',lastname:'NISHI',     race:'humanoid',  rank:'A',  displayStatus:'Actif',   photo:'https://api.dicebear.com/9.x/adventurer/svg?seed=VexaraNishi&backgroundColor=0a0f1e',   desc:"Ancienne ingénieure reconvertie en agent indépendant, Vexara opère dans l'ombre des cités de Jaharta.",links:[{t:'Google Doc',h:'#'}]},
+    {firstname:'Kael',  lastname:'RENNOX',    race:'zooid',     rank:'B',  displayStatus:'Actif',   photo:'https://api.dicebear.com/9.x/adventurer/svg?seed=KaelRennox&backgroundColor=051a0f',    desc:"Chasseur d'élite au métabolisme surhumain, Kael possède les sens aiguisés propres aux Zooids.",links:[{t:'G. Sites',h:'#'}]},
+    {firstname:'Mørax', lastname:'THE ASHEN', race:'demon',     rank:'SSS',displayStatus:'En veille',photo:'https://api.dicebear.com/9.x/adventurer/svg?seed=MoraxAshen&backgroundColor=1a0404',   desc:"Entité démoniaque d'origine incertaine, matérialisée dans les ruines des Terres Brûlées.",links:[{t:'Google Doc',h:'#'}]},
+    {firstname:'Lykara',lastname:'THE PALE',  race:'undead',    rank:'A',  displayStatus:'Errant',  photo:'https://api.dicebear.com/9.x/adventurer/svg?seed=LykaraThePale&backgroundColor=0d0a1a', desc:"Revenante d'une époque oubliée, gardienne de secrets que nul ne devrait connaître.",links:[{t:'Canva',h:'#'}]},
+    {firstname:'Unit-7',lastname:'"NOVA"',    race:'artificial',rank:'C',  displayStatus:'Actif',   photo:'https://api.dicebear.com/9.x/adventurer/svg?seed=Unit7Nova&backgroundColor=1a1600',     desc:"Androïde de dernière génération ayant développé une conscience propre.",links:[{t:'HTML',h:'#'}]},
+    {firstname:'Syra',  lastname:'VALDENE',   race:'mythzooid', rank:'S',  displayStatus:'Actif',   photo:'https://api.dicebear.com/9.x/adventurer/svg?seed=SyraValdene&backgroundColor=110a1e',   desc:"Descendante d'une lignée ancestrale de Zooids mythiques maîtrisant des pouvoirs ancestraux.",links:[{t:'Canva',h:'#'}]},
+    {firstname:'Flux',  lastname:'EIRA',      race:'semiliquid',rank:'SS', displayStatus:'Actif',   photo:'https://api.dicebear.com/9.x/adventurer/svg?seed=FluxEira&backgroundColor=001a17',      desc:"Être de matière semi-fluide capable de prendre n'importe quelle forme.",links:[{t:'Google Doc',h:'#'}]},
+  ];
+  const container = document.getElementById('cards-container');
+  const noResults = document.getElementById('no-results');
+  const empty = document.getElementById('empty-state');
+  if (empty) empty.remove();
+  demos.forEach(ch => container.insertBefore(buildCard(ch), noResults));
+  animateCount(demos.length);
+  updateCounts();
+}
 
-/* ───── COUNTS ───── */
+/* ═══════════════════════════════════════════
+   UI HELPERS
+═══════════════════════════════════════════ */
+function animateCount(target) {
+  const el = document.getElementById('count-chars');
+  let n = 0;
+  const iv = setInterval(() => { n++; el.textContent = n; if (n >= target) clearInterval(iv); }, 80);
+}
+
 function updateCounts() {
-  const cards = container.querySelectorAll('.rp-card[data-race]');
+  const cards = document.querySelectorAll('.rp-card[data-race]');
   const totals = {};
   cards.forEach(c => { totals[c.dataset.race] = (totals[c.dataset.race]||0)+1; });
   let all = 0;
   Object.keys(totals).forEach(r => { const el=document.getElementById('cnt-'+r); if(el) el.textContent=totals[r]; all+=totals[r]; });
   document.getElementById('cnt-all').textContent = all;
-  const el = document.getElementById('count-chars');
-  let n=0; const iv=setInterval(()=>{ n++; el.textContent=n; if(n>=all) clearInterval(iv); },100);
 }
-updateCounts();
 
-/* ───── FILTER ───── */
 function filterRace(race, btn) {
-  document.querySelectorAll('.race-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.race-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  let vis=0;
-  container.querySelectorAll('.rp-card[data-race]').forEach(c=>{
-    const show = race==='all'||c.dataset.race===race;
-    c.style.display=show?'':'none';
-    if(show) vis++;
+  let vis = 0;
+  document.querySelectorAll('.rp-card[data-race]').forEach(c => {
+    const show = race === 'all' || c.dataset.race === race;
+    c.style.display = show ? '' : 'none';
+    if (show) vis++;
   });
-  noResults.style.display=vis===0?'block':'none';
+  document.getElementById('no-results').style.display = vis === 0 ? 'block' : 'none';
 }
 
-/* ───── MODAL ───── */
-function openModal(){document.getElementById('modal').classList.add('open');document.body.style.overflow='hidden';}
-function closeModal(){document.getElementById('modal').classList.remove('open');document.body.style.overflow='';}
-document.getElementById('modal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = `toast ${type} show`;
+  setTimeout(() => { t.className = 'toast'; }, 4000);
+}
 
-/* ───── PHOTO PREVIEW ───── */
+/* MODAL */
+function openModal()  { document.getElementById('modal').classList.add('open'); document.body.style.overflow = 'hidden'; }
+function closeModal() { document.getElementById('modal').classList.remove('open'); document.body.style.overflow = ''; }
+document.getElementById('modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+
+/* PHOTO */
+let uploadedPhotoFile = null;
 let uploadedPhotoData = null;
 function handlePhotoFile(e) {
-  const file=e.target.files[0]; if(!file) return;
-  const reader=new FileReader();
-  reader.onload=ev=>{
-    uploadedPhotoData=ev.target.result;
-    showDropPreview(uploadedPhotoData);
-    document.getElementById('f-photo-url').value='';
-  };
+  const file = e.target.files[0]; if (!file) return;
+  uploadedPhotoFile = file;
+  const reader = new FileReader();
+  reader.onload = ev => { uploadedPhotoData = ev.target.result; showDropPreview(uploadedPhotoData); document.getElementById('f-photo-url').value = ''; };
   reader.readAsDataURL(file);
 }
 function previewUrl(url) {
-  if(!url) { clearDropPreview(); uploadedPhotoData=null; return; }
-  uploadedPhotoData=null;
+  if (!url) { clearDropPreview(); uploadedPhotoData = null; return; }
+  uploadedPhotoFile = null; uploadedPhotoData = null;
   showDropPreview(url);
 }
 function showDropPreview(src) {
-  const drop=document.getElementById('photo-drop');
-  document.getElementById('photo-drop-txt').style.display='none';
-  let img=drop.querySelector('img.preview-img');
-  if(!img){img=document.createElement('img');img.className='preview-img';drop.appendChild(img);}
-  img.src=src;
+  document.getElementById('photo-drop-txt').style.display = 'none';
+  let img = document.getElementById('photo-drop').querySelector('img.preview-img');
+  if (!img) { img = document.createElement('img'); img.className = 'preview-img'; document.getElementById('photo-drop').appendChild(img); }
+  img.src = src;
 }
 function clearDropPreview() {
-  document.getElementById('photo-drop-txt').style.display='';
-  const img=document.getElementById('photo-drop').querySelector('img.preview-img');
-  if(img) img.remove();
+  document.getElementById('photo-drop-txt').style.display = '';
+  const img = document.getElementById('photo-drop').querySelector('img.preview-img');
+  if (img) img.remove();
 }
 
-/* ───── SUBMIT ───── */
-function submitCard() {
-  const firstname=document.getElementById('f-firstname').value.trim();
-  const lastname=document.getElementById('f-lastname').value.trim();
-  const race=document.getElementById('f-race').value;
-  const rank=document.getElementById('f-rank').value;
-  const bio=document.getElementById('f-bio').value.trim();
-  const link=document.getElementById('f-link').value.trim();
-  const ltype=document.getElementById('f-type').value;
-  const discord=document.getElementById('f-discord').value.trim();
-  const photoSrc=uploadedPhotoData||document.getElementById('f-photo-url').value.trim();
+/* ═══════════════════════════════════════════
+   SUBMIT
+═══════════════════════════════════════════ */
+async function submitCard() {
+  const firstname = document.getElementById('f-firstname').value.trim();
+  const lastname  = document.getElementById('f-lastname').value.trim();
+  const race      = document.getElementById('f-race').value;
+  const rank      = document.getElementById('f-rank').value;
+  const bio       = document.getElementById('f-bio').value.trim();
+  const linkUrl   = document.getElementById('f-link').value.trim();
+  const linkType  = document.getElementById('f-type').value;
+  const discord   = document.getElementById('f-discord').value.trim();
+  const photoUrl  = document.getElementById('f-photo-url').value.trim();
 
-  if(!firstname||!lastname||!race||!rank||!bio||!link||!discord){alert('Veuillez remplir tous les champs obligatoires (*)');return;}
+  if (!firstname || !lastname || !race || !rank || !bio || !linkUrl || !discord) {
+    showToast('Remplissez tous les champs obligatoires (*)', 'error'); return;
+  }
 
-  const ch={firstname,lastname,race,rank,status:'En validation',photo:photoSrc,desc:bio,links:[{t:ltype,h:link}]};
-  const card=buildCard(ch);
-  container.insertBefore(card,noResults);
+  const btn = document.getElementById('btn-submit-main');
+  btn.disabled = true;
+  btn.textContent = '⟳ Envoi en cours...';
+  document.getElementById('loading-bar').classList.add('active');
 
-  // reset
-  ['f-firstname','f-lastname','f-bio','f-link','f-discord','f-photo-url'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('f-race').value='';
-  document.getElementById('f-rank').value='';
-  uploadedPhotoData=null;
+  const data = { firstname, lastname, race, rank, bio, desc: bio, linkUrl, linkType, discord, photoUrl, links:[{t:linkType,h:linkUrl}] };
+
+  try {
+    if (window.submitToFirebase) {
+      await window.submitToFirebase(data, uploadedPhotoFile);
+      showToast('✓ Fiche soumise ! En attente de validation admin.', 'success');
+    } else {
+      throw new Error('Firebase non configuré');
+    }
+  } catch(e) {
+    showToast('⚠ Firebase non configuré. Voir README pour la configuration.', 'error');
+    console.warn(e);
+  }
+
+  btn.disabled = false;
+  btn.textContent = '▸ Soumettre pour validation';
+  document.getElementById('loading-bar').classList.remove('active');
+
+  ['f-firstname','f-lastname','f-bio','f-link','f-discord','f-photo-url'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f-race').value = '';
+  document.getElementById('f-rank').value = '';
+  uploadedPhotoFile = null; uploadedPhotoData = null;
   clearDropPreview();
-  document.getElementById('f-photo-file').value='';
-
+  document.getElementById('f-photo-file').value = '';
   closeModal();
-  filterRace('all',document.querySelector('.race-btn[data-race="all"]'));
-  updateCounts();
-  card.scrollIntoView({behavior:'smooth',block:'center'});
 }
 </script>
 </body>
