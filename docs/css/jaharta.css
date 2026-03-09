@@ -396,3 +396,35 @@ nav a.active::after {
 .hero-title .c.glitching::after {
   animation: heroGlitch3 8s steps(2,end) infinite;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   BADGE ADMIN CONNECTÉ — visible dans le nav quand auth active
+   ═══════════════════════════════════════════════════════════════ */
+.admin-badge {
+  display:        none;
+  align-items:    center;
+  gap:            6px;
+  font-family:    'Share Tech Mono', monospace;
+  font-size:      0.58rem;
+  letter-spacing: 0.14em;
+  color:          #00ff88;
+  border:         1px solid rgba(0,255,136,0.3);
+  background:     rgba(0,255,136,0.06);
+  padding:        5px 11px;
+  margin-left:    6px;
+  position:       relative;
+  clip-path: polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%);
+}
+.admin-badge::before {
+  content:       '';
+  width:         6px;
+  height:        6px;
+  border-radius: 50%;
+  background:    #00ff88;
+  box-shadow:    0 0 8px #00ff88;
+  animation:     hdot-pulse 1.8s infinite;
+  flex-shrink:   0;
+}
+.admin-badge.visible {
+  display: flex;
+}
