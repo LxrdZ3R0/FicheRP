@@ -34,17 +34,11 @@ jaharta-rp/
 
 Les fichiers dans `public/` sont servis via GitHub Pages.
 
-**Activer GitHub Pages :**
-1. Aller dans **Settings → Pages** du repo
-2. Source : `Deploy from a branch`
-3. Branch : `main` — Folder : `/public`
-4. Sauvegarder → URL : `https://USERNAME.github.io/jaharta-rp/`
-
 ---
 
 ## Hébergement futur : Firebase Hosting + nom de domaine
 
-Quand vous serez prêt à migrer sur Firebase Hosting (pour connecter un nom de domaine custom) :
+Quand vous serez prêt à migrer sur Firebase Hosting :
 
 ### 1. Installer Firebase CLI
 ```bash
@@ -84,71 +78,6 @@ Le fichier `.github/workflows/deploy.yml` déclenche un déploiement à chaque `
 | `pnj`          | Personnages non-joueurs créés par les admins |
 | `pnj_filters`  | Filtres personnalisés de la page PNJ (label + couleur) |
 
-### Règles Firestore recommandées
-
-```javascript
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-
-    // Fiches : lecture publique (validées), écriture publique (soumission)
-    match /fiches/{id} {
-      allow read: if resource.data.status == "validee";
-      allow create: if true;
-      allow update, delete: if request.auth != null;
-    }
-
-    // PNJ : lecture publique, écriture admin seulement
-    match /pnj/{id} {
-      allow read: if true;
-      allow write: if request.auth != null;
-    }
-
-    // Filtres PNJ : lecture publique, écriture admin seulement
-    match /pnj_filters/{id} {
-      allow read: if true;
-      allow write: if request.auth != null;
-    }
-  }
-}
-```
-
-### Règles Firebase Storage recommandées
-
-```javascript
-rules_version = '2';
-service firebase.storage {
-  match /b/{bucket}/o {
-    // Photos fiches joueurs
-    match /photos/{allPaths=**} {
-      allow read: if true;
-      allow write: if request.resource.size < 5 * 1024 * 1024
-                   && request.resource.contentType.matches('image/.*');
-    }
-    // Photos PNJ
-    match /pnj/{allPaths=**} {
-      allow read: if true;
-      allow write: if request.auth != null
-                   && request.resource.size < 5 * 1024 * 1024
-                   && request.resource.contentType.matches('image/.*');
-    }
-  }
-}
-```
-
----
-
-## Comptes admin
-
-Les comptes admins sont gérés via **Firebase Authentication** (email/password).
-
-1. Aller sur [console.firebase.google.com](https://console.firebase.google.com)
-2. Sélectionner le projet `jaharta-rp`
-3. Authentication → Users → **Add user**
-4. Entrer l'email et mot de passe du nouvel admin
-5. Communiquer les identifiants via Discord DM
-
----
 
 ## Portail — Liens à configurer
 
