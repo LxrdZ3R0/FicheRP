@@ -110,10 +110,9 @@
   }
 
   /* ── Validate ── */
-  window.validateFiche = async function(id, displayStatus) {
+  window.validateFiche = async function(id) {
     await updateDoc(doc(db, "fiches", id), {
       status: "validee",
-      displayStatus: displayStatus || "Actif",
       validatedAt: new Date()
     });
     showToast('✓ Fiche validée et publiée !', 'success');
@@ -341,9 +340,7 @@
   .reject-input::placeholder{color:var(--muted);font-size:0.75rem;}
 
   /* STATUS SELECT in approve */
-  .status-select{background:rgba(0,245,255,0.04);border:1px solid rgba(0,245,255,0.2);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:0.6rem;padding:6px 8px;outline:none;width:100%;}
-  .status-select option{background:var(--dark2);}
-
+    
   /* EMPTY */
   .empty-list{text-align:center;padding:50px;font-family:'Share Tech Mono',monospace;color:var(--muted);letter-spacing:0.16em;font-size:0.72rem;}
   .empty-list-icon{font-size:2rem;display:block;margin-bottom:12px;opacity:0.2;}
@@ -552,15 +549,7 @@ function renderTable(containerId, fiches, type) {
     if (type === 'pending') {
       actions.innerHTML = `
         <div class="fiche-actions-row">
-          <select class="status-select" id="status-${f.id}">
-            <option value="Actif">Statut : Actif</option>
-            <option value="Inactif">Statut : Inactif</option>
-            <option value="En mission">Statut : En mission</option>
-            <option value="Errant">Statut : Errant</option>
-          </select>
-        </div>
-        <div class="fiche-actions-row">
-          <button class="action-btn approve" onclick="validateFiche('${f.id}', document.getElementById('status-${f.id}').value)">✓ Valider</button>
+          <button class="action-btn approve" onclick="validateFiche('${f.id}')">✓ Valider</button>
           <button class="action-btn delete" onclick="deleteFiche('${f.id}')">✕ Supprimer</button>
         </div>
         <div class="fiche-actions-row" style="width:100%">

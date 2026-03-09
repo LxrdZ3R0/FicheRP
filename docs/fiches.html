@@ -146,13 +146,11 @@ loadCards();
 .card-photo-ov{position:absolute;inset:0;background:linear-gradient(180deg,transparent 30%,rgba(8,13,26,0.65) 68%,var(--dark2) 100%);pointer-events:none;}
 .card-photo-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;font-size:2.8rem;font-weight:900;opacity:0.5;}
 .card-stripe{position:absolute;top:0;left:0;right:0;height:3px;z-index:2;}
-.rank-badge{position:absolute;top:12px;right:12px;z-index:3;font-family:'Orbitron',sans-serif;font-weight:900;width:52px;height:52px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1px;clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);}
+.rank-badge{position:absolute;top:12px;right:58px;z-index:3;font-family:'Orbitron',sans-serif;font-weight:900;width:52px;height:52px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1px;clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);}
 .rb-val{font-size:.95rem;line-height:1;text-shadow:0 0 12px currentColor;}
 .rb-val.sm{font-size:.7rem;}
 .rb-lbl{font-family:'Share Tech Mono',monospace;font-size:.32rem;letter-spacing:.2em;opacity:.7;font-weight:400;}
 @keyframes rankPulse{0%,100%{text-shadow:0 0 12px currentColor}50%{text-shadow:0 0 28px currentColor,0 0 50px currentColor}}
-.card-status{position:absolute;bottom:12px;left:12px;z-index:3;font-family:'Share Tech Mono',monospace;font-size:.54rem;letter-spacing:.14em;text-transform:uppercase;color:#00ff88;display:flex;align-items:center;gap:5px;background:rgba(4,6,15,0.75);padding:4px 9px;border:1px solid rgba(0,255,136,0.3);backdrop-filter:blur(4px);}
-.card-status.off{color:var(--muted);border-color:rgba(90,122,144,0.3);}
 .sdot{width:4px;height:4px;border-radius:50%;background:currentColor;box-shadow:0 0 5px currentColor;flex-shrink:0;animation:sdp 2s infinite;}
 .off .sdot{animation:none;opacity:.45;}
 @keyframes sdp{0%,100%{opacity:1}50%{opacity:.28}}
@@ -179,7 +177,9 @@ loadCards();
 .card-del-btn:hover{background:rgba(255,0,110,.18);border-color:#ff006e;}
 
 /* ── Stats panel ── */
-.stat-panel{position:absolute;left:0;top:0;bottom:0;width:48px;background:rgba(4,6,15,0.88);border-right:1px solid rgba(0,245,255,0.12);z-index:4;display:flex;flex-direction:column;align-items:center;justify-content:space-evenly;padding:6px 0;}
+.stat-panel{position:absolute;top:0;bottom:0;width:50px;background:rgba(4,6,15,0.82);z-index:4;display:flex;flex-direction:column;align-items:center;justify-content:space-evenly;padding:8px 0;backdrop-filter:blur(2px);}
+.stat-panel.sp-left{left:0;border-right:1px solid rgba(0,245,255,0.1);}
+.stat-panel.sp-right{right:0;border-left:1px solid rgba(0,245,255,0.1);}
 .sp-item{display:flex;flex-direction:column;align-items:center;gap:1px;}
 .sp-lbl{font-family:'Share Tech Mono',monospace;font-size:0.38rem;letter-spacing:.06em;color:var(--muted);text-transform:uppercase;}
 .sp-val{font-family:'Orbitron',sans-serif;font-size:0.52rem;font-weight:700;color:#c8e0f0;line-height:1;}
@@ -491,38 +491,39 @@ function buildPips(c,rank){const rk=RANKS[rank]||RANKS.F;c.innerHTML='';for(let 
 function buildCard(ch){
   const rc=RACES[ch.race]||{color:'#00c8ff',label:ch.race||'?'};
   const rk=RANKS[ch.rank]||RANKS.F;
-  const active=(ch.displayStatus||ch.status||'Actif').toLowerCase()==='actif'||(ch.displayStatus||'').toLowerCase()==='actif';
   const card=document.createElement('div');card.className='rp-card';card.dataset.race=ch.race;
   const photo=document.createElement('div');photo.className='card-photo';
   const stripe=document.createElement('div');stripe.className='card-stripe';stripe.style.background=`linear-gradient(90deg,${rc.color},${rc.color}20)`;photo.appendChild(stripe);
   if(ch.photoUrl||ch.photo){const img=document.createElement('img');img.src=ch.photoUrl||ch.photo;img.alt=ch.firstname;img.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top center;z-index:1;';img.onerror=function(){this.remove();};photo.appendChild(img);}
   else{const ph=document.createElement('div');ph.className='card-photo-ph';ph.style.color=rc.color;ph.textContent=(ch.firstname?.[0]||'')+(ch.lastname?.[0]||'');photo.appendChild(ph);}
   const ov=document.createElement('div');ov.className='card-photo-ov';photo.appendChild(ov);
-  /* ── Stat panel (left) ── */
-  const st_def=[
-    {k:'str', lbl:'STR', cls:'sp-str'}, {k:'agi', lbl:'AGI', cls:'sp-agi'},
-    {k:'spd', lbl:'SPD', cls:'sp-spd'}, {k:'int', lbl:'INT', cls:'sp-int'},
-    {k:'mana',lbl:'MNA', cls:'sp-mana'},{k:'res', lbl:'RES', cls:'sp-res'},
-    {k:'cha', lbl:'CHA', cls:'sp-cha'}, {k:'aura',lbl:'AUR', cls:'sp-aura'},
-  ];
+  /* ── Stat panels (left: STR AGI SPD INT / right: MNA RES CHA AUR) ── */
   const s=ch.stats||{};
-  const visStats=st_def.filter(d=>d.k!=='aura'||(s[d.k]||0)>0);
-  if(visStats.some(d=>(s[d.k]||0)>0)){
-    const sp=document.createElement('div');sp.className='stat-panel';
-    visStats.forEach(d=>{
+  function _mkPanel(side,defs){
+    const any=defs.some(d=>(s[d.k]||0)>0||(d.k!=='aura'));
+    if(!any) return;
+    const sp=document.createElement('div');sp.className=`stat-panel sp-${side}`;
+    defs.forEach(d=>{
       const v=s[d.k]||0;
       if(d.k==='aura'&&v===0) return;
       const item=document.createElement('div');item.className=`sp-item ${d.cls}`;
       const lbl=document.createElement('div');lbl.className='sp-lbl';lbl.textContent=d.lbl;
-      const val=document.createElement('div');val.className='sp-val';val.textContent=v;
+      const val=document.createElement('div');val.className='sp-val';val.textContent=v||'—';
       item.appendChild(lbl);item.appendChild(val);sp.appendChild(item);
     });
-    photo.appendChild(sp);
+    if(sp.children.length>0) photo.appendChild(sp);
   }
+  _mkPanel('left',[
+    {k:'str', lbl:'STR', cls:'sp-str'},{k:'agi', lbl:'AGI', cls:'sp-agi'},
+    {k:'spd', lbl:'SPD', cls:'sp-spd'},{k:'int', lbl:'INT', cls:'sp-int'},
+  ]);
+  _mkPanel('right',[
+    {k:'mana',lbl:'MNA', cls:'sp-mana'},{k:'res', lbl:'RES', cls:'sp-res'},
+    {k:'cha', lbl:'CHA', cls:'sp-cha'},{k:'aura',lbl:'AUR', cls:'sp-aura'},
+  ]);
   const badge=document.createElement('div');badge.className='rank-badge';badge.style.cssText=`background:${rk.bg};color:${rk.color};box-shadow:0 0 20px ${rk.color}55;`;
   const bv=document.createElement('div');bv.className='rb-val'+(ch.rank==='SSS'?' sm':'');if(ch.rank==='SSS'||ch.rank==='X'||ch.rank==='Z')bv.style.animation='rankPulse 2.5s infinite';bv.textContent=ch.rank;
   const bl=document.createElement('div');bl.className='rb-lbl';bl.textContent='RANG';badge.appendChild(bv);badge.appendChild(bl);photo.appendChild(badge);
-  const st=document.createElement('div');st.className='card-status'+(active?'':' off');const sd=document.createElement('span');sd.className='sdot';st.appendChild(sd);st.appendChild(document.createTextNode(ch.displayStatus||ch.status||'Actif'));photo.appendChild(st);
   card.appendChild(photo);
   const body=document.createElement('div');body.className='card-body';
   const fn=document.createElement('div');fn.className='card-fn';fn.textContent=ch.firstname;body.appendChild(fn);
@@ -630,8 +631,7 @@ window.openEditFiche = async function(id){
         aura: Math.min(9999,parseInt(document.getElementById('f-aura').value)||0),
       };
       await window._updateDoc(window._doc(window._db,'fiches',id),{
-        firstname,lastname,race,raceSpecific,rank,desc,links,stats:_updStats,
-        photoUrl:finalPhoto,updatedAt:new Date()
+        firstname,lastname,race,raceSpecific,rank,desc,links,stats:_updStats,photoUrl:finalPhoto,updatedAt:new Date()
       });
       closeModal();
       showToast('✓ Fiche mise à jour !');
