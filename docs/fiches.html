@@ -5,7 +5,6 @@
 <title>JAHARTA // Fiches RP</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600&display=swap" rel="stylesheet">
 
-<!-- FIREBASE CONFIG — remplacez les valeurs -->
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import{getFirestore,collection,addDoc,getDocs,query,where,orderBy,serverTimestamp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -26,10 +25,41 @@ async function loadCards(){
     if(count===0){document.getElementById("empty-state2").style.display="block";}
   }catch(e){console.warn("Firebase non configuré:",e.message);document.getElementById("empty-state").textContent="⚠ Firebase non configuré — voir README.md";}
 }
-window.submitToFirebase=async function(data,photoFile){
-  let photoUrl=data.photoUrl||"";
-  if(photoFile){try{const r2=ref(storage,`photos/${Date.now()}_${photoFile.name}`);const snap=await uploadBytes(r2,photoFile);photoUrl=await getDownloadURL(snap.ref);}catch(e){console.warn("Upload photo:",e.message);}}
-  await addDoc(collection(db,"fiches"),{...data,photoUrl,status:"en_attente",createdAt:serverTimestamp()});
+
+/* ── FIX : submitToFirebase prend maintenant photoFile ET ficheFile séparément ── */
+window.submitToFirebase=async function(data, photoFile, ficheFile){
+  // Photo : priorité au fichier uploadé, sinon URL
+  let photoUrl="";
+  if(photoFile){
+    try{
+      const r2=ref(storage,`photos/${Date.now()}_${photoFile.name}`);
+      const snap=await uploadBytes(r2,photoFile);
+      photoUrl=await getDownloadURL(snap.ref);
+    }catch(e){console.warn("Upload photo:",e.message);}
+  } else if(data.photoUrl){
+    photoUrl=data.photoUrl;
+  }
+
+  // Fichier fiche (HTML/PDF/DOCX etc.)
+  let ficheFileUrl="";
+  let ficheFileName="";
+  if(ficheFile){
+    try{
+      const r3=ref(storage,`fiches/${Date.now()}_${ficheFile.name}`);
+      const snap2=await uploadBytes(r3,ficheFile);
+      ficheFileUrl=await getDownloadURL(snap2.ref);
+      ficheFileName=ficheFile.name;
+    }catch(e){console.warn("Upload fiche:",e.message);}
+  }
+
+  await addDoc(collection(db,"fiches"),{
+    ...data,
+    photoUrl,
+    ficheFileUrl,
+    ficheFileName,
+    status:"en_attente",
+    createdAt:serverTimestamp()
+  });
 };
 loadCards();
 </script>
@@ -53,8 +83,6 @@ nav a.active::after{content:'';position:absolute;bottom:-1px;left:0;right:0;heig
 .nav-admin:hover{border-color:var(--gold)!important;background:rgba(255,214,10,0.05)!important;}
 .add-btn{font-family:'Orbitron',sans-serif;font-weight:700;font-size:0.6rem;letter-spacing:0.18em;color:var(--dark)!important;background:var(--cyan);padding:8px 18px;clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);border:none!important;margin-left:8px;cursor:pointer;transition:background .2s,box-shadow .2s;}
 .add-btn:hover{background:#fff!important;box-shadow:0 0 20px var(--cyan);}
-
-/* PAGE HERO */
 .page-hero{position:relative;z-index:1;padding:52px 44px 44px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,rgba(0,245,255,0.03) 0%,transparent 100%);}
 .page-hero-inner{max-width:1380px;margin:0 auto;display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;}
 .ph-tag{font-family:'Share Tech Mono',monospace;font-size:0.62rem;letter-spacing:0.4em;color:var(--magenta);text-shadow:0 0 10px var(--magenta);margin-bottom:10px;}
@@ -65,43 +93,35 @@ nav a.active::after{content:'';position:absolute;bottom:-1px;left:0;right:0;heig
 .phs{text-align:center;background:var(--panel);border:1px solid var(--border);padding:14px 20px;}
 .phs-num{font-family:'Orbitron',sans-serif;font-size:1.5rem;font-weight:800;color:var(--cyan);display:block;line-height:1;}
 .phs-lbl{font-family:'Share Tech Mono',monospace;font-size:0.52rem;color:var(--muted);letter-spacing:0.16em;text-transform:uppercase;display:block;margin-top:3px;}
-
-/* MAIN */
 .page-wrap{position:relative;z-index:1;padding:48px 44px;max-width:1380px;margin:0 auto;}
-
-/* RANK LEGEND */
 .rank-legend{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:32px;padding:14px 18px;border:1px solid var(--border);background:var(--panel);align-items:center;}
 .rl-title{font-family:'Share Tech Mono',monospace;font-size:0.58rem;color:var(--muted);letter-spacing:0.2em;text-transform:uppercase;margin-right:8px;flex-shrink:0;}
 .rl-pill{font-family:'Orbitron',sans-serif;font-weight:700;font-size:0.6rem;letter-spacing:0.1em;padding:3px 11px;border:1px solid;cursor:default;}
 .rl-note{font-family:'Share Tech Mono',monospace;font-size:0.54rem;color:var(--muted);margin-left:auto;letter-spacing:0.1em;}
-
-/* RACE FILTER */
 .race-filter{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:36px;padding-bottom:18px;border-bottom:1px solid var(--border);}
 .race-btn{font-family:'Share Tech Mono',monospace;font-size:0.64rem;letter-spacing:0.13em;text-transform:uppercase;background:transparent;border:1px solid;padding:7px 14px;cursor:pointer;clip-path:polygon(7px 0%,100% 0%,calc(100% - 7px) 100%,0% 100%);display:flex;align-items:center;gap:7px;position:relative;overflow:hidden;transition:all 0.22s;}
 .race-btn::before{content:'';position:absolute;left:0;top:0;width:3px;height:100%;background:currentColor;opacity:0;transition:opacity .22s;}
 .race-btn:hover::before,.race-btn.active::before{opacity:1;}
 .rdot{width:6px;height:6px;border-radius:50%;background:currentColor;box-shadow:0 0 6px currentColor;flex-shrink:0;}
 .rcnt{font-family:'Orbitron',sans-serif;font-size:0.5rem;font-weight:700;background:rgba(255,255,255,0.08);padding:2px 6px;border-radius:2px;}
-.race-btn[data-race="all"]        {color:var(--text);border-color:rgba(200,224,240,0.22);}
-.race-btn[data-race="humanoid"]   {color:var(--r-humanoid);border-color:rgba(0,200,255,0.22);}
-.race-btn[data-race="zooid"]      {color:var(--r-zooid);border-color:rgba(68,255,136,0.22);}
-.race-btn[data-race="mythzooid"]  {color:var(--r-mythzooid);border-color:rgba(176,110,255,0.22);}
-.race-btn[data-race="demon"]      {color:var(--r-demon);border-color:rgba(255,48,48,0.22);}
-.race-btn[data-race="artificial"] {color:var(--r-artificial);border-color:rgba(255,214,10,0.22);}
-.race-btn[data-race="semiliquid"] {color:var(--r-semiliquid);border-color:rgba(0,229,204,0.22);}
-.race-btn[data-race="undead"]     {color:var(--r-undead);border-color:rgba(154,140,255,0.22);}
+.race-btn[data-race="all"]{color:var(--text);border-color:rgba(200,224,240,0.22);}
+.race-btn[data-race="humanoid"]{color:var(--r-humanoid);border-color:rgba(0,200,255,0.22);}
+.race-btn[data-race="zooid"]{color:var(--r-zooid);border-color:rgba(68,255,136,0.22);}
+.race-btn[data-race="mythzooid"]{color:var(--r-mythzooid);border-color:rgba(176,110,255,0.22);}
+.race-btn[data-race="demon"]{color:var(--r-demon);border-color:rgba(255,48,48,0.22);}
+.race-btn[data-race="artificial"]{color:var(--r-artificial);border-color:rgba(255,214,10,0.22);}
+.race-btn[data-race="semiliquid"]{color:var(--r-semiliquid);border-color:rgba(0,229,204,0.22);}
+.race-btn[data-race="undead"]{color:var(--r-undead);border-color:rgba(154,140,255,0.22);}
 .race-btn.active,.race-btn:hover{background:rgba(255,255,255,0.035);box-shadow:0 0 10px rgba(255,255,255,0.04);}
-
-/* CARDS */
 .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(295px,1fr));gap:22px;}
 .rp-card{position:relative;background:var(--dark2);border:1px solid var(--border);overflow:hidden;clip-path:polygon(22px 0%,100% 0%,100% calc(100% - 22px),calc(100% - 22px) 100%,0% 100%,0% 22px);transition:border-color .3s,box-shadow .3s,transform .28s;cursor:default;display:flex;flex-direction:column;}
-.rp-card[data-race="humanoid"]:hover   {border-color:var(--r-humanoid);box-shadow:0 0 28px rgba(0,200,255,0.14),0 12px 38px rgba(0,0,0,0.5);transform:translateY(-6px);}
-.rp-card[data-race="zooid"]:hover      {border-color:var(--r-zooid);box-shadow:0 0 28px rgba(68,255,136,0.14),0 12px 38px rgba(0,0,0,0.5);transform:translateY(-6px);}
-.rp-card[data-race="mythzooid"]:hover  {border-color:var(--r-mythzooid);box-shadow:0 0 28px rgba(176,110,255,0.16),0 12px 38px rgba(0,0,0,0.5);transform:translateY(-6px);}
-.rp-card[data-race="demon"]:hover      {border-color:var(--r-demon);box-shadow:0 0 28px rgba(255,48,48,0.16),0 12px 38px rgba(0,0,0,0.5);transform:translateY(-6px);}
-.rp-card[data-race="artificial"]:hover {border-color:var(--r-artificial);box-shadow:0 0 28px rgba(255,214,10,0.14),0 12px 38px rgba(0,0,0,0.5);transform:translateY(-6px);}
-.rp-card[data-race="semiliquid"]:hover {border-color:var(--r-semiliquid);box-shadow:0 0 28px rgba(0,229,204,0.16),0 12px 38px rgba(0,0,0,0.5);transform:translateY(-6px);}
-.rp-card[data-race="undead"]:hover     {border-color:var(--r-undead);box-shadow:0 0 28px rgba(154,140,255,0.16),0 12px 38px rgba(0,0,0,0.5);transform:translateY(-6px);}
+.rp-card[data-race="humanoid"]:hover{border-color:var(--r-humanoid);box-shadow:0 0 28px rgba(0,200,255,0.14),0 12px 38px rgba(0,0,0,0.5);transform:translateY(-6px);}
+.rp-card[data-race="zooid"]:hover{border-color:var(--r-zooid);box-shadow:0 0 28px rgba(68,255,136,0.14),0 12px 38px rgba(0,0,0,0.5);transform:translateY(-6px);}
+.rp-card[data-race="mythzooid"]:hover{border-color:var(--r-mythzooid);box-shadow:0 0 28px rgba(176,110,255,0.16),0 12px 38px rgba(0,0,0,0.5);transform:translateY(-6px);}
+.rp-card[data-race="demon"]:hover{border-color:var(--r-demon);box-shadow:0 0 28px rgba(255,48,48,0.16),0 12px 38px rgba(0,0,0,0.5);transform:translateY(-6px);}
+.rp-card[data-race="artificial"]:hover{border-color:var(--r-artificial);box-shadow:0 0 28px rgba(255,214,10,0.14),0 12px 38px rgba(0,0,0,0.5);transform:translateY(-6px);}
+.rp-card[data-race="semiliquid"]:hover{border-color:var(--r-semiliquid);box-shadow:0 0 28px rgba(0,229,204,0.16),0 12px 38px rgba(0,0,0,0.5);transform:translateY(-6px);}
+.rp-card[data-race="undead"]:hover{border-color:var(--r-undead);box-shadow:0 0 28px rgba(154,140,255,0.16),0 12px 38px rgba(0,0,0,0.5);transform:translateY(-6px);}
 .card-photo{position:relative;width:100%;height:220px;overflow:hidden;flex-shrink:0;background:#0a0f1e;}
 .card-photo img{width:100%;height:100%;object-fit:cover;object-position:top center;filter:saturate(1.1) contrast(1.05);transition:transform .5s,filter .4s;}
 .rp-card:hover .card-photo img{transform:scale(1.07);filter:saturate(1.3) contrast(1.08);}
@@ -155,24 +175,36 @@ nav a.active::after{content:'';position:absolute;bottom:-1px;left:0;right:0;heig
 .fs option{background:var(--dark2);}
 .fta{resize:vertical;min-height:72px;}
 .frow{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+/* Photo drop */
 .photo-drop{width:100%;height:100px;background:rgba(0,245,255,0.03);border:1px dashed var(--border);display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer;transition:border-color .2s;overflow:hidden;}
 .photo-drop:hover{border-color:var(--cyan);}
 .photo-drop img.prev-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
 .photo-drop input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;}
 .pdtxt{font-family:'Share Tech Mono',monospace;font-size:.58rem;color:var(--muted);letter-spacing:.12em;text-align:center;pointer-events:none;}
+
+/* Fiche file drop */
+.fiche-drop{width:100%;background:rgba(0,245,255,0.03);border:1px dashed var(--border);padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .2s;position:relative;}
+.fiche-drop:hover{border-color:rgba(0,245,255,0.4);background:rgba(0,245,255,0.05);}
+.fiche-drop input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.fiche-drop-ico{font-size:1.4rem;opacity:.3;flex-shrink:0;transition:opacity .2s;}
+.fiche-drop-main{flex:1;}
+.fiche-drop-label{font-family:'Share Tech Mono',monospace;font-size:.58rem;color:var(--muted);letter-spacing:.12em;display:block;margin-bottom:3px;transition:color .2s;}
+.fiche-drop-formats{font-family:'Share Tech Mono',monospace;font-size:.5rem;color:var(--muted);letter-spacing:.1em;opacity:.55;}
+.fiche-drop.has-file{border-color:rgba(0,245,255,0.35);border-style:solid;background:rgba(0,245,255,0.06);}
+.fiche-drop.has-file .fiche-drop-ico{opacity:1;}
+.fiche-drop.has-file .fiche-drop-label{color:var(--cyan);}
+.fiche-name-tag{display:none;margin-top:7px;font-family:'Share Tech Mono',monospace;font-size:.54rem;color:var(--cyan);letter-spacing:.1em;padding:4px 9px;border:1px solid rgba(0,245,255,0.22);background:rgba(0,245,255,0.05);word-break:break-all;}
+
 .bsub{width:100%;font-family:'Orbitron',sans-serif;font-size:.68rem;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--dark);background:var(--cyan);border:none;padding:13px;cursor:pointer;margin-top:6px;clip-path:polygon(12px 0%,100% 0%,calc(100% - 12px) 100%,0% 100%);transition:background .2s,box-shadow .2s;}
 .bsub:hover{background:#fff;box-shadow:0 0 24px var(--cyan);}
 .bsub:disabled{background:var(--muted);cursor:not-allowed;box-shadow:none;}
 .mclose{position:absolute;top:16px;right:16px;background:transparent;border:1px solid var(--border);color:var(--muted);width:28px;height:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.85rem;transition:color .2s,border-color .2s;}
 .mclose:hover{color:var(--magenta);border-color:var(--magenta);}
-
-/* TOAST */
 .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--dark2);border:1px solid var(--border);font-family:'Share Tech Mono',monospace;font-size:.67rem;letter-spacing:.12em;color:var(--text);padding:13px 26px;z-index:9000;transition:transform .35s,opacity .35s;opacity:0;clip-path:polygon(10px 0%,100% 0%,calc(100% - 10px) 100%,0% 100%);}
 .toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
 .toast.success{border-color:rgba(0,255,136,0.5);color:#00ff88;}
 .toast.error{border-color:rgba(255,48,48,0.5);color:#ff3030;}
-
-/* FOOTER */
 footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:22px 44px;display:flex;align-items:center;justify-content:space-between;margin-top:60px;}
 .fl2{font-family:'Orbitron',sans-serif;font-weight:900;font-size:.8rem;letter-spacing:.28em;color:var(--cyan);opacity:.38;}
 .ft{font-family:'Share Tech Mono',monospace;font-size:.57rem;color:var(--muted);letter-spacing:.13em;}
@@ -199,7 +231,6 @@ footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:22
   </nav>
 </header>
 
-<!-- PAGE HERO -->
 <div class="page-hero">
   <div class="page-hero-inner">
     <div>
@@ -216,7 +247,6 @@ footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:22
 </div>
 
 <div class="page-wrap">
-  <!-- RANK LEGEND -->
   <div class="rank-legend">
     <span class="rl-title">Rangs :</span>
     <span class="rl-pill" style="color:var(--rank-f);border-color:rgba(107,114,128,0.4);background:rgba(107,114,128,0.08)">F</span>
@@ -231,16 +261,15 @@ footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:22
     <span class="rl-note">FAIBLE ─── LÉGENDAIRE</span>
   </div>
 
-  <!-- RACE FILTER -->
   <div class="race-filter">
     <button class="race-btn active" data-race="all" onclick="filterRace('all',this)"><span class="rdot" style="background:var(--text);box-shadow:none"></span>Tous<span class="rcnt" id="cnt-all">0</span></button>
-    <button class="race-btn" data-race="humanoid"   onclick="filterRace('humanoid',this)"><span class="rdot"></span>Humanoids<span class="rcnt" id="cnt-humanoid">0</span></button>
-    <button class="race-btn" data-race="zooid"      onclick="filterRace('zooid',this)"><span class="rdot"></span>Zooids<span class="rcnt" id="cnt-zooid">0</span></button>
-    <button class="race-btn" data-race="mythzooid"  onclick="filterRace('mythzooid',this)"><span class="rdot"></span>Mythical Zooids<span class="rcnt" id="cnt-mythzooid">0</span></button>
-    <button class="race-btn" data-race="demon"      onclick="filterRace('demon',this)"><span class="rdot"></span>Demons<span class="rcnt" id="cnt-demon">0</span></button>
+    <button class="race-btn" data-race="humanoid" onclick="filterRace('humanoid',this)"><span class="rdot"></span>Humanoids<span class="rcnt" id="cnt-humanoid">0</span></button>
+    <button class="race-btn" data-race="zooid" onclick="filterRace('zooid',this)"><span class="rdot"></span>Zooids<span class="rcnt" id="cnt-zooid">0</span></button>
+    <button class="race-btn" data-race="mythzooid" onclick="filterRace('mythzooid',this)"><span class="rdot"></span>Mythical Zooids<span class="rcnt" id="cnt-mythzooid">0</span></button>
+    <button class="race-btn" data-race="demon" onclick="filterRace('demon',this)"><span class="rdot"></span>Demons<span class="rcnt" id="cnt-demon">0</span></button>
     <button class="race-btn" data-race="artificial" onclick="filterRace('artificial',this)"><span class="rdot"></span>Artificial<span class="rcnt" id="cnt-artificial">0</span></button>
     <button class="race-btn" data-race="semiliquid" onclick="filterRace('semiliquid',this)"><span class="rdot"></span>Semi-Liquid<span class="rcnt" id="cnt-semiliquid">0</span></button>
-    <button class="race-btn" data-race="undead"     onclick="filterRace('undead',this)"><span class="rdot"></span>Undead<span class="rcnt" id="cnt-undead">0</span></button>
+    <button class="race-btn" data-race="undead" onclick="filterRace('undead',this)"><span class="rdot"></span>Undead<span class="rcnt" id="cnt-undead">0</span></button>
   </div>
 
   <div class="cards-grid" id="cards-container">
@@ -258,6 +287,7 @@ footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:22
     <div class="mi">
       <div class="mt">// Soumettre un Personnage</div>
       <div class="msub">▸ Votre fiche sera examinée par un admin avant publication.<br><strong>Délai habituel : 24-48h.</strong></div>
+
       <div class="frow">
         <div class="fg"><label class="fl">Prénom *</label><input type="text" class="fi" placeholder="Ex: Vexara" id="f-fn"></div>
         <div class="fg"><label class="fl">Nom *</label><input type="text" class="fi" placeholder="Ex: NISHI" id="f-ln"></div>
@@ -283,24 +313,42 @@ footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:22
           </select>
         </div>
       </div>
+
+      <!-- Photo -->
       <div class="fg">
         <label class="fl">Photo du personnage</label>
         <div class="photo-drop" id="photo-drop" onclick="document.getElementById('f-file').click()">
           <input type="file" id="f-file" accept="image/*" onchange="handlePhoto(event)">
-          <div class="pdtxt" id="pdtxt"><div style="font-size:1.3rem;margin-bottom:4px;opacity:.3">⬆</div>Cliquer pour uploader</div>
+          <div class="pdtxt" id="pdtxt">
+            <div style="font-size:1.3rem;margin-bottom:4px;opacity:.3">⬆</div>
+            Cliquer pour uploader une image
+          </div>
         </div>
         <input type="url" class="fi" placeholder="Ou URL d'image : https://..." id="f-photo-url" style="margin-top:7px" oninput="prevUrl(this.value)">
       </div>
+
       <div class="fg"><label class="fl">Description courte *</label><textarea class="fta" placeholder="2-3 phrases résumant votre personnage..." id="f-bio"></textarea></div>
-      <div class="frow">
-        <div class="fg"><label class="fl">Lien de la fiche *</label><input type="url" class="fi" placeholder="https://..." id="f-link"></div>
-        <div class="fg"><label class="fl">Type de fiche</label>
-          <select class="fs" id="f-type">
-            <option value="Google Doc">Google Doc</option><option value="Google Sites">Google Sites</option>
-            <option value="Canva">Canva</option><option value="Fiche HTML">Fiche HTML</option>
-          </select>
-        </div>
+
+      <!-- Lien externe -->
+      <div class="fg">
+        <label class="fl">Lien de la fiche *</label>
+        <input type="url" class="fi" placeholder="https://..." id="f-link">
       </div>
+
+      <!-- Fichier fiche uploadé -->
+      <div class="fg">
+        <label class="fl">Fichier de la fiche <span style="opacity:.55;font-size:.5rem">— optionnel</span></label>
+        <div class="fiche-drop" id="fiche-drop">
+          <input type="file" id="f-fiche-file" accept=".html,.htm,.pdf,.doc,.docx,.odt,.txt,.md,.pages" onchange="handleFicheFile(event)">
+          <div class="fiche-drop-ico">📄</div>
+          <div class="fiche-drop-main">
+            <span class="fiche-drop-label" id="fiche-drop-label">Cliquer pour uploader votre fichier fiche</span>
+            <span class="fiche-drop-formats">HTML · PDF · DOC · DOCX · ODT · TXT · MD</span>
+          </div>
+        </div>
+        <div class="fiche-name-tag" id="fiche-name-tag"></div>
+      </div>
+
       <div class="fg"><label class="fl">Pseudo Discord *</label><input type="text" class="fi" placeholder="Ex: username" id="f-discord"></div>
       <button class="bsub" id="bsub" onclick="submitCard()">▸ Soumettre pour validation</button>
     </div>
@@ -344,7 +392,12 @@ function buildCard(ch){
   const pill=document.createElement('div');pill.className='card-rpill';pill.style.cssText=`color:${rc.color};border-color:${rc.color}44;background:${rc.color}0e;`;pill.innerHTML=`<span class="rpip" style="background:${rc.color};box-shadow:0 0 4px ${rc.color}"></span>${rc.label}`;body.appendChild(pill);
   const desc=document.createElement('p');desc.className='card-desc';desc.textContent=ch.desc||ch.bio||'';body.appendChild(desc);
   const rrow=document.createElement('div');rrow.className='rank-row';const rl=document.createElement('span');rl.className='rr-lbl';rl.textContent='Puissance';const pips=document.createElement('div');pips.className='rank-pips';buildPips(pips,ch.rank);const rv=document.createElement('span');rv.className='rr-val';rv.style.color=rk.color;if(ch.rank==='SSS')rv.style.animation='rankPulse 2.5s infinite';rv.textContent=ch.rank;rrow.appendChild(rl);rrow.appendChild(pips);rrow.appendChild(rv);body.appendChild(rrow);
-  const links=document.createElement('div');links.className='card-links';const ls=ch.links||(ch.linkUrl?[{t:ch.linkType||'Fiche',h:ch.linkUrl}]:[]);ls.forEach(l=>{const a=document.createElement('a');a.className='lbtn';a.href=l.h||l.url;a.target='_blank';a.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>${l.t||l.type}`;links.appendChild(a);});body.appendChild(links);
+  const links=document.createElement('div');links.className='card-links';
+  const ls=ch.links||(ch.linkUrl?[{t:ch.linkType||'Fiche',h:ch.linkUrl}]:[]);
+  ls.forEach(l=>{const a=document.createElement('a');a.className='lbtn';a.href=l.h||l.url;a.target='_blank';a.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>${l.t||l.type}`;links.appendChild(a);});
+  // Bouton vers fichier uploadé si présent
+  if(ch.ficheFileUrl){const a=document.createElement('a');a.className='lbtn';a.href=ch.ficheFileUrl;a.target='_blank';a.title=ch.ficheFileName||'Fiche';a.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Télécharger`;links.appendChild(a);}
+  body.appendChild(links);
   card.appendChild(body);const deco=document.createElement('div');deco.className='cdeco';card.appendChild(deco);return card;
 }
 
@@ -355,22 +408,107 @@ function showToast(msg,type='success'){const t=document.getElementById('toast');
 function openModal(){document.getElementById('modal').classList.add('open');document.body.style.overflow='hidden';}
 function closeModal(){document.getElementById('modal').classList.remove('open');document.body.style.overflow='';}
 document.getElementById('modal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
-let photoFile=null,photoData=null;
-function handlePhoto(e){const f=e.target.files[0];if(!f)return;photoFile=f;const r=new FileReader();r.onload=ev=>{photoData=ev.target.result;showPrev(photoData);document.getElementById('f-photo-url').value='';};r.readAsDataURL(f);}
-function prevUrl(u){if(!u){clearPrev();photoData=null;return;}photoFile=null;photoData=null;showPrev(u);}
-function showPrev(src){document.getElementById('pdtxt').style.display='none';let img=document.getElementById('photo-drop').querySelector('img.prev-img');if(!img){img=document.createElement('img');img.className='prev-img';document.getElementById('photo-drop').appendChild(img);}img.src=src;}
-function clearPrev(){document.getElementById('pdtxt').style.display='';const img=document.getElementById('photo-drop').querySelector('img.prev-img');if(img)img.remove();}
+
+/* ═══ PHOTO ═══ */
+let photoFile=null;
+
+function handlePhoto(e){
+  const f=e.target.files[0];
+  if(!f)return;
+  photoFile=f;
+  // Vider le champ URL pour éviter tout conflit
+  document.getElementById('f-photo-url').value='';
+  // Prévisualisation locale — pas besoin d'uploader deux fois
+  const r=new FileReader();
+  r.onload=ev=>showPrev(ev.target.result);
+  r.readAsDataURL(f);
+}
+
+function prevUrl(u){
+  if(!u){clearPrev();return;}
+  // L'utilisateur tape une URL : annuler le fichier éventuel
+  photoFile=null;
+  document.getElementById('f-file').value='';
+  showPrev(u);
+}
+
+function showPrev(src){
+  document.getElementById('pdtxt').style.display='none';
+  let img=document.getElementById('photo-drop').querySelector('img.prev-img');
+  if(!img){img=document.createElement('img');img.className='prev-img';document.getElementById('photo-drop').appendChild(img);}
+  img.src=src;
+}
+function clearPrev(){
+  document.getElementById('pdtxt').style.display='';
+  const img=document.getElementById('photo-drop').querySelector('img.prev-img');
+  if(img)img.remove();
+}
+
+/* ═══ FICHIER FICHE ═══ */
+let ficheFile=null;
+
+function handleFicheFile(e){
+  const f=e.target.files[0];
+  if(!f)return;
+  ficheFile=f;
+  const drop=document.getElementById('fiche-drop');
+  drop.classList.add('has-file');
+  document.getElementById('fiche-drop-label').textContent='Fichier sélectionné ✓';
+  const tag=document.getElementById('fiche-name-tag');
+  tag.textContent='📄 '+f.name;
+  tag.style.display='block';
+}
+
+/* ═══ SUBMIT ═══ */
 async function submitCard(){
-  const fn=document.getElementById('f-fn').value.trim(),ln=document.getElementById('f-ln').value.trim(),race=document.getElementById('f-race').value,rank=document.getElementById('f-rank').value,bio=document.getElementById('f-bio').value.trim(),linkUrl=document.getElementById('f-link').value.trim(),linkType=document.getElementById('f-type').value,discord=document.getElementById('f-discord').value.trim(),photoUrl=document.getElementById('f-photo-url').value.trim();
-  if(!fn||!ln||!race||!rank||!bio||!linkUrl||!discord){showToast('Remplissez tous les champs obligatoires (*)','error');return;}
-  const btn=document.getElementById('bsub');btn.disabled=true;btn.textContent='⟳ Envoi en cours...';
-  const data={firstname:fn,lastname:ln,race,rank,bio,desc:bio,linkUrl,linkType,discord,photoUrl,links:[{t:linkType,h:linkUrl}]};
-  try{if(window.submitToFirebase){await window.submitToFirebase(data,photoFile);showToast('✓ Fiche soumise ! En attente de validation.','success');}else throw new Error('Firebase non configuré');}
-  catch(e){showToast('⚠ Firebase non configuré — voir README.md','error');}
+  const fn=document.getElementById('f-fn').value.trim();
+  const ln=document.getElementById('f-ln').value.trim();
+  const race=document.getElementById('f-race').value;
+  const rank=document.getElementById('f-rank').value;
+  const bio=document.getElementById('f-bio').value.trim();
+  const linkUrl=document.getElementById('f-link').value.trim();
+  const discord=document.getElementById('f-discord').value.trim();
+  // photoUrl uniquement si pas de fichier uploadé
+  const photoUrl=photoFile?'':document.getElementById('f-photo-url').value.trim();
+
+  if(!fn||!ln||!race||!rank||!bio||!linkUrl||!discord){
+    showToast('Remplissez tous les champs obligatoires (*)','error');return;
+  }
+
+  const btn=document.getElementById('bsub');
+  btn.disabled=true;btn.textContent='⟳ Envoi en cours...';
+
+  const data={
+    firstname:fn,lastname:ln,race,rank,bio,desc:bio,
+    linkUrl,linkType:'Lien',
+    discord,
+    photoUrl, // vide si fichier photo, sera rempli par submitToFirebase
+    links:[{t:'Fiche',h:linkUrl}]
+  };
+
+  try{
+    if(window.submitToFirebase){
+      await window.submitToFirebase(data,photoFile,ficheFile);
+      showToast('✓ Fiche soumise ! En attente de validation.','success');
+    }else throw new Error('Firebase non configuré');
+  }catch(e){
+    showToast('⚠ Firebase non configuré — voir README.md','error');
+  }
+
   btn.disabled=false;btn.textContent='▸ Soumettre pour validation';
+
+  // Reset complet
   ['f-fn','f-ln','f-bio','f-link','f-discord','f-photo-url'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('f-race').value='';document.getElementById('f-rank').value='';
-  photoFile=null;photoData=null;clearPrev();document.getElementById('f-file').value='';closeModal();
+  document.getElementById('f-race').value='';
+  document.getElementById('f-rank').value='';
+  photoFile=null;ficheFile=null;
+  clearPrev();
+  document.getElementById('f-file').value='';
+  document.getElementById('f-fiche-file').value='';
+  document.getElementById('fiche-drop').classList.remove('has-file');
+  document.getElementById('fiche-drop-label').textContent='Cliquer pour uploader votre fichier fiche';
+  document.getElementById('fiche-name-tag').style.display='none';
+  closeModal();
 }
 </script>
 </body>
