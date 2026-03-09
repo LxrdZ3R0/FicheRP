@@ -10,13 +10,13 @@
 
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import{getFirestore,collection,addDoc,getDocs,onSnapshot,doc,getDoc,updateDoc,query,where,orderBy,serverTimestamp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import{getFirestore,collection,addDoc,getDocs,onSnapshot,doc,getDoc,updateDoc,deleteDoc,query,where,orderBy,serverTimestamp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import{getAuth,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import{getStorage,ref,uploadBytes,getDownloadURL}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 const firebaseConfig={apiKey:"AIzaSyAru7qZX8Gu_b8Y3oNDV-a5PmkrrkRjkcs",authDomain:"jaharta-rp.firebaseapp.com",projectId:"jaharta-rp",storageBucket:"jaharta-rp.firebasestorage.app",messagingSenderId:"217075417489",appId:"1:217075417489:web:4d1e2df422a5cd42411a30",measurementId:"G-15JSSBZWCH"};
 const app=initializeApp(firebaseConfig);const db=getFirestore(app);const storage=getStorage(app);
 const auth=getAuth(app);
-window._db=db;window._storage=storage;
+window._db=db;window._storage=storage;window._deleteDoc=deleteDoc;
 window._doc=doc;window._getDoc=getDoc;window._updateDoc=updateDoc;
 window._ref=ref;window._uploadBytes=uploadBytes;window._getDownloadURL=getDownloadURL;
 window._isAdmin=false;
@@ -175,6 +175,27 @@ loadCards();
 .card-admin-row{display:flex;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
 .card-edit-btn{font-family:'Share Tech Mono',monospace;font-size:.6rem;letter-spacing:.1em;background:rgba(0,245,255,.08);border:1px solid rgba(0,245,255,.3);color:var(--cyan);padding:6px 14px;cursor:pointer;transition:all .2s;flex:1;}
 .card-edit-btn:hover{background:rgba(0,245,255,.18);border-color:var(--cyan);}
+.card-del-btn{font-family:'Share Tech Mono',monospace;font-size:.6rem;letter-spacing:.1em;background:rgba(255,0,110,.08);border:1px solid rgba(255,0,110,.3);color:#ff006e;padding:6px 14px;cursor:pointer;transition:all .2s;flex:1;}
+.card-del-btn:hover{background:rgba(255,0,110,.18);border-color:#ff006e;}
+
+/* ── Stats panel ── */
+.stat-panel{position:absolute;left:0;top:0;bottom:0;width:48px;background:rgba(4,6,15,0.88);border-right:1px solid rgba(0,245,255,0.12);z-index:4;display:flex;flex-direction:column;align-items:center;justify-content:space-evenly;padding:6px 0;}
+.sp-item{display:flex;flex-direction:column;align-items:center;gap:1px;}
+.sp-lbl{font-family:'Share Tech Mono',monospace;font-size:0.38rem;letter-spacing:.06em;color:var(--muted);text-transform:uppercase;}
+.sp-val{font-family:'Orbitron',sans-serif;font-size:0.52rem;font-weight:700;color:#c8e0f0;line-height:1;}
+.sp-item.sp-str .sp-val{color:#ff6060;}
+.sp-item.sp-agi .sp-val{color:#44ff88;}
+.sp-item.sp-spd .sp-val{color:#00f5ff;}
+.sp-item.sp-int .sp-val{color:#60a5fa;}
+.sp-item.sp-mana .sp-val{color:#b06eff;}
+.sp-item.sp-res .sp-val{color:#fbbf24;}
+.sp-item.sp-cha .sp-val{color:#f97316;}
+.sp-item.sp-aura .sp-lbl{color:#e040fb;}
+.sp-item.sp-aura .sp-val{color:#e040fb;text-shadow:0 0 8px rgba(224,64,251,0.6);}
+/* Stats form grid */
+.stats-form-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+@media(max-width:880px){.stats-form-grid{grid-template-columns:repeat(2,1fr)}}
+
 .cdeco{position:absolute;bottom:0;right:0;width:22px;height:22px;border-top:1px solid var(--border);border-left:1px solid var(--border);pointer-events:none;z-index:2;}
 .no-results{display:none;grid-column:1/-1;text-align:center;padding:70px 20px;font-family:'Share Tech Mono',monospace;color:var(--muted);letter-spacing:.2em;font-size:.75rem;}
 .empty-st{grid-column:1/-1;text-align:center;padding:70px 20px;font-family:'Share Tech Mono',monospace;color:var(--muted);letter-spacing:.16em;font-size:.72rem;}
@@ -406,6 +427,22 @@ footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:22
         <div class="fiche-name-tag" id="fiche-name-tag"></div>
       </div>
 
+
+      <!-- Statistiques -->
+      <div class="fg">
+        <label class="fl" style="margin-bottom:10px">Statistiques <span style="opacity:.5;font-size:.55rem">— de 0 à 9999 · AURA cachée si 0</span></label>
+        <div class="stats-form-grid">
+          <div><label class="fl" style="font-size:.5rem;color:#ff6060">STRENGTH</label><input type="number" class="fi" id="f-str" min="0" max="9999" placeholder="0" value="0"></div>
+          <div><label class="fl" style="font-size:.5rem;color:#44ff88">AGILITY</label><input type="number" class="fi" id="f-agi" min="0" max="9999" placeholder="0" value="0"></div>
+          <div><label class="fl" style="font-size:.5rem;color:#00f5ff">SPEED</label><input type="number" class="fi" id="f-spd" min="0" max="9999" placeholder="0" value="0"></div>
+          <div><label class="fl" style="font-size:.5rem;color:#60a5fa">INTELLIGENCE</label><input type="number" class="fi" id="f-int" min="0" max="9999" placeholder="0" value="0"></div>
+          <div><label class="fl" style="font-size:.5rem;color:#b06eff">MANA</label><input type="number" class="fi" id="f-mana" min="0" max="9999" placeholder="0" value="0"></div>
+          <div><label class="fl" style="font-size:.5rem;color:#fbbf24">RESISTANCE</label><input type="number" class="fi" id="f-res" min="0" max="9999" placeholder="0" value="0"></div>
+          <div><label class="fl" style="font-size:.5rem;color:#f97316">CHARISMA</label><input type="number" class="fi" id="f-cha" min="0" max="9999" placeholder="0" value="0"></div>
+          <div><label class="fl" style="font-size:.5rem;color:#e040fb">AURA</label><input type="number" class="fi" id="f-aura" min="0" max="9999" placeholder="0" value="0"></div>
+        </div>
+      </div>
+
       <div class="fg"><label class="fl">Pseudo Discord *</label><input type="text" class="fi" placeholder="Ex: username" id="f-discord"></div>
       <button class="bsub" id="bsub" onclick="submitCard()">▸ Soumettre pour validation</button>
     </div>
@@ -458,9 +495,30 @@ function buildCard(ch){
   const card=document.createElement('div');card.className='rp-card';card.dataset.race=ch.race;
   const photo=document.createElement('div');photo.className='card-photo';
   const stripe=document.createElement('div');stripe.className='card-stripe';stripe.style.background=`linear-gradient(90deg,${rc.color},${rc.color}20)`;photo.appendChild(stripe);
-  if(ch.photoUrl||ch.photo){const img=document.createElement('img');img.src=ch.photoUrl||ch.photo;img.alt=ch.firstname;img.onerror=function(){this.remove();};photo.appendChild(img);}
-  else{const ph=document.createElement('div');ph.className='card-photo-ph';ph.style.color=rc.color;ph.textContent=(ch.firstname[0]||'')+(ch.lastname[0]||'');photo.appendChild(ph);}
+  if(ch.photoUrl||ch.photo){const img=document.createElement('img');img.src=ch.photoUrl||ch.photo;img.alt=ch.firstname;img.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top center;z-index:1;';img.onerror=function(){this.remove();};photo.appendChild(img);}
+  else{const ph=document.createElement('div');ph.className='card-photo-ph';ph.style.color=rc.color;ph.textContent=(ch.firstname?.[0]||'')+(ch.lastname?.[0]||'');photo.appendChild(ph);}
   const ov=document.createElement('div');ov.className='card-photo-ov';photo.appendChild(ov);
+  /* ── Stat panel (left) ── */
+  const st_def=[
+    {k:'str', lbl:'STR', cls:'sp-str'}, {k:'agi', lbl:'AGI', cls:'sp-agi'},
+    {k:'spd', lbl:'SPD', cls:'sp-spd'}, {k:'int', lbl:'INT', cls:'sp-int'},
+    {k:'mana',lbl:'MNA', cls:'sp-mana'},{k:'res', lbl:'RES', cls:'sp-res'},
+    {k:'cha', lbl:'CHA', cls:'sp-cha'}, {k:'aura',lbl:'AUR', cls:'sp-aura'},
+  ];
+  const s=ch.stats||{};
+  const visStats=st_def.filter(d=>d.k!=='aura'||(s[d.k]||0)>0);
+  if(visStats.some(d=>(s[d.k]||0)>0)){
+    const sp=document.createElement('div');sp.className='stat-panel';
+    visStats.forEach(d=>{
+      const v=s[d.k]||0;
+      if(d.k==='aura'&&v===0) return;
+      const item=document.createElement('div');item.className=`sp-item ${d.cls}`;
+      const lbl=document.createElement('div');lbl.className='sp-lbl';lbl.textContent=d.lbl;
+      const val=document.createElement('div');val.className='sp-val';val.textContent=v;
+      item.appendChild(lbl);item.appendChild(val);sp.appendChild(item);
+    });
+    photo.appendChild(sp);
+  }
   const badge=document.createElement('div');badge.className='rank-badge';badge.style.cssText=`background:${rk.bg};color:${rk.color};box-shadow:0 0 20px ${rk.color}55;`;
   const bv=document.createElement('div');bv.className='rb-val'+(ch.rank==='SSS'?' sm':'');if(ch.rank==='SSS'||ch.rank==='X'||ch.rank==='Z')bv.style.animation='rankPulse 2.5s infinite';bv.textContent=ch.rank;
   const bl=document.createElement('div');bl.className='rb-lbl';bl.textContent='RANG';badge.appendChild(bv);badge.appendChild(bl);photo.appendChild(badge);
@@ -478,16 +536,30 @@ function buildCard(ch){
   // Bouton vers fichier uploadé si présent
   if(ch.ficheFileUrl){const a=document.createElement('a');a.className='lbtn';a.href=ch.ficheFileUrl;a.target='_blank';a.title=ch.ficheFileName||'Fiche';a.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Télécharger`;links.appendChild(a);}
   body.appendChild(links);
-  // Admin edit button
+  // Admin buttons (edit + delete)
   if(ch.id){
     const adminRow=document.createElement('div');adminRow.className='card-admin-row';adminRow.style.display=window._isAdmin?'flex':'none';
     const editBtn=document.createElement('button');editBtn.className='card-edit-btn';editBtn.textContent='✎ Modifier';editBtn.onclick=()=>openEditFiche(ch.id);
-    adminRow.appendChild(editBtn);body.appendChild(adminRow);
+    const delBtn=document.createElement('button');delBtn.className='card-del-btn';delBtn.textContent='✕ Supprimer';delBtn.onclick=()=>deleteFicheById(ch.id);
+    adminRow.appendChild(editBtn);adminRow.appendChild(delBtn);body.appendChild(adminRow);
   }
   card.appendChild(body);const deco=document.createElement('div');deco.className='cdeco';card.appendChild(deco);return card;
 }
 
 /* ── Edit fiche (admin) ── */
+/* ── Delete fiche (admin) ── */
+window.deleteFicheById = async function(id){
+  if(!window._isAdmin){ alert('Connexion admin requise'); return; }
+  if(!confirm('Supprimer définitivement cette fiche ? Cette action est irréversible.')) return;
+  try{
+    await window._deleteDoc(window._doc(window._db,'fiches',id));
+    showToast('Fiche supprimée.','error');
+  }catch(e){
+    console.error(e);
+    showToast('⚠ '+e.message,'error');
+  }
+};
+
 window.openEditFiche = async function(id){
   if(!window._isAdmin){ alert('Connexion admin requise'); return; }
   const snap = await window._getDoc(window._doc(window._db,'fiches',id));
@@ -502,6 +574,11 @@ window.openEditFiche = async function(id){
   document.getElementById('f-bio').value        = ch.desc||ch.bio||'';
   document.getElementById('f-photo-url').value  = ch.photoUrl   || '';
   document.getElementById('f-link').value       = (ch.links?.[0]?.h||ch.linkUrl||'');
+  // Stats
+  const _s=ch.stats||{};
+  ['str','agi','spd','int','mana','res','cha','aura'].forEach(k=>{
+    const el=document.getElementById('f-'+k); if(el) el.value=_s[k]||0;
+  });
   if(ch.photoUrl) prevUrl(ch.photoUrl);
 
   // Race specific
@@ -542,8 +619,18 @@ window.openEditFiche = async function(id){
     }
 
     try{
+      const _updStats={
+        str:  Math.min(9999,parseInt(document.getElementById('f-str').value)||0),
+        agi:  Math.min(9999,parseInt(document.getElementById('f-agi').value)||0),
+        spd:  Math.min(9999,parseInt(document.getElementById('f-spd').value)||0),
+        int:  Math.min(9999,parseInt(document.getElementById('f-int').value)||0),
+        mana: Math.min(9999,parseInt(document.getElementById('f-mana').value)||0),
+        res:  Math.min(9999,parseInt(document.getElementById('f-res').value)||0),
+        cha:  Math.min(9999,parseInt(document.getElementById('f-cha').value)||0),
+        aura: Math.min(9999,parseInt(document.getElementById('f-aura').value)||0),
+      };
       await window._updateDoc(window._doc(window._db,'fiches',id),{
-        firstname,lastname,race,raceSpecific,rank,desc,links,
+        firstname,lastname,race,raceSpecific,rank,desc,links,stats:_updStats,
         photoUrl:finalPhoto,updatedAt:new Date()
       });
       closeModal();
@@ -627,6 +714,16 @@ async function submitCard(){
   const bio=document.getElementById('f-bio').value.trim();
   const linkUrl=document.getElementById('f-link').value.trim();
   const discord=document.getElementById('f-discord').value.trim();
+  const stats={
+    str:  Math.min(9999,parseInt(document.getElementById('f-str').value)||0),
+    agi:  Math.min(9999,parseInt(document.getElementById('f-agi').value)||0),
+    spd:  Math.min(9999,parseInt(document.getElementById('f-spd').value)||0),
+    int:  Math.min(9999,parseInt(document.getElementById('f-int').value)||0),
+    mana: Math.min(9999,parseInt(document.getElementById('f-mana').value)||0),
+    res:  Math.min(9999,parseInt(document.getElementById('f-res').value)||0),
+    cha:  Math.min(9999,parseInt(document.getElementById('f-cha').value)||0),
+    aura: Math.min(9999,parseInt(document.getElementById('f-aura').value)||0),
+  };
   // photoUrl uniquement si pas de fichier uploadé
   const photoUrl=photoFile?'':document.getElementById('f-photo-url').value.trim();
 
@@ -640,7 +737,7 @@ async function submitCard(){
   const data={
     firstname:fn,lastname:ln,race,rank,bio,desc:bio,
     linkUrl,linkType:'Lien',
-    discord,
+    discord,stats,
     photoUrl, // vide si fichier photo, sera rempli par submitToFirebase
     links:[{t:'Fiche',h:linkUrl}]
   };
@@ -660,6 +757,7 @@ async function submitCard(){
   ['f-fn','f-ln','f-bio','f-link','f-discord','f-photo-url'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('f-race').value='';
   updateRaceSpecific('');
+  ['f-str','f-agi','f-spd','f-int','f-mana','f-res','f-cha','f-aura'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='0';});
   document.getElementById('f-rank').value='';
   photoFile=null;ficheFile=null;
   clearPrev();
