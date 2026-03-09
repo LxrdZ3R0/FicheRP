@@ -146,10 +146,10 @@ loadCards();
 .card-photo-ov{position:absolute;inset:0;background:linear-gradient(180deg,transparent 30%,rgba(8,13,26,0.65) 68%,var(--dark2) 100%);pointer-events:none;}
 .card-photo-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;font-size:2.8rem;font-weight:900;opacity:0.5;}
 .card-stripe{position:absolute;top:0;left:0;right:0;height:3px;z-index:2;}
-.rank-badge{position:absolute;top:12px;right:58px;z-index:3;font-family:'Orbitron',sans-serif;font-weight:900;width:52px;height:52px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1px;clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);}
-.rb-val{font-size:.95rem;line-height:1;text-shadow:0 0 12px currentColor;}
-.rb-val.sm{font-size:.7rem;}
-.rb-lbl{font-family:'Share Tech Mono',monospace;font-size:.32rem;letter-spacing:.2em;opacity:.7;font-weight:400;}
+.rank-badge{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:3;font-family:'Orbitron',sans-serif;font-weight:900;width:64px;height:64px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2px;clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);}
+.rb-val{font-size:1.1rem;line-height:1;text-shadow:0 0 18px currentColor,0 0 32px currentColor;}
+.rb-val.sm{font-size:.78rem;}
+.rb-lbl{font-family:'Share Tech Mono',monospace;font-size:.38rem;letter-spacing:.2em;opacity:.8;font-weight:400;}
 @keyframes rankPulse{0%,100%{text-shadow:0 0 12px currentColor}50%{text-shadow:0 0 28px currentColor,0 0 50px currentColor}}
 .sdot{width:4px;height:4px;border-radius:50%;background:currentColor;box-shadow:0 0 5px currentColor;flex-shrink:0;animation:sdp 2s infinite;}
 .off .sdot{animation:none;opacity:.45;}
@@ -167,9 +167,9 @@ loadCards();
 .ppip.on{box-shadow:0 0 4px currentColor;}
 .rr-val{font-family:'Orbitron',sans-serif;font-weight:800;font-size:.85rem;flex-shrink:0;}
 .card-links{display:flex;gap:6px;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:12px;}
-.lbtn{font-family:'Share Tech Mono',monospace;font-size:.54rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);text-decoration:none;border:1px solid var(--border);padding:5px 11px;transition:all .2s;display:flex;align-items:center;gap:5px;background:transparent;cursor:pointer;}
-.lbtn:hover{color:var(--cyan);border-color:var(--cyan);background:rgba(0,245,255,0.04);}
-.lbtn svg{width:9px;height:9px;flex-shrink:0;}
+.lbtn{font-family:'Share Tech Mono',monospace;font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;color:var(--cyan);text-decoration:none;border:1px solid rgba(0,245,255,0.35);padding:9px 16px;transition:all .2s;display:flex;align-items:center;gap:7px;background:rgba(0,245,255,0.04);cursor:pointer;}
+.lbtn:hover{color:#fff;border-color:var(--cyan);background:rgba(0,245,255,0.1);box-shadow:0 0 14px rgba(0,245,255,0.15);}
+.lbtn svg{width:12px;height:12px;flex-shrink:0;}
 .card-admin-row{display:flex;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
 .card-edit-btn{font-family:'Share Tech Mono',monospace;font-size:.6rem;letter-spacing:.1em;background:rgba(0,245,255,.08);border:1px solid rgba(0,245,255,.3);color:var(--cyan);padding:6px 14px;cursor:pointer;transition:all .2s;flex:1;}
 .card-edit-btn:hover{background:rgba(0,245,255,.18);border-color:var(--cyan);}
@@ -177,12 +177,12 @@ loadCards();
 .card-del-btn:hover{background:rgba(255,0,110,.18);border-color:#ff006e;}
 
 /* ── Stats panel ── */
-.stat-panel{position:absolute;top:0;bottom:0;width:50px;background:rgba(4,6,15,0.82);z-index:4;display:flex;flex-direction:column;align-items:center;justify-content:space-evenly;padding:8px 0;backdrop-filter:blur(2px);}
+.stat-panel{position:absolute;top:0;bottom:0;width:60px;background:rgba(4,6,15,0.88);z-index:4;display:flex;flex-direction:column;align-items:center;justify-content:space-evenly;padding:8px 0;backdrop-filter:blur(3px);}
 .stat-panel.sp-left{left:0;border-right:1px solid rgba(0,245,255,0.1);}
 .stat-panel.sp-right{right:0;border-left:1px solid rgba(0,245,255,0.1);}
-.sp-item{display:flex;flex-direction:column;align-items:center;gap:1px;}
-.sp-lbl{font-family:'Share Tech Mono',monospace;font-size:0.38rem;letter-spacing:.06em;color:var(--muted);text-transform:uppercase;}
-.sp-val{font-family:'Orbitron',sans-serif;font-size:0.52rem;font-weight:700;color:#c8e0f0;line-height:1;}
+.sp-item{display:flex;flex-direction:column;align-items:center;gap:2px;}
+.sp-lbl{font-family:'Share Tech Mono',monospace;font-size:0.44rem;letter-spacing:.05em;color:#6a8fa8;text-transform:uppercase;}
+.sp-val{font-family:'Orbitron',sans-serif;font-size:0.68rem;font-weight:700;color:#c8e0f0;line-height:1;}
 .sp-item.sp-str .sp-val{color:#ff6060;}
 .sp-item.sp-agi .sp-val{color:#44ff88;}
 .sp-item.sp-spd .sp-val{color:#00f5ff;}
@@ -528,7 +528,7 @@ function buildCard(ch){
   const body=document.createElement('div');body.className='card-body';
   const fn=document.createElement('div');fn.className='card-fn';fn.textContent=ch.firstname;body.appendChild(fn);
   const ln=document.createElement('div');ln.className='card-ln';ln.textContent=ch.lastname;body.appendChild(ln);
-  const pill=document.createElement('div');pill.className='card-rpill';pill.style.cssText=`color:${rc.color};border-color:${rc.color}44;background:${rc.color}0e;`;pill.innerHTML=`<span class="rpip" style="background:${rc.color};box-shadow:0 0 4px ${rc.color}"></span>${rc.label}`;body.appendChild(pill);
+  const pill=document.createElement('div');pill.className='card-rpill';pill.style.cssText=`color:${rc.color};border-color:${rc.color}44;background:${rc.color}0e;`;const raceLabel=ch.raceSpecific?`${rc.label} <span style="opacity:.5;margin:0 3px">·</span> <span style="opacity:.85">${ch.raceSpecific}</span>`:rc.label;pill.innerHTML=`<span class="rpip" style="background:${rc.color};box-shadow:0 0 4px ${rc.color}"></span>${raceLabel}`;body.appendChild(pill);
   const desc=document.createElement('p');desc.className='card-desc';desc.textContent=ch.desc||ch.bio||'';body.appendChild(desc);
   const rrow=document.createElement('div');rrow.className='rank-row';const rl=document.createElement('span');rl.className='rr-lbl';rl.textContent='Puissance';const pips=document.createElement('div');pips.className='rank-pips';buildPips(pips,ch.rank);const rv=document.createElement('span');rv.className='rr-val';rv.style.color=rk.color;if(ch.rank==='SSS'||ch.rank==='X'||ch.rank==='Z')rv.style.animation='rankPulse 2.5s infinite';rv.textContent=ch.rank;rrow.appendChild(rl);rrow.appendChild(pips);rrow.appendChild(rv);body.appendChild(rrow);
   const links=document.createElement('div');links.className='card-links';
