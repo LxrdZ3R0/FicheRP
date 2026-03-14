@@ -209,11 +209,35 @@ function loadPNJ(){
  * @returns {HTMLElement} .pnj-card
  */
 function buildPNJCard(p){
-  // Find color from custom filters, fallback to default
-  const filterObj=window._filters.find(f=>f.id===p.category);
-  const c=filterObj?filterObj.color:'#b06eff';
-  const cl=filterObj?filterObj.label:(p.category||'?');
-  const hasMotivations=p.motivations&&(p.motivations.desc||p.motivations.social||p.motivations.economique||p.motivations.militaire);
+  // Couleur depuis les filtres custom, fallback magenta
+  const filterObj = window._filters.find(f => f.id === p.category);
+  const c  = filterObj ? filterObj.color : '#b06eff';
+  const cl = filterObj ? filterObj.label : (p.category && p.category !== 'Unknown' ? p.category : null);
+
+  // "Unknown" envoyé par le bot = ne pas afficher ce champ
+  const displayRace   = (p.race   && p.race   !== 'Unknown') ? p.race   : null;
+  const displayRole   = (p.role   && p.role   !== 'Unknown') ? p.role   : null;
+  const displayDanger = (p.danger && p.danger !== 'Inconnu') ? p.danger : null;
+
+  const hasMotivations = p.motivations && (p.motivations.desc || p.motivations.social || p.motivations.economique || p.motivations.militaire);
+
+  // ── Stats ──
+  const s = p.stats || {};
+  const statDefs = [
+    {k:'str', lbl:'STR', cls:'pnj-sb-str'}, {k:'agi',  lbl:'AGI', cls:'pnj-sb-agi'},
+    {k:'spd', lbl:'SPD', cls:'pnj-sb-spd'}, {k:'int',  lbl:'INT', cls:'pnj-sb-int'},
+    {k:'mana',lbl:'MNA', cls:'pnj-sb-mana'},{k:'res',  lbl:'RES', cls:'pnj-sb-res'},
+    {k:'cha', lbl:'CHA', cls:'pnj-sb-cha'}, {k:'aura', lbl:'AUR', cls:'pnj-sb-aura'},
+  ];
+  const maxStat   = Math.max(...statDefs.map(d => s[d.k] || 0), 1);
+  const hasStats  = statDefs.some(d => (s[d.k] || 0) > 0);
+
+  // ── Pouvoirs ──
+  const powers    = p.powers || [];
+  const hasPowers = powers.length > 0;
+
+  // ── Affinité ──
+  const affinity  = p.affinity && p.affinity !== '' ? p.affinity : null;
 
   const card=document.createElement('div');
   card.className='pnj-card';
@@ -240,25 +264,61 @@ function buildPNJCard(p){
       <button class="pnj-del-btn" onclick="deletePNJ('${p.id}')">✕ Supprimer</button>
     </div>`:'';
 
+  // ── Stats HTML ──
+  const statsHTML = hasStats ? `
+    <div class="pnj-stats">
+      ${statDefs.map(d => {
+        const v = s[d.k] || 0;
+        if (d.k === 'aura' && v === 0) return '';
+        const pct = Math.min(100, Math.round(v / maxStat * 100));
+        return `<div class="pnj-sb-item ${d.cls}">
+          <div class="pnj-sb-lbl">${d.lbl}</div>
+          <div class="pnj-sb-val">${v >= 1000 ? (v/1000).toFixed(1)+'k' : v}</div>
+          <div class="pnj-sb-bar"><div class="pnj-sb-fill" style="width:${pct}%"></div></div>
+        </div>`;
+      }).join('')}
+    </div>` : '';
+
+  // ── Pouvoirs HTML ──
+  const powersHTML = hasPowers ? `
+    <div class="pnj-powers">
+      <div class="pnj-powers-title">⚡ Pouvoirs</div>
+      ${powers.map(pw => `
+        <div class="pnj-power-item" style="border-color:${c}88;background:${c}08">
+          <div class="pnj-power-name" style="color:${c}">${pw.name || pw}</div>
+          ${pw.desc ? `<div class="pnj-power-desc">${pw.desc}</div>` : ''}
+        </div>`).join('')}
+    </div>` : '';
+
+  // ── Affinité HTML ──
+  const affinityHTML = affinity ? `
+    <div class="pnj-affinity">
+      <span class="pnj-aff-label">Affinité</span>
+      ${String(affinity).split(',').map(a => `<span style="color:${c};opacity:.8">${a.trim()}</span>`).join('<span style="opacity:.3"> · </span>')}
+    </div>` : '';
+
   card.innerHTML=`
     <div class="pnj-photo" style="background:linear-gradient(135deg,${c}14,#04060f)">
       <div class="pnj-stripe" style="background:linear-gradient(90deg,${c},${c}20)"></div>
       <div class="pnj-photo-ov"></div>
       ${photoHTML}
-      <div class="danger-badge" style="color:${c};border-color:${c}80;background:${c}18">${p.danger||'?'}</div>
-      <div class="cat-badge" style="color:${c};border-color:${c}55;background:${c}10">${cl}</div>
+      ${displayDanger ? `<div class="danger-badge" style="color:${c};border-color:${c}80;background:${c}18">${displayDanger}</div>` : ''}
+      ${cl ? `<div class="cat-badge" style="color:${c};border-color:${c}55;background:${c}10">${cl}</div>` : ''}
     </div>
     <div class="pnj-body">
       <div class="pnj-title">${p.prenom||''} ${p.nom||''}</div>
-      ${p.titre?`<div class="pnj-epithet" style="color:${c};text-shadow:0 0 14px ${c}88">✦ ${p.titre}</div>`:''}
+      ${p.titre ? `<div class="pnj-epithet" style="color:${c};text-shadow:0 0 14px ${c}88">✦ ${p.titre}</div>` : ''}
       <div class="pnj-tags">
-        ${p.race?`<span class="pnj-tag pnj-tag-race" style="color:${c};border-color:${c}55;background:${c}0d">${p.race}</span>`:''}
-        ${p.role?`<span class="pnj-tag pnj-tag-role" style="color:#c8e0f0;border-color:rgba(200,224,240,0.2)">${p.role}</span>`:''}
-        ${p.age?`<span class="pnj-tag">${p.age} ans</span>`:''}
-        ${p.taille?`<span class="pnj-tag">${p.taille}</span>`:''}
-        ${p.marital?`<span class="pnj-tag">${p.marital}</span>`:''}
+        ${displayRace  ? `<span class="pnj-tag pnj-tag-race" style="color:${c};border-color:${c}55;background:${c}0d">${displayRace}</span>` : ''}
+        ${displayRole  ? `<span class="pnj-tag pnj-tag-role" style="color:#c8e0f0;border-color:rgba(200,224,240,0.2)">${displayRole}</span>` : ''}
+        ${p.age        ? `<span class="pnj-tag">${p.age} ans</span>` : ''}
+        ${p.taille     ? `<span class="pnj-tag">${p.taille}</span>` : ''}
+        ${p.marital    ? `<span class="pnj-tag">${p.marital}</span>` : ''}
       </div>
-      <p class="pnj-desc">${p.desc||''}</p>
+      ${p.desc ? `<p class="pnj-desc">${p.desc}</p>` : ''}
+      ${affinityHTML}
+      ${statsHTML}
+      ${powersHTML}
       ${motivHTML}
       ${adminBtns}
     </div>
@@ -415,6 +475,34 @@ window._refreshCategorySelect=function(){
 .pnj-del-btn{font-family:'Share Tech Mono',monospace;font-size:.56rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);background:transparent;border:1px solid rgba(90,122,144,0.3);padding:5px 12px;cursor:pointer;transition:all .2s;margin-top:10px;align-self:flex-start;display:flex;align-items:center;gap:6px;}
 .pnj-del-btn:hover{color:#ff3030;border-color:rgba(255,48,48,0.35);background:rgba(255,48,48,0.04);}
 .pnj-deco{position:absolute;bottom:0;right:0;width:24px;height:24px;border-top:1px solid var(--border);border-left:1px solid var(--border);pointer-events:none;z-index:2;}
+
+/* ── Stats bar PNJ (même style que fiches) ── */
+.pnj-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin:10px 0 4px;padding:8px 0 6px;border-top:1px solid var(--border);}
+.pnj-sb-item{display:flex;flex-direction:column;align-items:center;gap:2px;}
+.pnj-sb-lbl{font-family:'Share Tech Mono',monospace;font-size:.38rem;letter-spacing:.04em;text-transform:uppercase;opacity:.6;}
+.pnj-sb-val{font-family:'Orbitron',sans-serif;font-size:.62rem;font-weight:800;line-height:1;}
+.pnj-sb-bar{width:100%;height:2px;background:rgba(255,255,255,.08);border-radius:1px;margin-top:2px;overflow:hidden;}
+.pnj-sb-fill{height:100%;border-radius:1px;}
+/* Couleurs identiques aux fiches */
+.pnj-sb-str .pnj-sb-lbl,.pnj-sb-str .pnj-sb-val{color:#ff6060;}.pnj-sb-str .pnj-sb-fill{background:#ff6060;}
+.pnj-sb-agi .pnj-sb-lbl,.pnj-sb-agi .pnj-sb-val{color:#44ff88;}.pnj-sb-agi .pnj-sb-fill{background:#44ff88;}
+.pnj-sb-spd .pnj-sb-lbl,.pnj-sb-spd .pnj-sb-val{color:#00f5ff;}.pnj-sb-spd .pnj-sb-fill{background:#00f5ff;}
+.pnj-sb-int .pnj-sb-lbl,.pnj-sb-int .pnj-sb-val{color:#60a5fa;}.pnj-sb-int .pnj-sb-fill{background:#60a5fa;}
+.pnj-sb-mana .pnj-sb-lbl,.pnj-sb-mana .pnj-sb-val{color:#b06eff;}.pnj-sb-mana .pnj-sb-fill{background:#b06eff;}
+.pnj-sb-res .pnj-sb-lbl,.pnj-sb-res .pnj-sb-val{color:#fbbf24;}.pnj-sb-res .pnj-sb-fill{background:#fbbf24;}
+.pnj-sb-cha .pnj-sb-lbl,.pnj-sb-cha .pnj-sb-val{color:#f97316;}.pnj-sb-cha .pnj-sb-fill{background:#f97316;}
+.pnj-sb-aura .pnj-sb-lbl,.pnj-sb-aura .pnj-sb-val{color:#e040fb;}.pnj-sb-aura .pnj-sb-fill{background:#e040fb;}
+
+/* ── Pouvoirs PNJ ── */
+.pnj-powers{margin-top:8px;padding-top:8px;border-top:1px solid var(--border);}
+.pnj-powers-title{font-family:'Share Tech Mono',monospace;font-size:.5rem;letter-spacing:.25em;color:var(--muted);text-transform:uppercase;margin-bottom:5px;}
+.pnj-power-item{font-family:'Rajdhani',sans-serif;font-size:.82rem;color:#c8e0f0;line-height:1.4;padding:3px 8px;border-left:2px solid;margin-bottom:3px;}
+.pnj-power-name{font-weight:600;letter-spacing:.04em;}
+.pnj-power-desc{font-size:.75rem;color:var(--muted);margin-top:1px;}
+
+/* ── Affinité PNJ ── */
+.pnj-affinity{font-family:'Share Tech Mono',monospace;font-size:.55rem;letter-spacing:.12em;color:var(--muted);margin-top:4px;display:flex;gap:5px;align-items:center;flex-wrap:wrap;}
+.pnj-aff-label{font-size:.48rem;letter-spacing:.2em;text-transform:uppercase;opacity:.55;}
 
 /* ── MODAL SHARED ── */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(4,6,15,0.94);z-index:1000;align-items:flex-start;justify-content:center;padding:30px 16px;overflow-y:auto;}
