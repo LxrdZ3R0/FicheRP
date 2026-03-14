@@ -117,19 +117,14 @@ function loadCards(){
   }
 }
 
-/* Attend que le DOM ET <jaharta-card> soient prêts */
-Promise.all([
-  new Promise(r => {
-    if(document.readyState === 'loading')
-      document.addEventListener('DOMContentLoaded', r, {once:true});
-    else r();
-  }),
-  customElements.whenDefined('jaharta-card')
-]).then(() => loadCards());
+/* jaharta-card.js chargé en script classique synchrone — déjà défini ici.
+   On attend juste que le DOM soit prêt. */
+if(document.readyState === 'loading')
+  document.addEventListener('DOMContentLoaded', loadCards, {once:true});
+else
+  loadCards();
 </script>
 
-<!-- jaharta-card chargé en module séparé, après le bloc Firebase -->
-<script type="module" src="js/jaharta-card.js"></script>
 
 <link rel="stylesheet" href="css/jaharta.css">
 <style>
@@ -314,6 +309,7 @@ footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:22
 <script src="js/debug.js"></script>
 <script src="js/constants.js"></script><!-- RACES, RANKS, RACES_SPECIFIC globaux -->
 <script src="js/utils.js"></script>    <!-- sanitize, compressImage, AntiSpam, Skeleton, showToast -->
+<script src="js/jaharta-card.js"></script><!-- Web Component — doit être défini avant Firebase -->
 <script type="module" src="js/auth-badge.js"></script>
 </head>
 <body>
