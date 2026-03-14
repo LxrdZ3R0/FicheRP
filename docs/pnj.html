@@ -417,9 +417,9 @@ window._refreshCategorySelect=function(){
 .pnj-deco{position:absolute;bottom:0;right:0;width:24px;height:24px;border-top:1px solid var(--border);border-left:1px solid var(--border);pointer-events:none;z-index:2;}
 
 /* ── MODAL SHARED ── */
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(4,6,15,0.94);z-index:1000;align-items:flex-start;justify-content:center;backdrop-filter:blur(6px);padding:30px 16px;overflow-y:auto;}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(4,6,15,0.94);z-index:1000;align-items:flex-start;justify-content:center;padding:30px 16px;overflow-y:auto;}
 .modal-overlay.open{display:flex;}
-.modal{background:var(--dark2);border:1px solid var(--border);width:92%;max-width:660px;position:relative;clip-path:polygon(24px 0%,100% 0%,100% calc(100% - 24px),calc(100% - 24px) 100%,0% 100%,0% 24px);animation:mIn .28s ease;margin:auto;}
+.modal{background:var(--dark2);border:1px solid var(--border);width:92%;max-width:660px;position:relative;animation:mIn .28s ease;margin:auto;}
 .modal.sm{max-width:420px;}
 @keyframes mIn{from{opacity:0;transform:scale(.96) translateY(12px)}to{opacity:1;transform:none}}
 .mac-magenta{height:3px;background:linear-gradient(90deg,var(--magenta),var(--gold));}
@@ -756,9 +756,14 @@ function openPNJModal(){
   const btn=document.getElementById('pnj-submit-btn');
   btn.textContent='◆ Créer le PNJ'; btn.onclick=submitPNJ;
   document.getElementById('pnj-modal').classList.add('open');
-  document.body.style.overflow='hidden';
+  document.body.style.overflow = 'hidden';
+  document.body.classList.add('modal-open');
 }
-function closePNJModal(){document.getElementById('pnj-modal').classList.remove('open');document.body.style.overflow='';}
+function closePNJModal(){
+  document.getElementById('pnj-modal').classList.remove('open');
+  document.body.style.overflow = '';
+  document.body.classList.remove('modal-open');
+}
 function openFilterModal(){
   document.getElementById('new-filter-label').value='';
   document.getElementById('new-filter-color').value='#b06eff';
@@ -766,9 +771,14 @@ function openFilterModal(){
   document.getElementById('color-preview-box').style.background='#b06eff';
   updateFilterPreview('#b06eff','Nouveau filtre');
   document.getElementById('filter-modal').classList.add('open');
-  document.body.style.overflow='hidden';
+  document.body.style.overflow = 'hidden';
+  document.body.classList.add('modal-open');
 }
-function closeFilterModal(){document.getElementById('filter-modal').classList.remove('open');document.body.style.overflow='';}
+function closeFilterModal(){
+  document.getElementById('filter-modal').classList.remove('open');
+  document.body.style.overflow = '';
+  document.body.classList.remove('modal-open');
+}
 
 /* Close on backdrop click */
 document.getElementById('pnj-modal').addEventListener('click',e=>{if(e.target===e.currentTarget)closePNJModal();});

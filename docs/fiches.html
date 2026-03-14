@@ -241,9 +241,9 @@ loadCards();
 .empty-st{grid-column:1/-1;text-align:center;padding:70px 20px;font-family:'Share Tech Mono',monospace;color:var(--muted);letter-spacing:.16em;font-size:.72rem;}
 
 /* MODAL */
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(4,6,15,0.93);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(5px);}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(4,6,15,0.93);z-index:1000;align-items:center;justify-content:center;}
 .modal-overlay.open{display:flex;}
-.modal{background:var(--dark2);border:1px solid var(--border);width:92%;max-width:580px;max-height:90vh;overflow-y:auto;position:relative;clip-path:polygon(24px 0%,100% 0%,100% calc(100% - 24px),calc(100% - 24px) 100%,0% 100%,0% 24px);animation:mIn .28s ease;}
+.modal{background:var(--dark2);border:1px solid var(--border);width:92%;max-width:580px;max-height:90vh;overflow-y:auto;position:relative;animation:mIn .28s ease;}
 @keyframes mIn{from{opacity:0;transform:scale(.96) translateY(10px)}to{opacity:1;transform:none}}
 .mac{height:3px;background:linear-gradient(90deg,var(--cyan),var(--magenta));}
 .mi{padding:28px;}
@@ -734,9 +734,14 @@ function filterRank(rank, btn) {
 function openModal(){
   if(!window._isAdmin){ showToast('⚠ Connexion admin requise.','error'); return; }
   document.getElementById('modal').classList.add('open');
-  document.body.style.overflow='hidden';
+  document.body.style.overflow = 'hidden';
+  document.body.classList.add('modal-open'); /* suspend effets de fond coûteux */
 }
-function closeModal(){document.getElementById('modal').classList.remove('open');document.body.style.overflow='';}
+function closeModal(){
+  document.getElementById('modal').classList.remove('open');
+  document.body.style.overflow = '';
+  document.body.classList.remove('modal-open');
+}
 document.getElementById('modal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
 
 /* ════════════════════════════════════════════
