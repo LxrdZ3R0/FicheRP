@@ -1,20 +1,40 @@
 # JAHARTA // RP — Documentation Développeur
 
-Site web officiel du serveur RP Discord **Jaharta**.
+Site officiel du serveur RP Discord **Jaharta**.
+Visible par tous, modifiable uniquement par les membres du staff.
 
-> **Pour les nouveaux collaborateurs** : lisez ce fichier en entier avant de toucher au code.
+> **Nouveau collaborateur ?** Lisez ce fichier en entier avant de toucher au code.
+
+---
+
+## Vision du projet
+
+Le site permet à tout visiteur de consulter les informations de l'univers Jaharta :
+
+| Page | Contenu | Qui peut modifier |
+|------|---------|-------------------|
+| **Accueil** | Navigation vers les sections + lien Discord | Staff (HTML) |
+| **Fiches RP** | Cartes des personnages joueurs validés par le staff | Staff via admin.html |
+| **PNJ** | Personnages non-joueurs importants | Staff via admin.html |
+| **Portail** | Liens vers le Lore et la Carte du monde (à venir) | Staff (HTML) |
+| **Admin** | Panel de gestion (connexion requise) | Staff whitelist |
 
 ---
 
 ## Stack technique
 
-| Élément | Technologie |
-|---------|-------------|
-| Hébergement | GitHub Pages (`/docs`) |
-| Base de données | Firebase Firestore (NoSQL, temps réel) |
-| Stockage images | Firebase Storage |
-| Authentification admin | Firebase Auth (email/password) |
-| Frontend | HTML / CSS / JS vanilla — aucun framework |
+| Élément | Technologie | Fichier |
+|---------|-------------|---------|
+| Hébergement | GitHub Pages (`/docs`) | — |
+| Base de données | Firebase Firestore (temps réel) | config inline |
+| Stockage images | Firebase Storage | config inline |
+| Authentification | Firebase Auth (Google + email/password) | admin.html |
+| Frontend | HTML / CSS / JS vanilla | — |
+| UI réactive | Alpine.js 3.14 (onglets admin) | admin.html |
+| Composant carte | Web Component `<jaharta-card>` | js/jaharta-card.js |
+| Constantes | RACES, RANKS, RACES_SPECIFIC | js/constants.js |
+| Utilitaires | sanitize, compressImage, AntiSpam, Skeleton, showToast | js/utils.js |
+| Debug logger | Panneau d'erreurs flottant | js/debug.js |
 
 ---
 
@@ -25,23 +45,26 @@ JahartaRP/
 │
 ├── docs/                          ← Dossier servi par GitHub Pages
 │   ├── index.html                 ← Page d'accueil
-│   ├── fiches.html                ← Base de données personnages joueurs (PC)
-│   ├── pnj.html                   ← Personnages non-joueurs (admin seulement)
-│   ├── portail.html               ← Portail des ressources (lore, cartes…)
-│   ├── racesjouables.html         ← Encyclopédie des 42 races jouables
+│   ├── fiches.html                ← Personnages joueurs (PC)
+│   ├── pnj.html                   ← Personnages non-joueurs
+│   ├── portail.html               ← Portail ressources (Lore + Carte)
+│   ├── racesjouables.html         ← Encyclopédie des 42 races
 │   ├── admin.html                 ← Panel d'administration (login requis)
 │   │
 │   ├── css/
 │   │   └── jaharta.css            ← STYLES PARTAGÉS — inclus par toutes les pages
 │   │
 │   ├── js/
-│   │   └── debug.js               ← Logger d'erreurs flottant (dev only)
+│   │   ├── constants.js           ← RACES, RANKS, RACES_SPECIFIC (partagé)
+│   │   ├── utils.js               ← sanitize, compressImage, AntiSpam, Skeleton, showToast
+│   │   ├── jaharta-card.js        ← Web Component <jaharta-card> (cartes personnages)
+│   │   └── debug.js               ← Logger d'erreurs flottant (dev)
 │   │
 │   └── img/
 │       ├── banner.png             ← Image Open Graph (Discord embed)
 │       ├── favicon.ico
 │       ├── favicon-32.png
-│       └── favicon-180.png        ← Apple touch icon
+│       └── favicon-180.png
 │
 ├── .gitignore
 └── README.md
@@ -49,9 +72,34 @@ JahartaRP/
 
 ---
 
+## Ordre d'inclusion des scripts
+
+Dans chaque page, les scripts doivent être inclus dans cet ordre :
+
+```html
+<!-- 1. Debug logger (doit être en premier pour capturer toutes les erreurs) -->
+<script src="js/debug.js"></script>
+
+<!-- 2. Constantes globales (RACES, RANKS, RACES_SPECIFIC) -->
+<script src="js/constants.js"></script>
+
+<!-- 3. Utilitaires (sanitize, compressImage, AntiSpam, Skeleton, showToast) -->
+<script src="js/utils.js"></script>
+
+<!-- 4. Module Firebase (type="module", ESM) -->
+<script type="module"> ... </script>
+```
+
+Pour `fiches.html`, le Web Component est importé depuis le module Firebase :
+```js
+import '/js/jaharta-card.js';
+```
+
+---
+
 ## Configuration Firebase
 
-**Toutes les pages partagent la même config Firebase** — déclarée inline dans chaque `<script type="module">`.
+Toutes les pages partagent la même config Firebase déclarée inline dans chaque `<script type="module">`.
 
 ```js
 const firebaseConfig = {
@@ -64,17 +112,42 @@ const firebaseConfig = {
 };
 ```
 
-> **Note** : cette clé est publique (les Firebase Security Rules protègent les données côté serveur).
+> **Note** : cette clé est publique (la sécurité repose sur les Firebase Security Rules côté serveur).
 
 ---
 
-## Collections Firestore
+## Système d'accès admin
 
-### `fiches` — Fiches personnages joueurs
+L'accès admin utilise une **whitelist Firestore** (pas juste Firebase Auth).
+
+### Étapes pour ajouter un admin
+
+1. Créer le compte dans **Firebase Console → Authentication → Users**
+2. Copier l'**User UID** (chaîne type `abc123xyz...`)
+3. Dans **Firestore → admins/{uid}**, créer un document avec :
+   ```json
+   { "role": "admin", "name": "PseudoMembre", "email": "membre@mail.com" }
+   ```
+4. Se connecter sur `/admin.html` via Google ou email/password
+
+### Rôles disponibles
+
+| Rôle | Valider | Rejeter | Supprimer | Voir logs |
+|------|---------|---------|-----------|-----------|
+| `admin` | ✓ | ✓ | ✓ | ✓ |
+| `modo`  | ✓ | ✓ | ✗ | ✗ |
+
+---
+
+## Schéma Firestore
+
+### Collection `fiches` — Personnages joueurs (PC)
+
 ```
 {
   firstname:     string       // Prénom
   lastname:      string       // Nom
+  age:           string       // Âge (ex: "23 ans", "Inconnu")
   race:          string       // Groupe de race (humanoid, zooid…)
   raceSpecific:  string       // Race précise (Human, Elf, Neko…)
   rank:          string       // Rang de puissance (F → Z)
@@ -89,118 +162,75 @@ const firebaseConfig = {
   powers:        Array        // [{name: string, desc: string}]
   status:        string       // "en_attente" | "validee" | "rejetee"
   createdAt:     Timestamp
-  updatedAt:     Timestamp    // Défini lors des modifications admin
-  validatedAt:   Timestamp    // Défini lors de la validation
-  rejectReason:  string       // Motif du rejet (optionnel)
+  updatedAt:     Timestamp
+  validatedAt:   Timestamp
+  rejectReason:  string
 }
 ```
 
-### `pnj` — Personnages non-joueurs
+### Collection `pnj` — Personnages non-joueurs
+
 ```
 {
-  nom:         string
-  prenom:      string
-  age:         string
-  race:        string
-  role:        string
-  titre:       string       // Titre spécial affiché sous le nom
-  marital:     string
-  taille:      string
-  category:    string       // ID du filtre (ref: collection pnj_filters)
-  danger:      string       // "RANG : S", "DANGER : X"…
-  photoUrl:    string
-  desc:        string
-  motivations: Object       // {desc, social, economique, militaire}
-  createdAt:   Timestamp
+  nom, prenom, age, race, role, titre,
+  marital, taille, category, danger,
+  photoUrl, desc,
+  motivations: { desc, social, economique, militaire },
+  createdAt
 }
 ```
 
-### `pnj_filters` — Filtres personnalisés pour la page PNJ
+### Collection `pnj_filters` — Filtres personnalisés PNJ
+
 ```
-{
-  label:     string       // Nom affiché ("Guerrier", "Noble"…)
-  color:     string       // Couleur hex (#ff3030)
-  order:     number
-  createdAt: Timestamp
-}
+{ label, color, order, createdAt }
 ```
 
----
+### Collection `admins` — Whitelist staff
 
-## Groupes de races et couleurs
+```
+{ role: "admin" | "modo", name, email }
+```
 
-| Groupe         | Clé Firestore | Couleur    |
-|----------------|---------------|------------|
-| Humanoid       | `humanoid`    | `#00c8ff`  |
-| Zooid          | `zooid`       | `#44ff88`  |
-| Mythical Zooid | `mythzooid`   | `#b06eff`  |
-| Demon          | `demon`       | `#ff3030`  |
-| Artificial     | `artificial`  | `#ffd60a`  |
-| Semi-Liquid    | `semiliquid`  | `#00e5cc`  |
-| Undead         | `undead`      | `#9a8cff`  |
+### Collection `logs` — Historique des actions admin
 
-## Rangs de puissance
-
-`F → E → D → C → B → A → S → SS → SSS → X → Z`
-
-Définis dans la constante `RANKS` dans `fiches.html` et `admin.html`.
-
----
-
-## Thème visuel — jaharta.css
-
-Variables CSS globales (`:root`) :
-
-| Variable       | Valeur par défaut | Usage                         |
-|----------------|-------------------|-------------------------------|
-| `--cyan`       | `#00f5ff`         | Couleur principale            |
-| `--magenta`    | `#ff006e`         | Accent secondaire             |
-| `--gold`       | `#ffd60a`         | Accent tertiaire              |
-| `--dark`       | `#04060f`         | Fond principal                |
-| `--dark2`      | `#080d1a`         | Fond secondaire (cartes)      |
-| `--text`       | `#c8e0f0`         | Texte normal                  |
-| `--muted`      | `#5a7a90`         | Texte atténué                 |
-| `--accent`     | `var(--cyan)`     | **Surchargé par chaque page** |
-
-**Accent par page** :
-
-| Page               | `--accent` |
-|--------------------|-----------|
-| index.html         | cyan      |
-| fiches.html        | cyan      |
-| pnj.html           | magenta   |
-| portail.html       | gold      |
-| racesjouables.html | gold      |
-| admin.html         | gold      |
-
----
-
-## Accès Admin
-
-1. Créer un compte dans **Firebase Console → Authentication → Users**
-2. Aller sur `/admin.html` et se connecter avec email/mot de passe
-3. Une fois connecté :
-   - Badge vert `ADMIN` apparaît dans le nav de toutes les pages
-   - Boutons ✎ Modifier / ✕ Supprimer apparaissent sur les cartes (fiches et PNJ)
-   - Page PNJ : bouton `Créer un PNJ` visible
-   - Filtres PNJ : bouton `+ Filtre` + croix de suppression visibles
+```
+{ action, targetId, targetName, byEmail, byUid, byName, role, at }
+```
 
 ---
 
 ## Règles de sécurité Firebase
 
-### Firestore
+### Firestore (à copier dans Firebase Console → Firestore → Règles)
+
 ```javascript
-match /fiches/{ficheId} {
-  allow create: if true;                           // Tous peuvent soumettre
-  allow read:   if resource.data.status == "validee" || request.auth != null;
-  allow update, delete: if request.auth != null;  // Admins seulement
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Fiches : soumission publique, lecture publique si validée, écriture admin
+    match /fiches/{ficheId} {
+      allow create: if true;
+      allow read:   if resource.data.status == "validee" || request.auth != null;
+      allow update, delete: if request.auth != null;
+    }
+
+    // PNJ et filtres : lecture publique, écriture admin
+    match /pnj/{id}         { allow read: if true; allow write: if request.auth != null; }
+    match /pnj_filters/{id} { allow read: if true; allow write: if request.auth != null; }
+
+    // Whitelist admins : lecture si connecté (vérifié dans admin.html)
+    match /admins/{uid}     { allow read: if request.auth != null; }
+
+    // Logs : lecture et écriture si connecté
+    match /logs/{id}        { allow read, write: if request.auth != null; }
+  }
 }
-match /pnj/{id}         { allow read: if true; allow write: if request.auth != null; }
-match /pnj_filters/{id} { allow read: if true; allow write: if request.auth != null; }
 ```
 
 ### Storage
+
 ```
 /photos/**  → lecture publique, écriture publique (images < 5MB)
 /pnj/**     → lecture publique, écriture admin seulement
@@ -209,9 +239,92 @@ match /pnj_filters/{id} { allow read: if true; allow write: if request.auth != n
 
 ---
 
+## Personnalisation du thème
+
+Tout le thème visuel est contrôlé par les **variables CSS** dans `jaharta.css` (`:root`).
+
+### Modifier les couleurs globales
+
+Dans `docs/css/jaharta.css`, section `1. VARIABLES GLOBALES` :
+
+```css
+:root {
+  --cyan:    #00f5ff;   /* couleur principale */
+  --magenta: #ff006e;   /* accent secondaire */
+  --gold:    #ffd60a;   /* accent tertiaire (admin, portail) */
+  --dark:    #04060f;   /* fond principal */
+  --dark2:   #080d1a;   /* fond cartes */
+  --text:    #c8e0f0;   /* texte normal */
+  --muted:   #5a7a90;   /* texte atténué */
+}
+```
+
+### Accent par page
+
+Chaque page surcharge `--accent` dans son `<style>` inline :
+
+| Page | `--accent` | Modifier dans |
+|------|-----------|---------------|
+| index.html | cyan | `<style>` de index.html |
+| fiches.html | cyan | `<style>` de fiches.html |
+| pnj.html | magenta | `<style>` de pnj.html |
+| portail.html | gold | `<style>` de portail.html |
+| racesjouables.html | gold | `<style>` de racesjouables.html |
+| admin.html | gold | `<style>` de admin.html |
+
+### Modifier les couleurs des races
+
+Dans `docs/js/constants.js` :
+```js
+window.RACES = {
+  humanoid: { color: '#00c8ff', label: 'Humanoid' },
+  // … modifier la couleur hex ici
+};
+```
+
+### Modifier les couleurs des rangs
+
+Dans `docs/js/constants.js` :
+```js
+window.RANKS = {
+  F: { color: '#6b7280', bg: 'rgba(107,114,128,0.22)', level: 1 },
+  // … modifier la couleur hex ici
+};
+```
+
+---
+
+## Ajouter une race ou un rang
+
+**Nouvelle race dans un groupe existant :**
+1. `docs/js/constants.js` → ajouter dans `window.RACES_SPECIFIC[groupe]`
+2. `docs/racesjouables.html` → ajouter une `.race-card` dans le groupe concerné
+
+**Nouveau groupe de race :**
+1. `constants.js` → ajouter dans `window.RACES` + `window.RACES_SPECIFIC`
+2. `fiches.html` → ajouter un bouton dans `.race-filter` + une `.race-btn` CSS
+3. `racesjouables.html` → ajouter une section `.race-group`
+
+**Nouveau rang :**
+1. `constants.js` → ajouter dans `window.RANKS`
+2. `fiches.html` → ajouter un bouton dans `.rank-filter`
+
+---
+
+## Ajouter un champ à la fiche personnage
+
+1. **Formulaire** (`fiches.html`, section `<!-- MODAL DE SOUMISSION -->`) : ajouter l'input
+2. **Soumission** (`submitCard()`) : lire et inclure la valeur dans `data`
+3. **Édition** (`openEditFiche()`) : pré-remplir le champ
+4. **Affichage** (`docs/js/jaharta-card.js`, méthode `_render()`) : afficher dans la carte
+5. **Admin** (`admin.html`, `renderTable()`) : afficher dans le panel si nécessaire
+6. **README** (ici) : documenter le champ dans le schéma `fiches`
+
+---
+
 ## Déploiement
 
-Le site est déployé automatiquement sur GitHub Pages depuis `/docs/` à chaque push sur `main`.
+Le site se déploie automatiquement sur GitHub Pages à chaque push sur `main`.
 
 **URL** : https://lxrdz3r0.github.io/JahartaRP/
 
@@ -229,16 +342,17 @@ python3 -m http.server 8080
 
 ## Conventions de code
 
-- **CSS** : commentaires `/* ══ Section ══ */` pour chaque bloc logique
-- **JS inline** : commentaires `/* ─── Section ─── */` en début de bloc fonctionnel
-- **Pas de framework** : vanilla JS + Firebase SDK ESM (CDN gstatic)
-- **Globals window._*** : les variables Firebase sont exposées sur `window` pour être accessibles depuis les `<script>` non-module
-  - `window._db` → instance Firestore
-  - `window._storage` → instance Storage
-  - `window._isAdmin` → booléen auth
-  - `window._doc`, `window._updateDoc`, etc. → fonctions Firestore
-- **Temps réel** : `onSnapshot()` sur les collections fiches/pnj → pas de rechargement nécessaire
-- **Formulaires** : pas de `<form>` — tout est géré via `onclick` et JS pour éviter les rechargements
+- **CSS** : blocs commentés `/* ══ Section ══ */` dans jaharta.css
+- **JS inline** : blocs commentés `/* ── Section ── */` + JSDoc sur les fonctions
+- **Pas de framework JS** : vanilla JS + Firebase SDK ESM (CDN gstatic)
+- **Alpine.js** : uniquement dans admin.html pour la logique d'onglets
+- **Globals window._*** : fonctions Firebase exposées pour les scripts non-module
+  - `window._db`, `window._storage`, `window._isAdmin`
+  - `window._doc`, `window._updateDoc`, `window._deleteDoc`
+  - `window._ref`, `window._uploadBytes`, `window._getDownloadURL`
+- **Temps réel** : `onSnapshot()` sur fiches et pnj — pas de rechargement nécessaire
+- **Sécurité** : `sanitize()` sur tous les inputs avant stockage Firestore
+- **Formulaires** : pas de `<form>` — tout est géré via `onclick` + JS
 
 ---
 
