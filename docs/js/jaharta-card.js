@@ -288,22 +288,8 @@ class JahartaCard extends HTMLElement {
       links.appendChild(a);
     });
 
-    /* Bouton télécharger si fichier uploadé */
-    if (ch.ficheFileUrl) {
-      const a     = document.createElement('a');
-      a.className = 'lbtn';
-      a.href      = ch.ficheFileUrl;
-      a.target    = '_blank';
-      a.title     = ch.ficheFileName || 'Fiche';
-      a.innerHTML =
-        `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">` +
-        `<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>` +
-        `<polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>` +
-        `Télécharger`;
-      links.appendChild(a);
-    }
-
-    body.appendChild(links);
+    /* Masquer la section liens si elle est vide */
+    if (ls.length > 0) body.appendChild(links);
 
     /* ── Boutons admin (Modifier / Supprimer) — affichés si connecté ── */
     if (ch.id) {
