@@ -221,6 +221,21 @@ loadCards();
 .stats-form-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
 @media(max-width:880px){.stats-form-grid{grid-template-columns:repeat(2,1fr)}}
 
+/* ── Système multi-liens (formulaire) ── */
+.links-form-wrap{display:flex;flex-direction:column;gap:8px;}
+.link-entry{display:flex;gap:6px;align-items:center;}
+.link-entry .fi{flex:1;}
+.link-entry .link-label-inp{width:120px;flex-shrink:0;}
+.link-rm-btn{background:rgba(255,0,110,.1);border:1px solid rgba(255,0,110,.3);color:#ff006e;padding:6px 10px;cursor:pointer;font-size:.8rem;flex-shrink:0;transition:all .2s;}
+.link-rm-btn:hover{background:rgba(255,0,110,.2);}
+.link-type-sep{font-family:'Share Tech Mono',monospace;font-size:.55rem;color:var(--muted);letter-spacing:.12em;padding:4px 0;display:flex;align-items:center;gap:8px;}
+.link-type-sep::before,.link-type-sep::after{content:'';flex:1;height:1px;background:var(--border);}
+.add-link-btn{font-family:'Share Tech Mono',monospace;font-size:.58rem;letter-spacing:.12em;background:rgba(0,245,255,.06);border:1px solid rgba(0,245,255,.22);color:var(--cyan);padding:7px 14px;cursor:pointer;transition:all .2s;}
+.add-link-btn:hover{background:rgba(0,245,255,.12);}
+.link-file-entry{display:flex;gap:6px;align-items:center;background:rgba(0,245,255,.03);border:1px solid rgba(0,245,255,.15);padding:8px 10px;}
+.link-file-entry .link-label-inp{width:120px;flex-shrink:0;}
+.link-file-entry input[type=file]{flex:1;font-family:'Share Tech Mono',monospace;font-size:.6rem;color:var(--muted);background:transparent;border:none;outline:none;cursor:pointer;}
+.link-file-entry input[type=file]::file-selector-button{font-family:'Share Tech Mono',monospace;font-size:.58rem;background:rgba(0,245,255,.1);border:1px solid rgba(0,245,255,.3);color:var(--cyan);padding:4px 10px;cursor:pointer;margin-right:8px;}
 /* ── Powers list ── */
 .powers-section{margin-bottom:14px;}
 .powers-title{font-family:'Share Tech Mono',monospace;font-size:.5rem;letter-spacing:.25em;color:var(--muted);text-transform:uppercase;margin-bottom:6px;}
@@ -446,10 +461,21 @@ footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:22
 
       <div class="fg"><label class="fl">Description courte *</label><textarea class="fta" placeholder="2-3 phrases résumant votre personnage..." id="f-bio"></textarea></div>
 
-      <!-- Lien externe -->
+      <!-- Liens et fichiers (dynamique — plusieurs possibles) -->
       <div class="fg">
-        <label class="fl">Lien de la fiche *</label>
-        <input type="url" class="fi" placeholder="https://..." id="f-link">
+        <label class="fl" style="margin-bottom:10px">
+          Liens &amp; Fichiers
+          <span style="opacity:.5;font-size:.5rem">— ajoutez autant de fiches que nécessaire</span>
+        </label>
+
+        <!-- Liens URL -->
+        <div class="links-form-wrap" id="links-url-wrap"></div>
+        <button type="button" class="add-link-btn" onclick="addLinkField()" style="margin-bottom:10px;width:100%">+ Ajouter un lien URL</button>
+
+        <!-- Fichiers à uploader -->
+        <div class="link-type-sep">fichiers à uploader</div>
+        <div class="links-form-wrap" id="links-file-wrap"></div>
+        <button type="button" class="add-link-btn" onclick="addFileField()" style="width:100%">+ Uploader un fichier</button>
       </div>
 
 
@@ -572,7 +598,10 @@ window.openEditFiche = async function(id){
   document.getElementById('f-rank').value       = ch.rank       || 'F';
   document.getElementById('f-bio').value        = ch.desc||ch.bio||'';
   document.getElementById('f-photo-url').value  = ch.photoUrl   || '';
-  document.getElementById('f-link').value       = (ch.links?.[0]?.h||ch.linkUrl||'');
+  /* Pré-remplir les liens existants */
+  clearLinks();
+  const existingLinks = ch.links || (ch.linkUrl ? [{t:'Fiche',h:ch.linkUrl}] : []);
+  existingLinks.forEach(l => addLinkField(l.t||'Fiche', l.h||''));
   // Stats
   const _s=ch.stats||{};
   ['str','agi','spd','int','mana','res','cha','aura'].forEach(k=>{
@@ -606,8 +635,7 @@ window.openEditFiche = async function(id){
     const rank      = document.getElementById('f-rank').value;
     const desc      = document.getElementById('f-bio').value.trim();
     const photoUrl  = document.getElementById('f-photo-url').value.trim();
-    const linkUrl   = document.getElementById('f-link').value.trim();
-    const links     = linkUrl?[{t:'Fiche',h:linkUrl}]:ch.links||[];
+    const links = await getLinks(); /* récupère tous les liens + fichiers uploadés */
 
     let finalPhoto = photoUrl;
     const photoFile = document.getElementById('f-file')?.files[0];
@@ -733,9 +761,10 @@ function filterRank(rank, btn) {
 /* ── Gestion de la modale de soumission ── */
 function openModal(){
   if(!window._isAdmin){ showToast('⚠ Connexion admin requise.','error'); return; }
+  clearLinks(); /* initialise avec un champ lien vide */
   document.getElementById('modal').classList.add('open');
   document.body.style.overflow = 'hidden';
-  document.body.classList.add('modal-open'); /* suspend effets de fond coûteux */
+  document.body.classList.add('modal-open');
 }
 function closeModal(){
   document.getElementById('modal').classList.remove('open');
@@ -781,6 +810,89 @@ function clearPrev(){
   if(img)img.remove();
 }
 
+/* ════════════════════════════════════════════════════════
+   SYSTÈME MULTI-LIENS — URL + fichiers uploadés
+   Chaque entrée produit un objet {t: label, h: url}.
+   getLinks() retourne un tableau de tous les liens prêts.
+   ════════════════════════════════════════════════════════ */
+
+/**
+ * Ajoute un champ lien URL dans le formulaire.
+ * @param {string} label - Label affiché sur le bouton de la carte
+ * @param {string} url   - URL pré-remplie (mode édition)
+ */
+function addLinkField(label='Fiche', url='') {
+  const wrap = document.getElementById('links-url-wrap');
+  const row  = document.createElement('div');
+  row.className = 'link-entry';
+  row.innerHTML = `
+    <input type="text" class="fi link-label-inp" placeholder="Libellé" value="${label}">
+    <input type="url"  class="fi" placeholder="https://..." value="${url}">
+    <button type="button" class="link-rm-btn" onclick="this.parentElement.remove()">✕</button>
+  `;
+  wrap.appendChild(row);
+}
+
+/**
+ * Ajoute un champ upload de fichier dans le formulaire.
+ * @param {string} label - Label affiché sur le bouton de la carte
+ */
+function addFileField(label='Fichier') {
+  const wrap = document.getElementById('links-file-wrap');
+  const row  = document.createElement('div');
+  row.className = 'link-file-entry';
+  row.innerHTML = `
+    <input type="text" class="fi link-label-inp" placeholder="Libellé" value="${label}">
+    <input type="file" accept=".html,.htm,.pdf,.doc,.docx,.odt,.txt,.md,.pages,.png,.jpg,.jpeg">
+    <button type="button" class="link-rm-btn" onclick="this.parentElement.remove()">✕</button>
+  `;
+  wrap.appendChild(row);
+}
+
+/**
+ * Collecte tous les liens (URL + fichiers) et uploade les fichiers vers Storage.
+ * @returns {Promise<Array<{t:string, h:string}>>} tableau de liens prêts
+ */
+async function getLinks() {
+  const links = [];
+
+  /* ── Liens URL ── */
+  document.querySelectorAll('#links-url-wrap .link-entry').forEach(row => {
+    const label = row.querySelector('.link-label-inp').value.trim() || 'Fiche';
+    const url   = row.querySelectorAll('input')[1].value.trim();
+    if (url) links.push({ t: label, h: url });
+  });
+
+  /* ── Fichiers uploadés ── */
+  const fileRows = document.querySelectorAll('#links-file-wrap .link-file-entry');
+  for (const row of fileRows) {
+    const label = row.querySelector('.link-label-inp').value.trim() || 'Fichier';
+    const file  = row.querySelector('input[type=file]').files[0];
+    if (!file) continue;
+    try {
+      const path = `fiches/${Date.now()}_${file.name}`;
+      const snap = await window._uploadBytes(window._ref(window._storage, path), file);
+      const url  = await window._getDownloadURL(snap.ref);
+      links.push({ t: label, h: url });
+    } catch(e) {
+      console.warn('[upload lien]', e.message);
+      showToast('⚠ Erreur upload : ' + e.message, 'error');
+    }
+  }
+
+  return links;
+}
+
+/** Vide tous les champs liens et fichiers */
+function clearLinks() {
+  const wu = document.getElementById('links-url-wrap');
+  const wf = document.getElementById('links-file-wrap');
+  if (wu) wu.innerHTML = '';
+  if (wf) wf.innerHTML = '';
+  /* Ajoute un champ URL vide par défaut pour guider l'admin */
+  addLinkField('Fiche', '');
+}
+
 /* ════════════════════════════════════════════
    SOUMISSION DU FORMULAIRE (admin uniquement)
    ════════════════════════════════════════════ */
@@ -821,9 +933,8 @@ async function submitCard(){
   const race        = document.getElementById('f-race').value;
   const raceSpecific= document.getElementById('f-race-specific').value;
   const rank        = document.getElementById('f-rank').value;
-  const bio         = sanitize(document.getElementById('f-bio').value.trim());
-  const linkUrl     = document.getElementById('f-link').value.trim();
-  const discord     = sanitize(document.getElementById('f-discord').value.trim());
+  const bio     = sanitize(document.getElementById('f-bio').value.trim());
+  const discord = sanitize(document.getElementById('f-discord').value.trim());
   const stats={
     str:  Math.min(9999,parseInt(document.getElementById('f-str').value)||0),
     agi:  Math.min(9999,parseInt(document.getElementById('f-agi').value)||0),
@@ -837,19 +948,22 @@ async function submitCard(){
   // photoUrl uniquement si pas de fichier uploadé
   const photoUrl=photoFile?'':document.getElementById('f-photo-url').value.trim();
 
-  if(!fn||!ln||!race||!rank||!bio||!linkUrl||!discord){
+  if(!fn||!ln||!race||!rank||!bio||!discord){
     showToast('Remplissez tous les champs obligatoires (*)','error');return;
   }
 
   const btn=document.getElementById('bsub');
   btn.disabled=true;btn.textContent='⟳ Envoi en cours...';
 
+  /* Collecter tous les liens (URL + fichiers uploadés) */
+  const allLinks = await getLinks();
+
   const data={
-    firstname:fn,lastname:ln,age,race,rank,bio,desc:bio,
-    linkUrl,linkType:'Lien',
-    discord,stats,powers:getPowers(),
+    firstname:fn, lastname:ln, age, race, rank, bio, desc:bio,
+    discord, stats, powers:getPowers(),
     photoUrl,
-    links:[{t:'Fiche',h:linkUrl}]
+    links: allLinks,        /* tableau [{t, h}] — tous les liens et fichiers */
+    linkUrl: allLinks[0]?.h || '', /* compat. rétrocompatible */
   };
 
   try{
@@ -875,7 +989,8 @@ async function submitCard(){
   btn.disabled=false;btn.textContent='▸ Ajouter la fiche';
 
   // Reset complet
-  ['f-fn','f-ln','f-age','f-bio','f-link','f-discord','f-photo-url'].forEach(id=>document.getElementById(id).value='');
+  ['f-fn','f-ln','f-age','f-bio','f-discord','f-photo-url'].forEach(id=>document.getElementById(id).value='');
+  clearLinks();
   document.getElementById('f-race').value='';
   updateRaceSpecific('');
   ['f-str','f-agi','f-spd','f-int','f-mana','f-res','f-cha','f-aura'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='0';});
