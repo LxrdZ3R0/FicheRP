@@ -14,7 +14,7 @@
   const TRACKS = [
     /* Ajouter les URLs des fichiers audio Firebase Storage ou externes */
     /* Exemple : 'https://firebasestorage.googleapis.com/...' */
-    /* Pour l'instant : silence (placeholder) — remplacer par les vraies URLs */
+    'https://firebasestorage.googleapis.com/v0/b/jaharta-rp.firebasestorage.app/o/audio%2FThe%20Rebel%20Path.mp3?alt=media&token=3401b5b9-6c2e-47e7-a982-5fd0e8dff5bc'
   ];
 
   /* Si aucune track configurée, ne pas afficher le player */
