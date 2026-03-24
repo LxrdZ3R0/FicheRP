@@ -1,85 +1,89 @@
 /* ═══════════════════════════════════════════════════════════════
    js/music-player.js — Player audio ambiance Jaharta
-   ═══════════════════════════════════════════════════════════════
-   - Injecte un player fixe en bas à droite sur toutes les pages
-   - Autoplay silencieux au premier chargement (muted par défaut)
-   - Click sur l'icône → unmute + play (contourne les restrictions browser)
-   - Persiste muted/volume dans localStorage
-   - Source audio : configurer TRACK_URL ci-dessous
+   - Deux pistes en rotation automatique
+   - Lecture continue entre les pages via sessionStorage
+   - Player fixe en bas à droite, au-dessus du bouton debug
    ═══════════════════════════════════════════════════════════════ */
 
-(function() {
+(function () {
 
-  /* ── Config — remplacer par l'URL de la musique ── */
   const TRACKS = [
-    /* Ajouter les URLs des fichiers audio Firebase Storage ou externes */
-    /* Exemple : 'https://firebasestorage.googleapis.com/...' */
-    /* Pour l'instant : silence (placeholder) — remplacer par les vraies URLs */
+    'https://firebasestorage.googleapis.com/v0/b/jaharta-rp.firebasestorage.app/o/audio%2FThe%20Rebel%20Path.mp3?alt=media&token=3401b5b9-6c2e-47e7-a982-5fd0e8dff5bc',
+    'https://firebasestorage.googleapis.com/v0/b/jaharta-rp.firebasestorage.app/o/audio%2F%C3%B8fdream%20-%20thelema%20(slowed%20%26%20bass%20boosted).mp3?alt=media&token=e42405d3-bcd9-4ff5-974e-622d79215bce',
   ];
 
-  /* Si aucune track configurée, ne pas afficher le player */
-  if (!TRACKS.length) {
-    console.info('[MusicPlayer] Aucune track configurée — player masqué.');
-    return;
+  /* ── État persisté en sessionStorage (survit à la navigation) ── */
+  const SK = 'jmp_state';
+  function load() {
+    try { return JSON.parse(sessionStorage.getItem(SK)) || {}; } catch { return {}; }
+  }
+  function save(s) {
+    try { sessionStorage.setItem(SK, JSON.stringify(s)); } catch {}
   }
 
-  /* ── État persisté ── */
-  const STORAGE_KEY = 'jaharta_music';
-  function loadState() {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch { return {}; }
-  }
-  function saveState(s) {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); } catch {}
-  }
-
-  let state = loadState();
-  let muted   = state.muted  !== false; /* muted par défaut */
-  let volume  = state.volume ?? 0.35;
-  let trackIdx = state.trackIdx ?? 0;
+  let st       = load();
+  let trackIdx = st.trackIdx ?? 0;
+  let volume   = st.volume   ?? 0.35;
+  let muted    = st.muted    !== false; /* muted par défaut */
   let playing  = false;
 
+  /* ── Sauvegarder la position avant navigation ── */
+  window.addEventListener('beforeunload', () => {
+    save({
+      trackIdx,
+      volume,
+      muted,
+      currentTime : audio.currentTime,
+      wasPlaying  : playing,
+    });
+  });
+
   /* ── Élément audio ── */
-  const audio = new Audio();
-  audio.loop    = TRACKS.length === 1;
+  const audio   = new Audio();
   audio.volume  = muted ? 0 : volume;
   audio.preload = 'auto';
-  audio.src = TRACKS[trackIdx % TRACKS.length]; /* charger immédiatement */
 
-  /* Logs d'erreur visibles en console */
-  audio.addEventListener('error', (e) => {
-    const err = audio.error;
-    const codes = {1:'ABORTED',2:'NETWORK',3:'DECODE',4:'SRC_NOT_SUPPORTED'};
-    console.error('[MusicPlayer] Erreur audio:', codes[err?.code] || err?.code, err?.message, audio.src);
-  });
-  audio.addEventListener('canplaythrough', () => {
-    console.info('[MusicPlayer] Audio prêt :', audio.src.slice(0,60)+'...');
-  });
+  function loadTrack(idx, startTime) {
+    audio.src         = TRACKS[idx % TRACKS.length];
+    audio.currentTime = 0;
+    if (startTime > 0) {
+      audio.addEventListener('loadedmetadata', function seek() {
+        audio.currentTime = Math.min(startTime, audio.duration - 0.1);
+        audio.removeEventListener('loadedmetadata', seek);
+      });
+    }
+  }
 
-  /* Track suivante à la fin */
   audio.addEventListener('ended', () => {
-    if (TRACKS.length > 1) {
+    trackIdx = (trackIdx + 1) % TRACKS.length;
+    loadTrack(trackIdx, 0);
+    audio.play().catch(() => {});
+    save({ trackIdx, volume, muted, currentTime: 0, wasPlaying: true });
+  });
+
+  audio.addEventListener('error', () => {
+    const c = audio.error?.code;
+    if (c === 3 || c === 4) {
+      /* Decode error ou format non supporté → essayer la piste suivante */
       trackIdx = (trackIdx + 1) % TRACKS.length;
-      audio.src = TRACKS[trackIdx];
-      audio.play().catch(e => console.warn('[MusicPlayer] ended→play:', e.message));
+      loadTrack(trackIdx, 0);
+      if (playing) audio.play().catch(() => {});
     }
   });
 
-  /* ── CSS injecté ── */
+  /* ── CSS ── */
   const style = document.createElement('style');
   style.textContent = `
     #jmp {
       position: fixed;
-      bottom: 72px;
+      /* Au-dessus du bouton debug (bottom:16px) avec marge */
+      bottom: 70px;
       right: 20px;
       z-index: 8000;
       display: flex;
       align-items: center;
-      gap: 0;
       font-family: 'Share Tech Mono', monospace;
-      transition: all .3s ease;
     }
-
-    /* Panneau étendu (hover) */
     #jmp:hover #jmp-panel { opacity:1; transform:translateX(0); pointer-events:all; }
 
     #jmp-btn {
@@ -97,121 +101,81 @@
       position: relative;
       transition: border-color .2s, box-shadow .2s;
     }
-    #jmp-btn:hover {
-      border-color: #00f5ff;
-      box-shadow: 0 0 16px rgba(0,245,255,0.25);
-    }
-    #jmp-btn svg { width: 16px; height: 16px; }
+    #jmp-btn:hover { border-color:#00f5ff; box-shadow:0 0 16px rgba(0,245,255,0.25); }
+    #jmp-btn svg { width:16px; height:16px; }
 
-    /* Barre d'onde animée (visible si playing) */
+    /* Barres d'onde animation lecture */
     #jmp-wave {
-      display: flex;
-      align-items: flex-end;
-      gap: 2px;
-      height: 14px;
-      position: absolute;
-      bottom: 6px;
-      left: 50%;
-      transform: translateX(-50%);
-      opacity: 0;
-      transition: opacity .3s;
+      display: flex; align-items: flex-end; gap: 2px;
+      height: 14px; position: absolute; bottom: 6px;
+      left: 50%; transform: translateX(-50%);
+      opacity: 0; transition: opacity .3s;
     }
     #jmp-btn.playing #jmp-wave { opacity: 1; }
-    #jmp-btn.playing svg { opacity: 0.25; }
+    #jmp-btn.playing svg { opacity: 0.2; }
     #jmp-wave span {
-      display: block;
-      width: 2px;
-      background: #00f5ff;
-      border-radius: 1px;
-      animation: jmp-bar 1.1s ease-in-out infinite;
+      display:block; width:2px; background:#00f5ff;
+      border-radius:1px; animation: jmp-bar 1.1s ease-in-out infinite;
     }
-    #jmp-wave span:nth-child(1) { height: 5px;  animation-delay: 0s;    }
-    #jmp-wave span:nth-child(2) { height: 10px; animation-delay: 0.15s; }
-    #jmp-wave span:nth-child(3) { height: 7px;  animation-delay: 0.3s;  }
-    #jmp-wave span:nth-child(4) { height: 12px; animation-delay: 0.1s;  }
-    #jmp-wave span:nth-child(5) { height: 5px;  animation-delay: 0.25s; }
+    #jmp-wave span:nth-child(1){height:5px; animation-delay:0s}
+    #jmp-wave span:nth-child(2){height:10px;animation-delay:.15s}
+    #jmp-wave span:nth-child(3){height:7px; animation-delay:.3s}
+    #jmp-wave span:nth-child(4){height:12px;animation-delay:.1s}
+    #jmp-wave span:nth-child(5){height:5px; animation-delay:.25s}
     @keyframes jmp-bar {
-      0%,100% { transform: scaleY(1);   opacity: .7; }
-      50%      { transform: scaleY(.3); opacity: 1;  }
+      0%,100%{transform:scaleY(1);opacity:.7}
+      50%{transform:scaleY(.3);opacity:1}
     }
 
-    /* Panneau volume + track */
+    /* Panneau étendu au hover */
     #jmp-panel {
-      display: flex;
-      align-items: center;
-      gap: 10px;
+      display: flex; align-items: center; gap: 10px;
       background: rgba(4,6,15,0.92);
-      border: 1px solid rgba(0,245,255,0.2);
-      border-right: none;
-      padding: 0 14px;
-      height: 42px;
-      opacity: 0;
-      transform: translateX(12px);
+      border: 1px solid rgba(0,245,255,0.2); border-right: none;
+      padding: 0 14px; height: 42px;
+      opacity: 0; transform: translateX(12px);
       pointer-events: none;
       transition: opacity .25s, transform .25s;
       white-space: nowrap;
     }
-
     #jmp-label {
-      font-size: .52rem;
-      letter-spacing: .18em;
-      color: rgba(0,245,255,0.5);
-      text-transform: uppercase;
-      user-select: none;
+      font-size:.52rem; letter-spacing:.18em;
+      color:rgba(0,245,255,0.5); text-transform:uppercase; user-select:none;
     }
-
     #jmp-vol {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 72px;
-      height: 2px;
-      background: rgba(0,245,255,0.2);
-      outline: none;
-      cursor: pointer;
+      -webkit-appearance:none; appearance:none;
+      width:72px; height:2px;
+      background:rgba(0,245,255,0.2); outline:none; cursor:pointer;
     }
     #jmp-vol::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 10px;
-      height: 10px;
-      background: #00f5ff;
-      clip-path: polygon(50% 0%,100% 50%,50% 100%,0% 50%);
-      cursor: pointer;
+      -webkit-appearance:none; width:10px; height:10px;
+      background:#00f5ff;
+      clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%);
+      cursor:pointer;
     }
     #jmp-vol::-moz-range-thumb {
-      width: 10px;
-      height: 10px;
-      background: #00f5ff;
-      border: none;
-      cursor: pointer;
+      width:10px; height:10px; background:#00f5ff; border:none; cursor:pointer;
     }
-
     #jmp-mute {
-      font-size: .65rem;
-      color: rgba(0,245,255,0.45);
-      cursor: pointer;
-      background: none;
-      border: none;
-      padding: 0;
-      line-height: 1;
-      transition: color .2s;
-      font-family: 'Share Tech Mono', monospace;
+      font-size:.65rem; color:rgba(0,245,255,0.45); cursor:pointer;
+      background:none; border:none; padding:0; line-height:1;
+      transition:color .2s; font-family:'Share Tech Mono',monospace;
     }
-    #jmp-mute:hover { color: #00f5ff; }
-
-    @media (max-width: 600px) {
-      #jmp { bottom: 68px; right: 12px; }
-      #jmp-panel { display: none; }
+    #jmp-mute:hover { color:#00f5ff; }
+    @media(max-width:600px){
+      #jmp { bottom:66px; right:14px; }
+      #jmp-panel { display:none; }
     }
   `;
   document.head.appendChild(style);
 
-  /* ── HTML injecté ── */
+  /* ── HTML ── */
   const wrap = document.createElement('div');
   wrap.id = 'jmp';
   wrap.innerHTML = `
     <div id="jmp-panel">
       <span id="jmp-label">AMBIANCE</span>
-      <input type="range" id="jmp-vol" min="0" max="1" step="0.01" value="${volume}">
+      <input type="range" id="jmp-vol" min="0" max="1" step="0.01" value="${volume}" title="Volume">
       <button id="jmp-mute">${muted ? 'OFF' : 'ON'}</button>
     </div>
     <button id="jmp-btn" title="Musique d'ambiance">
@@ -226,88 +190,99 @@
   `;
   document.body.appendChild(wrap);
 
-  const btn    = document.getElementById('jmp-btn');
-  const volSlider = document.getElementById('jmp-vol');
-  const muteBtn   = document.getElementById('jmp-mute');
+  const btn     = document.getElementById('jmp-btn');
+  const volEl   = document.getElementById('jmp-vol');
+  const muteBtn = document.getElementById('jmp-mute');
 
-  /* ── Helpers ── */
   function setPlaying(v) {
     playing = v;
     btn.classList.toggle('playing', v);
   }
-
   function syncMute() {
     audio.volume = muted ? 0 : volume;
     muteBtn.textContent = muted ? 'OFF' : 'ON';
     muteBtn.style.color = muted ? 'rgba(0,245,255,0.25)' : 'rgba(0,245,255,0.8)';
   }
 
-  /* ── Événements ── */
+  /* ── Charger la piste (reprendre si même session) ── */
+  loadTrack(trackIdx, st.currentTime || 0);
+  syncMute();
+
+  /* ── Reprendre automatiquement si on naviguait en jouant ── */
+  if (st.wasPlaying) {
+    const tryResume = async () => {
+      try {
+        muted = false;
+        syncMute();
+        await audio.play();
+        setPlaying(true);
+      } catch { /* bloqué — l'utilisateur devra cliquer */ }
+      document.removeEventListener('click',    tryResume);
+      document.removeEventListener('keydown',  tryResume);
+      document.removeEventListener('touchend', tryResume);
+    };
+    /* Tentative immédiate puis sur premier interact */
+    audio.addEventListener('canplay', function tryOnce() {
+      audio.removeEventListener('canplay', tryOnce);
+      tryResume();
+    });
+    document.addEventListener('click',    tryResume, { passive: true });
+    document.addEventListener('keydown',  tryResume, { passive: true });
+    document.addEventListener('touchend', tryResume, { passive: true });
+  }
+
+  /* ── Click bouton play/pause ── */
   btn.addEventListener('click', async () => {
     if (!playing) {
       muted = false;
       syncMute();
-      /* src déjà chargée au démarrage */
       try {
         await audio.play();
         setPlaying(true);
-        console.info('[MusicPlayer] Lecture démarrée');
-      } catch(e) {
+      } catch (e) {
         console.error('[MusicPlayer] play() échoué:', e.name, e.message);
-        /* Afficher l'erreur sur le bouton temporairement */
         btn.style.borderColor = '#ff006e';
-        btn.title = 'Erreur: ' + e.message;
         setTimeout(() => { btn.style.borderColor = ''; }, 3000);
       }
     } else {
       audio.pause();
       setPlaying(false);
     }
-    saveState({ muted, volume, trackIdx });
+    save({ trackIdx, volume, muted, currentTime: audio.currentTime, wasPlaying: playing });
   });
 
-  muteBtn.addEventListener('click', (e) => {
+  muteBtn.addEventListener('click', e => {
     e.stopPropagation();
     muted = !muted;
     syncMute();
     if (!muted && !playing) {
       audio.play().then(() => setPlaying(true)).catch(() => {});
     }
-    saveState({ muted, volume, trackIdx });
+    save({ trackIdx, volume, muted, currentTime: audio.currentTime, wasPlaying: playing });
   });
 
-  volSlider.addEventListener('input', (e) => {
+  volEl.addEventListener('input', e => {
     volume = parseFloat(e.target.value);
     if (!muted) audio.volume = volume;
-    saveState({ muted, volume, trackIdx });
+    save({ trackIdx, volume, muted, currentTime: audio.currentTime, wasPlaying: playing });
   });
 
-  /* ── Init visuel ── */
-  syncMute();
-
-  /* ── Autoplay au premier interact (contourne la politique browser) ──
-     Les navigateurs autorisent l'audio après n'importe quelle interaction
-     utilisateur (click, keydown, scroll). On tente silencieusement. */
-  const _tryAutoplay = async (e) => {
-    /* Ignorer les clicks sur le player lui-même — géré par btn.addEventListener */
-    if (document.getElementById('jmp')?.contains(e.target)) return;
-    document.removeEventListener('click',    _tryAutoplay);
-    document.removeEventListener('keydown',  _tryAutoplay);
-    document.removeEventListener('touchend', _tryAutoplay);
-    try {
-      muted = false;
-      audio.volume = volume;
-      syncMute();
-      await audio.play();
-      setPlaying(true);
-      console.info('[MusicPlayer] Autoplay réussi');
-    } catch(e) {
-      console.info('[MusicPlayer] Autoplay bloqué, click manuel requis');
-    }
-  };
-  document.addEventListener('click',    _tryAutoplay, { once: false });
-  document.addEventListener('keydown',  _tryAutoplay, { once: false });
-  document.addEventListener('touchend', _tryAutoplay, { once: false });
-  console.info('[MusicPlayer] En attente d\'interaction pour démarrer...');
+  /* ── Premier visit : autoplay au premier interact ── */
+  if (!st.wasPlaying) {
+    const tryFirst = async (e) => {
+      if (document.getElementById('jmp')?.contains(e.target)) return;
+      document.removeEventListener('click',    tryFirst);
+      document.removeEventListener('keydown',  tryFirst);
+      document.removeEventListener('touchend', tryFirst);
+      try {
+        muted = false; syncMute();
+        await audio.play();
+        setPlaying(true);
+      } catch { /* silencieux */ }
+    };
+    document.addEventListener('click',    tryFirst, { passive: true });
+    document.addEventListener('keydown',  tryFirst, { passive: true });
+    document.addEventListener('touchend', tryFirst, { passive: true });
+  }
 
 })();
