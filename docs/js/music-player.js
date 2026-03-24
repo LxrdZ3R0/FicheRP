@@ -14,7 +14,7 @@
   const TRACKS = [
     /* Ajouter les URLs des fichiers audio Firebase Storage ou externes */
     /* Exemple : 'https://firebasestorage.googleapis.com/...' */
-    'https://firebasestorage.googleapis.com/v0/b/jaharta-rp.firebasestorage.app/o/audio%2FThe%20Rebel%20Path.mp3?alt=media&token=3401b5b9-6c2e-47e7-a982-5fd0e8dff5bc',
+    /* Pour l'instant : silence (placeholder) — remplacer par les vraies URLs */
   ];
 
   /* Si aucune track configurée, ne pas afficher le player */
@@ -40,17 +40,27 @@
 
   /* ── Élément audio ── */
   const audio = new Audio();
-  audio.loop   = TRACKS.length === 1;
-  audio.volume = muted ? 0 : volume;
-  audio.src    = TRACKS[trackIdx % TRACKS.length];
-  audio.preload = 'auto';
+  audio.loop    = TRACKS.length === 1;
+  audio.volume  = muted ? 0 : volume;
+  audio.preload = 'none'; /* ne pas précharger — attend le premier click */
+  audio.crossOrigin = 'anonymous';
+
+  /* Logs d'erreur visibles en console */
+  audio.addEventListener('error', (e) => {
+    const err = audio.error;
+    const codes = {1:'ABORTED',2:'NETWORK',3:'DECODE',4:'SRC_NOT_SUPPORTED'};
+    console.error('[MusicPlayer] Erreur audio:', codes[err?.code] || err?.code, err?.message, audio.src);
+  });
+  audio.addEventListener('canplaythrough', () => {
+    console.info('[MusicPlayer] Audio prêt :', audio.src.slice(0,60)+'...');
+  });
 
   /* Track suivante à la fin */
   audio.addEventListener('ended', () => {
     if (TRACKS.length > 1) {
       trackIdx = (trackIdx + 1) % TRACKS.length;
       audio.src = TRACKS[trackIdx];
-      audio.play().catch(() => {});
+      audio.play().catch(e => console.warn('[MusicPlayer] ended→play:', e.message));
     }
   });
 
@@ -235,14 +245,23 @@
   /* ── Événements ── */
   btn.addEventListener('click', async () => {
     if (!playing) {
-      /* Premier click : unmute + play */
       muted = false;
       syncMute();
+      /* Charger la src au premier click seulement (évite les erreurs CORS à froid) */
+      if (!audio.src || audio.src === window.location.href) {
+        audio.src = TRACKS[trackIdx % TRACKS.length];
+        console.info('[MusicPlayer] Chargement :', audio.src.slice(0,80));
+      }
       try {
         await audio.play();
         setPlaying(true);
+        console.info('[MusicPlayer] Lecture démarrée');
       } catch(e) {
-        console.warn('[MusicPlayer] Autoplay bloqué:', e.message);
+        console.error('[MusicPlayer] play() échoué:', e.name, e.message);
+        /* Afficher l'erreur sur le bouton temporairement */
+        btn.style.borderColor = '#ff006e';
+        btn.title = 'Erreur: ' + e.message;
+        setTimeout(() => { btn.style.borderColor = ''; }, 3000);
       }
     } else {
       audio.pause();
@@ -270,14 +289,8 @@
   /* ── Init visuel ── */
   syncMute();
 
-  /* ── Autoplay silencieux au chargement ── */
-  /* Les navigateurs bloquent l'autoplay — on joue uniquement si l'utilisateur
-     a déjà interagi (état sauvegardé = non muted depuis une session précédente) */
-  if (!muted && state.muted === false) {
-    window.addEventListener('click', function tryPlay() {
-      audio.play().then(() => setPlaying(true)).catch(() => {});
-      window.removeEventListener('click', tryPlay);
-    }, { once: true });
-  }
+  /* Autoplay désactivé — le navigateur le bloque de toute façon.
+     L'utilisateur doit cliquer sur le bouton pour démarrer. */
+  console.info('[MusicPlayer] Player prêt. Cliquez sur le bouton pour démarrer.');
 
 })();
