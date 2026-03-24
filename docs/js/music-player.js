@@ -5,6 +5,7 @@
 (function () {
 
   var TRACKS = [
+    'https://firebasestorage.googleapis.com/v0/b/jaharta-rp.firebasestorage.app/o/audio%2FThe%20Rebel%20Path.mp3?alt=media&token=3401b5b9-6c2e-47e7-a982-5fd0e8dff5bc',
     'https://firebasestorage.googleapis.com/v0/b/jaharta-rp.firebasestorage.app/o/audio%2F%C3%B8fdream%20-%20thelema%20(slowed%20%26%20bass%20boosted).mp3?alt=media&token=e42405d3-bcd9-4ff5-974e-622d79215bce',
   ];
 
@@ -43,9 +44,9 @@
   /* ── CSS ── */
   var s = document.createElement('style');
   s.textContent = [
-    '#jmp{position:fixed;bottom:70px;right:20px;z-index:8000;display:flex;align-items:center;font-family:"Share Tech Mono",monospace}',
+    '#jmp{position:fixed;bottom:70px;right:20px;z-index:90000;display:flex;align-items:center;font-family:"Share Tech Mono",monospace}',
     '#jmp:hover #jmp-panel{opacity:1;transform:translateX(0);pointer-events:all}',
-    '#jmp-btn{width:42px;height:42px;background:rgba(4,6,15,.92);border:1px solid rgba(0,245,255,.35);color:#00f5ff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;transition:border-color .2s,box-shadow .2s;clip-path:polygon(8px 0%,100% 0%,100% calc(100% - 8px),calc(100% - 8px) 100%,0% 100%,0% 8px)}',
+    '#jmp-btn{width:42px;height:42px;background:rgba(4,6,15,.96);border:1px solid rgba(0,245,255,.6);color:#00f5ff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;transition:border-color .2s,box-shadow .2s;clip-path:polygon(8px 0%,100% 0%,100% calc(100% - 8px),calc(100% - 8px) 100%,0% 100%,0% 8px)}',
     '#jmp-btn:hover{border-color:#00f5ff;box-shadow:0 0 16px rgba(0,245,255,.3)}',
     '#jmp-btn svg{width:16px;height:16px;transition:opacity .3s}',
     '#jmp-btn.playing svg{opacity:.15}',
@@ -100,14 +101,28 @@
   }
   syncMute();
 
+  function doPlay() {
+    muted = false; syncMute();
+    return audio.play().then(function() { setPlaying(true); }).catch(function(e) {
+      console.error('[JMP]', e.message);
+    });
+  }
+
   btn.addEventListener('click', function() {
     if (!playing) {
-      muted = false; syncMute();
-      audio.play().then(function() { setPlaying(true); }).catch(function(e) {
-        console.error('[JMP]', e.message);
-        btn.style.borderColor = '#ff006e';
-        setTimeout(function(){ btn.style.borderColor = ''; }, 2000);
-      });
+      /* Si l'audio n'est pas encore prêt, attendre canplay */
+      if (audio.readyState < 3) {
+        btn.style.opacity = '0.5';
+        audio.addEventListener('canplay', function() {
+          btn.style.opacity = '';
+          doPlay();
+        }, { once: true });
+        /* Forcer le chargement si pas démarré */
+        if (!audio.src) audio.src = TRACKS[idx % TRACKS.length];
+        audio.load();
+      } else {
+        doPlay();
+      }
     } else {
       audio.pause(); setPlaying(false);
     }
@@ -142,7 +157,13 @@
       document.removeEventListener('keydown',  tryPlay);
       document.removeEventListener('touchend', tryPlay);
       muted = false; syncMute();
-      audio.play().then(function(){ setPlaying(true); }).catch(function(){});
+      if (audio.readyState >= 3) {
+        audio.play().then(function(){ setPlaying(true); }).catch(function(){});
+      } else {
+        audio.addEventListener('canplay', function() {
+          audio.play().then(function(){ setPlaying(true); }).catch(function(){});
+        }, { once: true });
+      }
     }
     document.addEventListener('click',    tryPlay, { passive: true });
     document.addEventListener('keydown',  tryPlay, { passive: true });
