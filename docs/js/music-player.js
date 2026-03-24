@@ -43,7 +43,6 @@
   audio.loop    = TRACKS.length === 1;
   audio.volume  = muted ? 0 : volume;
   audio.preload = 'auto';
-  audio.crossOrigin = 'anonymous';
   audio.src = TRACKS[trackIdx % TRACKS.length]; /* charger immédiatement */
 
   /* Logs d'erreur visibles en console */
