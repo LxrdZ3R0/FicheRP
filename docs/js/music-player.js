@@ -14,7 +14,7 @@
   const TRACKS = [
     /* Ajouter les URLs des fichiers audio Firebase Storage ou externes */
     /* Exemple : 'https://firebasestorage.googleapis.com/...' */
-    'https://firebasestorage.googleapis.com/v0/b/jaharta-rp.firebasestorage.app/o/audio%2FThe%20Rebel%20Path.mp3?alt=media&token=3401b5b9-6c2e-47e7-a982-5fd0e8dff5bc'
+    /* Pour l'instant : silence (placeholder) — remplacer par les vraies URLs */
   ];
 
   /* Si aucune track configurée, ne pas afficher le player */
@@ -42,8 +42,9 @@
   const audio = new Audio();
   audio.loop    = TRACKS.length === 1;
   audio.volume  = muted ? 0 : volume;
-  audio.preload = 'none'; /* ne pas précharger — attend le premier click */
+  audio.preload = 'auto';
   audio.crossOrigin = 'anonymous';
+  audio.src = TRACKS[trackIdx % TRACKS.length]; /* charger immédiatement */
 
   /* Logs d'erreur visibles en console */
   audio.addEventListener('error', (e) => {
@@ -69,8 +70,8 @@
   style.textContent = `
     #jmp {
       position: fixed;
-      bottom: 24px;
-      right: 24px;
+      bottom: 72px;
+      right: 20px;
       z-index: 8000;
       display: flex;
       align-items: center;
@@ -199,7 +200,7 @@
     #jmp-mute:hover { color: #00f5ff; }
 
     @media (max-width: 600px) {
-      #jmp { bottom: 14px; right: 14px; }
+      #jmp { bottom: 68px; right: 12px; }
       #jmp-panel { display: none; }
     }
   `;
@@ -247,11 +248,7 @@
     if (!playing) {
       muted = false;
       syncMute();
-      /* Charger la src au premier click seulement (évite les erreurs CORS à froid) */
-      if (!audio.src || audio.src === window.location.href) {
-        audio.src = TRACKS[trackIdx % TRACKS.length];
-        console.info('[MusicPlayer] Chargement :', audio.src.slice(0,80));
-      }
+      /* src déjà chargée au démarrage */
       try {
         await audio.play();
         setPlaying(true);
@@ -289,8 +286,29 @@
   /* ── Init visuel ── */
   syncMute();
 
-  /* Autoplay désactivé — le navigateur le bloque de toute façon.
-     L'utilisateur doit cliquer sur le bouton pour démarrer. */
-  console.info('[MusicPlayer] Player prêt. Cliquez sur le bouton pour démarrer.');
+  /* ── Autoplay au premier interact (contourne la politique browser) ──
+     Les navigateurs autorisent l'audio après n'importe quelle interaction
+     utilisateur (click, keydown, scroll). On tente silencieusement. */
+  const _tryAutoplay = async (e) => {
+    /* Ignorer les clicks sur le player lui-même — géré par btn.addEventListener */
+    if (document.getElementById('jmp')?.contains(e.target)) return;
+    document.removeEventListener('click',    _tryAutoplay);
+    document.removeEventListener('keydown',  _tryAutoplay);
+    document.removeEventListener('touchend', _tryAutoplay);
+    try {
+      muted = false;
+      audio.volume = volume;
+      syncMute();
+      await audio.play();
+      setPlaying(true);
+      console.info('[MusicPlayer] Autoplay réussi');
+    } catch(e) {
+      console.info('[MusicPlayer] Autoplay bloqué, click manuel requis');
+    }
+  };
+  document.addEventListener('click',    _tryAutoplay, { once: false });
+  document.addEventListener('keydown',  _tryAutoplay, { once: false });
+  document.addEventListener('touchend', _tryAutoplay, { once: false });
+  console.info('[MusicPlayer] En attente d\'interaction pour démarrer...');
 
 })();
