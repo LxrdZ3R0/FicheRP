@@ -6,6 +6,8 @@
    ═══════════════════════════════════════════════════════════════ */
 
 (function () {
+  /* Attendre que le DOM soit prêt avant d'injecter le player */
+  function _init() {
 
   const TRACKS = [
     'https://firebasestorage.googleapis.com/v0/b/jaharta-rp.firebasestorage.app/o/audio%2FThe%20Rebel%20Path.mp3?alt=media&token=3401b5b9-6c2e-47e7-a982-5fd0e8dff5bc',
@@ -267,10 +269,10 @@
     save({ trackIdx, volume, muted, currentTime: audio.currentTime, wasPlaying: playing });
   });
 
-  /* ── Premier visit : autoplay au premier interact ── */
+  /* ── Autoplay : tenter immédiatement, sinon attendre premier interact ── */
   if (!st.wasPlaying) {
     const tryFirst = async (e) => {
-      if (document.getElementById('jmp')?.contains(e.target)) return;
+      if (e && document.getElementById('jmp')?.contains(e.target)) return;
       document.removeEventListener('click',    tryFirst);
       document.removeEventListener('keydown',  tryFirst);
       document.removeEventListener('touchend', tryFirst);
@@ -278,11 +280,26 @@
         muted = false; syncMute();
         await audio.play();
         setPlaying(true);
-      } catch { /* silencieux */ }
+        save({ trackIdx, volume, muted: false, currentTime: 0, wasPlaying: true });
+      } catch { /* bloqué par le browser — l'interact va le déclencher */ }
     };
+    /* Tenter directement dès que l'audio est prêt */
+    audio.addEventListener('canplay', function onReady() {
+      audio.removeEventListener('canplay', onReady);
+      tryFirst(null);
+    }, { once: true });
+    /* Fallback : premier interact utilisateur */
     document.addEventListener('click',    tryFirst, { passive: true });
     document.addEventListener('keydown',  tryFirst, { passive: true });
     document.addEventListener('touchend', tryFirst, { passive: true });
+  }
+
+  } /* fin _init */
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', _init, { once: true });
+  } else {
+    _init();
   }
 
 })();
