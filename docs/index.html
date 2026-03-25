@@ -1,4 +1,19 @@
 <!DOCTYPE html>
+<!--
+  ═══════════════════════════════════════════════════════════════════════
+  index.html — Page d'accueil de Jaharta RP (v5 — Redesign)
+  ───────────────────────────────────────────────────────────────────────
+  REDESIGN v5 :
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │ HERO       Animated mesh gradient + enhanced particle system        │
+  │ SCROLL     IntersectionObserver-based reveal animations             │
+  │ CARDS      3D tilt hover + staggered entrance + glow effects        │
+  │ NAV        Mobile drawer + scroll progress bar                      │
+  │ SECTIONS   Features strip, enhanced Discord, richer footer          │
+  │ POLISH     Noise texture, geometric decorations, micro-interactions │
+  └─────────────────────────────────────────────────────────────────────┘
+  ═══════════════════════════════════════════════════════════════════════
+-->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -6,90 +21,708 @@
 <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png">
 <link rel="apple-touch-icon" sizes="180x180" href="img/favicon-180.png">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<meta name="description" content="Jaharta RP — Un monde où magie et technologie s'entrelacent.">
-<meta name="theme-color" content="#06060c">
-<title>JAHARTA // RP</title>
+<title>JAHARTA // Accueil</title>
+
+<!-- Open Graph -->
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://www.jaharta.fr/">
 <meta property="og:title" content="JAHARTA // RP">
 <meta property="og:description" content="Univers Jaharta — Explorez, créez votre personnage et rejoignez l'aventure.">
 <meta property="og:image" content="https://www.jaharta.fr/img/banner.png?v=3">
-<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
 <meta property="og:site_name" content="Jaharta RP">
+<meta name="theme-color" content="#00f5ff">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="JAHARTA // RP">
+<meta name="twitter:description" content="Univers Jaharta — Explorez, créez votre personnage et rejoignez l'aventure.">
+<meta name="twitter:image" content="https://www.jaharta.fr/img/banner.png?v=3">
 
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;800;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/jaharta.css">
+
 <style>
-/* ═══ INDEX — Hero + Page-specific ═══ */
-.hero{position:relative;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;overflow:hidden}
-.hero-mesh{position:absolute;inset:0;z-index:0;overflow:hidden}
-.hero-mesh::before{content:'';position:absolute;width:180%;height:180%;top:-40%;left:-40%;background:radial-gradient(ellipse 600px 400px at 20% 30%,rgba(0,240,255,.08),transparent),radial-gradient(ellipse 500px 500px at 80% 20%,rgba(255,42,138,.06),transparent),radial-gradient(ellipse 400px 400px at 60% 80%,rgba(255,214,10,.04),transparent),radial-gradient(ellipse 800px 600px at 50% 50%,rgba(180,74,255,.03),transparent);animation:meshDrift 25s ease-in-out infinite}
-@keyframes meshDrift{0%,100%{transform:translate(0) scale(1)}25%{transform:translate(3%,-2%) scale(1.02)}50%{transform:translate(-2%,3%) scale(.98)}75%{transform:translate(1%,-1%) scale(1.01)}}
-.hero-mesh::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 65% 55% at 50% 45%,transparent 30%,var(--bg-deep) 100%)}
-.hero-grid{position:absolute;inset:0;background-image:linear-gradient(90deg,#00f0ff06 1px,transparent 1px),linear-gradient(0deg,#00f0ff06 1px,transparent 1px);background-size:80px 80px;mask-image:radial-gradient(ellipse 50% 50% at 50% 50%,black 0%,transparent 70%);-webkit-mask-image:radial-gradient(ellipse 50% 50% at 50% 50%,black 0%,transparent 70%)}
-.hero-overlay{position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 50% 50%,transparent 0%,var(--bg-deep) 100%),linear-gradient(180deg,#06060c80 0%,transparent 30%,transparent 70%,var(--bg-deep) 100%)}
-.hero-cityscape{position:absolute;bottom:0;left:0;right:0;z-index:0;pointer-events:none;height:50%;min-height:300px;overflow:hidden}
-.hero-cityscape svg{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:max(100%,1600px);height:100%}
-.hero-horizon{position:absolute;bottom:26%;left:0;right:0;height:2px;z-index:1;background:linear-gradient(90deg,transparent 5%,rgba(0,240,255,.06) 20%,rgba(0,240,255,.18) 40%,rgba(255,42,138,.12) 50%,rgba(0,240,255,.18) 60%,transparent 95%);box-shadow:0 0 40px 8px rgba(0,240,255,.04)}
-.hero-fog{position:absolute;left:0;right:0;z-index:1;pointer-events:none}
-.hero-fog-1{bottom:20%;height:100px;background:linear-gradient(180deg,transparent,rgba(0,240,255,.015) 40%,rgba(6,6,12,.3));animation:fogD1 30s ease-in-out infinite}
-.hero-fog-2{bottom:13%;height:70px;background:linear-gradient(180deg,transparent,rgba(255,42,138,.01) 50%,rgba(6,6,12,.2));animation:fogD2 22s ease-in-out infinite}
-@keyframes fogD1{0%,100%{transform:translateX(0);opacity:.7}50%{transform:translateX(3%);opacity:1}}
-@keyframes fogD2{0%,100%{transform:translateX(0);opacity:.5}50%{transform:translateX(-2%);opacity:.8}}
-@keyframes windowFlicker{0%,100%{opacity:var(--wo,.6)}10%{opacity:.2}12%{opacity:var(--wo,.6)}52%{opacity:.1}54%{opacity:var(--wo,.6)}}
-@keyframes signGlow{0%,100%{opacity:.35}30%{opacity:.6}60%{opacity:.25}80%{opacity:.55}}
-.hero-scanline{position:absolute;left:0;right:0;height:2px;z-index:2;background:linear-gradient(90deg,transparent,rgba(0,240,255,.12),transparent);animation:scanMove 8s linear infinite;pointer-events:none}
-@keyframes scanMove{0%{top:-2px}100%{top:100%}}
+/* ═══════════════════════════════════════════════════════════════
+   INDEX v5 — PAGE-SPECIFIC STYLES
+   ═══════════════════════════════════════════════════════════════ */
 
-.hero-content{position:relative;z-index:10;padding:2rem;max-width:860px;width:100%}
-.hero-eyebrow{font-family:var(--font-heading);font-size:.78rem;font-weight:500;letter-spacing:.45em;text-transform:uppercase;color:var(--cyan-dim);margin-bottom:28px;display:flex;align-items:center;justify-content:center;gap:14px;opacity:0;animation:fadeInUp .8s .3s forwards}
-.hero-eyebrow::before,.hero-eyebrow::after{content:'';width:40px;height:1px;background:linear-gradient(90deg,transparent,var(--magenta))}
-.hero-eyebrow::after{background:linear-gradient(90deg,var(--magenta),transparent)}
-.hero-title{font-family:var(--font-display);font-weight:900;font-size:clamp(3.5rem,10vw,8rem);line-height:.92;letter-spacing:.2em;color:#fff;position:relative;margin-bottom:6px;opacity:0;animation:fadeInUp 1s .5s forwards}
-.hero-title .glow-text{background:linear-gradient(135deg,var(--cyan),#80ffea 40%,var(--violet));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 0 30px #00f0ff40)}
-.hero-title::before,.hero-title::after{content:attr(data-text);position:absolute;inset:0;background:linear-gradient(135deg,var(--cyan),#80ffea 40%,var(--violet));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;opacity:0}
-.hero-title::before{animation:glitchT 4s infinite;clip-path:inset(0 0 65% 0)}
-.hero-title::after{animation:glitchB 4s infinite;clip-path:inset(65% 0 0 0)}
-@keyframes glitchT{0%,90%,100%{opacity:0;transform:translate(0)}92%{opacity:.8;transform:translate(-3px,-2px)}94%{opacity:0}96%{opacity:.6;transform:translate(3px,1px)}98%{opacity:0}}
-@keyframes glitchB{0%,90%,100%{opacity:0;transform:translate(0)}91%{opacity:.6;transform:translate(3px,2px)}93%{opacity:0}95%{opacity:.8;transform:translate(-2px,-1px)}97%{opacity:0}}
-.hero-subtitle{font-family:var(--font-body);font-size:1.05rem;font-weight:300;font-style:italic;color:var(--text-secondary);max-width:550px;margin:0 auto 2.5rem;opacity:0;animation:fadeInUp .8s 1.2s forwards}
-.hero-ctas{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-bottom:64px;opacity:0;animation:fadeInUp .8s 1.1s forwards}
-.hero-status{display:flex;gap:48px;justify-content:center;align-items:center;opacity:0;animation:fadeInUp .8s 1.3s forwards}
-.hs{text-align:center}
-.hs-num{font-family:var(--font-display);font-size:1.6rem;font-weight:800;color:var(--cyan);text-shadow:0 0 20px var(--cyan);display:flex;align-items:center;justify-content:center;gap:8px}
-.hs-lbl{font-family:var(--font-heading);font-size:.55rem;font-weight:500;color:var(--muted);letter-spacing:.18em;text-transform:uppercase;margin-top:4px}
-.hs-sep{width:1px;height:36px;background:linear-gradient(180deg,transparent,var(--border),transparent)}
-.scroll-hint{position:absolute;bottom:32px;left:50%;transform:translateX(-50%);z-index:3;display:flex;flex-direction:column;align-items:center;gap:8px;opacity:0;animation:fadeIn 1s 2s forwards}
-.scroll-hint-text{font-family:var(--font-heading);font-size:.55rem;font-weight:500;letter-spacing:.3em;color:var(--text-dim);text-transform:uppercase}
-.scroll-hint-line{width:1px;height:32px;position:relative;overflow:hidden;background:rgba(0,240,255,.1)}
-.scroll-hint-line::after{content:'';position:absolute;top:-100%;left:0;width:100%;height:50%;background:var(--cyan);animation:scrollP 2s ease-in-out infinite}
-@keyframes scrollP{0%{top:-50%}100%{top:150%}}
+/* ── Scroll Progress Bar ── */
+.scroll-progress {
+  position: fixed; top: 0; left: 0; z-index: 9998;
+  width: 0%; height: 2px;
+  background: linear-gradient(90deg, var(--cyan), var(--magenta), var(--gold));
+  transition: width 0.05s linear;
+  pointer-events: none;
+}
 
-.feature-strip{position:relative;z-index:1;border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:rgba(0,240,255,.012)}
-.feature-strip-inner{max-width:1400px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}
-.fs-item{padding:28px 24px;border-right:1px solid var(--border);display:flex;align-items:center;gap:14px;transition:background .3s}
-.fs-item:last-child{border-right:none}
-.fs-item:hover{background:rgba(0,240,255,.02)}
-.fs-ico{font-size:1.4rem;flex-shrink:0;width:44px;height:44px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:2px;background:rgba(0,240,255,.02)}
-.fs-title{font-family:var(--font-heading);font-weight:600;font-size:.72rem;letter-spacing:.06em;color:#fff}
-.fs-desc{font-family:var(--font-heading);font-size:.58rem;font-weight:400;color:var(--muted);letter-spacing:.03em;margin-top:2px}
+/* ── Mobile Nav Toggle ── */
+.nav-toggle {
+  display: none;
+  background: none; border: 1px solid var(--border);
+  color: var(--cyan); cursor: pointer;
+  width: 40px; height: 40px;
+  align-items: center; justify-content: center;
+  font-size: 1.1rem;
+  transition: border-color .2s, color .2s;
+}
+.nav-toggle:hover { border-color: var(--cyan); }
 
-.discord-section{position:relative;z-index:1;padding:0 44px 80px;max-width:1400px;margin:0 auto}
+@media (max-width: 880px) {
+  .nav-toggle { display: flex; }
+  header nav {
+    position: fixed; top: 68px; right: 0; bottom: 0;
+    width: 280px; background: rgba(4,6,15,0.98);
+    border-left: 1px solid var(--border);
+    backdrop-filter: blur(24px);
+    flex-direction: column; gap: 0; padding: 20px 0;
+    transform: translateX(100%);
+    transition: transform .35s cubic-bezier(.4,0,.2,1);
+    z-index: 200;
+  }
+  header nav.open { transform: translateX(0); }
+  header nav a {
+    padding: 14px 28px; border: none;
+    font-size: .72rem; letter-spacing: .16em;
+  }
+  header nav a span { display: inline !important; }
+  header nav a:hover { background: rgba(0,245,255,.04); }
+  .nav-backdrop {
+    position: fixed; inset: 0; z-index: 99;
+    background: rgba(0,0,0,.5); opacity: 0;
+    pointer-events: none; transition: opacity .3s;
+  }
+  .nav-backdrop.open { opacity: 1; pointer-events: all; }
+}
 
-@media(max-width:960px){.feature-strip-inner{grid-template-columns:repeat(2,1fr)}.fs-item:nth-child(2){border-right:none}}
-@media(max-width:900px){.hero{padding:100px 24px 60px}.hero-ctas{flex-direction:column;align-items:center}.hero-status{gap:28px}.discord-section{padding:0 20px 60px}.db{padding:28px 24px;flex-direction:column;align-items:flex-start;gap:18px}}
-@media(max-width:560px){.feature-strip-inner{grid-template-columns:1fr}.fs-item{border-right:none;border-bottom:1px solid var(--border)}.fs-item:last-child{border-bottom:none}.hero-title{font-size:clamp(2.8rem,14vw,4rem);letter-spacing:.1em}.hero-subtitle{font-size:.95rem}.hero-status{flex-direction:column;gap:16px}.hs-sep{width:40px;height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent)}.scroll-hint{display:none}}
+/* ── Noise Texture Overlay ── */
+.noise {
+  position: fixed; inset: 0; z-index: 9997;
+  pointer-events: none; opacity: .035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 200px;
+}
+
+/* ── Geometric Decorations ── */
+.geo-deco {
+  position: absolute; pointer-events: none;
+  border: 1px solid; opacity: 0;
+  animation: geoFloat 18s ease-in-out infinite;
+}
+@keyframes geoFloat {
+  0%, 100% { transform: translateY(0) rotate(0deg); opacity: .08; }
+  25% { opacity: .15; }
+  50% { transform: translateY(-30px) rotate(180deg); opacity: .06; }
+  75% { opacity: .12; }
+}
+
+/* ═══════════════════════════════════
+   HERO
+   ═══════════════════════════════════ */
+.hero {
+  position: relative; z-index: 1;
+  min-height: 100vh; min-height: 100dvh;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  text-align: center; padding: 80px 40px 60px;
+  overflow: hidden;
+}
+
+/* Animated gradient mesh */
+.hero-mesh {
+  position: absolute; inset: 0; z-index: 0;
+  overflow: hidden;
+}
+.hero-mesh::before {
+  content: '';
+  position: absolute;
+  width: 180%; height: 180%;
+  top: -40%; left: -40%;
+  background:
+    radial-gradient(ellipse 600px 400px at 20% 30%, rgba(0,245,255,.1), transparent),
+    radial-gradient(ellipse 500px 500px at 80% 20%, rgba(255,0,110,.07), transparent),
+    radial-gradient(ellipse 400px 400px at 60% 80%, rgba(255,214,10,.05), transparent),
+    radial-gradient(ellipse 800px 600px at 50% 50%, rgba(176,110,255,.04), transparent);
+  animation: meshDrift 25s ease-in-out infinite;
+}
+@keyframes meshDrift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(3%, -2%) scale(1.02); }
+  50% { transform: translate(-2%, 3%) scale(0.98); }
+  75% { transform: translate(1%, -1%) scale(1.01); }
+}
+
+/* Radial vignette */
+.hero-mesh::after {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(ellipse 70% 60% at 50% 45%, transparent 30%, var(--dark) 100%);
+}
+
+/* ═══════════════════════════════════
+   CYBERPUNK CITYSCAPE BACKGROUND
+   ═══════════════════════════════════ */
+.hero-cityscape {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  z-index: 0; pointer-events: none;
+  height: 55%; min-height: 350px;
+  overflow: hidden;
+}
+.hero-cityscape svg {
+  position: absolute; bottom: 0; left: 50%;
+  transform: translateX(-50%);
+  width: max(100%, 1600px); height: 100%;
+}
+
+/* Horizon glow */
+.hero-horizon {
+  position: absolute; bottom: 28%; left: 0; right: 0;
+  height: 2px; z-index: 1;
+  background: linear-gradient(90deg,
+    transparent 5%,
+    rgba(0,245,255,.06) 20%,
+    rgba(0,245,255,.2) 40%,
+    rgba(255,0,110,.15) 50%,
+    rgba(0,245,255,.2) 60%,
+    rgba(0,245,255,.06) 80%,
+    transparent 95%
+  );
+  box-shadow: 0 0 40px 8px rgba(0,245,255,.06), 0 0 80px 16px rgba(255,0,110,.03);
+}
+
+/* Atmospheric fog layers */
+.hero-fog {
+  position: absolute; left: 0; right: 0; z-index: 1;
+  pointer-events: none;
+}
+.hero-fog-1 {
+  bottom: 22%; height: 120px;
+  background: linear-gradient(180deg, transparent, rgba(0,245,255,.02) 40%, rgba(4,6,15,.3));
+  animation: fogDrift1 30s ease-in-out infinite;
+}
+.hero-fog-2 {
+  bottom: 15%; height: 80px;
+  background: linear-gradient(180deg, transparent, rgba(255,0,110,.015) 50%, rgba(4,6,15,.2));
+  animation: fogDrift2 22s ease-in-out infinite;
+}
+@keyframes fogDrift1 {
+  0%, 100% { transform: translateX(0); opacity: .7; }
+  50% { transform: translateX(3%); opacity: 1; }
+}
+@keyframes fogDrift2 {
+  0%, 100% { transform: translateX(0); opacity: .5; }
+  50% { transform: translateX(-2%); opacity: .8; }
+}
+
+/* Neon window flicker animation */
+@keyframes windowFlicker {
+  0%, 100% { opacity: var(--wo, .6); }
+  10% { opacity: .2; }
+  12% { opacity: var(--wo, .6); }
+  50% { opacity: var(--wo, .6); }
+  52% { opacity: .1; }
+  54% { opacity: var(--wo, .6); }
+}
+@keyframes neonPulse {
+  0%, 100% { opacity: .5; filter: blur(0px); }
+  50% { opacity: .9; filter: blur(1px); }
+}
+@keyframes signGlow {
+  0%, 100% { opacity: .35; }
+  30% { opacity: .6; }
+  60% { opacity: .25; }
+  80% { opacity: .55; }
+}
+
+/* Horizontal scan line (moves slowly) */
+.hero-scanline {
+  position: absolute; left: 0; right: 0;
+  height: 2px; z-index: 2;
+  background: linear-gradient(90deg, transparent, rgba(0,245,255,.15), transparent);
+  animation: scanMove 8s linear infinite;
+  pointer-events: none;
+}
+@keyframes scanMove {
+  0% { top: -2px; }
+  100% { top: 100%; }
+}
+
+/* Particles */
+.particles { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 1; }
+.particle {
+  position: absolute; border-radius: 50%; opacity: 0;
+  animation: floatP linear infinite;
+}
+@keyframes floatP {
+  0%  { transform: translateY(100vh) translateX(0) scale(1); opacity: 0; }
+  8%  { opacity: var(--po, .5); }
+  92% { opacity: var(--po, .5); }
+  100%{ transform: translateY(-20px) translateX(var(--dx,0)) scale(var(--ps,1)); opacity: 0; }
+}
+
+/* Hero content */
+.hero-content {
+  position: relative; z-index: 3;
+  max-width: 860px; width: 100%;
+}
+
+.hero-eyebrow {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: .65rem; letter-spacing: .5em;
+  color: var(--magenta);
+  text-shadow: 0 0 14px var(--magenta);
+  margin-bottom: 28px;
+  display: flex; align-items: center; justify-content: center; gap: 14px;
+  opacity: 0; animation: fadeSlideUp .8s .3s forwards;
+}
+.hero-eyebrow::before, .hero-eyebrow::after {
+  content: ''; width: 40px; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--magenta));
+}
+.hero-eyebrow::after {
+  background: linear-gradient(90deg, var(--magenta), transparent);
+}
+
+/* Title */
+.hero-title {
+  font-family: 'Orbitron', sans-serif; font-weight: 900;
+  font-size: clamp(3.5rem, 10vw, 8rem);
+  line-height: .92; letter-spacing: .03em; color: #fff;
+  margin-bottom: 6px;
+  opacity: 0; animation: fadeSlideUp .9s .5s forwards;
+}
+
+.hero-subtitle {
+  font-family: 'Orbitron', sans-serif; font-weight: 400;
+  font-size: clamp(.7rem, 2vw, .95rem);
+  letter-spacing: .35em; color: var(--muted);
+  margin-bottom: 40px;
+  opacity: 0; animation: fadeSlideUp .8s .7s forwards;
+}
+
+.hero-desc {
+  font-size: clamp(1rem, 2.2vw, 1.2rem);
+  color: var(--muted); font-weight: 300;
+  letter-spacing: .08em; line-height: 1.85;
+  max-width: 560px; margin: 0 auto 52px;
+  opacity: 0; animation: fadeSlideUp .8s .9s forwards;
+}
+
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* CTAs */
+.hero-ctas {
+  display: flex; gap: 14px; flex-wrap: wrap; justify-content: center;
+  margin-bottom: 64px;
+  opacity: 0; animation: fadeSlideUp .8s 1.1s forwards;
+}
+.btn-primary {
+  font-family: 'Orbitron', sans-serif; font-weight: 700;
+  font-size: .7rem; letter-spacing: .2em; text-transform: uppercase;
+  color: var(--dark); background: var(--cyan);
+  text-decoration: none; padding: 16px 34px;
+  clip-path: polygon(12px 0%, 100% 0%, calc(100% - 12px) 100%, 0% 100%);
+  transition: all .25s; position: relative; overflow: hidden;
+}
+.btn-primary::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,.2), transparent 50%);
+  pointer-events: none;
+}
+.btn-primary::after {
+  content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.3), transparent);
+  transition: left .5s;
+}
+.btn-primary:hover::after { left: 100%; }
+.btn-primary:hover {
+  background: #fff; color: var(--dark);
+  box-shadow: 0 0 36px var(--cyan), 0 0 80px rgba(0,245,255,.2);
+}
+
+.btn-outline {
+  font-family: 'Orbitron', sans-serif; font-weight: 600;
+  font-size: .68rem; letter-spacing: .2em; text-transform: uppercase;
+  color: var(--cyan); text-decoration: none; padding: 15px 30px;
+  border: 1px solid rgba(0,245,255,.3);
+  clip-path: polygon(12px 0%, 100% 0%, calc(100% - 12px) 100%, 0% 100%);
+  transition: all .25s; position: relative;
+}
+.btn-outline:hover {
+  background: rgba(0,245,255,.08); border-color: var(--cyan);
+  box-shadow: 0 0 24px rgba(0,245,255,.12);
+}
+.btn-discord-h {
+  font-family: 'Orbitron', sans-serif; font-weight: 600;
+  font-size: .68rem; letter-spacing: .18em; text-transform: uppercase;
+  color: #7289da; text-decoration: none; padding: 15px 28px;
+  border: 1px solid rgba(114,137,218,.3);
+  clip-path: polygon(12px 0%, 100% 0%, calc(100% - 12px) 100%, 0% 100%);
+  transition: all .25s;
+  display: inline-flex; align-items: center; gap: 9px;
+}
+.btn-discord-h svg { width: 16px; height: 16px; fill: currentColor; }
+.btn-discord-h:hover {
+  background: rgba(114,137,218,.08); border-color: #7289da;
+  box-shadow: 0 0 24px rgba(114,137,218,.15);
+}
+
+/* Hero status bar */
+.hero-status {
+  display: flex; gap: 48px; justify-content: center; align-items: center;
+  opacity: 0; animation: fadeSlideUp .8s 1.3s forwards;
+}
+.hs { text-align: center; }
+.hs-num {
+  font-family: 'Orbitron', sans-serif; font-size: 1.6rem; font-weight: 800;
+  color: var(--cyan); text-shadow: 0 0 20px var(--cyan);
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.hs-lbl {
+  font-family: 'Share Tech Mono', monospace; font-size: .52rem;
+  color: var(--muted); letter-spacing: .22em; text-transform: uppercase;
+  margin-top: 4px;
+}
+.hs-sep {
+  width: 1px; height: 36px;
+  background: linear-gradient(180deg, transparent, var(--border), transparent);
+}
+
+/* Scroll hint */
+.scroll-hint {
+  position: absolute; bottom: 32px; left: 50%;
+  transform: translateX(-50%); z-index: 3;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  opacity: 0; animation: fadeSlideUp .8s 1.8s forwards;
+}
+.scroll-hint-text {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: .5rem; letter-spacing: .3em; color: var(--muted);
+  text-transform: uppercase;
+}
+.scroll-hint-line {
+  width: 1px; height: 32px; position: relative; overflow: hidden;
+  background: rgba(0,245,255,.1);
+}
+.scroll-hint-line::after {
+  content: ''; position: absolute; top: -100%; left: 0;
+  width: 100%; height: 50%; background: var(--cyan);
+  animation: scrollPulse 2s ease-in-out infinite;
+}
+@keyframes scrollPulse {
+  0% { top: -50%; }
+  100% { top: 150%; }
+}
+
+/* ═══════════════════════════════════
+   FEATURE STRIP — between hero & cards
+   ═══════════════════════════════════ */
+.feature-strip {
+  position: relative; z-index: 1;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: rgba(0,245,255,.015);
+  padding: 0; overflow: hidden;
+}
+.feature-strip-inner {
+  max-width: 1400px; margin: 0 auto;
+  display: grid; grid-template-columns: repeat(4, 1fr);
+}
+.fs-item {
+  padding: 32px 28px;
+  border-right: 1px solid var(--border);
+  display: flex; align-items: center; gap: 16px;
+  transition: background .3s;
+  /* reveal anim */
+  opacity: 0; transform: translateY(20px);
+}
+.fs-item:last-child { border-right: none; }
+.fs-item:hover { background: rgba(0,245,255,.03); }
+.fs-item.revealed { opacity: 1; transform: translateY(0); transition: all .6s cubic-bezier(.4,0,.2,1); }
+.fs-ico {
+  font-size: 1.6rem; flex-shrink: 0;
+  width: 48px; height: 48px;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border);
+  background: rgba(0,245,255,.03);
+  clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+}
+.fs-title {
+  font-family: 'Orbitron', sans-serif; font-weight: 700;
+  font-size: .7rem; letter-spacing: .12em; color: #fff;
+}
+.fs-desc {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: .55rem; color: var(--muted); letter-spacing: .06em;
+  margin-top: 2px;
+}
+
+@media (max-width: 960px) {
+  .feature-strip-inner { grid-template-columns: repeat(2, 1fr); }
+  .fs-item:nth-child(2) { border-right: none; }
+}
+@media (max-width: 560px) {
+  .feature-strip-inner { grid-template-columns: 1fr; }
+  .fs-item { border-right: none; border-bottom: 1px solid var(--border); }
+  .fs-item:last-child { border-bottom: none; }
+}
+
+/* ═══════════════════════════════════
+   SECTION HEADING
+   ═══════════════════════════════════ */
+.section-head {
+  display: flex; align-items: center; gap: 16px;
+  margin-bottom: 44px;
+  /* reveal */
+  opacity: 0; transform: translateY(20px);
+}
+.section-head.revealed { opacity: 1; transform: translateY(0); transition: all .6s ease; }
+.sh-num {
+  font-family: 'Orbitron', sans-serif; font-size: .68rem;
+  font-weight: 700; color: var(--gold); letter-spacing: .1em;
+}
+.sh-title {
+  font-family: 'Orbitron', sans-serif; font-weight: 700;
+  font-size: clamp(.85rem, 2vw, 1.05rem);
+  letter-spacing: .25em; color: #fff; text-transform: uppercase;
+  white-space: nowrap;
+}
+.sh-line { flex: 1; height: 1px; background: linear-gradient(90deg, var(--border), transparent); }
+
+/* ═══════════════════════════════════
+   NAVIGATION CARDS (Explorer l'univers)
+   ═══════════════════════════════════ */
+.cards-section {
+  position: relative; z-index: 1;
+  padding: 80px 44px;
+  max-width: 1400px; margin: 0 auto;
+}
+
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.ncard {
+  position: relative; background: var(--dark2);
+  border: 1px solid var(--border);
+  overflow: hidden; text-decoration: none; color: inherit;
+  display: flex; flex-direction: column;
+  clip-path: polygon(18px 0%, 100% 0%, 100% calc(100% - 18px),
+                      calc(100% - 18px) 100%, 0% 100%, 0% 18px);
+  transition: border-color .35s, box-shadow .35s, transform .35s;
+  /* reveal */
+  opacity: 0; transform: translateY(30px);
+}
+.ncard.revealed {
+  opacity: 1; transform: translateY(0);
+  transition: opacity .6s cubic-bezier(.4,0,.2,1),
+              transform .6s cubic-bezier(.4,0,.2,1),
+              border-color .35s, box-shadow .35s;
+}
+.ncard:hover { transform: translateY(-8px) !important; }
+
+/* Glow orb behind card on hover */
+.ncard::before {
+  content: ''; position: absolute; inset: -1px;
+  background: linear-gradient(135deg, rgba(255,255,255,.025) 0%, transparent 40%);
+  pointer-events: none; z-index: 0;
+}
+.ncard::after {
+  content: ''; position: absolute;
+  bottom: -40px; right: -40px;
+  width: 180px; height: 180px; border-radius: 50%;
+  background: radial-gradient(circle, var(--card-glow, rgba(0,245,255,.08)), transparent 70%);
+  opacity: 0; transition: opacity .4s;
+  pointer-events: none;
+}
+.ncard:hover::after { opacity: 1; }
+
+.ncard.c1 { --card-glow: rgba(0,245,255,.12); }
+.ncard.c2 { --card-glow: rgba(255,0,110,.12); }
+.ncard.c3 { --card-glow: rgba(255,214,10,.1); }
+
+.ncard.c1:hover { border-color: var(--cyan); box-shadow: 0 0 32px rgba(0,245,255,.14), 0 16px 48px rgba(0,0,0,.4); }
+.ncard.c2:hover { border-color: var(--magenta); box-shadow: 0 0 32px rgba(255,0,110,.14), 0 16px 48px rgba(0,0,0,.4); }
+.ncard.c3:hover { border-color: var(--gold); box-shadow: 0 0 32px rgba(255,214,10,.12), 0 16px 48px rgba(0,0,0,.4); }
+
+.nc-bar { height: 3px; flex-shrink: 0; position: relative; z-index: 1; }
+.c1 .nc-bar { background: linear-gradient(90deg, var(--cyan), rgba(0,245,255,.12)); }
+.c2 .nc-bar { background: linear-gradient(90deg, var(--magenta), rgba(255,0,110,.12)); }
+.c3 .nc-bar { background: linear-gradient(90deg, var(--gold), rgba(255,214,10,.12)); }
+
+.nc-body {
+  padding: 30px 28px 28px; position: relative; z-index: 1;
+  flex: 1; display: flex; flex-direction: column;
+}
+.nc-ico {
+  font-size: 2rem; margin-bottom: 16px; display: block; line-height: 1;
+  filter: drop-shadow(0 0 8px currentColor);
+}
+.c1 .nc-ico { color: var(--cyan); }
+.c2 .nc-ico { color: var(--magenta); }
+.c3 .nc-ico { color: var(--gold); }
+
+.nc-title {
+  font-family: 'Orbitron', sans-serif; font-weight: 700;
+  font-size: .95rem; letter-spacing: .13em; color: #fff;
+  margin-bottom: 10px;
+}
+.c1 .nc-title { text-shadow: 0 0 14px rgba(0,245,255,.3); }
+.c2 .nc-title { text-shadow: 0 0 14px rgba(255,0,110,.3); }
+.c3 .nc-title { text-shadow: 0 0 14px rgba(255,214,10,.25); }
+
+.nc-desc {
+  font-size: .88rem; color: var(--muted); line-height: 1.75;
+  font-weight: 300; flex: 1; margin-bottom: 18px;
+}
+.nc-arrow {
+  font-family: 'Share Tech Mono', monospace; font-size: .6rem;
+  letter-spacing: .18em; display: flex; align-items: center; gap: 8px;
+  transition: gap .25s, color .25s;
+}
+.c1 .nc-arrow { color: var(--cyan); }
+.c2 .nc-arrow { color: var(--magenta); }
+.c3 .nc-arrow { color: var(--gold); }
+.ncard:hover .nc-arrow { gap: 16px; }
+
+.nc-corner {
+  position: absolute; bottom: 0; right: 0;
+  width: 18px; height: 18px;
+  border-top: 1px solid var(--border); border-left: 1px solid var(--border);
+  pointer-events: none; z-index: 2;
+}
+
+/* ═══════════════════════════════════
+   DISCORD BANNER
+   ═══════════════════════════════════ */
+.discord-section {
+  position: relative; z-index: 1;
+  padding: 0 44px 80px;
+  max-width: 1400px; margin: 0 auto;
+}
+.db {
+  padding: 36px 40px;
+  overflow: hidden;
+  border-radius: 0;
+}
+.db-ico svg { width: 38px; height: 38px; fill: #7289da; opacity: .8; }
+.db::after {
+  content: ''; position: absolute; top: -50px; right: -50px;
+  width: 220px; height: 220px;
+  background: radial-gradient(circle, rgba(114,137,218,.08), transparent 65%);
+  pointer-events: none;
+}
+/* reveal */
+.discord-section .db {
+  opacity: 0; transform: translateY(20px);
+}
+.discord-section .db.revealed {
+  opacity: 1; transform: translateY(0);
+  transition: all .7s cubic-bezier(.4,0,.2,1);
+}
+
+/* ═══════════════════════════════════
+   FOOTER
+   ═══════════════════════════════════ */
+footer {
+  position: relative; z-index: 1;
+  border-top: 1px solid var(--border);
+  padding: 40px 44px 32px;
+}
+.footer-inner {
+  max-width: 1400px; margin: 0 auto;
+  display: grid; grid-template-columns: 1fr auto 1fr;
+  align-items: start; gap: 40px;
+}
+.f-brand {}
+.f-logo {
+  font-family: 'Orbitron', sans-serif; font-weight: 900;
+  font-size: .9rem; letter-spacing: .28em;
+  color: var(--cyan); opacity: .5; margin-bottom: 8px;
+}
+.f-tagline {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: .52rem; color: var(--muted); letter-spacing: .14em;
+}
+.f-status {
+  text-align: center;
+}
+.f-status-dot {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: .56rem; color: var(--muted); letter-spacing: .15em;
+}
+.f-version {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: .5rem; color: rgba(90,122,144,.5);
+  letter-spacing: .12em; margin-top: 6px;
+}
+.f-links-col { text-align: right; }
+.f-links {
+  display: flex; gap: 18px; justify-content: flex-end; flex-wrap: wrap;
+}
+.f-links a {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: .56rem; color: var(--muted); text-decoration: none;
+  letter-spacing: .1em; transition: color .2s;
+}
+.f-links a:hover { color: var(--cyan); }
+.f-bottom {
+  max-width: 1400px; margin: 28px auto 0;
+  padding-top: 20px; border-top: 1px solid var(--border);
+  text-align: center;
+}
+.f-copy {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: .48rem; color: rgba(90,122,144,.4);
+  letter-spacing: .16em;
+}
+
+/* ═══════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════ */
+@media (max-width: 900px) {
+  .hero { padding: 100px 24px 60px; }
+  .hero-ctas { flex-direction: column; align-items: center; }
+  .hero-status { gap: 28px; }
+  .cards-section { padding: 60px 20px; }
+  .discord-section { padding: 0 20px 60px; }
+  .db { padding: 28px 24px; flex-direction: column; align-items: flex-start; gap: 18px; }
+  .footer-inner { grid-template-columns: 1fr; text-align: center; gap: 24px; }
+  .f-links-col { text-align: center; }
+  .f-links { justify-content: center; }
+}
+
+@media (max-width: 560px) {
+  .hero-title { font-size: clamp(2.8rem, 14vw, 4rem); }
+  .hero-subtitle { letter-spacing: .2em; font-size: .6rem; }
+  .hero-status { flex-direction: column; gap: 16px; }
+  .hs-sep { width: 40px; height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent); }
+  .cards-grid { grid-template-columns: 1fr; }
+  footer { padding: 32px 20px 24px; }
+}
+
+/* ── Toast ── */
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--dark2);border:1px solid var(--border);font-family:'Share Tech Mono',monospace;font-size:.67rem;letter-spacing:.12em;color:var(--text);padding:13px 26px;z-index:9000;transition:transform .35s,opacity .35s;opacity:0;clip-path:polygon(10px 0%,100% 0%,calc(100% - 10px) 100%,0% 100%);}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+.toast.success{border-color:rgba(0,255,136,0.5);color:#00ff88;}
+.toast.error{border-color:rgba(255,48,48,0.5);color:#ff3030;}
 </style>
 <script src="js/debug.js"></script>
 <script src="js/constants.js"></script>
 <script src="js/utils.js"></script>
 </head>
 <body>
+
 <div class="scroll-progress" id="scroll-progress"></div>
 <div class="noise"></div>
 <div class="nav-backdrop" id="nav-backdrop"></div>
 <div class="toast" id="toast"></div>
 
+<!-- ══════════ HEADER ══════════ -->
 <header>
   <a href="index.html" class="logo">JAHARTA <span class="logo-slash">//</span> RP<span class="logo-sub">UNIVERS JAHARTA · ROLEPLAY OFFICIEL</span></a>
   <button class="nav-toggle" id="nav-toggle" aria-label="Menu">☰</button>
@@ -104,144 +737,539 @@
   </nav>
 </header>
 
+<!-- ══════════ HERO ══════════ -->
 <section class="hero">
+  <!-- Animated gradient mesh -->
   <div class="hero-mesh"></div>
-  <canvas id="particles-canvas"></canvas>
-  <div class="hero-grid"></div>
   <div class="hero-scanline"></div>
+
+  <!-- Cyberpunk Cityscape Background -->
   <div class="hero-cityscape">
     <svg viewBox="0 0 1600 600" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">
-      <defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0a0f1e"/><stop offset="100%" stop-color="#04060f"/></linearGradient><filter id="ng" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter><filter id="sg" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="6"/></filter></defs>
-      <g opacity=".25"><rect x="50" y="200" width="45" height="400" fill="#060a14"/><rect x="180" y="180" width="55" height="420" fill="#070b16"/><rect x="370" y="160" width="50" height="440" fill="#070b16"/><rect x="600" y="170" width="45" height="430" fill="#070b16"/><rect x="820" y="190" width="40" height="410" fill="#070b16"/><rect x="1020" y="170" width="65" height="430" fill="#070b16"/><rect x="1240" y="180" width="55" height="420" fill="#070b16"/><rect x="1440" y="190" width="50" height="410" fill="#070b16"/></g>
-      <g opacity=".5"><rect x="20" y="310" width="70" height="290" fill="#080d1a"/><rect x="120" y="270" width="85" height="330" fill="#0a1020"/><rect x="340" y="250" width="90" height="350" fill="#0a1020"/><rect x="580" y="240" width="95" height="360" fill="#0a1020"/><rect x="830" y="290" width="80" height="310" fill="#0a1020"/><rect x="1070" y="270" width="75" height="330" fill="#0a1020"/><rect x="1310" y="280" width="65" height="320" fill="#0a1020"/><rect x="1520" y="300" width="70" height="300" fill="#0a1020"/></g>
-      <g fill="url(#bg)"><rect x="-10" y="380" width="100" height="220"/><rect x="100" y="340" width="80" height="260"/><rect x="190" y="360" width="110" height="240"/><rect x="310" y="320" width="70" height="280"/><rect x="400" y="280" width="95" height="320"/><rect x="435" y="250" width="25" height="30"/><rect x="446" y="220" width="3" height="30"/><rect x="510" y="350" width="85" height="250"/><rect x="610" y="310" width="120" height="290"/><rect x="750" y="340" width="75" height="260"/><rect x="840" y="260" width="110" height="340"/><rect x="875" y="230" width="40" height="30"/><rect x="893" y="195" width="4" height="35"/><rect x="970" y="350" width="90" height="250"/><rect x="1080" y="300" width="100" height="300"/><rect x="1200" y="330" width="80" height="270"/><rect x="1300" y="360" width="110" height="240"/><rect x="1430" y="310" width="75" height="290"/><rect x="1520" y="350" width="90" height="250"/></g>
-      <g opacity=".5"><line x1="400" y1="280" x2="400" y2="600" stroke="#00f0ff" stroke-width=".7" opacity=".35"/><line x1="840" y1="260" x2="840" y2="600" stroke="#ff2a8a" stroke-width=".7" opacity=".3"/><line x1="950" y1="260" x2="950" y2="600" stroke="#00f0ff" stroke-width=".5" opacity=".25"/></g>
-      <g fill="#00f0ff"><rect x="412" y="300" width="4" height="3" opacity=".7"/><rect x="462" y="300" width="4" height="3" opacity=".6"/><rect x="855" y="280" width="4" height="3" opacity=".6"/><rect x="900" y="280" width="4" height="3" opacity=".7"/><rect x="885" y="300" width="4" height="3" opacity=".6" style="animation:windowFlicker 5s 1s infinite;--wo:.6"/><rect x="920" y="320" width="4" height="3" opacity=".6"/></g>
-      <g fill="#ff2a8a"><rect x="625" y="330" width="4" height="3" opacity=".6"/><rect x="670" y="350" width="4" height="3" opacity=".7"/><rect x="1120" y="320" width="4" height="3" opacity=".7"/></g>
-      <g fill="#ffd60a"><rect x="140" y="390" width="4" height="3" opacity=".6" style="animation:windowFlicker 6s 3s infinite;--wo:.6"/><rect x="1380" y="380" width="4" height="3" opacity=".6"/></g>
-      <g filter="url(#ng)"><rect x="420" y="292" width="22" height="2" fill="#00f0ff" opacity=".45" style="animation:signGlow 4s infinite"/><rect x="640" y="322" width="30" height="2" fill="#ff2a8a" opacity=".35" style="animation:signGlow 5s 1.5s infinite"/><rect x="860" y="272" width="25" height="2" fill="#ffd60a" opacity=".4" style="animation:signGlow 3.5s .8s infinite"/></g>
-      <circle cx="448" cy="220" r="2" fill="#ff3030" opacity=".8" style="animation:windowFlicker 2s infinite;--wo:.8"/><circle cx="895" cy="195" r="2" fill="#ff3030" opacity=".7" style="animation:windowFlicker 2.5s .5s infinite;--wo:.7"/>
-      <g filter="url(#sg)" opacity=".25"><line x1="0" y1="380" x2="1600" y2="380" stroke="#00f0ff" stroke-width="1"/></g>
+      <defs>
+        <!-- Building gradient -->
+        <linearGradient id="bldgGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#0a0f1e"/>
+          <stop offset="100%" stop-color="#04060f"/>
+        </linearGradient>
+        <!-- Neon glow filter -->
+        <filter id="neonGlow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="6"/>
+        </filter>
+      </defs>
+
+      <!-- Background buildings (far layer — darkest, smallest) -->
+      <g opacity=".25">
+        <rect x="50" y="200" width="45" height="400" fill="#060a14"/>
+        <rect x="110" y="240" width="35" height="360" fill="#060a14"/>
+        <rect x="180" y="180" width="55" height="420" fill="#070b16"/>
+        <rect x="280" y="220" width="40" height="380" fill="#060a14"/>
+        <rect x="370" y="160" width="50" height="440" fill="#070b16"/>
+        <rect x="480" y="200" width="60" height="400" fill="#060a14"/>
+        <rect x="600" y="170" width="45" height="430" fill="#070b16"/>
+        <rect x="700" y="210" width="55" height="390" fill="#060a14"/>
+        <rect x="820" y="190" width="40" height="410" fill="#070b16"/>
+        <rect x="920" y="230" width="50" height="370" fill="#060a14"/>
+        <rect x="1020" y="170" width="65" height="430" fill="#070b16"/>
+        <rect x="1140" y="200" width="45" height="400" fill="#060a14"/>
+        <rect x="1240" y="180" width="55" height="420" fill="#070b16"/>
+        <rect x="1350" y="220" width="40" height="380" fill="#060a14"/>
+        <rect x="1440" y="190" width="50" height="410" fill="#070b16"/>
+        <rect x="1530" y="210" width="45" height="390" fill="#060a14"/>
+      </g>
+
+      <!-- Mid-layer buildings -->
+      <g opacity=".5">
+        <rect x="20" y="310" width="70" height="290" fill="#080d1a"/>
+        <rect x="120" y="270" width="85" height="330" fill="#0a1020"/>
+        <rect x="240" y="290" width="60" height="310" fill="#080d1a"/>
+        <rect x="340" y="250" width="90" height="350" fill="#0a1020"/>
+        <rect x="470" y="280" width="75" height="320" fill="#080d1a"/>
+        <rect x="580" y="240" width="95" height="360" fill="#0a1020"/>
+        <rect x="720" y="260" width="70" height="340" fill="#080d1a"/>
+        <rect x="830" y="290" width="80" height="310" fill="#0a1020"/>
+        <rect x="950" y="250" width="85" height="350" fill="#080d1a"/>
+        <rect x="1070" y="270" width="75" height="330" fill="#0a1020"/>
+        <rect x="1180" y="240" width="90" height="360" fill="#080d1a"/>
+        <rect x="1310" y="280" width="65" height="320" fill="#0a1020"/>
+        <rect x="1420" y="260" width="80" height="340" fill="#080d1a"/>
+        <rect x="1520" y="300" width="70" height="300" fill="#0a1020"/>
+      </g>
+
+      <!-- Foreground buildings (closest — most detail) -->
+      <g fill="url(#bldgGrad)">
+        <!-- Left cluster -->
+        <rect x="-10" y="380" width="100" height="220"/>
+        <rect x="100" y="340" width="80" height="260"/>
+        <rect x="190" y="360" width="110" height="240"/>
+        <rect x="310" y="320" width="70" height="280"/>
+        <!-- Tower with antenna -->
+        <rect x="400" y="280" width="95" height="320"/>
+        <rect x="435" y="250" width="25" height="30"/>
+        <rect x="446" y="220" width="3" height="30"/>
+        <!-- Mid cluster -->
+        <rect x="510" y="350" width="85" height="250"/>
+        <rect x="610" y="310" width="120" height="290"/>
+        <rect x="750" y="340" width="75" height="260"/>
+        <!-- Central tall tower -->
+        <rect x="840" y="260" width="110" height="340"/>
+        <rect x="875" y="230" width="40" height="30"/>
+        <rect x="893" y="195" width="4" height="35"/>
+        <!-- Right cluster -->
+        <rect x="970" y="350" width="90" height="250"/>
+        <rect x="1080" y="300" width="100" height="300"/>
+        <rect x="1200" y="330" width="80" height="270"/>
+        <rect x="1300" y="360" width="110" height="240"/>
+        <rect x="1430" y="310" width="75" height="290"/>
+        <rect x="1520" y="350" width="90" height="250"/>
+      </g>
+
+      <!-- Neon edge lines on buildings -->
+      <g opacity=".6">
+        <line x1="100" y1="340" x2="100" y2="600" stroke="#00f5ff" stroke-width=".5" opacity=".3"/>
+        <line x1="180" y1="360" x2="180" y2="600" stroke="#ff006e" stroke-width=".5" opacity=".2"/>
+        <line x1="400" y1="280" x2="400" y2="600" stroke="#00f5ff" stroke-width=".7" opacity=".4"/>
+        <line x1="495" y1="280" x2="495" y2="600" stroke="#00f5ff" stroke-width=".5" opacity=".3"/>
+        <line x1="610" y1="310" x2="610" y2="600" stroke="#ffd60a" stroke-width=".5" opacity=".2"/>
+        <line x1="730" y1="310" x2="730" y2="600" stroke="#00f5ff" stroke-width=".5" opacity=".25"/>
+        <line x1="840" y1="260" x2="840" y2="600" stroke="#ff006e" stroke-width=".7" opacity=".35"/>
+        <line x1="950" y1="260" x2="950" y2="600" stroke="#00f5ff" stroke-width=".5" opacity=".3"/>
+        <line x1="1080" y1="300" x2="1080" y2="600" stroke="#ffd60a" stroke-width=".5" opacity=".2"/>
+        <line x1="1180" y1="300" x2="1180" y2="600" stroke="#00f5ff" stroke-width=".5" opacity=".25"/>
+        <line x1="1300" y1="360" x2="1300" y2="600" stroke="#ff006e" stroke-width=".5" opacity=".2"/>
+        <line x1="1430" y1="310" x2="1430" y2="600" stroke="#00f5ff" stroke-width=".5" opacity=".3"/>
+      </g>
+
+      <!-- Windows — cyan cluster -->
+      <g fill="#00f5ff">
+        <!-- Building at x400 -->
+        <rect x="412" y="300" width="4" height="3" opacity=".7"/>
+        <rect x="422" y="300" width="4" height="3" opacity=".5"/>
+        <rect x="432" y="300" width="4" height="3" opacity=".4"/>
+        <rect x="462" y="300" width="4" height="3" opacity=".6"/>
+        <rect x="472" y="300" width="4" height="3" opacity=".3"/>
+        <rect x="412" y="320" width="4" height="3" opacity=".5"/>
+        <rect x="432" y="320" width="4" height="3" opacity=".7"/>
+        <rect x="452" y="320" width="4" height="3" opacity=".4"/>
+        <rect x="472" y="320" width="4" height="3" opacity=".6"/>
+        <rect x="412" y="340" width="4" height="3" opacity=".3"/>
+        <rect x="442" y="340" width="4" height="3" opacity=".6"/>
+        <rect x="462" y="340" width="4" height="3" opacity=".5"/>
+        <rect x="412" y="360" width="4" height="3" opacity=".6" style="animation:windowFlicker 4s infinite;--wo:.6"/>
+        <rect x="432" y="360" width="4" height="3" opacity=".4"/>
+        <rect x="462" y="360" width="4" height="3" opacity=".7"/>
+        <rect x="482" y="360" width="4" height="3" opacity=".3"/>
+        <!-- Building at x840 -->
+        <rect x="855" y="280" width="4" height="3" opacity=".6"/>
+        <rect x="870" y="280" width="4" height="3" opacity=".4"/>
+        <rect x="900" y="280" width="4" height="3" opacity=".7"/>
+        <rect x="920" y="280" width="4" height="3" opacity=".5"/>
+        <rect x="855" y="300" width="4" height="3" opacity=".4"/>
+        <rect x="885" y="300" width="4" height="3" opacity=".6" style="animation:windowFlicker 5s 1s infinite;--wo:.6"/>
+        <rect x="910" y="300" width="4" height="3" opacity=".5"/>
+        <rect x="930" y="300" width="4" height="3" opacity=".3"/>
+        <rect x="860" y="320" width="4" height="3" opacity=".5"/>
+        <rect x="880" y="320" width="4" height="3" opacity=".7"/>
+        <rect x="900" y="320" width="4" height="3" opacity=".4"/>
+        <rect x="925" y="320" width="4" height="3" opacity=".6"/>
+        <rect x="860" y="340" width="4" height="3" opacity=".6"/>
+        <rect x="890" y="340" width="4" height="3" opacity=".3"/>
+        <rect x="920" y="340" width="4" height="3" opacity=".5"/>
+      </g>
+
+      <!-- Windows — magenta -->
+      <g fill="#ff006e">
+        <rect x="625" y="330" width="4" height="3" opacity=".6"/>
+        <rect x="650" y="330" width="4" height="3" opacity=".4"/>
+        <rect x="690" y="330" width="4" height="3" opacity=".5"/>
+        <rect x="635" y="350" width="4" height="3" opacity=".5" style="animation:windowFlicker 3.5s .5s infinite;--wo:.5"/>
+        <rect x="670" y="350" width="4" height="3" opacity=".7"/>
+        <rect x="700" y="350" width="4" height="3" opacity=".3"/>
+        <rect x="625" y="370" width="4" height="3" opacity=".4"/>
+        <rect x="660" y="370" width="4" height="3" opacity=".6"/>
+        <rect x="1095" y="320" width="4" height="3" opacity=".5"/>
+        <rect x="1120" y="320" width="4" height="3" opacity=".7"/>
+        <rect x="1150" y="320" width="4" height="3" opacity=".4"/>
+        <rect x="1095" y="340" width="4" height="3" opacity=".6"/>
+        <rect x="1130" y="340" width="4" height="3" opacity=".4"/>
+        <rect x="1160" y="340" width="4" height="3" opacity=".5" style="animation:windowFlicker 4.5s 2s infinite;--wo:.5"/>
+      </g>
+
+      <!-- Windows — gold/warm -->
+      <g fill="#ffd60a">
+        <rect x="140" y="370" width="4" height="3" opacity=".5"/>
+        <rect x="155" y="370" width="4" height="3" opacity=".3"/>
+        <rect x="140" y="390" width="4" height="3" opacity=".6" style="animation:windowFlicker 6s 3s infinite;--wo:.6"/>
+        <rect x="165" y="390" width="4" height="3" opacity=".4"/>
+        <rect x="225" y="380" width="4" height="3" opacity=".5"/>
+        <rect x="255" y="380" width="4" height="3" opacity=".4"/>
+        <rect x="275" y="380" width="4" height="3" opacity=".6"/>
+        <rect x="235" y="400" width="4" height="3" opacity=".3"/>
+        <rect x="265" y="400" width="4" height="3" opacity=".5"/>
+        <rect x="1320" y="380" width="4" height="3" opacity=".5"/>
+        <rect x="1350" y="380" width="4" height="3" opacity=".4"/>
+        <rect x="1380" y="380" width="4" height="3" opacity=".6"/>
+        <rect x="1330" y="400" width="4" height="3" opacity=".4"/>
+        <rect x="1370" y="400" width="4" height="3" opacity=".5"/>
+      </g>
+
+      <!-- Neon signs (glowing rectangles on buildings) -->
+      <g filter="url(#neonGlow)">
+        <!-- Cyan sign on tower -->
+        <rect x="420" y="292" width="22" height="2" fill="#00f5ff" opacity=".5" style="animation:signGlow 4s infinite"/>
+        <!-- Magenta sign -->
+        <rect x="640" y="322" width="30" height="2" fill="#ff006e" opacity=".4" style="animation:signGlow 5s 1.5s infinite"/>
+        <!-- Gold sign on central tower -->
+        <rect x="860" y="272" width="25" height="2" fill="#ffd60a" opacity=".45" style="animation:signGlow 3.5s .8s infinite"/>
+        <!-- Cyan vertical sign -->
+        <rect x="1088" y="308" width="2" height="16" fill="#00f5ff" opacity=".4" style="animation:signGlow 6s 2s infinite"/>
+      </g>
+
+      <!-- Antenna blink lights -->
+      <circle cx="448" cy="220" r="2" fill="#ff3030" opacity=".8" style="animation:windowFlicker 2s infinite;--wo:.8"/>
+      <circle cx="895" cy="195" r="2" fill="#ff3030" opacity=".7" style="animation:windowFlicker 2.5s .5s infinite;--wo:.7"/>
+
+      <!-- Soft horizon glow -->
+      <g filter="url(#softGlow)" opacity=".3">
+        <line x1="0" y1="380" x2="1600" y2="380" stroke="#00f5ff" stroke-width="1"/>
+      </g>
     </svg>
   </div>
+
+  <!-- Fog layers -->
   <div class="hero-fog hero-fog-1"></div>
   <div class="hero-fog hero-fog-2"></div>
   <div class="hero-horizon"></div>
-  <div class="hero-overlay"></div>
 
+  <!-- Particles -->
+  <div class="particles" id="ptcl"></div>
+
+  <!-- Geometric decorations -->
+  <div class="geo-deco" style="width:80px;height:80px;border-color:rgba(0,245,255,.06);top:12%;left:8%;animation-delay:0s;border-radius:0;transform:rotate(45deg)"></div>
+  <div class="geo-deco" style="width:50px;height:50px;border-color:rgba(255,0,110,.06);top:20%;right:12%;animation-delay:4s;border-radius:50%"></div>
+  <div class="geo-deco" style="width:120px;height:1px;background:rgba(255,214,10,.04);border:none;top:75%;left:5%;animation-delay:8s"></div>
+  <div class="geo-deco" style="width:60px;height:60px;border-color:rgba(176,110,255,.05);bottom:18%;right:10%;animation-delay:6s;clip-path:polygon(50% 0%,100% 100%,0% 100%)"></div>
+
+  <!-- Content -->
   <div class="hero-content">
-    <p class="hero-eyebrow">Roleplay · Fantasy · Cyberpunk</p>
-    <h1 class="hero-title" data-text="JAHARTA"><span class="glow-text">JAHARTA</span></h1>
-    <p class="hero-subtitle">Là où la magie et la technologie ne se contredisent pas&nbsp;— elles coexistent, s'entrelacent et se complètent.</p>
+    <p class="hero-eyebrow">▸ UNIVERS JAHARTA · SERVEUR RP DISCORD · EN LIGNE</p>
+
+    <h1 class="hero-title">
+      <span class="c" data-text="JAHARTA">JAHARTA</span>
+    </h1>
+    <p class="hero-subtitle">ROLEPLAY UNIVERSE</p>
+
+    <p class="hero-desc">
+      Bienvenue dans l'univers de Jaharta — explorez, créez votre personnage et rejoignez l'aventure collective.
+    </p>
+
     <div class="hero-ctas">
-      <a href="fiches.html" class="btn-primary" style="opacity:0;animation:fadeInUp .8s 1.1s forwards">◈ Base de données RP</a>
-      <a href="portail.html" class="btn-outline" style="opacity:0;animation:fadeInUp .8s 1.2s forwards">⬡ Portail ressources</a>
-      <a href="https://discord.gg/jaharta" target="_blank" class="btn-discord-h" style="opacity:0;animation:fadeInUp .8s 1.3s forwards"><svg viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.032.054a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.107a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.108c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>Discord</a>
+      <a href="fiches.html" class="btn-primary">◈ Base de données RP</a>
+      <a href="portail.html" class="btn-outline">⬡ Portail ressources</a>
+      <a href="https://discord.gg/jBMnmeR944" target="_blank" class="btn-discord-h">
+        <svg viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.032.054a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.107a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.108c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+        Discord
+      </a>
     </div>
+
     <div class="hero-status">
-      <div class="hs"><div class="hs-num"><span class="hdot"></span>LIVE</div><div class="hs-lbl">Serveur actif</div></div>
+      <div class="hs">
+        <div class="hs-num"><span class="hdot"></span>LIVE</div>
+        <div class="hs-lbl">Serveur actif</div>
+      </div>
       <div class="hs-sep"></div>
-      <div class="hs"><div class="hs-num" style="color:var(--gold)">42</div><div class="hs-lbl">Races jouables</div></div>
+      <div class="hs">
+        <div class="hs-num" style="color:var(--gold)">42</div>
+        <div class="hs-lbl">Races jouables</div>
+      </div>
       <div class="hs-sep"></div>
-      <div class="hs"><div class="hs-num" style="color:var(--magenta)">14</div><div class="hs-lbl">Rangs de puissance</div></div>
+      <div class="hs">
+        <div class="hs-num" style="color:var(--magenta)">14</div>
+        <div class="hs-lbl">Rangs de puissance</div>
+      </div>
     </div>
   </div>
-  <div class="scroll-hint"><span class="scroll-hint-text">Explorer</span><div class="scroll-hint-line"></div></div>
+
+  <!-- Scroll hint -->
+  <div class="scroll-hint">
+    <span class="scroll-hint-text">Scroll</span>
+    <div class="scroll-hint-line"></div>
+  </div>
 </section>
 
+<!-- ══════════ FEATURE STRIP ══════════ -->
 <section class="feature-strip">
   <div class="feature-strip-inner">
-    <div class="fs-item" data-reveal><div class="fs-ico">◈</div><div><div class="fs-title">Fiches en temps réel</div><div class="fs-desc">Base de données live · Firebase</div></div></div>
-    <div class="fs-item" data-reveal data-delay="100"><div class="fs-ico">⚡</div><div><div class="fs-title">Système de puissance</div><div class="fs-desc">14 rangs · F → Z Absolu</div></div></div>
-    <div class="fs-item" data-reveal data-delay="200"><div class="fs-ico">◆</div><div><div class="fs-title">PNJ importants</div><div class="fs-desc">Figures clés de l'univers</div></div></div>
-    <div class="fs-item" data-reveal data-delay="300"><div class="fs-ico">⬡</div><div><div class="fs-title">Lore & Cartographie</div><div class="fs-desc">Encyclopédie · Bientôt disponible</div></div></div>
+    <div class="fs-item" data-reveal data-delay="0">
+      <div class="fs-ico">◈</div>
+      <div><div class="fs-title">Fiches en temps réel</div><div class="fs-desc">Base de données live · Firebase</div></div>
+    </div>
+    <div class="fs-item" data-reveal data-delay="100">
+      <div class="fs-ico">⚡</div>
+      <div><div class="fs-title">Système de puissance</div><div class="fs-desc">14 rangs · F → Z Absolu</div></div>
+    </div>
+    <div class="fs-item" data-reveal data-delay="200">
+      <div class="fs-ico">◆</div>
+      <div><div class="fs-title">PNJ importants</div><div class="fs-desc">Figures clés de l'univers</div></div>
+    </div>
+    <div class="fs-item" data-reveal data-delay="300">
+      <div class="fs-ico">⬡</div>
+      <div><div class="fs-title">Lore & Cartographie</div><div class="fs-desc">Encyclopédie · Bientôt disponible</div></div>
+    </div>
   </div>
 </section>
 
+<!-- ══════════ NAVIGATION CARDS ══════════ -->
 <section class="cards-section">
-  <div class="section-head" data-reveal><span class="sh-num">01 //</span><h2 class="sh-title">Explorer l'univers Jaharta</h2><div class="sh-line"></div></div>
+  <div class="section-head" data-reveal>
+    <span class="sh-num">01 //</span>
+    <h2 class="sh-title">Explorer l'univers Jaharta</h2>
+    <div class="sh-line"></div>
+  </div>
+
   <div class="cards-grid">
-    <a href="fiches.html" class="ncard c1" data-reveal><div class="nc-bar"></div><div class="nc-body"><span class="nc-ico">◈</span><div class="nc-title">Base de Données RP</div><p class="nc-desc">Registre complet des personnages joueurs. Filtrez par race, consultez les fiches, rangs de puissance et liens vers les fiches détaillées.</p><div class="nc-arrow">ACCÉDER ──▶</div></div></a>
-    <a href="pnj.html" class="ncard c2" data-reveal data-delay="100"><div class="nc-bar"></div><div class="nc-body"><span class="nc-ico">◆</span><div class="nc-title">Personnages PNJ</div><p class="nc-desc">Les figures importantes de Jaharta — entités mythiques, seigneurs de guerre, gardiens anciens qui façonnent le destin de l'univers.</p><div class="nc-arrow">DÉCOUVRIR ──▶</div></div></a>
-    <a href="portail.html" class="ncard c3" data-reveal data-delay="200"><div class="nc-bar"></div><div class="nc-body"><span class="nc-ico">⬡</span><div class="nc-title">Portail des Ressources</div><p class="nc-desc">Lore de Jaharta, cartes du monde, règles du RP et toutes les ressources essentielles pour jouer dans cet univers.</p><div class="nc-arrow">EXPLORER ──▶</div></div></a>
+    <a href="fiches.html" class="ncard c1" data-reveal data-delay="0">
+      <div class="nc-bar"></div>
+      <div class="nc-body">
+        <span class="nc-ico">◈</span>
+        <div class="nc-title">Base de Données RP</div>
+        <p class="nc-desc">Registre complet des personnages joueurs. Filtrez par race, consultez les fiches, rangs de puissance et liens vers les fiches détaillées de chaque joueur.</p>
+        <div class="nc-arrow">ACCÉDER ──▶</div>
+      </div>
+      <div class="nc-corner"></div>
+    </a>
+
+    <a href="pnj.html" class="ncard c2" data-reveal data-delay="120">
+      <div class="nc-bar"></div>
+      <div class="nc-body">
+        <span class="nc-ico">◆</span>
+        <div class="nc-title">Personnages PNJ</div>
+        <p class="nc-desc">Les figures importantes de Jaharta — entités mythiques, seigneurs de guerre, gardiens anciens et acteurs clés qui façonnent le destin de l'univers.</p>
+        <div class="nc-arrow">DÉCOUVRIR ──▶</div>
+      </div>
+      <div class="nc-corner"></div>
+    </a>
+
+    <a href="portail.html" class="ncard c3" data-reveal data-delay="240">
+      <div class="nc-bar"></div>
+      <div class="nc-body">
+        <span class="nc-ico">⬡</span>
+        <div class="nc-title">Portail des Ressources</div>
+        <p class="nc-desc">Lore de Jaharta, cartes du monde, règles du RP et toutes les ressources essentielles pour jouer et construire votre histoire dans cet univers.</p>
+        <div class="nc-arrow">EXPLORER ──▶</div>
+      </div>
+      <div class="nc-corner"></div>
+    </a>
   </div>
 </section>
 
-<section class="section" id="lore">
-  <div class="section-inner">
-    <div class="divider reveal"></div>
-    <p class="section-label reveal">Votre histoire commence ici</p>
-    <div class="lore-text reveal">
-      <p>Votre âme errait quelque part, dans l'immensité de l'inconscience collective. Mais une entité unique vous a appelé&nbsp;: <em>le Nexus</em>. Vous n'êtes pas né dans ce monde — vous y avez été <strong>invité</strong>, ajouté à la trame du réel comme une variable venue d'ailleurs.</p>
-      <p>Jaharta vous a accepté… sans forcément vous comprendre. Ici, une rune peut alimenter une machine, et un circuit peut canaliser un sort. Magie et technologie ne se contredisent pas&nbsp;: elles <em>coexistent</em>, s'entrelacent et parfois se déforment mutuellement.</p>
-    </div>
-    <div class="lore-highlight reveal">Votre seconde chance débute à <em>Navari</em>, la Cité-Strate&nbsp;:<br>première puissance militaire et deuxième puissance économique de Jaharta.</div>
-    <div class="lore-text reveal">
-      <p>Le corps qui vous est octroyé par le Nexus peut — ou non — être celui de votre vie antérieure. Au rythme de vos discussions, de vos combats, de vos chasses et de vos négociations, vous reprendrez le contrôle grâce au <strong>Système</strong> — votre compagnon le plus constant.</p>
-      <p>Suivrez-vous la voie du Système&nbsp;? Ou forgerez-vous une vie comme vous le dicte votre instinct&nbsp;? Quel que soit votre choix, ce sera le vôtre. Et un choix implique toujours des <strong>conséquences</strong>.</p>
-    </div>
-  </div>
-</section>
-
-<section class="section" id="features">
-  <div class="section-inner" style="max-width:1100px;">
-    <div class="divider reveal"></div>
-    <p class="section-label reveal">Un système inédit</p>
-    <div class="features-grid reveal-stagger reveal">
-      <div class="feature-card"><span class="feature-icon">⚔️</span><h3>Système RPG exclusif</h3><p>Un bot développé sur mesure : gagnez de l'XP, montez de niveau, gérez vos items et vos loots — une expérience encore jamais vue.</p></div>
-      <div class="feature-card"><span class="feature-icon">💰</span><h3>Économie complète</h3><p>Un système monétaire pensé pour le RP, avec un marché interactif pour acheter équipements et ressources.</p></div>
-      <div class="feature-card"><span class="feature-icon">🐉</span><h3>Companions</h3><p>Des monstres uniques avec évolutions, pouvoirs synchronisés et stats bonus. Trouvez celui qui combattra à vos côtés.</p></div>
-      <div class="feature-card"><span class="feature-icon">🏅</span><h3>Titres & Prouesses</h3><p>Des titres qui marquent vos exploits en RP et octroient divers bonus. Forgez votre légende dans Jaharta.</p></div>
-    </div>
-  </div>
-</section>
-
+<!-- ══════════ DISCORD BANNER ══════════ -->
 <section class="discord-section">
-  <div class="section-head" data-reveal><span class="sh-num">02 //</span><h2 class="sh-title">Rejoindre la communauté</h2><div class="sh-line"></div></div>
+  <div class="section-head" data-reveal>
+    <span class="sh-num">02 //</span>
+    <h2 class="sh-title">Rejoindre la communauté</h2>
+    <div class="sh-line"></div>
+  </div>
+
   <div class="db" data-reveal>
     <div class="db-l">
       <div class="db-ico"><svg viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.032.054a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.107a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.108c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg></div>
-      <div><div class="db-title" data-text="Rejoignez le serveur Jaharta">Rejoignez le serveur Jaharta</div><div class="db-sub">Communauté · Événements RP · Annonces · Soumission de fiches</div></div>
+      <div>
+        <div class="db-title" data-text="Rejoignez le serveur Jaharta">Rejoignez le serveur Jaharta</div>
+        <div class="db-sub">Communauté · Événements RP · Annonces · Soumission de fiches</div>
+      </div>
     </div>
-    <a href="https://discord.gg/jaharta" target="_blank" class="db-btn"><svg viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.032.054a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.107a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.108c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>discord.gg/jaharta</a>
+    <a href="https://discord.gg/jBMnmeR944" target="_blank" class="db-btn">
+      <svg viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.032.054a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.107a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.108c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+      discord.gg/jBMnmeR944
+    </a>
   </div>
 </section>
 
-<section class="final-cta">
-  <div class="reveal">
-    <p class="final-cta-title">Êtes-vous prêts à assumer vos choix&nbsp;?</p>
-    <p class="final-cta-sub">Jaharta ne se comprend pas en le lisant — mais en le vivant.</p>
-    <a href="https://discord.gg/jaharta" target="_blank" class="hero-cta" style="animation:none;opacity:1;"><svg viewBox="0 0 24 24" fill="currentColor" style="width:18px;height:18px;"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.032.054a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.107a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.108c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>Entrer dans Jaharta</a>
-  </div>
-</section>
-
+<!-- ══════════ FOOTER ══════════ -->
 <footer>
   <div class="footer-inner">
-    <div><div class="f-logo">JAHARTA // RP</div><div class="f-tagline">Univers Jaharta · Roleplay Officiel</div></div>
-    <div class="f-status"><div class="f-status-dot"><span class="hdot"></span> SYSTÈME EN LIGNE</div><div class="f-version">v7.0.0</div></div>
-    <div class="f-links-col"><div class="f-links"><a href="fiches.html">Fiches RP</a><a href="pnj.html">PNJ</a><a href="portail.html">Portail</a><a href="racesjouables.html">Races</a><a href="admin.html">Admin</a><a href="https://discord.gg/jaharta" target="_blank">Discord ↗</a></div></div>
+    <div class="f-brand">
+      <div class="f-logo">JAHARTA // RP</div>
+      <div class="f-tagline">Univers Jaharta · Roleplay Officiel</div>
+    </div>
+    <div class="f-status">
+      <div class="f-status-dot"><span class="hdot"></span> SYSTÈME EN LIGNE</div>
+      <div class="f-version">v5.0.0</div>
+    </div>
+    <div class="f-links-col">
+      <div class="f-links">
+        <a href="fiches.html">Fiches RP</a>
+        <a href="pnj.html">PNJ</a>
+        <a href="portail.html">Portail</a>
+        <a href="racesjouables.html">Races</a>
+        <a href="admin.html">Admin</a>
+        <a href="https://discord.gg/jBMnmeR944" target="_blank">Discord ↗</a>
+      </div>
+    </div>
   </div>
-  <div class="f-bottom"><div class="f-copy">© 2024 — 2026 JAHARTA RP · TOUS DROITS RÉSERVÉS</div></div>
+  <div class="f-bottom">
+    <div class="f-copy">© 2024 — 2026 JAHARTA RP · TOUS DROITS RÉSERVÉS</div>
+  </div>
 </footer>
 
+<!-- ══════════════════════════════════════════════════════
+     SCRIPTS
+     ══════════════════════════════════════════════════════ -->
+
 <script>
-/* Particles */
-(function(){const c=document.getElementById('particles-canvas');if(!c)return;const ctx=c.getContext('2d');let ps=[],w,h,aid;function resize(){const p=c.parentElement;w=c.width=p.offsetWidth;h=c.height=p.offsetHeight;}function create(){const n=Math.min(Math.floor(w*h/20000),60);ps=[];for(let i=0;i<n;i++)ps.push({x:Math.random()*w,y:Math.random()*h,r:Math.random()*1.5+.3,sx:(Math.random()-.5)*.3,sy:(Math.random()-.5)*.2-.1,o:Math.random()*.5+.1,c:Math.random()>.75?'180,74,255':'0,240,255',p:Math.random()*Math.PI*2,ps:Math.random()*.02+.005});}function draw(){ctx.clearRect(0,0,w,h);ps.forEach(p=>{p.x+=p.sx;p.y+=p.sy;p.p+=p.ps;if(p.x<-10)p.x=w+10;if(p.x>w+10)p.x=-10;if(p.y<-10)p.y=h+10;if(p.y>h+10)p.y=-10;const o=p.o*(.6+.4*Math.sin(p.p));ctx.beginPath();ctx.arc(p.x,p.y,p.r*3,0,Math.PI*2);ctx.fillStyle=`rgba(${p.c},${o*.12})`;ctx.fill();ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle=`rgba(${p.c},${o})`;ctx.fill();});aid=requestAnimationFrame(draw);}const obs=new IntersectionObserver(([e])=>{if(e.isIntersecting){if(!aid)draw();}else{cancelAnimationFrame(aid);aid=null;}},{threshold:.1});resize();create();draw();obs.observe(c.parentElement);let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{resize();create();},200);});})();
-/* Scroll progress */
-(function(){const b=document.getElementById('scroll-progress');let t=false;window.addEventListener('scroll',()=>{if(!t){requestAnimationFrame(()=>{const h=document.documentElement.scrollHeight-window.innerHeight;b.style.width=h>0?(window.scrollY/h*100)+'%':'0%';t=false;});t=true;}},{passive:true});})();
-/* Scroll reveal */
-(function(){const els=document.querySelectorAll('.reveal,[data-reveal]');if(!els.length)return;const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){const d=parseInt(e.target.dataset.delay||'0');setTimeout(()=>{e.target.classList.add('visible');e.target.classList.add('revealed');},d);obs.unobserve(e.target);}});},{threshold:.12,rootMargin:'0px 0px -40px 0px'});els.forEach(el=>obs.observe(el));})();
-/* Mobile nav */
-(function(){const t=document.getElementById('nav-toggle'),n=document.getElementById('main-nav'),b=document.getElementById('nav-backdrop');if(!t||!n)return;function cl(){n.classList.remove('open');b?.classList.remove('open');t.textContent='☰';}function op(){n.classList.add('open');b?.classList.add('open');t.textContent='✕';}t.addEventListener('click',()=>{n.classList.contains('open')?cl():op();});b?.addEventListener('click',cl);n.querySelectorAll('a').forEach(a=>a.addEventListener('click',cl));})();
-/* Header scroll */
-(function(){const h=document.querySelector('header');if(!h)return;let s=false;window.addEventListener('scroll',()=>{const v=window.scrollY>80;if(v!==s){s=v;h.classList.toggle('scrolled',v);}},{passive:true});})();
-/* Scroll hint */
-(function(){const h=document.querySelector('.scroll-hint');if(!h)return;let hid=false;window.addEventListener('scroll',()=>{if(!hid&&window.scrollY>100){h.style.opacity='0';h.style.transition='opacity .5s';hid=true;}},{passive:true});})();
-/* Discord glitch */
-(function(){const b=document.querySelector('.db'),t=document.querySelector('.db-title');if(!b||!t)return;let tm;b.addEventListener('mouseenter',()=>{if(tm)return;t.classList.add('glitching');tm=setTimeout(()=>{t.classList.remove('glitching');tm=null;},2900);});})();
+/* ═══════════════════════════════════════════
+   1. PARTICLE SYSTEM — Enhanced
+   ═══════════════════════════════════════════ */
+(function(){
+  const c = document.getElementById('ptcl');
+  const cols = ['#00f5ff','#ff006e','#ffd60a','#b06eff','#44ff88','#ffffff'];
+  for(let i = 0; i < 35; i++){
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const col = cols[Math.floor(Math.random()*cols.length)];
+    const size = 1 + Math.random() * 3;
+    const opacity = .2 + Math.random() * .5;
+    p.style.cssText = `
+      left:${Math.random()*100}%;
+      width:${size}px; height:${size}px;
+      background:${col};
+      box-shadow:0 0 ${size*3}px ${col};
+      animation-duration:${10+Math.random()*18}s;
+      animation-delay:${Math.random()*12}s;
+      --dx:${(Math.random()-.5)*200}px;
+      --po:${opacity};
+      --ps:${.5 + Math.random()};
+    `;
+    c.appendChild(p);
+  }
+})();
+
+/* ═══════════════════════════════════════════
+   2. HERO GLITCH — auto-start
+   ═══════════════════════════════════════════ */
+(function(){
+  const c = document.querySelector('.hero-title .c');
+  if(c) c.classList.add('glitching');
+})();
+
+/* ═══════════════════════════════════════════
+   3. DISCORD BANNER GLITCH — hover trigger
+   ═══════════════════════════════════════════ */
+(function(){
+  const banner = document.querySelector('.db');
+  const title  = document.querySelector('.db-title');
+  if(!banner || !title) return;
+  let timer = null;
+  banner.addEventListener('mouseenter', () => {
+    if(timer) return;
+    title.classList.add('glitching');
+    timer = setTimeout(() => {
+      title.classList.remove('glitching');
+      void title.offsetWidth;
+      timer = null;
+    }, 2900);
+  });
+})();
+
+/* ═══════════════════════════════════════════
+   4. SCROLL PROGRESS BAR
+   ═══════════════════════════════════════════ */
+(function(){
+  const bar = document.getElementById('scroll-progress');
+  let ticking = false;
+  window.addEventListener('scroll', () => {
+    if(!ticking){
+      requestAnimationFrame(() => {
+        const h = document.documentElement.scrollHeight - window.innerHeight;
+        bar.style.width = h > 0 ? (window.scrollY / h * 100) + '%' : '0%';
+        ticking = false;
+      });
+      ticking = true;
+    }
+  }, { passive: true });
+})();
+
+/* ═══════════════════════════════════════════
+   5. SCROLL REVEAL (IntersectionObserver)
+   ═══════════════════════════════════════════ */
+(function(){
+  const els = document.querySelectorAll('[data-reveal]');
+  if(!('IntersectionObserver' in window)){
+    els.forEach(el => el.classList.add('revealed'));
+    return;
+  }
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if(e.isIntersecting){
+        const delay = parseInt(e.target.dataset.delay || '0');
+        setTimeout(() => e.target.classList.add('revealed'), delay);
+        obs.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+  els.forEach(el => obs.observe(el));
+})();
+
+/* ═══════════════════════════════════════════
+   6. MOBILE NAV DRAWER
+   ═══════════════════════════════════════════ */
+(function(){
+  const toggle   = document.getElementById('nav-toggle');
+  const nav      = document.getElementById('main-nav');
+  const backdrop = document.getElementById('nav-backdrop');
+  if(!toggle || !nav) return;
+
+  function closeNav(){ nav.classList.remove('open'); backdrop.classList.remove('open'); toggle.textContent='☰'; }
+  function openNav() { nav.classList.add('open');    backdrop.classList.add('open');    toggle.textContent='✕'; }
+
+  toggle.addEventListener('click', () => {
+    nav.classList.contains('open') ? closeNav() : openNav();
+  });
+  backdrop.addEventListener('click', closeNav);
+  nav.querySelectorAll('a').forEach(a => a.addEventListener('click', closeNav));
+})();
+
+/* ═══════════════════════════════════════════
+   7. SCROLL HINT — hide on scroll
+   ═══════════════════════════════════════════ */
+(function(){
+  const hint = document.querySelector('.scroll-hint');
+  if(!hint) return;
+  let hidden = false;
+  window.addEventListener('scroll', () => {
+    if(!hidden && window.scrollY > 100){
+      hint.style.opacity = '0';
+      hint.style.transform = 'translateX(-50%) translateY(20px)';
+      hint.style.transition = 'all .5s ease';
+      hidden = true;
+    }
+  }, { passive: true });
+})();
+
+/* ═══════════════════════════════════════════
+   8. HEADER SHRINK ON SCROLL
+   ═══════════════════════════════════════════ */
+(function(){
+  const header = document.querySelector('header');
+  if(!header) return;
+  let shrunk = false;
+  window.addEventListener('scroll', () => {
+    const s = window.scrollY > 80;
+    if(s !== shrunk){
+      shrunk = s;
+      header.style.height = s ? '56px' : '';
+      header.style.borderBottomColor = s ? 'rgba(0,245,255,.22)' : '';
+    }
+  }, { passive: true });
+})();
 </script>
+
 <script type="module" src="js/auth-badge.js"></script>
 <script src="js/music-player.js"></script>
-<script src="js/page-transitions.js"></script>
 </body>
 </html>
