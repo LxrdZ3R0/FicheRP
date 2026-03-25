@@ -70,8 +70,15 @@ footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:40
 <script src="js/debug.js"></script>
 <script src="js/constants.js"></script>
 <script src="js/utils.js"></script>
+<style>
+#page-transition{position:fixed;inset:0;z-index:99999;pointer-events:none;display:flex;flex-direction:column;}
+.pt-block{flex:1;background:#04060f;transform:translateX(-100%);transition:none;}
+#page-transition::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 1px,rgba(0,240,255,.12) 1px,rgba(0,240,255,.12) 2px);opacity:0;z-index:1;pointer-events:none;}
+#page-transition.active::before{opacity:1;}
+</style>
 </head>
 <body>
+<div id="page-transition"><div class="pt-block"></div><div class="pt-block"></div><div class="pt-block"></div><div class="pt-block"></div><div class="pt-block"></div><div class="pt-block"></div><div class="pt-block"></div><div class="pt-block"></div><div class="pt-block"></div><div class="pt-block"></div><div class="pt-block"></div><div class="pt-block"></div></div>
 <div class="scroll-progress" id="scroll-progress"></div>
 <div class="noise"></div>
 <div class="nav-backdrop" id="nav-backdrop"></div>
@@ -84,6 +91,7 @@ footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:40
     <a href="fiches.html">◈ <span>Fiches RP</span></a>
     <a href="pnj.html">◆ <span>PNJ</span></a>
     <a href="portail.html" class="active">⬡ <span>Portail</span></a>
+    <a href="racesjouables.html">◈ <span>Races</span></a>
     <a href="admin.html" class="admin-badge" id="admin-badge">ADMIN</a>
     <a href="admin.html" class="nav-admin">⚙ Connexion</a>
   </nav>
@@ -167,6 +175,7 @@ footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:40
 (function(){const h=document.querySelector('header');if(!h)return;let s=false;window.addEventListener('scroll',()=>{const v=window.scrollY>80;if(v!==s){s=v;h.style.height=v?'56px':'';h.style.borderBottomColor=v?'rgba(0,245,255,.22)':'';}},{passive:true});})();
 </script>
 <script type="module" src="js/auth-badge.js"></script>
+<script src="js/jaharta-core.js"></script>
 <script src="js/music-player.js"></script>
 </body>
 </html>
