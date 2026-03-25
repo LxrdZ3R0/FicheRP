@@ -25,10 +25,10 @@
 
 <!-- Open Graph -->
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://lxrdz3r0.github.io/JahartaRP/">
+<meta property="og:url" content="https://www.jaharta.fr/">
 <meta property="og:title" content="JAHARTA // RP">
 <meta property="og:description" content="Univers Jaharta — Explorez, créez votre personnage et rejoignez l'aventure.">
-<meta property="og:image" content="https://lxrdz3r0.github.io/JahartaRP/img/banner.png?v=2">
+<meta property="og:image" content="https://www.jaharta.fr/img/banner.png?v=3">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:site_name" content="Jaharta RP">
@@ -36,7 +36,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="JAHARTA // RP">
 <meta name="twitter:description" content="Univers Jaharta — Explorez, créez votre personnage et rejoignez l'aventure.">
-<meta name="twitter:image" content="https://lxrdz3r0.github.io/JahartaRP/img/banner.png?v=2">
+<meta name="twitter:image" content="https://www.jaharta.fr/img/banner.png?v=3">
 
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;800;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/jaharta.css">
@@ -155,6 +155,81 @@
 .hero-mesh::after {
   content: ''; position: absolute; inset: 0;
   background: radial-gradient(ellipse 70% 60% at 50% 45%, transparent 30%, var(--dark) 100%);
+}
+
+/* ═══════════════════════════════════
+   CYBERPUNK CITYSCAPE BACKGROUND
+   ═══════════════════════════════════ */
+.hero-cityscape {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  z-index: 0; pointer-events: none;
+  height: 55%; min-height: 350px;
+  overflow: hidden;
+}
+.hero-cityscape svg {
+  position: absolute; bottom: 0; left: 50%;
+  transform: translateX(-50%);
+  width: max(100%, 1600px); height: 100%;
+}
+
+/* Horizon glow */
+.hero-horizon {
+  position: absolute; bottom: 28%; left: 0; right: 0;
+  height: 2px; z-index: 1;
+  background: linear-gradient(90deg,
+    transparent 5%,
+    rgba(0,245,255,.06) 20%,
+    rgba(0,245,255,.2) 40%,
+    rgba(255,0,110,.15) 50%,
+    rgba(0,245,255,.2) 60%,
+    rgba(0,245,255,.06) 80%,
+    transparent 95%
+  );
+  box-shadow: 0 0 40px 8px rgba(0,245,255,.06), 0 0 80px 16px rgba(255,0,110,.03);
+}
+
+/* Atmospheric fog layers */
+.hero-fog {
+  position: absolute; left: 0; right: 0; z-index: 1;
+  pointer-events: none;
+}
+.hero-fog-1 {
+  bottom: 22%; height: 120px;
+  background: linear-gradient(180deg, transparent, rgba(0,245,255,.02) 40%, rgba(4,6,15,.3));
+  animation: fogDrift1 30s ease-in-out infinite;
+}
+.hero-fog-2 {
+  bottom: 15%; height: 80px;
+  background: linear-gradient(180deg, transparent, rgba(255,0,110,.015) 50%, rgba(4,6,15,.2));
+  animation: fogDrift2 22s ease-in-out infinite;
+}
+@keyframes fogDrift1 {
+  0%, 100% { transform: translateX(0); opacity: .7; }
+  50% { transform: translateX(3%); opacity: 1; }
+}
+@keyframes fogDrift2 {
+  0%, 100% { transform: translateX(0); opacity: .5; }
+  50% { transform: translateX(-2%); opacity: .8; }
+}
+
+/* Neon window flicker animation */
+@keyframes windowFlicker {
+  0%, 100% { opacity: var(--wo, .6); }
+  10% { opacity: .2; }
+  12% { opacity: var(--wo, .6); }
+  50% { opacity: var(--wo, .6); }
+  52% { opacity: .1; }
+  54% { opacity: var(--wo, .6); }
+}
+@keyframes neonPulse {
+  0%, 100% { opacity: .5; filter: blur(0px); }
+  50% { opacity: .9; filter: blur(1px); }
+}
+@keyframes signGlow {
+  0%, 100% { opacity: .35; }
+  30% { opacity: .6; }
+  60% { opacity: .25; }
+  80% { opacity: .55; }
 }
 
 /* Horizontal scan line (moves slowly) */
@@ -667,6 +742,208 @@ footer {
   <!-- Animated gradient mesh -->
   <div class="hero-mesh"></div>
   <div class="hero-scanline"></div>
+
+  <!-- Cyberpunk Cityscape Background -->
+  <div class="hero-cityscape">
+    <svg viewBox="0 0 1600 600" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <!-- Building gradient -->
+        <linearGradient id="bldgGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#0a0f1e"/>
+          <stop offset="100%" stop-color="#04060f"/>
+        </linearGradient>
+        <!-- Neon glow filter -->
+        <filter id="neonGlow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="6"/>
+        </filter>
+      </defs>
+
+      <!-- Background buildings (far layer — darkest, smallest) -->
+      <g opacity=".25">
+        <rect x="50" y="200" width="45" height="400" fill="#060a14"/>
+        <rect x="110" y="240" width="35" height="360" fill="#060a14"/>
+        <rect x="180" y="180" width="55" height="420" fill="#070b16"/>
+        <rect x="280" y="220" width="40" height="380" fill="#060a14"/>
+        <rect x="370" y="160" width="50" height="440" fill="#070b16"/>
+        <rect x="480" y="200" width="60" height="400" fill="#060a14"/>
+        <rect x="600" y="170" width="45" height="430" fill="#070b16"/>
+        <rect x="700" y="210" width="55" height="390" fill="#060a14"/>
+        <rect x="820" y="190" width="40" height="410" fill="#070b16"/>
+        <rect x="920" y="230" width="50" height="370" fill="#060a14"/>
+        <rect x="1020" y="170" width="65" height="430" fill="#070b16"/>
+        <rect x="1140" y="200" width="45" height="400" fill="#060a14"/>
+        <rect x="1240" y="180" width="55" height="420" fill="#070b16"/>
+        <rect x="1350" y="220" width="40" height="380" fill="#060a14"/>
+        <rect x="1440" y="190" width="50" height="410" fill="#070b16"/>
+        <rect x="1530" y="210" width="45" height="390" fill="#060a14"/>
+      </g>
+
+      <!-- Mid-layer buildings -->
+      <g opacity=".5">
+        <rect x="20" y="310" width="70" height="290" fill="#080d1a"/>
+        <rect x="120" y="270" width="85" height="330" fill="#0a1020"/>
+        <rect x="240" y="290" width="60" height="310" fill="#080d1a"/>
+        <rect x="340" y="250" width="90" height="350" fill="#0a1020"/>
+        <rect x="470" y="280" width="75" height="320" fill="#080d1a"/>
+        <rect x="580" y="240" width="95" height="360" fill="#0a1020"/>
+        <rect x="720" y="260" width="70" height="340" fill="#080d1a"/>
+        <rect x="830" y="290" width="80" height="310" fill="#0a1020"/>
+        <rect x="950" y="250" width="85" height="350" fill="#080d1a"/>
+        <rect x="1070" y="270" width="75" height="330" fill="#0a1020"/>
+        <rect x="1180" y="240" width="90" height="360" fill="#080d1a"/>
+        <rect x="1310" y="280" width="65" height="320" fill="#0a1020"/>
+        <rect x="1420" y="260" width="80" height="340" fill="#080d1a"/>
+        <rect x="1520" y="300" width="70" height="300" fill="#0a1020"/>
+      </g>
+
+      <!-- Foreground buildings (closest — most detail) -->
+      <g fill="url(#bldgGrad)">
+        <!-- Left cluster -->
+        <rect x="-10" y="380" width="100" height="220"/>
+        <rect x="100" y="340" width="80" height="260"/>
+        <rect x="190" y="360" width="110" height="240"/>
+        <rect x="310" y="320" width="70" height="280"/>
+        <!-- Tower with antenna -->
+        <rect x="400" y="280" width="95" height="320"/>
+        <rect x="435" y="250" width="25" height="30"/>
+        <rect x="446" y="220" width="3" height="30"/>
+        <!-- Mid cluster -->
+        <rect x="510" y="350" width="85" height="250"/>
+        <rect x="610" y="310" width="120" height="290"/>
+        <rect x="750" y="340" width="75" height="260"/>
+        <!-- Central tall tower -->
+        <rect x="840" y="260" width="110" height="340"/>
+        <rect x="875" y="230" width="40" height="30"/>
+        <rect x="893" y="195" width="4" height="35"/>
+        <!-- Right cluster -->
+        <rect x="970" y="350" width="90" height="250"/>
+        <rect x="1080" y="300" width="100" height="300"/>
+        <rect x="1200" y="330" width="80" height="270"/>
+        <rect x="1300" y="360" width="110" height="240"/>
+        <rect x="1430" y="310" width="75" height="290"/>
+        <rect x="1520" y="350" width="90" height="250"/>
+      </g>
+
+      <!-- Neon edge lines on buildings -->
+      <g opacity=".6">
+        <line x1="100" y1="340" x2="100" y2="600" stroke="#00f5ff" stroke-width=".5" opacity=".3"/>
+        <line x1="180" y1="360" x2="180" y2="600" stroke="#ff006e" stroke-width=".5" opacity=".2"/>
+        <line x1="400" y1="280" x2="400" y2="600" stroke="#00f5ff" stroke-width=".7" opacity=".4"/>
+        <line x1="495" y1="280" x2="495" y2="600" stroke="#00f5ff" stroke-width=".5" opacity=".3"/>
+        <line x1="610" y1="310" x2="610" y2="600" stroke="#ffd60a" stroke-width=".5" opacity=".2"/>
+        <line x1="730" y1="310" x2="730" y2="600" stroke="#00f5ff" stroke-width=".5" opacity=".25"/>
+        <line x1="840" y1="260" x2="840" y2="600" stroke="#ff006e" stroke-width=".7" opacity=".35"/>
+        <line x1="950" y1="260" x2="950" y2="600" stroke="#00f5ff" stroke-width=".5" opacity=".3"/>
+        <line x1="1080" y1="300" x2="1080" y2="600" stroke="#ffd60a" stroke-width=".5" opacity=".2"/>
+        <line x1="1180" y1="300" x2="1180" y2="600" stroke="#00f5ff" stroke-width=".5" opacity=".25"/>
+        <line x1="1300" y1="360" x2="1300" y2="600" stroke="#ff006e" stroke-width=".5" opacity=".2"/>
+        <line x1="1430" y1="310" x2="1430" y2="600" stroke="#00f5ff" stroke-width=".5" opacity=".3"/>
+      </g>
+
+      <!-- Windows — cyan cluster -->
+      <g fill="#00f5ff">
+        <!-- Building at x400 -->
+        <rect x="412" y="300" width="4" height="3" opacity=".7"/>
+        <rect x="422" y="300" width="4" height="3" opacity=".5"/>
+        <rect x="432" y="300" width="4" height="3" opacity=".4"/>
+        <rect x="462" y="300" width="4" height="3" opacity=".6"/>
+        <rect x="472" y="300" width="4" height="3" opacity=".3"/>
+        <rect x="412" y="320" width="4" height="3" opacity=".5"/>
+        <rect x="432" y="320" width="4" height="3" opacity=".7"/>
+        <rect x="452" y="320" width="4" height="3" opacity=".4"/>
+        <rect x="472" y="320" width="4" height="3" opacity=".6"/>
+        <rect x="412" y="340" width="4" height="3" opacity=".3"/>
+        <rect x="442" y="340" width="4" height="3" opacity=".6"/>
+        <rect x="462" y="340" width="4" height="3" opacity=".5"/>
+        <rect x="412" y="360" width="4" height="3" opacity=".6" style="animation:windowFlicker 4s infinite;--wo:.6"/>
+        <rect x="432" y="360" width="4" height="3" opacity=".4"/>
+        <rect x="462" y="360" width="4" height="3" opacity=".7"/>
+        <rect x="482" y="360" width="4" height="3" opacity=".3"/>
+        <!-- Building at x840 -->
+        <rect x="855" y="280" width="4" height="3" opacity=".6"/>
+        <rect x="870" y="280" width="4" height="3" opacity=".4"/>
+        <rect x="900" y="280" width="4" height="3" opacity=".7"/>
+        <rect x="920" y="280" width="4" height="3" opacity=".5"/>
+        <rect x="855" y="300" width="4" height="3" opacity=".4"/>
+        <rect x="885" y="300" width="4" height="3" opacity=".6" style="animation:windowFlicker 5s 1s infinite;--wo:.6"/>
+        <rect x="910" y="300" width="4" height="3" opacity=".5"/>
+        <rect x="930" y="300" width="4" height="3" opacity=".3"/>
+        <rect x="860" y="320" width="4" height="3" opacity=".5"/>
+        <rect x="880" y="320" width="4" height="3" opacity=".7"/>
+        <rect x="900" y="320" width="4" height="3" opacity=".4"/>
+        <rect x="925" y="320" width="4" height="3" opacity=".6"/>
+        <rect x="860" y="340" width="4" height="3" opacity=".6"/>
+        <rect x="890" y="340" width="4" height="3" opacity=".3"/>
+        <rect x="920" y="340" width="4" height="3" opacity=".5"/>
+      </g>
+
+      <!-- Windows — magenta -->
+      <g fill="#ff006e">
+        <rect x="625" y="330" width="4" height="3" opacity=".6"/>
+        <rect x="650" y="330" width="4" height="3" opacity=".4"/>
+        <rect x="690" y="330" width="4" height="3" opacity=".5"/>
+        <rect x="635" y="350" width="4" height="3" opacity=".5" style="animation:windowFlicker 3.5s .5s infinite;--wo:.5"/>
+        <rect x="670" y="350" width="4" height="3" opacity=".7"/>
+        <rect x="700" y="350" width="4" height="3" opacity=".3"/>
+        <rect x="625" y="370" width="4" height="3" opacity=".4"/>
+        <rect x="660" y="370" width="4" height="3" opacity=".6"/>
+        <rect x="1095" y="320" width="4" height="3" opacity=".5"/>
+        <rect x="1120" y="320" width="4" height="3" opacity=".7"/>
+        <rect x="1150" y="320" width="4" height="3" opacity=".4"/>
+        <rect x="1095" y="340" width="4" height="3" opacity=".6"/>
+        <rect x="1130" y="340" width="4" height="3" opacity=".4"/>
+        <rect x="1160" y="340" width="4" height="3" opacity=".5" style="animation:windowFlicker 4.5s 2s infinite;--wo:.5"/>
+      </g>
+
+      <!-- Windows — gold/warm -->
+      <g fill="#ffd60a">
+        <rect x="140" y="370" width="4" height="3" opacity=".5"/>
+        <rect x="155" y="370" width="4" height="3" opacity=".3"/>
+        <rect x="140" y="390" width="4" height="3" opacity=".6" style="animation:windowFlicker 6s 3s infinite;--wo:.6"/>
+        <rect x="165" y="390" width="4" height="3" opacity=".4"/>
+        <rect x="225" y="380" width="4" height="3" opacity=".5"/>
+        <rect x="255" y="380" width="4" height="3" opacity=".4"/>
+        <rect x="275" y="380" width="4" height="3" opacity=".6"/>
+        <rect x="235" y="400" width="4" height="3" opacity=".3"/>
+        <rect x="265" y="400" width="4" height="3" opacity=".5"/>
+        <rect x="1320" y="380" width="4" height="3" opacity=".5"/>
+        <rect x="1350" y="380" width="4" height="3" opacity=".4"/>
+        <rect x="1380" y="380" width="4" height="3" opacity=".6"/>
+        <rect x="1330" y="400" width="4" height="3" opacity=".4"/>
+        <rect x="1370" y="400" width="4" height="3" opacity=".5"/>
+      </g>
+
+      <!-- Neon signs (glowing rectangles on buildings) -->
+      <g filter="url(#neonGlow)">
+        <!-- Cyan sign on tower -->
+        <rect x="420" y="292" width="22" height="2" fill="#00f5ff" opacity=".5" style="animation:signGlow 4s infinite"/>
+        <!-- Magenta sign -->
+        <rect x="640" y="322" width="30" height="2" fill="#ff006e" opacity=".4" style="animation:signGlow 5s 1.5s infinite"/>
+        <!-- Gold sign on central tower -->
+        <rect x="860" y="272" width="25" height="2" fill="#ffd60a" opacity=".45" style="animation:signGlow 3.5s .8s infinite"/>
+        <!-- Cyan vertical sign -->
+        <rect x="1088" y="308" width="2" height="16" fill="#00f5ff" opacity=".4" style="animation:signGlow 6s 2s infinite"/>
+      </g>
+
+      <!-- Antenna blink lights -->
+      <circle cx="448" cy="220" r="2" fill="#ff3030" opacity=".8" style="animation:windowFlicker 2s infinite;--wo:.8"/>
+      <circle cx="895" cy="195" r="2" fill="#ff3030" opacity=".7" style="animation:windowFlicker 2.5s .5s infinite;--wo:.7"/>
+
+      <!-- Soft horizon glow -->
+      <g filter="url(#softGlow)" opacity=".3">
+        <line x1="0" y1="380" x2="1600" y2="380" stroke="#00f5ff" stroke-width="1"/>
+      </g>
+    </svg>
+  </div>
+
+  <!-- Fog layers -->
+  <div class="hero-fog hero-fog-1"></div>
+  <div class="hero-fog hero-fog-2"></div>
+  <div class="hero-horizon"></div>
 
   <!-- Particles -->
   <div class="particles" id="ptcl"></div>
