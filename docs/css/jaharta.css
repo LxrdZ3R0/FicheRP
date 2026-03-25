@@ -1,235 +1,248 @@
 /* ═══════════════════════════════════════════════════════════════════════
-   JAHARTA.CSS — Styles partagés sur toutes les pages du site
+   JAHARTA.CSS — Styles partagés · Refonte Cyberpunk-Fantasy v6
    ═══════════════════════════════════════════════════════════════════════
-   IMPORTANT : Ce fichier est inclus par TOUTES les pages.
-   Ne pas y mettre de styles spécifiques à une seule page.
-
-   STRUCTURE :
-   1. Variables globales
-   2. Reset & base
-   3. Curseur custom
-   4. Effets de fond (scanlines CRT, grille)
-   5. Header & logo
-   6. Navigation
-   7. Scrollbar
-   8. Discord Banner (partagé index + portail)
-   9. Hero Title Glitch (page index uniquement)
-   10. Badge Admin connecté
+   Aesthetic : Cyberpunk-Fantasy Hybrid (Test-Jaharta style)
+   Fonts    : Orbitron (display) · Rajdhani (heading) · Exo 2 (body)
+   Palette  : Cyan #00f0ff · Violet #b44aff · Magenta #ff006e · Gold #ffd60a
    ═══════════════════════════════════════════════════════════════════════ */
 
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Exo+2:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Share+Tech+Mono&display=swap');
 
 /* ══════════════════════════════════════════════════════
    1. VARIABLES GLOBALES
    ══════════════════════════════════════════════════════ */
 :root {
-  /* Palette principale */
-  --cyan:    #00f5ff;
+  --cyan:    #00f0ff;
+  --cyan-dim: #00a0aa;
+  --cyan-glow: #00f0ff60;
   --magenta: #ff006e;
+  --magenta-glow: #ff006e30;
+  --violet: #b44aff;
+  --violet-dim: #7b2fbd;
+  --violet-glow: #b44aff40;
   --gold:    #ffd60a;
 
-  /* Fonds */
-  --dark:  #04060f;    /* fond principal */
-  --dark2: #080d1a;    /* fond cartes / panneaux */
+  --bg-deep: #06060c;
+  --bg-dark: #0a0a14;
+  --bg-surface: #0f0f1a;
+  --bg-card: #12122080;
+  --dark:  #06060c;
+  --dark2: #0a0a14;
 
-  /* Texte */
-  --text:  #c8e0f0;
-  --muted: #5a7a90;
+  --text-primary: #e8eaf0;
+  --text-secondary: #8a8fa8;
+  --text-dim: #4a4e66;
+  --text:  #e8eaf0;
+  --muted: #8a8fa8;
 
-  /* Composants */
-  --panel:  rgba(0,245,255,0.035);
-  --border: rgba(0,245,255,0.16);
+  --panel:  rgba(0,240,255,0.035);
+  --border: rgba(0,240,255,0.16);
 
-  /* ── Accent dynamique : chaque page surcharge ces variables ──
-     Ex dans pnj.html : --accent: var(--magenta);
-     Utilisé pour la couleur active du nav, les glows, etc. */
+  --font-display: 'Orbitron', sans-serif;
+  --font-heading: 'Rajdhani', sans-serif;
+  --font-body: 'Exo 2', sans-serif;
+  --font-mono: 'Share Tech Mono', monospace;
+
+  --glow-sm: 0 0 8px var(--cyan-glow);
+  --glow-md: 0 0 20px var(--cyan-glow), 0 0 40px #00f0ff20;
+  --glow-lg: 0 0 30px var(--cyan-glow), 0 0 80px #00f0ff15, 0 0 120px #00f0ff08;
+  --glow-violet: 0 0 20px var(--violet-glow), 0 0 50px #b44aff15;
+
   --accent:        var(--cyan);
-  --accent-rgb:    0,245,255;
-  --accent-border: rgba(0,245,255,0.22);
-  --accent-bg:     rgba(0,245,255,0.05);
-  --accent-grid:   rgba(0,245,255,0.025); /* couleur de la grille de fond */
+  --accent-rgb:    0,240,255;
+  --accent-border: rgba(0,240,255,0.22);
+  --accent-bg:     rgba(0,240,255,0.05);
+  --accent-grid:   rgba(0,240,255,0.02);
 }
 
 
 /* ══════════════════════════════════════════════════════
    2. RESET & BASE
    ══════════════════════════════════════════════════════ */
-
-/* ── Classe ajoutée sur <body> à l'ouverture d'un modal ──────────────
-   Suspend les effets de fond coûteux (scanlines, grille, animations)
-   pour éviter que le navigateur doive les recalculer derrière le modal.
-   Retirée à la fermeture du modal. */
-body.modal-open::before,
-body.modal-open::after {
-  display: none;   /* suspend scanlines CRT + grille de fond */
-}
-body.modal-open .hero-title .c.glitching,
-body.modal-open .hero-title .c.glitching::before,
-body.modal-open .hero-title .c.glitching::after {
-  animation: none; /* suspend le glitch du titre hero */
-}
 *, *::before, *::after {
   box-sizing: border-box;
-  margin:  0;
+  margin: 0;
   padding: 0;
 }
 
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: var(--cyan-dim) var(--bg-deep);
+}
 
 body {
-  background:  var(--dark);
-  color:       var(--text);
-  font-family: 'Rajdhani', sans-serif;
-  font-size:   16px;
-  min-height:  100vh;
-  overflow-x:  hidden;
-
-  /* Curseur custom — flèche cyan avec glow, généré en SVG inline */
-  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cfilter id='glow'%3E%3CfeGaussianBlur stdDeviation='1.5' result='blur'/%3E%3CfeMerge%3E%3CfeMergeNode in='blur'/%3E%3CfeMergeNode in='SourceGraphic'/%3E%3C/feMerge%3E%3C/filter%3E%3Cpolygon points='4,2 4,18 8,14 11,20 13,19 10,13 16,13' fill='%230a0f1e' stroke='%2300f5ff' stroke-width='1.2' filter='url(%23glow)'/%3E%3C/svg%3E") 4 2, crosshair;
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-weight: 300;
+  font-size: 16px;
+  line-height: 1.7;
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cfilter id='glow'%3E%3CfeGaussianBlur stdDeviation='1.5' result='blur'/%3E%3CfeMerge%3E%3CfeMergeNode in='blur'/%3E%3CfeMergeNode in='SourceGraphic'/%3E%3C/feMerge%3E%3C/filter%3E%3Cpolygon points='4,2 4,18 8,14 11,20 13,19 10,13 16,13' fill='%230a0f1e' stroke='%2300f0ff' stroke-width='1.2' filter='url(%23glow)'/%3E%3C/svg%3E") 4 2, crosshair;
 }
+
+::selection {
+  background: var(--cyan);
+  color: var(--bg-deep);
+}
+
+body.modal-open::before,
+body.modal-open::after { display: none; }
+body.modal-open .hero-title .c.glitching,
+body.modal-open .hero-title .c.glitching::before,
+body.modal-open .hero-title .c.glitching::after { animation: none; }
 
 
 /* ══════════════════════════════════════════════════════
    3. EFFETS DE FOND
-   Pseudo-éléments sur body pour ne pas polluer le DOM
    ══════════════════════════════════════════════════════ */
-
-/* Scanlines CRT — légères lignes horizontales sur tout l'écran */
 body::before {
   content: '';
-  position: fixed;
-  inset: 0;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    rgba(0,0,0,0.055) 2px,
-    rgba(0,0,0,0.055) 4px
-  );
+  position: fixed; inset: 0;
+  background: repeating-linear-gradient(0deg,
+    transparent, transparent 2px,
+    #00f0ff03 2px, #00f0ff03 4px);
   pointer-events: none;
-  z-index: 9999; /* au-dessus de tout sauf les modales */
+  z-index: 9999;
 }
 
-/* Grille de fond — couleur définie par --accent-grid (propre à chaque page) */
 body::after {
   content: '';
-  position: fixed;
-  inset: 0;
+  position: fixed; inset: 0;
   background-image:
     linear-gradient(var(--accent-grid) 1px, transparent 1px),
     linear-gradient(90deg, var(--accent-grid) 1px, transparent 1px);
-  background-size: 60px 60px;
+  background-size: 80px 80px;
   pointer-events: none;
   z-index: 0;
 }
 
 
 /* ══════════════════════════════════════════════════════
-   4. HEADER
+   4. SCROLLBAR
+   ══════════════════════════════════════════════════════ */
+::-webkit-scrollbar       { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-deep); }
+::-webkit-scrollbar-thumb { background: var(--cyan-dim); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--cyan); }
+
+
+/* ══════════════════════════════════════════════════════
+   5. HEADER
    ══════════════════════════════════════════════════════ */
 header {
   position: sticky;
-  top: 0;
-  z-index: 100;
-  padding: 0 44px;
-  height: 68px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  top: 0; z-index: 100;
+  padding: 0 44px; height: 68px;
+  display: flex; align-items: center; justify-content: space-between;
   border-bottom: 1px solid var(--border);
-  background: rgba(4,6,15,0.96);
-  backdrop-filter: blur(18px);
+  background: rgba(6,6,12,0.96);
+  backdrop-filter: blur(20px);
+  transition: height 0.3s, border-color 0.3s, background 0.3s;
 }
 
 
 /* ══════════════════════════════════════════════════════
-   5. LOGO
+   6. LOGO
    ══════════════════════════════════════════════════════ */
 .logo {
-  font-family:    'Orbitron', sans-serif;
-  font-weight:    900;
-  font-size:      1.35rem;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 1.35rem;
   letter-spacing: 0.32em;
-  color:          var(--cyan);
-  text-shadow:    0 0 22px var(--cyan);
+  color: var(--cyan);
+  text-shadow: var(--glow-sm);
   text-decoration: none;
+  transition: text-shadow 0.3s;
 }
+.logo:hover { text-shadow: var(--glow-md); }
 .logo-slash {
-  color:       var(--magenta);
-  text-shadow: 0 0 18px var(--magenta);
+  color: var(--violet);
+  text-shadow: 0 0 18px var(--violet);
 }
 .logo-sub {
-  font-family:    'Share Tech Mono', monospace;
-  font-size:      0.46rem;
-  color:          var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.46rem;
+  color: var(--text-dim);
   letter-spacing: 0.2em;
-  display:        block;
-  margin-top:     2px;
+  display: block;
+  margin-top: 2px;
 }
 
 
 /* ══════════════════════════════════════════════════════
-   6. NAVIGATION
+   7. NAVIGATION
    ══════════════════════════════════════════════════════ */
 nav { display: flex; gap: 2px; align-items: center; }
 
 nav a {
-  font-family:    'Share Tech Mono', monospace;
-  font-size:      0.65rem;
-  color:          var(--muted);
+  font-family: var(--font-heading);
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--text-secondary);
   text-decoration: none;
-  letter-spacing: 0.13em;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
-  padding:        8px 13px;
-  border:         1px solid transparent;
-  transition:     all 0.2s;
-  position:       relative;
+  padding: 8px 14px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+nav a::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: var(--accent);
+  transform: translateX(-101%);
+  transition: transform 0.3s;
+  opacity: 0.06;
 }
 nav a:hover {
-  color:        var(--cyan);
-  border-color: rgba(0,245,255,0.2);
-  background:   rgba(0,245,255,0.03);
+  color: var(--cyan);
+  border-color: rgba(0,240,255,0.2);
 }
-/* Lien de la page active — utilise la couleur accent de la page */
+nav a:hover::before { transform: translateX(0); }
+
 nav a.active {
-  color:        var(--accent);
+  color: var(--accent);
   border-color: var(--accent-border);
-  background:   var(--accent-bg);
+  background: var(--accent-bg);
 }
 nav a.active::after {
-  content:    '';
-  position:   absolute;
-  bottom:     -1px;
-  left: 0; right: 0;
-  height:     1px;
+  content: '';
+  position: absolute;
+  bottom: -1px; left: 0; right: 0;
+  height: 2px;
   background: var(--accent);
-  box-shadow: 0 0 8px var(--accent);
+  box-shadow: 0 0 12px var(--accent);
 }
 
-/* Bouton Admin dans le nav — toujours doré, distinct des autres liens */
 .nav-admin {
-  color:          var(--gold)    !important;
-  border-color:   rgba(255,214,10,0.22) !important;
-  font-family:    'Orbitron', sans-serif !important;
-  font-weight:    700  !important;
-  font-size:      0.58rem !important;
+  color: var(--gold) !important;
+  border-color: rgba(255,214,10,0.22) !important;
+  font-family: var(--font-display) !important;
+  font-weight: 700 !important;
+  font-size: 0.58rem !important;
   letter-spacing: 0.18em !important;
-  margin-left:    6px;
+  margin-left: 6px;
 }
 .nav-admin:hover {
-  border-color: var(--gold)            !important;
-  background:   rgba(255,214,10,0.05)  !important;
+  border-color: var(--gold) !important;
+  background: rgba(255,214,10,0.05) !important;
 }
 
-/* Dot animé — indicateur "en ligne" (utilisé dans le nav et hero) */
 .hdot {
-  width:         5px;
-  height:        5px;
+  width: 5px; height: 5px;
   border-radius: 50%;
-  background:    #00ff88;
-  box-shadow:    0 0 7px #00ff88;
-  display:       inline-block;
-  margin-right:  4px;
-  animation:     hdot-pulse 2s infinite;
+  background: #00ff88;
+  box-shadow: 0 0 7px #00ff88;
+  display: inline-block;
+  margin-right: 4px;
+  animation: hdot-pulse 2s infinite;
 }
 @keyframes hdot-pulse {
   0%, 100% { opacity: 1 }
@@ -238,258 +251,157 @@ nav a.active::after {
 
 
 /* ══════════════════════════════════════════════════════
-   7. SCROLLBAR CUSTOM
+   8. RESPONSIVE HEADER + MOBILE NAV
    ══════════════════════════════════════════════════════ */
-::-webkit-scrollbar              { width: 4px; }
-::-webkit-scrollbar-track        { background: var(--dark); }
-::-webkit-scrollbar-thumb        { background: var(--border); }
-::-webkit-scrollbar-thumb:hover  { background: var(--accent); }
+.nav-toggle {
+  display: none;
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--cyan);
+  cursor: pointer;
+  width: 40px; height: 40px;
+  align-items: center; justify-content: center;
+  font-size: 1.1rem;
+  transition: border-color .2s, color .2s;
+}
+.nav-toggle:hover { border-color: var(--cyan); }
 
-
-/* ══════════════════════════════════════════════════════
-   8. RESPONSIVE HEADER
-   ══════════════════════════════════════════════════════ */
 @media (max-width: 880px) {
   header { padding: 0 16px; }
-  nav a span { display: none; } /* cache les labels, garde les icônes */
+  .nav-toggle { display: flex; }
+  header nav {
+    position: fixed; top: 68px; right: 0; bottom: 0;
+    width: 280px;
+    background: rgba(6,6,12,0.98);
+    border-left: 1px solid var(--border);
+    backdrop-filter: blur(24px);
+    flex-direction: column; gap: 0; padding: 20px 0;
+    transform: translateX(100%);
+    transition: transform .35s cubic-bezier(.4,0,.2,1);
+    z-index: 200;
+  }
+  header nav.open { transform: translateX(0); }
+  header nav a {
+    padding: 14px 28px; border: none;
+    font-size: .72rem; letter-spacing: .16em;
+  }
+  header nav a span { display: inline !important; }
+  header nav a:hover { background: rgba(0,240,255,.04); }
+  .nav-backdrop {
+    position: fixed; inset: 0; z-index: 99;
+    background: rgba(0,0,0,.5); opacity: 0;
+    pointer-events: none; transition: opacity .3s;
+  }
+  .nav-backdrop.open { opacity: 1; pointer-events: all; }
+  nav a span { display: none; }
 }
 
 
 /* ═══════════════════════════════════════════════════════════════════════
-   9. DISCORD BANNER (partagé index.html + portail.html)
-   ═══════════════════════════════════════════════════════════════════════
-
-   Structure HTML attendue :
-   <div class="db">
-     <div class="db-l">
-       <div class="db-ico">...</div>
-       <div>
-         <div class="db-title" data-text="...">...</div>
-         <div class="db-sub">...</div>
-       </div>
-     </div>
-     <a class="db-btn" href="...">...</a>
-   </div>
-
-   Le glitch est déclenché par JS au survol (class "glitching" sur .db-title).
+   9. DISCORD BANNER
    ═══════════════════════════════════════════════════════════════════════ */
-
-/* ── Keyframes glitch couche principale (position) ── */
 @keyframes dbGlitch1 {
-  0%,100% { transform:none; text-shadow:none }
-  3%  { transform:skew(-5deg) translateX(-6px) }
-  5%  { transform:skew(3deg) translateX(5px) }
-  7%  { transform:none }
-  25% { transform:none }
-  27% { transform:translateX(-8px); text-shadow:-3px 0 var(--cyan) }
-  29% { transform:translateX(7px);  text-shadow: 3px 0 var(--magenta) }
-  31% { transform:none; text-shadow:none }
-  55% { transform:none }
-  57% { transform:skew(-3deg) translateX(-5px); text-shadow:-5px 0 var(--magenta),5px 0 var(--cyan) }
-  60% { transform:skew(2deg) translateX(4px) }
-  62% { transform:none; text-shadow:none }
+  0%,100%{transform:none;text-shadow:none}3%{transform:skew(-5deg) translateX(-6px)}5%{transform:skew(3deg) translateX(5px)}7%{transform:none}25%{transform:none}27%{transform:translateX(-8px);text-shadow:-3px 0 var(--cyan)}29%{transform:translateX(7px);text-shadow:3px 0 var(--magenta)}31%{transform:none;text-shadow:none}55%{transform:none}57%{transform:skew(-3deg) translateX(-5px);text-shadow:-5px 0 var(--magenta),5px 0 var(--cyan)}60%{transform:skew(2deg) translateX(4px)}62%{transform:none;text-shadow:none}
 }
-/* ── Keyframes glitch couche magenta (::before) ── */
 @keyframes dbGlitch2 {
-  0%,100% { opacity:0; transform:none; clip-path:none }
-  3%  { opacity:1; transform:translateX(-8px);  clip-path:polygon(0 8%,100% 8%,100% 32%,0 32%) }
-  5%  { opacity:1; transform:translateX(7px);   clip-path:polygon(0 58%,100% 58%,100% 78%,0 78%) }
-  7%  { opacity:0; clip-path:none }
-  27% { opacity:0 }
-  28% { opacity:1; transform:translateX(-10px); clip-path:polygon(0 15%,100% 15%,100% 40%,0 40%) }
-  30% { opacity:1; transform:translateX(8px);   clip-path:polygon(0 62%,100% 62%,100% 88%,0 88%) }
-  32% { opacity:0; clip-path:none }
-  57% { opacity:0 }
-  58% { opacity:1; transform:translateX(-7px);  clip-path:polygon(0 3%,100% 3%,100% 28%,0 28%) }
-  60% { opacity:1; transform:translateX(6px);   clip-path:polygon(0 50%,100% 50%,100% 72%,0 72%) }
-  63% { opacity:1; transform:translateX(-4px);  clip-path:polygon(0 30%,100% 30%,100% 55%,0 55%) }
-  65% { opacity:0; clip-path:none }
+  0%,100%{opacity:0;clip-path:none}3%{opacity:1;transform:translateX(-8px);clip-path:polygon(0 8%,100% 8%,100% 32%,0 32%)}5%{opacity:1;transform:translateX(7px);clip-path:polygon(0 58%,100% 58%,100% 78%,0 78%)}7%{opacity:0;clip-path:none}27%{opacity:0}28%{opacity:1;transform:translateX(-10px);clip-path:polygon(0 15%,100% 15%,100% 40%,0 40%)}30%{opacity:1;transform:translateX(8px);clip-path:polygon(0 62%,100% 62%,100% 88%,0 88%)}32%{opacity:0;clip-path:none}57%{opacity:0}58%{opacity:1;transform:translateX(-7px);clip-path:polygon(0 3%,100% 3%,100% 28%,0 28%)}60%{opacity:1;transform:translateX(6px);clip-path:polygon(0 50%,100% 50%,100% 72%,0 72%)}63%{opacity:1;transform:translateX(-4px);clip-path:polygon(0 30%,100% 30%,100% 55%,0 55%)}65%{opacity:0;clip-path:none}
 }
-/* ── Keyframes glitch couche cyan (::after) ── */
 @keyframes dbGlitch3 {
-  0%,100% { opacity:0; transform:none; clip-path:none }
-  3%  { opacity:1; transform:translateX(9px);   clip-path:polygon(0 48%,100% 48%,100% 72%,0 72%) }
-  5%  { opacity:1; transform:translateX(-6px);  clip-path:polygon(0 20%,100% 20%,100% 44%,0 44%) }
-  7%  { opacity:0; clip-path:none }
-  27% { opacity:0 }
-  29% { opacity:1; transform:translateX(9px);   clip-path:polygon(0 35%,100% 35%,100% 60%,0 60%) }
-  31% { opacity:1; transform:translateX(-7px);  clip-path:polygon(0 8%,100% 8%,100% 30%,0 30%) }
-  33% { opacity:0; clip-path:none }
-  57% { opacity:0 }
-  59% { opacity:1; transform:translateX(8px);   clip-path:polygon(0 55%,100% 55%,100% 80%,0 80%) }
-  62% { opacity:1; transform:translateX(-5px);  clip-path:polygon(0 18%,100% 18%,100% 42%,0 42%) }
-  64% { opacity:0; clip-path:none }
+  0%,100%{opacity:0;clip-path:none}3%{opacity:1;transform:translateX(9px);clip-path:polygon(0 48%,100% 48%,100% 72%,0 72%)}5%{opacity:1;transform:translateX(-6px);clip-path:polygon(0 20%,100% 20%,100% 44%,0 44%)}7%{opacity:0;clip-path:none}27%{opacity:0}29%{opacity:1;transform:translateX(9px);clip-path:polygon(0 35%,100% 35%,100% 60%,0 60%)}31%{opacity:1;transform:translateX(-7px);clip-path:polygon(0 8%,100% 8%,100% 30%,0 30%)}33%{opacity:0;clip-path:none}57%{opacity:0}59%{opacity:1;transform:translateX(8px);clip-path:polygon(0 55%,100% 55%,100% 80%,0 80%)}62%{opacity:1;transform:translateX(-5px);clip-path:polygon(0 18%,100% 18%,100% 42%,0 42%)}64%{opacity:0;clip-path:none}
 }
 
-/* ── Élément .db-title : les pseudo-éléments portent les couches glitch ── */
 .db-title {
-  position:       relative;
-  display:        inline-block;
-  font-family:    'Orbitron', sans-serif;
-  font-weight:    700;
-  font-size:      .9rem;
-  letter-spacing: .14em;
-  color:          #fff;
-  margin-bottom:  3px;
+  position: relative; display: inline-block;
+  font-family: var(--font-display); font-weight: 700;
+  font-size: .9rem; letter-spacing: .14em;
+  color: #fff; margin-bottom: 3px;
 }
-.db-title::before,
-.db-title::after {
-  content:       attr(data-text); /* duplique le texte via l'attribut HTML */
-  position:      absolute;
-  top: 0; left: 0;
+.db-title::before, .db-title::after {
+  content: attr(data-text);
+  position: absolute; top: 0; left: 0;
   width: 100%; height: 100%;
-  pointer-events: none;
-  opacity: 0;
+  pointer-events: none; opacity: 0;
 }
 .db-title::before { color: var(--magenta); }
 .db-title::after  { color: var(--cyan); }
 
-/* Classes ajoutées par JS au survol pour déclencher le glitch */
 .db-title.glitching          { animation: dbGlitch1 2.8s steps(2,end) forwards; }
 .db-title.glitching::before  { animation: dbGlitch2 2.8s steps(2,end) forwards; }
 .db-title.glitching::after   { animation: dbGlitch3 2.8s steps(2,end) forwards; }
 
-/* ── Structure du banneau Discord ── */
 .db {
-  position:        relative;
-  z-index:         1;
-  background:      linear-gradient(135deg, rgba(114,137,218,.07), rgba(114,137,218,.03));
-  border:          1px solid rgba(114,137,218,.25);
-  display:         flex;
-  align-items:     center;
-  justify-content: space-between;
-  gap:             22px;
-  flex-wrap:       wrap;
+  position: relative; z-index: 1;
+  background: linear-gradient(135deg, rgba(114,137,218,.07), rgba(114,137,218,.03));
+  border: 1px solid rgba(114,137,218,.25);
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 22px; flex-wrap: wrap;
+  backdrop-filter: blur(10px);
+  transition: border-color 0.4s, box-shadow 0.4s;
 }
-/* Barre colorée gauche — identité Discord */
+.db:hover {
+  border-color: rgba(114,137,218,.45);
+  box-shadow: 0 0 30px rgba(114,137,218,.1);
+}
 .db::before {
-  content:    '';
-  position:   absolute;
-  top: 0; left: 0;
-  width:      4px;
-  height:     100%;
+  content: ''; position: absolute; top: 0; left: 0;
+  width: 4px; height: 100%;
   background: linear-gradient(180deg, #7289da, transparent);
 }
 .db-l  { display:flex; align-items:center; gap:16px; }
+.db-ico svg { width: 38px; height: 38px; fill: #7289da; opacity: .8; }
 .db-sub {
-  font-family:    'Share Tech Mono', monospace;
-  font-size:      .58rem;
-  color:          var(--muted);
-  letter-spacing: .1em;
+  font-family: var(--font-mono); font-size: .58rem;
+  color: var(--text-secondary); letter-spacing: .1em;
 }
 .db-btn {
-  font-family:    'Orbitron', sans-serif;
-  font-weight:    700;
-  font-size:      .66rem;
-  letter-spacing: .2em;
-  text-transform: uppercase;
-  color:          #fff;
-  background:     rgba(114,137,218,.8);
-  text-decoration: none;
-  padding:        13px 26px;
-  clip-path:      polygon(10px 0%,100% 0%,calc(100% - 10px) 100%,0% 100%);
-  transition:     background .2s, box-shadow .2s;
-  white-space:    nowrap;
-  display:        flex;
-  align-items:    center;
-  gap:            9px;
-  flex-shrink:    0;
+  font-family: var(--font-display); font-weight: 700;
+  font-size: .66rem; letter-spacing: .2em;
+  text-transform: uppercase; color: #fff;
+  background: rgba(114,137,218,.8);
+  text-decoration: none; padding: 13px 26px;
+  border-radius: 2px;
+  transition: background .2s, box-shadow .2s, transform .2s;
+  white-space: nowrap;
+  display: flex; align-items: center; gap: 9px;
+  flex-shrink: 0; position: relative; overflow: hidden;
 }
-.db-btn:hover { background:#7289da; box-shadow:0 0 24px rgba(114,137,218,.4); }
-.db-btn svg   { width:15px; height:15px; fill:currentColor; }
+.db-btn::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(135deg, transparent 0%, #ffffff20 50%, transparent 100%);
+  transform: translateX(-100%); transition: transform 0.5s;
+}
+.db-btn:hover::after { transform: translateX(100%); }
+.db-btn:hover {
+  background: #7289da;
+  box-shadow: 0 0 30px rgba(114,137,218,.4);
+  transform: translateY(-2px);
+}
+.db-btn svg { width:15px; height:15px; fill:currentColor; }
 
 
 /* ═══════════════════════════════════════════════════════════════════════
-   10. HERO TITLE GLITCH (page index uniquement, boucle infinie)
-   ═══════════════════════════════════════════════════════════════════════
-   Structure HTML :
-   <h1 class="hero-title">
-     <span class="c" data-text="JAHARTA">JAHARTA</span>
-   </h1>
-   La classe "glitching" est ajoutée au load par JS.
+   10. HERO TITLE GLITCH
    ═══════════════════════════════════════════════════════════════════════ */
-
 @keyframes heroGlitch1 {
-  0%,100% { transform:none; text-shadow:0 0 30px var(--cyan),0 0 100px rgba(0,245,255,.2) }
-  2%  { transform:skew(-8deg) translateX(-10px); text-shadow:-6px 0 var(--magenta),6px 0 var(--cyan) }
-  4%  { transform:skew(5deg)  translateX(9px);  text-shadow: 6px 0 var(--magenta),-6px 0 var(--cyan) }
-  5%  { transform:skew(-3deg) translateX(-5px) }
-  6%  { transform:none; text-shadow:0 0 30px var(--cyan),0 0 100px rgba(0,245,255,.2) }
-  20% { transform:none }
-  21% { transform:translateX(-14px); text-shadow:-5px 0 var(--cyan) }
-  22% { transform:translateX(12px);  text-shadow: 5px 0 var(--magenta) }
-  23% { transform:translateX(-8px) }
-  24% { transform:none; text-shadow:0 0 30px var(--cyan),0 0 100px rgba(0,245,255,.2) }
-  48% { transform:none }
-  49% { transform:skew(-6deg) translateX(-12px); text-shadow:-8px 0 var(--magenta),8px 0 var(--cyan),0 0 30px var(--cyan) }
-  50% { transform:skew(4deg)  translateX(10px) }
-  51% { transform:skew(-2deg) translateX(-6px); text-shadow: 0 0 30px var(--cyan),0 0 100px rgba(0,245,255,.2) }
-  53% { transform:none }
-  72% { transform:none }
-  73% { transform:translateX(-16px); text-shadow:-6px 0 var(--cyan),6px 0 var(--magenta) }
-  74% { transform:translateX(14px) }
-  75% { transform:translateX(-10px) }
-  76% { transform:none; text-shadow:0 0 30px var(--cyan),0 0 100px rgba(0,245,255,.2) }
+  0%,100%{transform:none;text-shadow:0 0 30px var(--cyan),0 0 100px rgba(0,240,255,.2)}2%{transform:skew(-8deg) translateX(-10px);text-shadow:-6px 0 var(--magenta),6px 0 var(--cyan)}4%{transform:skew(5deg) translateX(9px);text-shadow:6px 0 var(--magenta),-6px 0 var(--cyan)}5%{transform:skew(-3deg) translateX(-5px)}6%{transform:none;text-shadow:0 0 30px var(--cyan),0 0 100px rgba(0,240,255,.2)}20%{transform:none}21%{transform:translateX(-14px);text-shadow:-5px 0 var(--cyan)}22%{transform:translateX(12px);text-shadow:5px 0 var(--magenta)}23%{transform:translateX(-8px)}24%{transform:none;text-shadow:0 0 30px var(--cyan),0 0 100px rgba(0,240,255,.2)}48%{transform:none}49%{transform:skew(-6deg) translateX(-12px);text-shadow:-8px 0 var(--magenta),8px 0 var(--cyan),0 0 30px var(--cyan)}50%{transform:skew(4deg) translateX(10px)}51%{transform:skew(-2deg) translateX(-6px);text-shadow:0 0 30px var(--cyan),0 0 100px rgba(0,240,255,.2)}53%{transform:none}72%{transform:none}73%{transform:translateX(-16px);text-shadow:-6px 0 var(--cyan),6px 0 var(--magenta)}74%{transform:translateX(14px)}75%{transform:translateX(-10px)}76%{transform:none;text-shadow:0 0 30px var(--cyan),0 0 100px rgba(0,240,255,.2)}
 }
 @keyframes heroGlitch2 {
-  0%,100% { opacity:0; clip-path:none }
-  2%  { opacity:1; transform:translateX(-12px); clip-path:polygon(0 5%,100% 5%,100% 30%,0 30%) }
-  4%  { opacity:1; transform:translateX(10px);  clip-path:polygon(0 60%,100% 60%,100% 85%,0 85%) }
-  5%  { opacity:1; transform:translateX(-6px);  clip-path:polygon(0 35%,100% 35%,100% 55%,0 55%) }
-  6%  { opacity:0; clip-path:none }
-  21% { opacity:0 }
-  21.5%{ opacity:1; transform:translateX(-15px); clip-path:polygon(0 10%,100% 10%,100% 40%,0 40%) }
-  22.5%{ opacity:1; transform:translateX(13px);  clip-path:polygon(0 55%,100% 55%,100% 80%,0 80%) }
-  24% { opacity:0; clip-path:none }
-  49% { opacity:0 }
-  49.5%{ opacity:1; transform:translateX(-14px); clip-path:polygon(0 0%,100% 0%,100% 25%,0 25%) }
-  50.5%{ opacity:1; transform:translateX(12px);  clip-path:polygon(0 45%,100% 45%,100% 70%,0 70%) }
-  51.5%{ opacity:1; transform:translateX(-8px);  clip-path:polygon(0 20%,100% 20%,100% 45%,0 45%) }
-  53% { opacity:0; clip-path:none }
-  73% { opacity:0 }
-  73.5%{ opacity:1; transform:translateX(-18px); clip-path:polygon(0 8%,100% 8%,100% 35%,0 35%) }
-  74.5%{ opacity:1; transform:translateX(16px);  clip-path:polygon(0 62%,100% 62%,100% 90%,0 90%) }
-  76% { opacity:0; clip-path:none }
+  0%,100%{opacity:0;clip-path:none}2%{opacity:1;transform:translateX(-12px);clip-path:polygon(0 5%,100% 5%,100% 30%,0 30%)}4%{opacity:1;transform:translateX(10px);clip-path:polygon(0 60%,100% 60%,100% 85%,0 85%)}5%{opacity:1;transform:translateX(-6px);clip-path:polygon(0 35%,100% 35%,100% 55%,0 55%)}6%{opacity:0;clip-path:none}21%{opacity:0}21.5%{opacity:1;transform:translateX(-15px);clip-path:polygon(0 10%,100% 10%,100% 40%,0 40%)}22.5%{opacity:1;transform:translateX(13px);clip-path:polygon(0 55%,100% 55%,100% 80%,0 80%)}24%{opacity:0;clip-path:none}49%{opacity:0}49.5%{opacity:1;transform:translateX(-14px);clip-path:polygon(0 0%,100% 0%,100% 25%,0 25%)}50.5%{opacity:1;transform:translateX(12px);clip-path:polygon(0 45%,100% 45%,100% 70%,0 70%)}51.5%{opacity:1;transform:translateX(-8px);clip-path:polygon(0 20%,100% 20%,100% 45%,0 45%)}53%{opacity:0;clip-path:none}73%{opacity:0}73.5%{opacity:1;transform:translateX(-18px);clip-path:polygon(0 8%,100% 8%,100% 35%,0 35%)}74.5%{opacity:1;transform:translateX(16px);clip-path:polygon(0 62%,100% 62%,100% 90%,0 90%)}76%{opacity:0;clip-path:none}
 }
 @keyframes heroGlitch3 {
-  0%,100% { opacity:0; clip-path:none }
-  2%  { opacity:1; transform:translateX(13px);  clip-path:polygon(0 50%,100% 50%,100% 75%,0 75%) }
-  4%  { opacity:1; transform:translateX(-11px); clip-path:polygon(0 20%,100% 20%,100% 45%,0 45%) }
-  5%  { opacity:1; transform:translateX(7px);   clip-path:polygon(0 70%,100% 70%,100% 90%,0 90%) }
-  6%  { opacity:0; clip-path:none }
-  21% { opacity:0 }
-  21.5%{ opacity:1; transform:translateX(16px);  clip-path:polygon(0 40%,100% 40%,100% 65%,0 65%) }
-  22.5%{ opacity:1; transform:translateX(-14px); clip-path:polygon(0 5%,100% 5%,100% 30%,0 30%) }
-  24% { opacity:0; clip-path:none }
-  49% { opacity:0 }
-  49.5%{ opacity:1; transform:translateX(15px);  clip-path:polygon(0 55%,100% 55%,100% 80%,0 80%) }
-  50.5%{ opacity:1; transform:translateX(-13px); clip-path:polygon(0 25%,100% 25%,100% 50%,0 50%) }
-  51.5%{ opacity:1; transform:translateX(9px);   clip-path:polygon(0 10%,100% 10%,100% 35%,0 35%) }
-  53% { opacity:0; clip-path:none }
-  73% { opacity:0 }
-  73.5%{ opacity:1; transform:translateX(19px);  clip-path:polygon(0 45%,100% 45%,100% 72%,0 72%) }
-  74.5%{ opacity:1; transform:translateX(-17px); clip-path:polygon(0 18%,100% 18%,100% 42%,0 42%) }
-  76% { opacity:0; clip-path:none }
+  0%,100%{opacity:0;clip-path:none}2%{opacity:1;transform:translateX(13px);clip-path:polygon(0 50%,100% 50%,100% 75%,0 75%)}4%{opacity:1;transform:translateX(-11px);clip-path:polygon(0 20%,100% 20%,100% 45%,0 45%)}5%{opacity:1;transform:translateX(7px);clip-path:polygon(0 70%,100% 70%,100% 90%,0 90%)}6%{opacity:0;clip-path:none}21%{opacity:0}21.5%{opacity:1;transform:translateX(16px);clip-path:polygon(0 40%,100% 40%,100% 65%,0 65%)}22.5%{opacity:1;transform:translateX(-14px);clip-path:polygon(0 5%,100% 5%,100% 30%,0 30%)}24%{opacity:0;clip-path:none}49%{opacity:0}49.5%{opacity:1;transform:translateX(15px);clip-path:polygon(0 55%,100% 55%,100% 80%,0 80%)}50.5%{opacity:1;transform:translateX(-13px);clip-path:polygon(0 25%,100% 25%,100% 50%,0 50%)}51.5%{opacity:1;transform:translateX(9px);clip-path:polygon(0 10%,100% 10%,100% 35%,0 35%)}53%{opacity:0;clip-path:none}73%{opacity:0}73.5%{opacity:1;transform:translateX(19px);clip-path:polygon(0 45%,100% 45%,100% 72%,0 72%)}74.5%{opacity:1;transform:translateX(-17px);clip-path:polygon(0 18%,100% 18%,100% 42%,0 42%)}76%{opacity:0;clip-path:none}
 }
 
 .hero-title { position:relative; display:inline-block; }
-
-.hero-title .c {
-  position: relative;
-  display:  inline-block;
-}
-/* Les pseudo-éléments portent les copies du texte pour le glitch */
-.hero-title .c::before,
-.hero-title .c::after {
-  content:       attr(data-text);
-  position:      absolute;
-  top: 0; left: 0;
+.hero-title .c { position: relative; display: inline-block; }
+.hero-title .c::before, .hero-title .c::after {
+  content: attr(data-text);
+  position: absolute; top: 0; left: 0;
   width: 100%; height: 100%;
-  pointer-events: none;
-  opacity: 0;
+  pointer-events: none; opacity: 0;
 }
 .hero-title .c::before { color: var(--magenta); }
-.hero-title .c::after  { color: var(--gold); }
+.hero-title .c::after  { color: var(--violet); }
 
 .hero-title .c.glitching          { animation: heroGlitch1 8s steps(2,end) infinite; }
 .hero-title .c.glitching::before  { animation: heroGlitch2 8s steps(2,end) infinite; }
@@ -497,49 +409,153 @@ nav a.active::after {
 
 
 /* ═══════════════════════════════════════════════════════════════════════
-   11. BADGE ADMIN CONNECTÉ
-   ═══════════════════════════════════════════════════════════════════════
-   Présent dans le <nav> de toutes les pages sauf admin.html.
-   Masqué par défaut, affiché via .visible quand l'utilisateur est connecté.
-   Géré par le script Firebase Auth inline de chaque page.
-
-   HTML : <a href="admin.html" class="admin-badge" id="admin-badge">ADMIN</a>
+   11. BADGE ADMIN
    ═══════════════════════════════════════════════════════════════════════ */
 .admin-badge {
-  display:        none;      /* masqué par défaut */
-  align-items:    center;
-  gap:            6px;
-  font-family:    'Share Tech Mono', monospace;
-  font-size:      0.58rem;
-  letter-spacing: 0.14em;
-  color:          #00ff88;
-  border:         1px solid rgba(0,255,136,0.3);
-  background:     rgba(0,255,136,0.06);
-  padding:        5px 11px;
-  margin-left:    6px;
-  clip-path: polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%);
+  display: none; align-items: center; gap: 6px;
+  font-family: var(--font-mono); font-size: 0.58rem;
+  letter-spacing: 0.14em; color: #00ff88;
+  border: 1px solid rgba(0,255,136,0.3);
+  background: rgba(0,255,136,0.06);
+  padding: 5px 11px; margin-left: 6px;
 }
-/* Dot vert pulsant à gauche du badge */
 .admin-badge::before {
-  content:       '';
-  width:         6px;
-  height:        6px;
-  border-radius: 50%;
-  background:    #00ff88;
-  box-shadow:    0 0 8px #00ff88;
-  animation:     hdot-pulse 1.8s infinite;
-  flex-shrink:   0;
+  content: ''; width: 6px; height: 6px;
+  border-radius: 50%; background: #00ff88;
+  box-shadow: 0 0 8px #00ff88;
+  animation: hdot-pulse 1.8s infinite;
+  flex-shrink: 0;
 }
-/* Affiché quand l'utilisateur est authentifié */
 .admin-badge.visible { display: flex; }
-
-/* Style lien (cliquable vers admin.html) */
-a.admin-badge {
-  text-decoration: none;
-  cursor: pointer;
-}
+a.admin-badge { text-decoration: none; cursor: pointer; }
 a.admin-badge:hover {
   border-color: rgba(0,255,136,0.6);
-  box-shadow:   0 0 12px rgba(0,255,136,0.25);
-  color:        #00ff88;
+  box-shadow: 0 0 12px rgba(0,255,136,0.25);
+  color: #00ff88;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   12. PAGE TRANSITIONS — Cybernetic Effect
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Transition overlay */
+.page-transition-overlay {
+  position: fixed; inset: 0;
+  z-index: 99999; pointer-events: all;
+  background: var(--bg-deep);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+}
+.page-transition-overlay .transition-scanline {
+  position: absolute; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--cyan), var(--violet), transparent);
+  animation: transitionScan 0.4s ease-out forwards;
+}
+@keyframes transitionScan {
+  from { top: 0; opacity: 1; }
+  to   { top: 100%; opacity: 0.3; }
+}
+.page-transition-overlay .transition-text {
+  font-family: var(--font-display);
+  font-size: 0.6rem;
+  letter-spacing: 0.5em;
+  color: var(--cyan);
+  text-shadow: var(--glow-sm);
+  opacity: 0;
+  animation: transTextFade 0.6s 0.1s forwards;
+}
+@keyframes transTextFade {
+  0% { opacity: 0; transform: translateY(10px); }
+  50% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-10px); }
+}
+
+/* Page enter animation */
+@keyframes pageEnterSlide {
+  from { transform: translateY(15px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+.page-enter > section,
+.page-enter > .page-hero,
+.page-enter > .page-wrap,
+.page-enter > .cards-section,
+.page-enter > .feature-strip,
+.page-enter > .discord-section,
+.page-enter > footer {
+  animation: pageEnterSlide 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.page-enter > *:nth-child(1) { animation-delay: 0.05s; }
+.page-enter > *:nth-child(2) { animation-delay: 0.1s; }
+.page-enter > *:nth-child(3) { animation-delay: 0.15s; }
+.page-enter > *:nth-child(4) { animation-delay: 0.2s; }
+.page-enter > *:nth-child(5) { animation-delay: 0.25s; }
+.page-enter > *:nth-child(6) { animation-delay: 0.3s; }
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   13. SCROLL REVEAL SYSTEM
+   ═══════════════════════════════════════════════════════════════════════ */
+[data-reveal] {
+  opacity: 0; transform: translateY(20px);
+}
+[data-reveal].revealed {
+  opacity: 1; transform: translateY(0);
+  transition: all 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+[data-reveal][data-delay="100"].revealed { transition-delay: 0.1s; }
+[data-reveal][data-delay="200"].revealed { transition-delay: 0.2s; }
+[data-reveal][data-delay="300"].revealed { transition-delay: 0.3s; }
+[data-reveal][data-delay="400"].revealed { transition-delay: 0.4s; }
+[data-reveal][data-delay="500"].revealed { transition-delay: 0.5s; }
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   14. SHARED COMPONENTS
+   ═══════════════════════════════════════════════════════════════════════ */
+.noise {
+  position: fixed; inset: 0; z-index: 9997;
+  pointer-events: none; opacity: .035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 200px;
+}
+
+.scroll-progress {
+  position: fixed; top: 0; left: 0; z-index: 9998;
+  width: 0%; height: 2px;
+  background: linear-gradient(90deg, var(--cyan), var(--violet), var(--magenta));
+  transition: width 0.05s linear;
+  pointer-events: none;
+}
+
+.toast {
+  position: fixed; bottom: 28px; left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: var(--bg-dark); border: 1px solid var(--border);
+  font-family: var(--font-mono); font-size: .67rem;
+  letter-spacing: .12em; color: var(--text-primary);
+  padding: 13px 26px; z-index: 9000;
+  transition: transform .35s, opacity .35s; opacity: 0;
+  border-radius: 2px; backdrop-filter: blur(10px);
+}
+.toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+.toast.success { border-color: rgba(0,255,136,0.5); color: #00ff88; }
+.toast.error   { border-color: rgba(255,48,48,0.5); color: #ff3030; }
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   15. UTILITY ANIMATIONS
+   ═══════════════════════════════════════════════════════════════════════ */
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes glowPulse {
+  0%, 100% { box-shadow: var(--glow-sm); }
+  50%      { box-shadow: var(--glow-md); }
 }
