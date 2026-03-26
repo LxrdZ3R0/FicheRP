@@ -1,343 +1,251 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Jaharta RP — Un monde où magie et technologie s'entrelacent. Rejoignez l'aventure sur Discord.">
-  <meta name="theme-color" content="#06060c">
-  <title>Jaharta RP — Là où la magie rencontre la technologie</title>
-  
-  <!-- Favicons -->
-  <link rel="icon" type="image/x-icon" href="img/favicon.ico">
-  <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="img/favicon-180.png">
-  
-  <!-- Open Graph -->
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://www.jaharta.fr/">
-  <meta property="og:title" content="JAHARTA // RP">
-  <meta property="og:description" content="Un monde où magie et technologie coexistent. Votre seconde chance commence à Navari.">
-  <meta property="og:image" content="https://www.jaharta.fr/img/banner.png?v=3">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
-  
-  <!-- Preload critical fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  
-  <!-- Stylesheet -->
-  <link rel="stylesheet" href="css/jaharta.css">
-  
-  <!-- Scripts (defer to not block rendering) -->
-  <script src="js/constants.js" defer></script>
-  <script src="js/utils.js" defer></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Jaharta RP — Un monde où magie et technologie s'entrelacent. Rejoignez l'aventure sur Discord.">
+<meta name="theme-color" content="#06060c">
+<title>Jaharta RP — Là où la magie rencontre la technologie</title>
+<link rel="icon" type="image/x-icon" href="img/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="img/favicon-180.png">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://www.jaharta.fr/">
+<meta property="og:title" content="JAHARTA // RP">
+<meta property="og:description" content="Un monde où magie et technologie coexistent. Votre seconde chance commence à Navari.">
+<meta property="og:image" content="https://www.jaharta.fr/img/banner.png?v=3">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+
+<link rel="stylesheet" href="css/jaharta.css">
+<script src="js/debug.js"></script>
+<script src="js/constants.js"></script>
+<script src="js/utils.js"></script>
 </head>
 <body>
-  <!-- Skip to main content link (accessibility) -->
-  <a href="#main-content" class="skip-link">Aller au contenu principal</a>
-  
-  <!-- Page Transition Overlay -->
-  <div class="page-transition-overlay" id="page-transition" aria-hidden="true">
+  <!-- Page Transition -->
+  <div class="page-transition-overlay" id="page-transition">
     <div class="pt-logo">JAHARTA</div>
-    <div class="pt-bar" role="progressbar" aria-label="Chargement"></div>
+    <div class="pt-bar"></div>
     <div class="pt-text">Chargement du système</div>
   </div>
 
-  <!-- ════════════════════════════════════════════════════════════════════════
-       NAVIGATION
-       ════════════════════════════════════════════════════════════════════════ -->
-  <nav class="nav" id="nav" aria-label="Navigation principale">
-    <a href="index.html" class="nav-logo" aria-label="Jaharta - Accueil">JAHARTA</a>
-    
-    <div class="nav-links" id="nav-links" role="menubar">
-      <a href="index.html" class="active" role="menuitem" aria-current="page">Accueil</a>
-      <a href="fiches.html" role="menuitem">Fiches RP</a>
-      <a href="pnj.html" role="menuitem">PNJ</a>
-      <a href="portail.html" role="menuitem">Portail</a>
-      <a href="racesjouables.html" role="menuitem">Races</a>
-      <a href="admin.html" class="nav-admin-link" role="menuitem">Admin</a>
-      <a href="admin.html" class="admin-badge" id="admin-badge" aria-label="Accès administrateur">ADMIN</a>
+  <!-- ======== NAVIGATION ======== -->
+  <nav class="nav" id="nav">
+    <a href="index.html" class="nav-logo">JAHARTA</a>
+    <div class="nav-links" id="nav-links">
+      <a href="index.html" class="active">Accueil</a>
+      <a href="fiches.html">Fiches RP</a>
+      <a href="pnj.html">PNJ</a>
+      <a href="portail.html">Portail</a>
+      <a href="racesjouables.html">Races</a>
+      <a href="admin.html" class="nav-admin-link">Admin</a>
+      <a href="admin.html" class="admin-badge" id="admin-badge">ADMIN</a>
     </div>
-    
-    <button 
-      class="nav-toggle" 
-      id="nav-toggle" 
-      aria-label="Ouvrir le menu" 
-      aria-expanded="false" 
-      aria-controls="nav-links"
-    >
-      <span aria-hidden="true">☰</span>
-    </button>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Menu">☰</button>
   </nav>
-  
-  <!-- Mobile nav backdrop -->
-  <div class="nav-backdrop" id="nav-backdrop" aria-hidden="true"></div>
 
-  <!-- ════════════════════════════════════════════════════════════════════════
-       MAIN CONTENT
-       ════════════════════════════════════════════════════════════════════════ -->
-  <main id="main-content">
-  
-    <!-- ════════════ HERO SECTION ════════════ -->
-    <section class="hero" id="hero" aria-labelledby="hero-title">
-      <canvas id="particles-canvas" aria-hidden="true"></canvas>
-      <div class="hero-bg" aria-hidden="true"></div>
-      <div class="hero-grid" aria-hidden="true"></div>
-      <div class="hero-overlay" aria-hidden="true"></div>
+  <!-- ======== HERO ======== -->
+  <section class="hero" id="hero">
+    <canvas id="particles-canvas"></canvas>
+    <div class="hero-bg"></div>
+    <div class="hero-grid"></div>
+    <div class="hero-overlay"></div>
 
-      <div class="hero-content">
-        <p class="hero-pretitle">Roleplay · Fantasy · Cyberpunk</p>
-        <h1 class="hero-title" id="hero-title" data-text="JAHARTA">
-          <span class="glow-text">JAHARTA</span>
-        </h1>
-        <p class="hero-subtitle">
-          Là où la magie et la technologie ne se contredisent pas&nbsp;—
-          elles coexistent, s'entrelacent et se complètent.
+    <div class="hero-content">
+      <p class="hero-pretitle">Roleplay · Fantasy · Cyberpunk</p>
+      <h1 class="hero-title" data-text="JAHARTA">
+        <span class="glow-text">JAHARTA</span>
+      </h1>
+      <p class="hero-subtitle">
+        Là où la magie et la technologie ne se contredisent pas&nbsp;—
+        elles coexistent, s'entrelacent et se complètent.
+      </p>
+      <a href="https://discord.gg/jaharta" target="_blank" rel="noopener" class="hero-cta">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+        Entrer dans Jaharta
+      </a>
+    </div>
+
+    <div class="hero-scroll">
+      <span>Explorer</span>
+      <div class="line"></div>
+    </div>
+  </section>
+
+  <!-- ======== LORE TEASER ======== -->
+  <section class="section" id="lore">
+    <div class="section-inner">
+      <div class="divider reveal"></div>
+      <p class="section-label reveal">Votre histoire commence ici</p>
+
+      <div class="lore-text reveal">
+        <p>
+          Votre âme errait quelque part, dans l'immensité de l'inconscience collective.
+          Mais une entité unique vous a appelé&nbsp;: <em>le Nexus</em>.
+          Vous n'êtes pas né dans ce monde — vous y avez été <strong>invité</strong>,
+          ajouté à la trame du réel comme une variable venue d'ailleurs.
         </p>
-        <a 
-          href="https://discord.gg/jaharta" 
-          target="_blank" 
-          rel="noopener noreferrer" 
-          class="hero-cta"
-          aria-label="Rejoindre le serveur Discord Jaharta (ouvre dans un nouvel onglet)"
-        >
-          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
-            <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/>
-          </svg>
-          Entrer dans Jaharta
-          <span class="sr-only">(ouvre dans un nouvel onglet)</span>
+        <p>
+          Jaharta vous a accepté… sans forcément vous comprendre.
+          Ici, une rune peut alimenter une machine, et un circuit peut canaliser un sort.
+          Magie et technologie ne se contredisent pas&nbsp;: elles <em>coexistent</em>,
+          s'entrelacent et parfois se déforment mutuellement.
+        </p>
+      </div>
+
+      <div class="lore-highlight reveal">
+        Votre seconde chance débute à <em>Navari</em>, la Cité-Strate&nbsp;:<br>
+        première puissance militaire et deuxième puissance économique de Jaharta.
+      </div>
+
+      <div class="lore-text reveal">
+        <p>
+          Le corps qui vous est octroyé par le Nexus peut — ou non — être celui de votre vie antérieure.
+          Mais le résultat est le même&nbsp;: vous ne le maîtrisez pas encore.
+          Au rythme de vos discussions, de vos combats, de vos chasses et de vos négociations,
+          vous reprendrez le contrôle grâce au <strong>Système</strong> — votre compagnon le plus constant.
+        </p>
+        <p>
+          Il vous observe, vous mesure, vous conseille… et parfois vous avertit.
+          Ignorer un de ses avertissements revient souvent à signer un aller simple
+          vers une situation que Jaharta <em>ne pardonne pas</em>.
+        </p>
+        <p>
+          Suivrez-vous la voie du Système&nbsp;? Ou forgerez-vous une vie comme vous le dicte votre instinct&nbsp;?
+          Quel que soit votre choix, ce sera le vôtre.
+          Et un choix implique toujours des <strong>conséquences</strong>.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======== MAP ======== -->
+  <section class="map-section">
+    <div class="section-inner" style="max-width: 1100px;">
+      <div class="divider reveal"></div>
+      <p class="section-label reveal">Cartographie de Jaharta</p>
+      <div class="map-container reveal">
+        <img src="assets/map-holographic.png" alt="Carte holographique de Jaharta" loading="lazy">
+        <span class="map-label">Core Stability: 94% — Projector Active</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======== FEATURES ======== -->
+  <section class="section" id="features">
+    <div class="section-inner" style="max-width: 1100px;">
+      <div class="divider reveal"></div>
+      <p class="section-label reveal">Un système inédit</p>
+
+      <div class="features-grid reveal-stagger reveal">
+        <div class="feature-card">
+          <span class="feature-icon">⚔️</span>
+          <h3>Système RPG exclusif</h3>
+          <p>Un bot développé sur mesure : gagnez de l'XP, montez de niveau, gérez vos items et vos loots — une expérience encore jamais vue.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">💰</span>
+          <h3>Économie complète</h3>
+          <p>Un système monétaire pensé pour le RP, avec un marché interactif pour acheter équipements et ressources.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">🐉</span>
+          <h3>Companions</h3>
+          <p>Des monstres uniques avec évolutions, pouvoirs synchronisés et stats bonus. Trouvez celui qui combattra à vos côtés.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">🏅</span>
+          <h3>Titres & Prouesses</h3>
+          <p>Des titres qui marquent vos exploits en RP et octroient divers bonus. Forgez votre légende dans Jaharta.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======== NAVIGATION CARDS ======== -->
+  <section class="section" id="explore">
+    <div class="section-inner" style="max-width: 1100px;">
+      <div class="divider reveal"></div>
+      <p class="section-label reveal">Explorer l'univers</p>
+
+      <div class="cards-grid reveal-stagger reveal">
+        <a href="fiches.html" class="nav-card nav-card--cyan">
+          <span class="nav-card-icon">◈</span>
+          <h3>Base de Données RP</h3>
+          <p>Registre complet des personnages joueurs. Filtrez par race, consultez les fiches et rangs de puissance.</p>
+          <span class="nav-card-arrow">ACCÉDER →</span>
+        </a>
+        <a href="pnj.html" class="nav-card nav-card--magenta">
+          <span class="nav-card-icon">◆</span>
+          <h3>Personnages PNJ</h3>
+          <p>Les figures importantes de Jaharta — entités mythiques, seigneurs de guerre et acteurs clés de l'univers.</p>
+          <span class="nav-card-arrow">DÉCOUVRIR →</span>
+        </a>
+        <a href="portail.html" class="nav-card nav-card--violet">
+          <span class="nav-card-icon">⬡</span>
+          <h3>Portail des Ressources</h3>
+          <p>Lore, cartes du monde, règles du RP et toutes les ressources essentielles pour votre histoire.</p>
+          <span class="nav-card-arrow">EXPLORER →</span>
         </a>
       </div>
+    </div>
+  </section>
 
-      <div class="hero-scroll" aria-hidden="true">
-        <span>Explorer</span>
-        <div class="line"></div>
-      </div>
-    </section>
-
-    <!-- ════════════ LORE TEASER ════════════ -->
-    <section class="section" id="lore" aria-labelledby="lore-title">
-      <div class="section-inner">
-        <div class="divider reveal" aria-hidden="true"></div>
-        <h2 class="section-label reveal" id="lore-title">Votre histoire commence ici</h2>
-
-        <div class="lore-text reveal">
-          <p>
-            Votre âme errait quelque part, dans l'immensité de l'inconscience collective.
-            Mais une entité unique vous a appelé&nbsp;: <em>le Nexus</em>.
-            Vous n'êtes pas né dans ce monde — vous y avez été <strong>invité</strong>,
-            ajouté à la trame du réel comme une variable venue d'ailleurs.
-          </p>
-          <p>
-            Jaharta vous a accepté… sans forcément vous comprendre.
-            Ici, une rune peut alimenter une machine, et un circuit peut canaliser un sort.
-            Magie et technologie ne se contredisent pas&nbsp;: elles <em>coexistent</em>,
-            s'entrelacent et parfois se déforment mutuellement.
-          </p>
-        </div>
-
-        <blockquote class="lore-highlight reveal">
-          Votre seconde chance débute à <em>Navari</em>, la Cité-Strate&nbsp;:<br>
-          première puissance militaire et deuxième puissance économique de Jaharta.
-        </blockquote>
-
-        <div class="lore-text reveal">
-          <p>
-            Le corps qui vous est octroyé par le Nexus peut — ou non — être celui de votre vie antérieure.
-            Mais le résultat est le même&nbsp;: vous ne le maîtrisez pas encore.
-            Au rythme de vos discussions, de vos combats, de vos chasses et de vos négociations,
-            vous reprendrez le contrôle grâce au <strong>Système</strong> — votre compagnon le plus constant.
-          </p>
-          <p>
-            Il vous observe, vous mesure, vous conseille… et parfois vous avertit.
-            Ignorer un de ses avertissements revient souvent à signer un aller simple
-            vers une situation que Jaharta <em>ne pardonne pas</em>.
-          </p>
-          <p>
-            Suivrez-vous la voie du Système&nbsp;? Ou forgerez-vous une vie comme vous le dicte votre instinct&nbsp;?
-            Quel que soit votre choix, ce sera le vôtre.
-            Et un choix implique toujours des <strong>conséquences</strong>.
-          </p>
-        </div>
-      </div>
-    </section>
-
-    <!-- ════════════ MAP SECTION ════════════ -->
-    <section class="map-section" aria-labelledby="map-title">
-      <div class="section-inner container--narrow">
-        <div class="divider reveal" aria-hidden="true"></div>
-        <h2 class="section-label reveal" id="map-title">Cartographie de Jaharta</h2>
-        <figure class="map-container reveal">
-          <img 
-            src="assets/map-holographic.png" 
-            alt="Carte holographique du monde de Jaharta montrant les différentes régions et territoires" 
-            loading="lazy"
-            width="1100"
-            height="733"
-          >
-          <figcaption class="map-label">Core Stability: 94% — Projector Active</figcaption>
-        </figure>
-      </div>
-    </section>
-
-    <!-- ════════════ FEATURES SECTION ════════════ -->
-    <section class="section" id="features" aria-labelledby="features-title">
-      <div class="section-inner container--narrow">
-        <div class="divider reveal" aria-hidden="true"></div>
-        <h2 class="section-label reveal" id="features-title">Un système inédit</h2>
-
-        <div class="features-grid reveal-stagger reveal">
-          <article class="feature-card">
-            <div class="feature-icon" aria-hidden="true" role="img">
-              <span aria-hidden="true">⚔️</span>
-            </div>
-            <h3>Système RPG exclusif</h3>
-            <p>Un bot développé sur mesure : gagnez de l'XP, montez de niveau, gérez vos items et vos loots — une expérience encore jamais vue.</p>
-          </article>
-          
-          <article class="feature-card">
-            <div class="feature-icon" aria-hidden="true" role="img">
-              <span aria-hidden="true">💰</span>
-            </div>
-            <h3>Économie complète</h3>
-            <p>Un système monétaire pensé pour le RP, avec un marché interactif pour acheter équipements et ressources.</p>
-          </article>
-          
-          <article class="feature-card">
-            <div class="feature-icon" aria-hidden="true" role="img">
-              <span aria-hidden="true">🐉</span>
-            </div>
-            <h3>Companions</h3>
-            <p>Des monstres uniques avec évolutions, pouvoirs synchronisés et stats bonus. Trouvez celui qui combattra à vos côtés.</p>
-          </article>
-          
-          <article class="feature-card">
-            <div class="feature-icon" aria-hidden="true" role="img">
-              <span aria-hidden="true">🏅</span>
-            </div>
-            <h3>Titres & Prouesses</h3>
-            <p>Des titres qui marquent vos exploits en RP et octroient divers bonus. Forgez votre légende dans Jaharta.</p>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <!-- ════════════ NAVIGATION CARDS ════════════ -->
-    <section class="section" id="explore" aria-labelledby="explore-title">
-      <div class="section-inner container--narrow">
-        <div class="divider reveal" aria-hidden="true"></div>
-        <h2 class="section-label reveal" id="explore-title">Explorer l'univers</h2>
-
-        <div class="cards-grid reveal-stagger reveal">
-          <a href="fiches.html" class="nav-card nav-card--cyan">
-            <span class="nav-card-icon" aria-hidden="true">◈</span>
-            <h3>Base de Données RP</h3>
-            <p>Registre complet des personnages joueurs. Filtrez par race, consultez les fiches et rangs de puissance.</p>
-            <span class="nav-card-arrow" aria-hidden="true">ACCÉDER →</span>
-          </a>
-          
-          <a href="pnj.html" class="nav-card nav-card--magenta">
-            <span class="nav-card-icon" aria-hidden="true">◆</span>
-            <h3>Personnages PNJ</h3>
-            <p>Les figures importantes de Jaharta — entités mythiques, seigneurs de guerre et acteurs clés de l'univers.</p>
-            <span class="nav-card-arrow" aria-hidden="true">DÉCOUVRIR →</span>
-          </a>
-          
-          <a href="portail.html" class="nav-card nav-card--violet">
-            <span class="nav-card-icon" aria-hidden="true">⬡</span>
-            <h3>Portail des Ressources</h3>
-            <p>Lore, cartes du monde, règles du RP et toutes les ressources essentielles pour votre histoire.</p>
-            <span class="nav-card-arrow" aria-hidden="true">EXPLORER →</span>
-          </a>
-        </div>
-      </div>
-    </section>
-
-    <!-- ════════════ DISCORD BANNER ════════════ -->
-    <section class="section" aria-labelledby="discord-title">
-      <div class="section-inner container--narrow">
-        <div class="discord-banner reveal">
-          <div class="discord-banner-left">
-            <svg viewBox="0 0 24 24" fill="#7289da" width="38" height="38" aria-hidden="true" focusable="false">
-              <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.032.054a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.107a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.108c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/>
-            </svg>
-            <div>
-              <h2 class="discord-banner-title" id="discord-title">Rejoignez le serveur Jaharta</h2>
-              <p class="discord-banner-sub">Communauté · Événements RP · Annonces · Soumission de fiches</p>
-            </div>
+  <!-- ======== DISCORD BANNER ======== -->
+  <section class="section">
+    <div class="section-inner" style="max-width: 1100px;">
+      <div class="discord-banner reveal">
+        <div class="discord-banner-left">
+          <svg viewBox="0 0 24 24" fill="#7289da" width="38" height="38"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.032.054a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.107a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.108c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+          <div>
+            <div class="discord-banner-title">Rejoignez le serveur Jaharta</div>
+            <div class="discord-banner-sub">Communauté · Événements RP · Annonces · Soumission de fiches</div>
           </div>
-          <a 
-            href="https://discord.gg/jaharta" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            class="discord-banner-btn"
-            aria-label="Rejoindre Discord (ouvre dans un nouvel onglet)"
-          >
-            <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15" aria-hidden="true" focusable="false">
-              <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.032.054a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.107a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.108c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/>
-            </svg>
-            discord.gg/jaharta
-          </a>
         </div>
-      </div>
-    </section>
-
-    <!-- ════════════ FINAL CTA ════════════ -->
-    <section class="final-cta" aria-labelledby="cta-title">
-      <div class="reveal">
-        <h2 class="final-cta-title" id="cta-title">Êtes-vous prêts à assumer vos choix&nbsp;?</h2>
-        <p class="final-cta-sub">Jaharta ne se comprend pas en le lisant — mais en le vivant.</p>
-        <a 
-          href="https://discord.gg/jaharta" 
-          target="_blank" 
-          rel="noopener noreferrer" 
-          class="hero-cta"
-          style="animation: none; opacity: 1;"
-          aria-label="Entrer dans Jaharta sur Discord (ouvre dans un nouvel onglet)"
-        >
-          <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18" aria-hidden="true" focusable="false">
-            <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/>
-          </svg>
-          Entrer dans Jaharta
+        <a href="https://discord.gg/jaharta" target="_blank" class="discord-banner-btn">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.032.054a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.107a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.108c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+          discord.gg/jaharta
         </a>
       </div>
-    </section>
-    
-  </main>
+    </div>
+  </section>
 
-  <!-- ════════════════════════════════════════════════════════════════════════
-       FOOTER
-       ════════════════════════════════════════════════════════════════════════ -->
+  <!-- ======== FINAL CTA ======== -->
+  <section class="final-cta">
+    <div class="reveal">
+      <p class="final-cta-title">Êtes-vous prêts à assumer vos choix&nbsp;?</p>
+      <p class="final-cta-sub">Jaharta ne se comprend pas en le lisant — mais en le vivant.</p>
+      <a href="https://discord.gg/jaharta" target="_blank" rel="noopener" class="hero-cta" style="animation: none; opacity: 1;">
+        <svg viewBox="0 0 24 24" fill="currentColor" style="width:18px;height:18px;"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+        Entrer dans Jaharta
+      </a>
+    </div>
+  </section>
+
+  <!-- ======== FOOTER ======== -->
   <footer class="footer-full">
     <div class="footer-inner">
       <div class="f-brand">
         <div class="f-logo">JAHARTA // RP</div>
-        <p class="f-tagline">Univers Jaharta · Roleplay Officiel</p>
+        <div class="f-tagline">Univers Jaharta · Roleplay Officiel</div>
       </div>
-      <nav class="f-links" aria-label="Liens du pied de page">
+      <div class="f-links">
         <a href="fiches.html">Fiches RP</a>
         <a href="pnj.html">PNJ</a>
         <a href="portail.html">Portail</a>
         <a href="racesjouables.html">Races</a>
         <a href="admin.html">Admin</a>
-        <a href="https://discord.gg/jaharta" target="_blank" rel="noopener noreferrer">
-          Discord
-          <span class="sr-only">(ouvre dans un nouvel onglet)</span>
-          <span aria-hidden="true">↗</span>
-        </a>
-      </nav>
+        <a href="https://discord.gg/jaharta" target="_blank">Discord ↗</a>
+      </div>
     </div>
-    <div class="f-bottom">
-      <p>© 2024 — 2026 JAHARTA RP · TOUS DROITS RÉSERVÉS</p>
-    </div>
+    <div class="f-bottom">© 2024 — 2026 JAHARTA RP · TOUS DROITS RÉSERVÉS</div>
   </footer>
 
-  <!-- Toast notification container -->
-  <div class="toast" id="toast" role="alert" aria-live="polite"></div>
-
-  <!-- Scripts -->
-  <script src="js/script.js" defer></script>
+  <script src="js/script.js"></script>
   <script type="module" src="js/auth-badge.js"></script>
-  <script src="js/music-player.js" defer></script>
+  <script src="js/music-player.js"></script>
 </body>
 </html>
