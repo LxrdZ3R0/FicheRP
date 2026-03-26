@@ -1,295 +1,251 @@
 <!DOCTYPE html>
-<!--
-  ═══════════════════════════════════════════════════════════════════════
-  index.html — Page d'accueil de Jaharta RP
-  ───────────────────────────────────────────────────────────────────────
-  Contenu :
-  - Hero animé avec effet glitch sur le titre (loop infini)
-  - Particules flottantes générées par JS
-  - 3 cards de navigation (Fiches, PNJ, Portail)
-  - Bannière Discord avec glitch au hover
-  - Open Graph / meta Discord embed
-
-  Firebase : uniquement pour l'état auth (badge admin dans la nav)
-  Pas de lecture/écriture Firestore sur cette page.
-  ═══════════════════════════════════════════════════════════════════════
--->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Jaharta RP — Un monde où magie et technologie s'entrelacent. Rejoignez l'aventure sur Discord.">
+<meta name="theme-color" content="#06060c">
+<title>Jaharta RP — Là où la magie rencontre la technologie</title>
 <link rel="icon" type="image/x-icon" href="img/favicon.ico">
 <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png">
-<link rel="apple-touch-icon" sizes="180x180" href="img/favicon-180.png"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>JAHARTA // Accueil</title>
+<link rel="apple-touch-icon" sizes="180x180" href="img/favicon-180.png">
 
-<!-- ── Open Graph / Discord embed ── -->
-<meta property="og:type"        content="website">
-<meta property="og:url"         content="https://lxrdz3r0.github.io/JahartaRP/">
-<meta property="og:title"       content="JAHARTA // RP">
-<meta property="og:description" content="Univers Jaharta — Explorez, créez votre personnage et rejoignez l'aventure. Base de données RP, fiches personnages, PNJ et lore officiel.">
-<meta property="og:image"       content="https://lxrdz3r0.github.io/JahartaRP/img/banner.png?v=2">
-<meta property="og:image:width"  content="1200">
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://www.jaharta.fr/">
+<meta property="og:title" content="JAHARTA // RP">
+<meta property="og:description" content="Un monde où magie et technologie coexistent. Votre seconde chance commence à Navari.">
+<meta property="og:image" content="https://www.jaharta.fr/img/banner.png?v=3">
+<meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:site_name"   content="Jaharta RP">
-<meta name="theme-color"        content="#00f5ff">
-<!-- Twitter card (Discord lit aussi ces balises) -->
-<meta name="twitter:card"        content="summary_large_image">
-<meta name="twitter:title"       content="JAHARTA // RP">
-<meta name="twitter:description" content="Univers Jaharta — Explorez, créez votre personnage et rejoignez l'aventure. Base de données RP, fiches personnages, PNJ et lore officiel.">
-<meta name="twitter:image"       content="https://lxrdz3r0.github.io/JahartaRP/img/banner.png?v=2">
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600&display=swap" rel="stylesheet">
+
 <link rel="stylesheet" href="css/jaharta.css">
-<style>
-:root {
-  /* index : accent cyan par défaut, pas de surcharge nécessaire */
-}
-/* Page-specific db sizing */
-.db { margin:0 44px 72px; padding:32px 38px; overflow:hidden; }
-.db-ico svg { width:36px; height:36px; fill:#7289da; opacity:.8; }
-.db::after { content:''; position:absolute; top:-40px; right:-40px; width:200px; height:200px; background:radial-gradient(circle,rgba(114,137,218,.06),transparent 65%); pointer-events:none; }
-
-
-/* HERO */
-.hero{position:relative;z-index:1;min-height:92vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:60px 40px;overflow:hidden;}
-.hglow-a{position:absolute;top:-80px;left:50%;transform:translateX(-50%);width:900px;height:600px;background:radial-gradient(ellipse,rgba(0,245,255,0.07) 0%,transparent 65%);pointer-events:none;}
-.hglow-b{position:absolute;bottom:0;left:15%;width:500px;height:350px;background:radial-gradient(ellipse,rgba(255,0,110,0.05) 0%,transparent 65%);pointer-events:none;}
-.hglow-c{position:absolute;top:25%;right:8%;width:380px;height:380px;background:radial-gradient(ellipse,rgba(255,214,10,0.035) 0%,transparent 65%);pointer-events:none;}
-.particles{position:absolute;inset:0;overflow:hidden;pointer-events:none;}
-.particle{position:absolute;width:2px;height:2px;border-radius:50%;opacity:0;animation:floatP linear infinite;}
-@keyframes floatP{0%{transform:translateY(100vh) translateX(0);opacity:0}10%{opacity:.55}90%{opacity:.55}100%{transform:translateY(-20px) translateX(var(--dx,0));opacity:0}}
-
-.eyebrow{font-family:'Share Tech Mono',monospace;font-size:0.67rem;letter-spacing:0.45em;color:var(--magenta);text-shadow:0 0 12px var(--magenta);margin-bottom:22px;animation:blink 4s infinite;}
-@keyframes blink{0%,85%,100%{opacity:1}92%{opacity:.1}}
-.hero-title{font-family:'Orbitron',sans-serif;font-weight:900;font-size:clamp(4rem,10vw,7.5rem);line-height:.95;letter-spacing:.04em;color:#fff;}
-.hero-title .c{color:var(--cyan);text-shadow:0 0 30px var(--cyan),0 0 100px rgba(0,245,255,.2);}
-91%{text-shadow:-4px 0 var(--magenta),4px 0 var(--cyan);transform:skew(-1.5deg)}93%{text-shadow:4px 0 var(--magenta),-4px 0 var(--cyan);transform:skew(1.5deg)}}
-.hero-sub{font-size:clamp(.95rem,2vw,1.25rem);color:var(--muted);font-weight:300;letter-spacing:.16em;margin-top:38px;margin-bottom:72px;max-width:580px;line-height:1.7;}
-
-/* CTAs */
-.ctas{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-bottom:72px;}
-.btn-primary{font-family:'Orbitron',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--dark);background:var(--cyan);text-decoration:none;padding:16px 32px;clip-path:polygon(12px 0%,100% 0%,calc(100% - 12px) 100%,0% 100%);transition:background .2s,box-shadow .2s;position:relative;overflow:hidden;}
-.btn-primary::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.15),transparent);pointer-events:none;}
-.btn-primary:hover{background:#fff;box-shadow:0 0 32px var(--cyan),0 0 70px rgba(0,245,255,.25);}
-.btn-outline{font-family:'Orbitron',sans-serif;font-weight:600;font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--cyan);text-decoration:none;padding:15px 32px;border:1px solid rgba(0,245,255,.38);clip-path:polygon(12px 0%,100% 0%,calc(100% - 12px) 100%,0% 100%);transition:all .2s;}
-.btn-outline:hover{background:rgba(0,245,255,.07);border-color:var(--cyan);box-shadow:0 0 20px rgba(0,245,255,.1);}
-.btn-discord{font-family:'Orbitron',sans-serif;font-weight:600;font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:#7289da;text-decoration:none;padding:15px 28px;border:1px solid rgba(114,137,218,.38);clip-path:polygon(12px 0%,100% 0%,calc(100% - 12px) 100%,0% 100%);transition:all .2s;display:flex;align-items:center;gap:9px;}
-.btn-discord:hover{background:rgba(114,137,218,.07);border-color:#7289da;box-shadow:0 0 20px rgba(114,137,218,.15);}
-.btn-discord svg{width:17px;height:17px;fill:currentColor;}
-
-/* STATS */
-.hero-stats{display:flex;gap:50px;justify-content:center;}
-.hs{text-align:center;}
-.hs-num{font-family:'Orbitron',sans-serif;font-size:1.75rem;font-weight:800;color:var(--cyan);text-shadow:0 0 18px var(--cyan);display:block;line-height:1;}
-.hs-lbl{font-family:'Share Tech Mono',monospace;font-size:.56rem;color:var(--muted);letter-spacing:.2em;text-transform:uppercase;margin-top:4px;display:block;}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-
-/* DIVIDER */
-.div-line{position:relative;z-index:1;height:1px;margin:0 44px;background:linear-gradient(90deg,transparent,var(--border),transparent);}
-
-/* NAV CARDS */
-.cards-section{position:relative;z-index:1;padding:72px 44px;max-width:1400px;margin:0 auto;}
-.cards-eyebrow{font-family:'Share Tech Mono',monospace;font-size:.62rem;color:var(--muted);letter-spacing:.35em;text-transform:uppercase;text-align:center;margin-bottom:44px;}
-.cards-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:18px;}
-
-.ncard{position:relative;background:var(--dark2);border:1px solid var(--border);overflow:hidden;text-decoration:none;color:inherit;transition:border-color .3s,transform .28s,box-shadow .3s;clip-path:polygon(16px 0%,100% 0%,100% calc(100% - 16px),calc(100% - 16px) 100%,0% 100%,0% 16px);display:flex;flex-direction:column;}
-.ncard::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.022) 0%,transparent 50%);pointer-events:none;}
-.ncard:hover{transform:translateY(-7px);}
-.ncard.c1:hover{border-color:var(--cyan);box-shadow:0 0 28px rgba(0,245,255,.12),0 14px 40px rgba(0,0,0,.4);}
-.ncard.c2:hover{border-color:var(--magenta);box-shadow:0 0 28px rgba(255,0,110,.12),0 14px 40px rgba(0,0,0,.4);}
-.ncard.c3:hover{border-color:var(--gold);box-shadow:0 0 28px rgba(255,214,10,.12),0 14px 40px rgba(0,0,0,.4);}
-.ncard.c4:hover{border-color:#7289da;box-shadow:0 0 28px rgba(114,137,218,.12),0 14px 40px rgba(0,0,0,.4);}
-.nc-bar{height:3px;position:relative;z-index:1;}
-.c1 .nc-bar{background:linear-gradient(90deg,var(--cyan),rgba(0,245,255,.18));}
-.c2 .nc-bar{background:linear-gradient(90deg,var(--magenta),rgba(255,0,110,.18));}
-.c3 .nc-bar{background:linear-gradient(90deg,var(--gold),rgba(255,214,10,.18));}
-.c4 .nc-bar{background:linear-gradient(90deg,#7289da,rgba(114,137,218,.18));}
-.nc-body{padding:26px 24px 24px;position:relative;z-index:1;flex:1;display:flex;flex-direction:column;}
-.nc-ico{font-size:1.8rem;margin-bottom:14px;display:block;line-height:1;}
-.nc-title{font-family:'Orbitron',sans-serif;font-weight:700;font-size:.95rem;letter-spacing:.13em;color:#fff;margin-bottom:9px;}
-.c1 .nc-title{text-shadow:0 0 12px rgba(0,245,255,.3);}
-.c2 .nc-title{text-shadow:0 0 12px rgba(255,0,110,.3);}
-.c3 .nc-title{text-shadow:0 0 12px rgba(255,214,10,.3);}
-.c4 .nc-title{color:#7289da;text-shadow:0 0 12px rgba(114,137,218,.3);}
-.nc-desc{font-size:.85rem;color:var(--muted);line-height:1.7;font-weight:300;flex:1;}
-.nc-arrow{font-family:'Share Tech Mono',monospace;font-size:.6rem;letter-spacing:.18em;margin-top:18px;display:flex;align-items:center;gap:8px;transition:gap .22s;}
-.c1 .nc-arrow{color:var(--cyan);}
-.c2 .nc-arrow{color:var(--magenta);}
-.c3 .nc-arrow{color:var(--gold);}
-.c4 .nc-arrow{color:#7289da;}
-.ncard:hover .nc-arrow{gap:14px;}
-.nc-corner{position:absolute;bottom:0;right:0;width:16px;height:16px;border-top:1px solid var(--border);border-left:1px solid var(--border);pointer-events:none;z-index:2;}
-
-/* GUIDE */
-.sh h2{font-family:'Orbitron',sans-serif;font-weight:700;font-size:1.05rem;letter-spacing:.25em;color:#fff;text-transform:uppercase;white-space:nowrap;}
-
-/* DISCORD BANNER */
-
-/* FOOTER */
-footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:24px 44px;display:flex;align-items:center;justify-content:space-between;}
-.f-logo{font-family:'Orbitron',sans-serif;font-weight:900;font-size:.82rem;letter-spacing:.28em;color:var(--cyan);opacity:.38;}
-.f-txt{font-family:'Share Tech Mono',monospace;font-size:.58rem;color:var(--muted);letter-spacing:.13em;}
-.f-links{display:flex;gap:16px;}
-.f-links a{font-family:'Share Tech Mono',monospace;font-size:.56rem;color:var(--muted);text-decoration:none;letter-spacing:.1em;transition:color .2s;}
-.f-links a:hover{color:var(--cyan);}
-@media(max-width:900px){header{padding:0 16px}nav a span{display:none}.ctas{flex-direction:column;align-items:center}.hero-stats{gap:28px}.cards-section,.db{margin:0 16px 50px}footer{flex-direction:column;gap:10px;text-align:center;padding:22px 16px}}
-</style>
 <script src="js/debug.js"></script>
 <script src="js/constants.js"></script>
 <script src="js/utils.js"></script>
 </head>
 <body>
-
-<header>
-  <a href="index.html" class="logo">JAHARTA <span class="logo-slash">//</span> RP<span class="logo-sub">UNIVERS JAHARTA · ROLEPLAY OFFICIEL</span></a>
-  <nav>
-    <a href="index.html"   class="active">⌂ <span>Accueil</span></a>
-    <a href="fiches.html">◈ <span>Fiches RP</span></a>
-    <a href="pnj.html">◆ <span>PNJ</span></a>
-    <a href="portail.html">⬡ <span>Portail</span></a>
-    <a href="racesjouables.html">◈ <span>Races</span></a>
-    <a href="admin.html" class="admin-badge" id="admin-badge">ADMIN</a>
-    <a href="admin.html" class="nav-admin">⚙ Connexion</a>
-  </nav>
-</header>
-
-<!-- ══════════════════════ HERO ══════════════════════ -->
-<!-- Titre animé glitch + sous-titre + boutons CTA -->
-<div class="hero">
-  <div class="hglow-a"></div><div class="hglow-b"></div><div class="hglow-c"></div>
-  <div class="particles" id="ptcl"></div>
-
-  <p class="eyebrow">▸ UNIVERS JAHARTA · SERVEUR RP DISCORD · EN LIGNE</p>
-  <h1 class="hero-title"><span class="c" data-text="JAHARTA">JAHARTA</span></h1>
-  <p class="hero-sub">Bienvenue dans l'univers de Jaharta — explorez, créez votre personnage et rejoignez l'aventure collective.</p>
-
-  <div class="ctas">
-    <a href="fiches.html" class="btn-primary">◈ Base de données RP</a>
-    <a href="portail.html" class="btn-outline">⬡ Portail ressources</a>
-    <a href="pnj.html" class="btn-outline">◆ PNJ Importants</a>
+  <!-- Page Transition -->
+  <div class="page-transition-overlay" id="page-transition">
+    <div class="pt-logo">JAHARTA</div>
+    <div class="pt-bar"></div>
+    <div class="pt-text">Chargement du système</div>
   </div>
 
-  <div class="hero-stats">
-    <div class="hs"><span class="hs-num"><span class="hdot"></span>LIVE</span><span class="hs-lbl">Statut</span></div>
-  </div>
-</div>
-
-<!-- Séparateur ligne horizontale -->
-<div class="div-line"></div>
-
-<!-- ══════════ CARDS NAVIGATION ══════════
-     3 cartes cliquables vers les sections principales -->
-<div class="cards-section">
-  <p class="cards-eyebrow">// Explorer l'univers Jaharta</p>
-  <div class="cards-grid">
-
-    <a href="fiches.html" class="ncard c1">
-      <div class="nc-bar"></div>
-      <div class="nc-body">
-        <span class="nc-ico">◈</span>
-        <div class="nc-title">Base de Données RP</div>
-        <p class="nc-desc">Registre complet des personnages joueurs. Filtrez par race, consultez les fiches, rangs de puissance et liens vers les fiches détaillées de chaque joueur.</p>
-        <div class="nc-arrow">ACCÉDER ──▶</div>
-      </div>
-      <div class="nc-corner"></div>
-    </a>
-
-    <a href="pnj.html" class="ncard c2">
-      <div class="nc-bar"></div>
-      <div class="nc-body">
-        <span class="nc-ico">◆</span>
-        <div class="nc-title">Personnages PNJ</div>
-        <p class="nc-desc">Les figures importantes de Jaharta — entités mythiques, seigneurs de guerre, gardiens anciens et acteurs clés qui façonnent le destin de l'univers.</p>
-        <div class="nc-arrow">DÉCOUVRIR ──▶</div>
-      </div>
-      <div class="nc-corner"></div>
-    </a>
-
-    <a href="portail.html" class="ncard c3">
-      <div class="nc-bar"></div>
-      <div class="nc-body">
-        <span class="nc-ico">⬡</span>
-        <div class="nc-title">Portail des Ressources</div>
-        <p class="nc-desc">Lore de Jaharta, cartes du monde, règles du RP et toutes les ressources essentielles pour jouer et construire votre histoire dans cet univers.</p>
-        <div class="nc-arrow">EXPLORER ──▶</div>
-      </div>
-      <div class="nc-corner"></div>
-    </a>
-
-  </div>
-</div>
-
-<!-- ══════════ BANNIÈRE DISCORD ══════════
-     Glitch au hover déclenché par JS -->
-<div class="db">
-  <div class="db-l">
-    <div class="db-ico"><svg viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.032.054a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.107a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.108c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg></div>
-    <div>
-      <div class="db-title" data-text="Rejoignez le serveur Jaharta">Rejoignez le serveur Jaharta</div>
-      <div class="db-sub">Communauté · Événements RP · Annonces · Soumission de fiches</div>
+  <!-- ======== NAVIGATION ======== -->
+  <nav class="nav" id="nav">
+    <a href="index.html" class="nav-logo">JAHARTA</a>
+    <div class="nav-links" id="nav-links">
+      <a href="index.html" class="active">Accueil</a>
+      <a href="fiches.html">Fiches RP</a>
+      <a href="pnj.html">PNJ</a>
+      <a href="portail.html">Portail</a>
+      <a href="racesjouables.html">Races</a>
+      <a href="admin.html" class="nav-admin-link">Admin</a>
+      <a href="admin.html" class="admin-badge" id="admin-badge">ADMIN</a>
     </div>
-  </div>
-  <a href="https://discord.gg/jaharta" target="_blank" class="db-btn">
-    <svg viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.032.054a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.107a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.108c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
-    discord.gg/jaharta
-  </a>
-</div>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Menu">☰</button>
+  </nav>
 
-<footer>
-  <div class="f-logo">JAHARTA // RP</div>
-  <div class="f-txt"><span class="hdot"></span>SYSTÈME EN LIGNE · v4.0.0</div>
-  <div class="f-links">
-    <a href="fiches.html">Fiches RP</a>
-    <a href="pnj.html">PNJ</a>
-    <a href="portail.html">Portail</a>
-    <a href="admin.html">Admin</a>
-    <a href="https://discord.gg/jaharta" target="_blank">Discord ↗</a>
-  </div>
-</footer>
+  <!-- ======== HERO ======== -->
+  <section class="hero" id="hero">
+    <canvas id="particles-canvas"></canvas>
+    <div class="hero-bg"></div>
+    <div class="hero-grid"></div>
+    <div class="hero-overlay"></div>
 
-<script>
-/* ── Génération des particules flottantes ── */
-/* ─── PARTICULES FLOTTANTES ──────────────────────────────────────────
-   20 points lumineux de couleurs aléatoires, animation CSS via
-   la keyframe floatP et les variables --dx (déplacement horizontal)
-   ─────────────────────────────────────────────────────────────────── */
-const c=document.getElementById('ptcl');
-const cols=['#00f5ff','#ff006e','#ffd60a','#b06eff','#44ff88'];
-for(let i=0;i<20;i++){
-  const p=document.createElement('div');p.className='particle';
-  const col=cols[Math.floor(Math.random()*cols.length)];
-  p.style.cssText=`left:${Math.random()*100}%;background:${col};box-shadow:0 0 6px ${col};animation-duration:${9+Math.random()*13}s;animation-delay:${Math.random()*9}s;--dx:${(Math.random()-.5)*180}px;`;
-  c.appendChild(p);
-}
-</script>
+    <div class="hero-content">
+      <p class="hero-pretitle">Roleplay · Fantasy · Cyberpunk</p>
+      <h1 class="hero-title" data-text="JAHARTA">
+        <span class="glow-text">JAHARTA</span>
+      </h1>
+      <p class="hero-subtitle">
+        Là où la magie et la technologie ne se contredisent pas&nbsp;—
+        elles coexistent, s'entrelacent et se complètent.
+      </p>
+      <a href="https://discord.gg/jBMnmeR944" target="_blank" rel="noopener" class="hero-cta">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+        Entrer dans Jaharta
+      </a>
+    </div>
 
-<script>
-/* ── Démarre le glitch en boucle sur le titre hero ── */
-(function(){
-  const c = document.querySelector('.hero-title .c');
-  if(!c) return;
-  c.classList.add('glitching');
-})();
+    <div class="hero-scroll">
+      <span>Explorer</span>
+      <div class="line"></div>
+    </div>
+  </section>
 
-/* ── Glitch bannière Discord au survol (déclenché 1x par hover, durée 2.9s) ── */
-(function(){
-  const banner = document.querySelector('.db');
-  const title  = document.querySelector('.db-title');
-  if(!banner || !title) return;
-  let timer = null;
-  banner.addEventListener('mouseenter', () => {
-    if(timer) return;
-    title.classList.add('glitching');
-    timer = setTimeout(() => {
-      title.classList.remove('glitching');
-      void title.offsetWidth;
-      timer = null;
-    }, 2900);
-  });
-})();
-</script>
+  <!-- ======== LORE TEASER ======== -->
+  <section class="section" id="lore">
+    <div class="section-inner">
+      <div class="divider reveal"></div>
+      <p class="section-label reveal">Votre histoire commence ici</p>
 
-<script type="module" src="js/auth-badge.js"></script>
+      <div class="lore-text reveal">
+        <p>
+          Votre âme errait quelque part, dans l'immensité de l'inconscience collective.
+          Mais une entité unique vous a appelé&nbsp;: <em>le Nexus</em>.
+          Vous n'êtes pas né dans ce monde — vous y avez été <strong>invité</strong>,
+          ajouté à la trame du réel comme une variable venue d'ailleurs.
+        </p>
+        <p>
+          Jaharta vous a accepté… sans forcément vous comprendre.
+          Ici, une rune peut alimenter une machine, et un circuit peut canaliser un sort.
+          Magie et technologie ne se contredisent pas&nbsp;: elles <em>coexistent</em>,
+          s'entrelacent et parfois se déforment mutuellement.
+        </p>
+      </div>
 
-<script src="js/music-player.js"></script>
+      <div class="lore-highlight reveal">
+        Votre seconde chance débute à <em>Navari</em>, la Cité-Strate&nbsp;:<br>
+        première puissance militaire et deuxième puissance économique de Jaharta.
+      </div>
+
+      <div class="lore-text reveal">
+        <p>
+          Le corps qui vous est octroyé par le Nexus peut — ou non — être celui de votre vie antérieure.
+          Mais le résultat est le même&nbsp;: vous ne le maîtrisez pas encore.
+          Au rythme de vos discussions, de vos combats, de vos chasses et de vos négociations,
+          vous reprendrez le contrôle grâce au <strong>Système</strong> — votre compagnon le plus constant.
+        </p>
+        <p>
+          Il vous observe, vous mesure, vous conseille… et parfois vous avertit.
+          Ignorer un de ses avertissements revient souvent à signer un aller simple
+          vers une situation que Jaharta <em>ne pardonne pas</em>.
+        </p>
+        <p>
+          Suivrez-vous la voie du Système&nbsp;? Ou forgerez-vous une vie comme vous le dicte votre instinct&nbsp;?
+          Quel que soit votre choix, ce sera le vôtre.
+          Et un choix implique toujours des <strong>conséquences</strong>.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======== MAP ======== -->
+  <section class="map-section">
+    <div class="section-inner" style="max-width: 1100px;">
+      <div class="divider reveal"></div>
+      <p class="section-label reveal">Cartographie de Jaharta</p>
+      <div class="map-container reveal">
+        <img src="assets/map-holographic.png" alt="Carte holographique de Jaharta" loading="lazy">
+        <span class="map-label">Core Stability: 94% — Projector Active</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======== FEATURES ======== -->
+  <section class="section" id="features">
+    <div class="section-inner" style="max-width: 1100px;">
+      <div class="divider reveal"></div>
+      <p class="section-label reveal">Un système inédit</p>
+
+      <div class="features-grid reveal-stagger reveal">
+        <div class="feature-card">
+          <span class="feature-icon">⚔️</span>
+          <h3>Système RPG exclusif</h3>
+          <p>Un bot développé sur mesure : gagnez de l'XP, montez de niveau, gérez vos items et vos loots — une expérience encore jamais vue.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">💰</span>
+          <h3>Économie complète</h3>
+          <p>Un système monétaire pensé pour le RP, avec un marché interactif pour acheter équipements et ressources.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">🐉</span>
+          <h3>Companions</h3>
+          <p>Des monstres uniques avec évolutions, pouvoirs synchronisés et stats bonus. Trouvez celui qui combattra à vos côtés.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">🏅</span>
+          <h3>Titres & Prouesses</h3>
+          <p>Des titres qui marquent vos exploits en RP et octroient divers bonus. Forgez votre légende dans Jaharta.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======== NAVIGATION CARDS ======== -->
+  <section class="section" id="explore">
+    <div class="section-inner" style="max-width: 1100px;">
+      <div class="divider reveal"></div>
+      <p class="section-label reveal">Explorer l'univers</p>
+
+      <div class="cards-grid reveal-stagger reveal">
+        <a href="fiches.html" class="nav-card nav-card--cyan">
+          <span class="nav-card-icon">◈</span>
+          <h3>Base de Données RP</h3>
+          <p>Registre complet des personnages joueurs. Filtrez par race, consultez les fiches et rangs de puissance.</p>
+          <span class="nav-card-arrow">ACCÉDER →</span>
+        </a>
+        <a href="pnj.html" class="nav-card nav-card--magenta">
+          <span class="nav-card-icon">◆</span>
+          <h3>Personnages PNJ</h3>
+          <p>Les figures importantes de Jaharta — entités mythiques, seigneurs de guerre et acteurs clés de l'univers.</p>
+          <span class="nav-card-arrow">DÉCOUVRIR →</span>
+        </a>
+        <a href="portail.html" class="nav-card nav-card--violet">
+          <span class="nav-card-icon">⬡</span>
+          <h3>Portail des Ressources</h3>
+          <p>Lore, cartes du monde, règles du RP et toutes les ressources essentielles pour votre histoire.</p>
+          <span class="nav-card-arrow">EXPLORER →</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======== DISCORD BANNER ======== -->
+  <section class="section">
+    <div class="section-inner" style="max-width: 1100px;">
+      <div class="discord-banner reveal">
+        <div class="discord-banner-left">
+          <svg viewBox="0 0 24 24" fill="#7289da" width="38" height="38"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.032.054a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.107a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.108c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+          <div>
+            <div class="discord-banner-title">Rejoignez le serveur Jaharta</div>
+            <div class="discord-banner-sub">Communauté · Événements RP · Annonces · Soumission de fiches</div>
+          </div>
+        </div>
+        <a href="https://discord.gg/jBMnmeR944" target="_blank" class="discord-banner-btn">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.032.054a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.107a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.108c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+          discord.gg/jBMnmeR944
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======== FINAL CTA ======== -->
+  <section class="final-cta">
+    <div class="reveal">
+      <p class="final-cta-title">Êtes-vous prêts à assumer vos choix&nbsp;?</p>
+      <p class="final-cta-sub">Jaharta ne se comprend pas en le lisant — mais en le vivant.</p>
+      <a href="https://discord.gg/jBMnmeR944" target="_blank" rel="noopener" class="hero-cta" style="animation: none; opacity: 1;">
+        <svg viewBox="0 0 24 24" fill="currentColor" style="width:18px;height:18px;"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+        Entrer dans Jaharta
+      </a>
+    </div>
+  </section>
+
+  <!-- ======== FOOTER ======== -->
+  <footer class="footer-full">
+    <div class="footer-inner">
+      <div class="f-brand">
+        <div class="f-logo">JAHARTA // RP</div>
+        <div class="f-tagline">Univers Jaharta · Roleplay Officiel</div>
+      </div>
+      <div class="f-links">
+        <a href="fiches.html">Fiches RP</a>
+        <a href="pnj.html">PNJ</a>
+        <a href="portail.html">Portail</a>
+        <a href="racesjouables.html">Races</a>
+        <a href="admin.html">Admin</a>
+        <a href="https://discord.gg/jBMnmeR944" target="_blank">Discord ↗</a>
+      </div>
+    </div>
+    <div class="f-bottom">© 2024 — 2026 JAHARTA RP · TOUS DROITS RÉSERVÉS</div>
+  </footer>
+
+  <script src="js/script.js"></script>
+  <script type="module" src="js/auth-badge.js"></script>
+  <script src="js/music-player.js"></script>
 </body>
 </html>

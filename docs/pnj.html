@@ -1,459 +1,85 @@
 <!DOCTYPE html>
-<!--
-  ═══════════════════════════════════════════════════════════════════════
-  pnj.html — Personnages Non-Joueurs importants
-  ───────────────────────────────────────────────────────────────────────
-  Fonctionnalités :
-  - Grille de cartes PNJ avec photo, titre spécial coloré, tags
-  - Filtres dynamiques depuis Firestore (collection pnj_filters)
-  - Filtres par défaut seedés automatiquement si la collection est vide
-  - Modal de création/édition PNJ (admin uniquement)
-  - Modal de création de filtre personnalisé (admin)
-  - Boutons Modifier + Supprimer sur chaque carte (admin)
-
-  Firebase (module ESM) :
-  - Firestore : collections 'pnj' et 'pnj_filters'
-  - Storage   : dossier pnj/
-  - Auth      : badge admin + affichage conditionnel des contrôles
-
-  showToast disponible via js/utils.js
-  ═══════════════════════════════════════════════════════════════════════
--->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <link rel="icon" type="image/x-icon" href="img/favicon.ico">
 <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png">
-<link rel="apple-touch-icon" sizes="180x180" href="img/favicon-180.png"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<link rel="apple-touch-icon" sizes="180x180" href="img/favicon-180.png">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>JAHARTA // PNJ Importants</title>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Exo+2:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap" rel="stylesheet">
 
 <script type="module">
-/*
- * ─── FIREBASE MODULE ───────────────────────────────────────────────────
- * Toutes les interactions Firestore/Storage sont ici.
- * Les fonctions utiles sont exposées sur window pour les scripts non-module.
- * ─────────────────────────────────────────────────────────────────────── */
+/* ─── FIREBASE MODULE — identique à l'original pnj.html ─── */
 import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import{getFirestore,collection,addDoc,getDocs,deleteDoc,doc,getDoc,updateDoc,query,orderBy,serverTimestamp,onSnapshot,setDoc}
-  from"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import{getFirestore,collection,addDoc,getDocs,deleteDoc,doc,getDoc,updateDoc,query,orderBy,serverTimestamp,onSnapshot,setDoc}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import{getStorage,ref,uploadBytes,getDownloadURL}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 import{getAuth,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-
-/* ── Config Firebase ── */
 const cfg={apiKey:"AIzaSyAru7qZX8Gu_b8Y3oNDV-a5PmkrrkRjkcs",authDomain:"jaharta-rp.firebaseapp.com",projectId:"jaharta-rp",storageBucket:"jaharta-rp.firebasestorage.app",messagingSenderId:"217075417489",appId:"1:217075417489:web:4d1e2df422a5cd42411a30"};
-const app=initializeApp(cfg);
-const db=getFirestore(app);
-const storage=getStorage(app);
-const auth=getAuth(app);
-/* ── Globals Firebase pour le second bloc <script> (non-module) ── */
-window._db=db;
-window._storage=storage;
-window._getDoc=getDoc;
-window._updateDoc=updateDoc;
-window._doc=doc;
-window._ref=ref;
-window._uploadBytes=uploadBytes;
-window._getDownloadURL=getDownloadURL;
-
-/* ── État global de la page ── */
-window._isAdmin=false;
-window._filters=[];   // [{id, label, color}]
-window._activeFilter='all';
-
-/* ── Auth : badge nav + affichage conditionnel des boutons admin ── */
-onAuthStateChanged(auth, user => {
-  /* Droits admin : affichage conditionnel des contrôles staff */
-  window._isAdmin = !!user;
-  document.querySelectorAll('.admin-only').forEach(el => el.style.display = user ? 'flex' : 'none');
-  document.querySelectorAll('.admin-actions').forEach(el => el.style.display = user ? 'flex' : 'none');
-  document.querySelectorAll('.admin-only-block').forEach(el => el.style.display = user ? 'block' : 'none');
-  if(typeof renderFilterBar === 'function') renderFilterBar();
-  document.querySelectorAll('.pnj-del-btn').forEach(btn => btn.style.display = user ? 'flex' : 'none');
-  /* Badge nav → géré par js/auth-badge.js */
-});
-
-/* ─── FILTRES ─────────────────────────────────────────────────────── */
-
-/* ── Seeding des filtres par défaut si la collection pnj_filters est vide ── */
-async function seedDefaultFilters(){
-  const snap = await getDocs(collection(db,'pnj_filters'));
-  if(snap.size > 0) return; // already seeded
-  const defaults = [
-    {label:'Politicien',  color:'#ffd60a', order:0},
-    {label:'Guerrier',    color:'#ff3030', order:1},
-    {label:'Marchand',    color:'#00e5cc', order:2},
-    {label:'Mage',        color:'#b06eff', order:3},
-    {label:'Criminel',    color:'#ff006e', order:4},
-    {label:'Noble',       color:'#60a5fa', order:5},
-    {label:'Religieux',   color:'#f97316', order:6},
-  ];
-  for(const f of defaults){
-    await addDoc(collection(db,'pnj_filters'),{...f, createdAt:serverTimestamp()});
-  }
-}
-
-/** Charge les filtres depuis Firestore et appelle renderFilterBar() */
-/* loadFilters : récupère les filtres depuis Firestore et reconstruit la barre */
-async function loadFilters(){
-  try{
-    const snap=await getDocs(query(collection(db,'pnj_filters'),orderBy('createdAt','asc')));
-    window._filters=[];
-    snap.forEach(d=>window._filters.push({id:d.id,...d.data()}));
-  }catch(e){window._filters=[];}
-  renderFilterBar();
-}
-
-/* ── Rendu de la barre de filtres (appelé après auth + après création d'un filtre) ── */
-/* renderFilterBar : reconstruit la barre de filtres HTML
-   (boutons colorés dynamiques + croix admin + bouton + Filtre) */
-window.renderFilterBar=function(){
-  const bar=document.getElementById('filter-bar');
-  // Keep "Tous" button
-  bar.innerHTML=`<button class="cat-btn${window._activeFilter==='all'?' active':''}" onclick="applyFilter('all',this)">Tous</button>`;
-  window._filters.forEach(f=>{
-    const hex=f.color||'#00f5ff';
-    const btn=document.createElement('button');
-    btn.className='cat-btn'+(window._activeFilter===f.id?' active':'');
-    btn.style.cssText=`color:${hex};border-color:${hex}44;`;
-    btn.innerHTML=`<span class="fdot" style="background:${hex};box-shadow:0 0 5px ${hex}"></span>${f.label}`;
-    btn.onclick=()=>applyFilter(f.id,btn);
-    // admin delete x
-    if(window._isAdmin){
-      const x=document.createElement('span');
-      x.className='filter-del';x.textContent='✕';
-      x.onclick=e=>{e.stopPropagation();deleteFilter(f.id);};
-      btn.appendChild(x);
-    }
-    bar.appendChild(btn);
-  });
-  // admin "+" add filter btn
-  if(window._isAdmin){
-    const ab=document.createElement('button');
-    ab.className='cat-btn add-filter-btn';
-    ab.innerHTML='+ Filtre';
-    ab.onclick=()=>openFilterModal();
-    bar.appendChild(ab);
-  }
-};
-
-/** Filtre les cartes PNJ par catégorie (cache/affiche via style.display) */
-window.applyFilter=function(id,btn){
-  window._activeFilter=id;
-  document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  let v=0;
-  document.querySelectorAll('.pnj-card[data-cat]').forEach(c=>{
-    const show=id==='all'||c.dataset.cat===id;
-    c.style.display=show?'':'none';
-    if(show)v++;
-  });
-  document.getElementById('no-results').style.display=v===0?'block':'none';
-};
-
-/** Crée un nouveau filtre dans Firestore puis recharge la barre */
-window.saveFilter=async function(){
-  const label=document.getElementById('new-filter-label').value.trim();
-  const color=document.getElementById('new-filter-color').value;
-  if(!label){showToast('Donnez un nom au filtre','error');return;}
-  const btn=document.getElementById('filter-save-btn');
-  btn.disabled=true;btn.textContent='⟳';
-  try{
-    await addDoc(collection(db,'pnj_filters'),{label,color,createdAt:serverTimestamp()});
-    showToast('✓ Filtre créé !','success');
-    closeFilterModal();
-    await loadFilters();
-  }catch(e){showToast('Erreur: '+e.message,'error');}
-  btn.disabled=false;btn.textContent='Créer';
-};
-
-/** Supprime un filtre Firestore et le retire de la barre */
-window.deleteFilter=async function(id){
-  if(!confirm('Supprimer ce filtre ?'))return;
-  try{
-    await deleteDoc(doc(db,'pnj_filters',id));
-    window._filters=window._filters.filter(f=>f.id!==id);
-    if(window._activeFilter===id)window._activeFilter='all';
-    renderFilterBar();
-    showToast('Filtre supprimé','error');
-  }catch(e){showToast('Erreur: '+e.message,'error');}
-};
-
-/* ── Écoute temps réel de la collection PNJ (onSnapshot) ── */
-/* Pas d'orderBy : Firestore exclut silencieusement les docs sans le champ
-   ordonné. Le bot envoie syncedAt, les PNJ manuels ont createdAt.
-   On charge tout et on trie côté client. */
-function loadPNJ(){
-  const q=collection(db,'pnj');
-  onSnapshot(q,snap=>{
-    const container=document.getElementById('pnj-container');
-    container.querySelectorAll('.pnj-card').forEach(c=>c.remove());
-    const empty=document.getElementById('empty-state');
-    if(empty)empty.style.display='none';
-
-    /* Collecter + trier : createdAt (PNJ manuels) ou syncedAt (bot) */
-    const docs=[];
-    snap.forEach(d=>docs.push({id:d.id,...d.data()}));
-    docs.sort((a,b)=>{
-      const ta=a.createdAt?.toMillis?.()??( a.syncedAt?new Date(a.syncedAt).getTime():0);
-      const tb=b.createdAt?.toMillis?.()??( b.syncedAt?new Date(b.syncedAt).getTime():0);
-      return tb-ta;
-    });
-
-    docs.forEach(p=>{
-      const card=buildPNJCard(p);
-      container.appendChild(card);
-    });
-    if(docs.length===0&&empty)empty.style.display='block';
-
-    /* Ré-appliquer le filtre actif */
-    if(window._activeFilter!=='all'){
-      document.querySelectorAll('.pnj-card[data-cat]').forEach(c=>{
-        c.style.display=c.dataset.cat===window._activeFilter?'':'none';
-      });
-    }
-  },err=>console.warn('PNJ load:',err.message));
-}
-
-/**
- * Construit une carte PNJ en DOM.
- * @param {Object} p - Données Firestore du PNJ
- * @returns {HTMLElement} .pnj-card
- */
-function buildPNJCard(p){
-  // Couleur depuis les filtres custom, fallback magenta
-  const filterObj = window._filters.find(f => f.id === p.category);
-  const c  = filterObj ? filterObj.color : '#b06eff';
-  const cl = filterObj ? filterObj.label : (p.category && p.category !== 'Unknown' ? p.category : null);
-
-  // "Unknown" envoyé par le bot = ne pas afficher ce champ
-  const displayRace   = (p.race   && p.race   !== 'Unknown') ? p.race   : null;
-  const displayRole   = (p.role   && p.role   !== 'Unknown') ? p.role   : null;
-  const displayDanger = (p.danger && p.danger !== 'Inconnu') ? p.danger : null;
-
-  const hasMotivations = p.motivations && (p.motivations.desc || p.motivations.social || p.motivations.economique || p.motivations.militaire);
-
-  // ── Stats ──
-  const s = p.stats || {};
-  const statDefs = [
-    {k:'str', lbl:'STR', cls:'pnj-sb-str'}, {k:'agi',  lbl:'AGI', cls:'pnj-sb-agi'},
-    {k:'spd', lbl:'SPD', cls:'pnj-sb-spd'}, {k:'int',  lbl:'INT', cls:'pnj-sb-int'},
-    {k:'mana',lbl:'MNA', cls:'pnj-sb-mana'},{k:'res',  lbl:'RES', cls:'pnj-sb-res'},
-    {k:'cha', lbl:'CHA', cls:'pnj-sb-cha'}, {k:'aura', lbl:'AUR', cls:'pnj-sb-aura'},
-  ];
-  const maxStat   = Math.max(...statDefs.map(d => s[d.k] || 0), 1);
-  const hasStats  = statDefs.some(d => (s[d.k] || 0) > 0);
-
-  // ── Pouvoirs ──
-  const powers    = p.powers || [];
-  const hasPowers = powers.length > 0;
-
-  // ── Affinité ──
-  const affinity  = p.affinity && p.affinity !== '' ? p.affinity : null;
-
-  const card=document.createElement('div');
-  card.className='pnj-card';
-  card.dataset.cat=p.category||'';
-  card.dataset.id=p.id||'';
-
-  const photoHTML=p.photoUrl
-    ?`<img src="${p.photoUrl}" alt="${p.prenom||''}" onerror="this.style.display='none';this.nextElementSibling&&(this.nextElementSibling.style.display='flex')">`
-    + `<div class="pnj-photo-ph" style="color:${c};display:none">${(p.prenom||'?')[0]}</div>`
-    :`<div class="pnj-photo-ph" style="color:${c}">${(p.prenom||'?')[0]}</div>`;
-
-  const motivHTML=p.motivations&&p.motivations.desc?`
-    <div class="pnj-divider"></div>
-    <div class="pnj-mot-title">Motivations</div>
-    <div class="pnj-mot-desc">${p.motivations.desc}</div>
-  `:'';
-
-  const adminBtns=p.id?`
-    <div class="admin-actions admin-only" style="display:${window._isAdmin?'flex':'none'};gap:8px;margin-top:10px;flex-wrap:wrap;">
-      <button class="pnj-edit-btn" onclick="openEditPNJ('${p.id}')">✎ Modifier</button>
-      <button class="pnj-del-btn" onclick="deletePNJ('${p.id}')">✕ Supprimer</button>
-    </div>`:'';
-
-  // ── Stats HTML ──
-  const statsHTML = hasStats ? `
-    <div class="pnj-stats">
-      ${statDefs.map(d => {
-        const v = s[d.k] || 0;
-        if (d.k === 'aura' && v === 0) return '';
-        const pct = Math.min(100, Math.round(v / maxStat * 100));
-        return `<div class="pnj-sb-item ${d.cls}">
-          <div class="pnj-sb-lbl">${d.lbl}</div>
-          <div class="pnj-sb-val">${v >= 1000 ? (v/1000).toFixed(1)+'k' : v}</div>
-          <div class="pnj-sb-bar"><div class="pnj-sb-fill" style="width:${pct}%"></div></div>
-        </div>`;
-      }).join('')}
-    </div>` : '';
-
-  // ── Pouvoirs HTML ──
-  const powersHTML = hasPowers ? `
-    <div class="pnj-powers">
-      <div class="pnj-powers-title">⚡ Pouvoirs</div>
-      ${powers.map(pw => `
-        <div class="pnj-power-item" style="border-color:${c}88;background:${c}08">
-          <div class="pnj-power-name" style="color:${c}">${pw.name || pw}</div>
-          ${pw.desc ? `<div class="pnj-power-desc">${pw.desc}</div>` : ''}
-        </div>`).join('')}
-    </div>` : '';
-
-  // ── Affinité HTML ──
-  const affinityHTML = affinity ? `
-    <div class="pnj-affinity">
-      <span class="pnj-aff-label">Affinité</span>
-      ${String(affinity).split(',').map(a => `<span style="color:${c};opacity:.8">${a.trim()}</span>`).join('<span style="opacity:.3"> · </span>')}
-    </div>` : '';
-
-  card.innerHTML=`
-    <div class="pnj-photo" style="background:linear-gradient(135deg,${c}14,#04060f)">
-      <div class="pnj-stripe" style="background:linear-gradient(90deg,${c},${c}20)"></div>
-      <div class="pnj-photo-ov"></div>
-      ${photoHTML}
-      ${displayDanger ? `<div class="danger-badge" style="color:${c};border-color:${c}80;background:${c}18">${displayDanger}</div>` : ''}
-      ${cl ? `<div class="cat-badge" style="color:${c};border-color:${c}55;background:${c}10">${cl}</div>` : ''}
-    </div>
-    <div class="pnj-body">
-      <div class="pnj-title">${p.prenom||''} ${p.nom||''}</div>
-      ${p.titre ? `<div class="pnj-epithet" style="color:${c};text-shadow:0 0 14px ${c}88">✦ ${p.titre}</div>` : ''}
-      <div class="pnj-tags">
-        ${displayRace  ? `<span class="pnj-tag pnj-tag-race" style="color:${c};border-color:${c}55;background:${c}0d">${displayRace}</span>` : ''}
-        ${displayRole  ? `<span class="pnj-tag pnj-tag-role" style="color:#c8e0f0;border-color:rgba(200,224,240,0.2)">${displayRole}</span>` : ''}
-        ${p.age        ? `<span class="pnj-tag">${p.age} ans</span>` : ''}
-        ${p.taille     ? `<span class="pnj-tag">${p.taille}</span>` : ''}
-        ${p.marital    ? `<span class="pnj-tag">${p.marital}</span>` : ''}
-      </div>
-      ${p.desc ? `<p class="pnj-desc">${p.desc}</p>` : ''}
-      ${affinityHTML}
-      ${statsHTML}
-      ${powersHTML}
-      ${motivHTML}
-      ${adminBtns}
-    </div>
-    <div class="pnj-deco"></div>
-  `;
-  return card;
-}
-
-/** Crée un nouveau PNJ dans Firestore avec upload photo optionnel (admin) */
-window.submitPNJ=async function(){
-  if(!window._isAdmin){showToast('⚠ Connexion admin requise','error');return;}
-  const nom=document.getElementById('pnj-nom').value.trim();
-  const prenom=document.getElementById('pnj-prenom').value.trim();
-  const age=document.getElementById('pnj-age').value.trim();
-  const race=document.getElementById('pnj-race').value.trim();
-  const role=document.getElementById('pnj-role').value.trim();
-  const titre=document.getElementById('pnj-titre').value.trim();
-  const marital=document.getElementById('pnj-marital').value.trim();
-  const taille=document.getElementById('pnj-taille').value.trim();
-  const category=document.getElementById('pnj-category').value;
-  const danger=document.getElementById('pnj-danger').value;
-  const photoUrl=document.getElementById('pnj-photo-url').value.trim();
-  const desc=document.getElementById('pnj-desc').value.trim();
-  const motDesc=document.getElementById('pnj-mot-desc').value.trim();
-
-  if(!nom||!prenom||!desc){showToast('Remplissez Nom, Prénom et Description','error');return;}
-  const btn=document.getElementById('pnj-submit-btn');
-  btn.disabled=true;btn.textContent='⟳ Création...';
-  let finalPhoto=photoUrl;
-  const photoFile=document.getElementById('pnj-file').files[0];
-  if(photoFile){
-    try{const r2=ref(storage,`pnj/${Date.now()}_${photoFile.name}`);const s2=await uploadBytes(r2,photoFile);finalPhoto=await getDownloadURL(s2.ref);}
-    catch(e){console.warn('Photo upload:',e.message);}
-  }
-  try{
-    await addDoc(collection(db,'pnj'),{nom,prenom,age,race,role,titre,marital,taille,category,danger,photoUrl:finalPhoto,desc,motivations:{desc:motDesc,social:'',economique:'',militaire:''},createdAt:serverTimestamp()});
-    showToast('✓ PNJ créé !','success');
-    closePNJModal();
-    ['pnj-nom','pnj-prenom','pnj-age','pnj-race','pnj-role','pnj-titre','pnj-marital','pnj-taille','pnj-photo-url','pnj-desc','pnj-mot-desc'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-    document.getElementById('pnj-category').value='';
-    clearPnjPrev();
-  }catch(e){showToast('⚠ '+e.message,'error');}
-  btn.disabled=false;btn.textContent='◆ Créer le PNJ';
-};
-
-/** Supprime un PNJ de Firestore et le retire du DOM (admin) */
-window.deletePNJ=async function(id){
-  if(!window._isAdmin)return;
-  if(!confirm('Supprimer définitivement ce PNJ ?'))return;
-  try{
-    await deleteDoc(doc(db,'pnj',id));
-    document.querySelector(`.pnj-card[data-id="${id}"]`)?.remove();
-    showToast('PNJ supprimé.','error');
-  }catch(e){showToast('Erreur: '+e.message,'error');}
-};
-
-/* ── Initialisation : charge filtres → peuple le select → charge PNJ ── */
-(async()=>{
-  await loadFilters();
-  // Populate category dropdown with custom filters
-  const sel=document.getElementById('pnj-category');
-  window._filters.forEach(f=>{
-    const opt=document.createElement('option');opt.value=f.id;opt.textContent=f.label;sel.appendChild(opt);
-  });
-  loadPNJ();
-})();
-
-/* ── Expose for filter modal ── */
-window._refreshCategorySelect=function(){
-  const sel=document.getElementById('pnj-category');
-  // clear non-placeholder options
-  while(sel.options.length>1)sel.remove(1);
-  window._filters.forEach(f=>{
-    const opt=document.createElement('option');opt.value=f.id;opt.textContent=f.label;sel.appendChild(opt);
-  });
-};
-
-/* showToast → js/utils.js (window.showToast disponible globalement) */
+const app=initializeApp(cfg);const db=getFirestore(app);const storage=getStorage(app);const auth=getAuth(app);
+window._db=db;window._storage=storage;window._getDoc=getDoc;window._updateDoc=updateDoc;window._doc=doc;
+window._ref=ref;window._uploadBytes=uploadBytes;window._getDownloadURL=getDownloadURL;
+window._isAdmin=false;window._filters=[];window._activeFilter='all';
+onAuthStateChanged(auth,user=>{window._isAdmin=!!user;document.querySelectorAll('.admin-only').forEach(el=>el.style.display=user?'flex':'none');document.querySelectorAll('.admin-actions').forEach(el=>el.style.display=user?'flex':'none');document.querySelectorAll('.admin-only-block').forEach(el=>el.style.display=user?'block':'none');if(typeof renderFilterBar==='function')renderFilterBar();document.querySelectorAll('.pnj-del-btn').forEach(btn=>btn.style.display=user?'flex':'none');});
+async function seedDefaultFilters(){const snap=await getDocs(collection(db,'pnj_filters'));if(snap.size>0)return;const defaults=[{label:'Politicien',color:'#ffd60a',order:0},{label:'Guerrier',color:'#ff3030',order:1},{label:'Marchand',color:'#00e5cc',order:2},{label:'Mage',color:'#b06eff',order:3},{label:'Criminel',color:'#ff006e',order:4},{label:'Noble',color:'#60a5fa',order:5},{label:'Religieux',color:'#f97316',order:6}];for(const f of defaults){await addDoc(collection(db,'pnj_filters'),{...f,createdAt:serverTimestamp()});}}
+async function loadFilters(){try{const snap=await getDocs(query(collection(db,'pnj_filters'),orderBy('createdAt','asc')));window._filters=[];snap.forEach(d=>window._filters.push({id:d.id,...d.data()}));}catch(e){window._filters=[];}renderFilterBar();}
+window.renderFilterBar=function(){const bar=document.getElementById('filter-bar');bar.innerHTML=`<button class="cat-btn${window._activeFilter==='all'?' active':''}" onclick="applyFilter('all',this)">Tous</button>`;window._filters.forEach(f=>{const hex=f.color||'#00f0ff';const btn=document.createElement('button');btn.className='cat-btn'+(window._activeFilter===f.id?' active':'');btn.style.cssText=`color:${hex};border-color:${hex}44;`;btn.innerHTML=`<span class="fdot" style="background:${hex};box-shadow:0 0 5px ${hex}"></span>${f.label}`;btn.onclick=()=>applyFilter(f.id,btn);if(window._isAdmin){const x=document.createElement('span');x.className='filter-del';x.textContent='✕';x.onclick=e=>{e.stopPropagation();deleteFilter(f.id);};btn.appendChild(x);}bar.appendChild(btn);});if(window._isAdmin){const ab=document.createElement('button');ab.className='cat-btn add-filter-btn';ab.innerHTML='+ Filtre';ab.onclick=()=>openFilterModal();bar.appendChild(ab);}};
+window.applyFilter=function(id,btn){window._activeFilter=id;document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');let v=0;document.querySelectorAll('.pnj-card[data-cat]').forEach(c=>{const show=id==='all'||c.dataset.cat===id;c.style.display=show?'':'none';if(show)v++;});document.getElementById('no-results').style.display=v===0?'block':'none';};
+window.saveFilter=async function(){const label=document.getElementById('new-filter-label').value.trim();const color=document.getElementById('new-filter-color').value;if(!label){showToast('Donnez un nom au filtre','error');return;}const btn=document.getElementById('filter-save-btn');btn.disabled=true;btn.textContent='⟳';try{await addDoc(collection(db,'pnj_filters'),{label,color,createdAt:serverTimestamp()});showToast('✓ Filtre créé !','success');closeFilterModal();await loadFilters();}catch(e){showToast('Erreur: '+e.message,'error');}btn.disabled=false;btn.textContent='Créer';};
+window.deleteFilter=async function(id){if(!confirm('Supprimer ce filtre ?'))return;try{await deleteDoc(doc(db,'pnj_filters',id));window._filters=window._filters.filter(f=>f.id!==id);if(window._activeFilter===id)window._activeFilter='all';renderFilterBar();showToast('Filtre supprimé','error');}catch(e){showToast('Erreur: '+e.message,'error');}};
+function loadPNJ(){const q=collection(db,'pnj');onSnapshot(q,snap=>{const container=document.getElementById('pnj-container');container.querySelectorAll('.pnj-card').forEach(c=>c.remove());const empty=document.getElementById('empty-state');if(empty)empty.style.display='none';const docs=[];snap.forEach(d=>docs.push({id:d.id,...d.data()}));docs.sort((a,b)=>{const ta=a.createdAt?.toMillis?.()??( a.syncedAt?new Date(a.syncedAt).getTime():0);const tb=b.createdAt?.toMillis?.()??( b.syncedAt?new Date(b.syncedAt).getTime():0);return tb-ta;});docs.forEach(p=>{const card=buildPNJCard(p);container.appendChild(card);});if(docs.length===0&&empty)empty.style.display='block';if(window._activeFilter!=='all'){document.querySelectorAll('.pnj-card[data-cat]').forEach(c=>{c.style.display=c.dataset.cat===window._activeFilter?'':'none';});}},err=>console.warn('PNJ load:',err.message));}
+function buildPNJCard(p){const filterObj=window._filters.find(f=>f.id===p.category);const c=filterObj?filterObj.color:'#b06eff';const cl=filterObj?filterObj.label:(p.category&&p.category!=='Unknown'?p.category:null);const displayRace=(p.race&&p.race!=='Unknown')?p.race:null;const displayRole=(p.role&&p.role!=='Unknown')?p.role:null;const displayDanger=(p.danger&&p.danger!=='Inconnu')?p.danger:null;const hasMotivations=p.motivations&&(p.motivations.desc||p.motivations.social||p.motivations.economique||p.motivations.militaire);const s=p.stats||{};const statDefs=[{k:'str',lbl:'STR',cls:'pnj-sb-str'},{k:'agi',lbl:'AGI',cls:'pnj-sb-agi'},{k:'spd',lbl:'SPD',cls:'pnj-sb-spd'},{k:'int',lbl:'INT',cls:'pnj-sb-int'},{k:'mana',lbl:'MNA',cls:'pnj-sb-mana'},{k:'res',lbl:'RES',cls:'pnj-sb-res'},{k:'cha',lbl:'CHA',cls:'pnj-sb-cha'},{k:'aura',lbl:'AUR',cls:'pnj-sb-aura'}];const maxStat=Math.max(...statDefs.map(d=>s[d.k]||0),1);const hasStats=statDefs.some(d=>(s[d.k]||0)>0);const powers=p.powers||[];const hasPowers=powers.length>0;const affinity=p.affinity&&p.affinity!==''?p.affinity:null;
+const card=document.createElement('div');card.className='pnj-card';card.dataset.cat=p.category||'';card.dataset.id=p.id||'';
+const photoHTML=p.photoUrl?`<img src="${p.photoUrl}" alt="${p.prenom||''}" onerror="this.style.display='none';this.nextElementSibling&&(this.nextElementSibling.style.display='flex')">`+`<div class="pnj-photo-ph" style="color:${c};display:none">${(p.prenom||'?')[0]}</div>`:`<div class="pnj-photo-ph" style="color:${c}">${(p.prenom||'?')[0]}</div>`;
+const motivHTML=p.motivations&&p.motivations.desc?`<div class="pnj-divider"></div><div class="pnj-mot-title">Motivations</div><div class="pnj-mot-desc">${p.motivations.desc}</div>`:'';
+const adminBtns=p.id?`<div class="admin-actions admin-only" style="display:${window._isAdmin?'flex':'none'};gap:8px;margin-top:10px;flex-wrap:wrap;"><button class="pnj-edit-btn" onclick="openEditPNJ('${p.id}')">✎ Modifier</button><button class="pnj-del-btn" onclick="deletePNJ('${p.id}')">✕ Supprimer</button></div>`:'';
+const statsHTML=hasStats?`<div class="pnj-stats">${statDefs.map(d=>{const v=s[d.k]||0;if(d.k==='aura'&&v===0)return'';const pct=Math.min(100,Math.round(v/maxStat*100));return`<div class="pnj-sb-item ${d.cls}"><div class="pnj-sb-lbl">${d.lbl}</div><div class="pnj-sb-val">${v>=1000?(v/1000).toFixed(1)+'k':v}</div><div class="pnj-sb-bar"><div class="pnj-sb-fill" style="width:${pct}%"></div></div></div>`;}).join('')}</div>`:'';
+const powersHTML=hasPowers?`<div class="pnj-powers"><div class="pnj-powers-title">⚡ Pouvoirs</div>${powers.map(pw=>`<div class="pnj-power-item" style="border-color:${c}88;background:${c}08"><div class="pnj-power-name" style="color:${c}">${pw.name||pw}</div>${pw.desc?`<div class="pnj-power-desc">${pw.desc}</div>`:''}</div>`).join('')}</div>`:'';
+const affinityHTML=affinity?`<div class="pnj-affinity"><span class="pnj-aff-label">Affinité</span>${String(affinity).split(',').map(a=>`<span style="color:${c};opacity:.8">${a.trim()}</span>`).join('<span style="opacity:.3"> · </span>')}</div>`:'';
+card.innerHTML=`<div class="pnj-photo" style="background:linear-gradient(135deg,${c}14,#06060c)"><div class="pnj-stripe" style="background:linear-gradient(90deg,${c},${c}20)"></div><div class="pnj-photo-ov"></div>${photoHTML}${displayDanger?`<div class="danger-badge" style="color:${c};border-color:${c}80;background:${c}18">${displayDanger}</div>`:''}${cl?`<div class="cat-badge" style="color:${c};border-color:${c}55;background:${c}10">${cl}</div>`:''}</div><div class="pnj-body"><div class="pnj-title">${p.prenom||''} ${p.nom||''}</div>${p.titre?`<div class="pnj-epithet" style="color:${c};text-shadow:0 0 14px ${c}88">✦ ${p.titre}</div>`:''}<div class="pnj-tags">${displayRace?`<span class="pnj-tag pnj-tag-race" style="color:${c};border-color:${c}55;background:${c}0d">${displayRace}</span>`:''}${displayRole?`<span class="pnj-tag pnj-tag-role" style="color:#c8e0f0;border-color:rgba(200,224,240,0.2)">${displayRole}</span>`:''}${p.age?`<span class="pnj-tag">${p.age} ans</span>`:''}${p.taille?`<span class="pnj-tag">${p.taille}</span>`:''}${p.marital?`<span class="pnj-tag">${p.marital}</span>`:''}</div>${p.desc?`<p class="pnj-desc">${p.desc}</p>`:''}${affinityHTML}${statsHTML}${powersHTML}${motivHTML}${adminBtns}</div><div class="pnj-deco"></div>`;return card;}
+window.submitPNJ=async function(){if(!window._isAdmin){showToast('⚠ Connexion admin requise','error');return;}const nom=document.getElementById('pnj-nom').value.trim();const prenom=document.getElementById('pnj-prenom').value.trim();const age=document.getElementById('pnj-age').value.trim();const race=document.getElementById('pnj-race').value.trim();const role=document.getElementById('pnj-role').value.trim();const titre=document.getElementById('pnj-titre').value.trim();const marital=document.getElementById('pnj-marital').value.trim();const taille=document.getElementById('pnj-taille').value.trim();const category=document.getElementById('pnj-category').value;const danger=document.getElementById('pnj-danger').value;const photoUrl=document.getElementById('pnj-photo-url').value.trim();const desc=document.getElementById('pnj-desc').value.trim();const motDesc=document.getElementById('pnj-mot-desc').value.trim();if(!nom||!prenom||!desc){showToast('Remplissez Nom, Prénom et Description','error');return;}const btn=document.getElementById('pnj-submit-btn');btn.disabled=true;btn.textContent='⟳ Création...';let finalPhoto=photoUrl;const photoFile=document.getElementById('pnj-file').files[0];if(photoFile){try{const r2=ref(storage,`pnj/${Date.now()}_${photoFile.name}`);const s2=await uploadBytes(r2,photoFile);finalPhoto=await getDownloadURL(s2.ref);}catch(e){console.warn('Photo:',e.message);}}try{await addDoc(collection(db,'pnj'),{nom,prenom,age,race,role,titre,marital,taille,category,danger,photoUrl:finalPhoto,desc,motivations:{desc:motDesc,social:'',economique:'',militaire:''},createdAt:serverTimestamp()});showToast('✓ PNJ créé !','success');closePNJModal();['pnj-nom','pnj-prenom','pnj-age','pnj-race','pnj-role','pnj-titre','pnj-marital','pnj-taille','pnj-photo-url','pnj-desc','pnj-mot-desc'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});document.getElementById('pnj-category').value='';clearPnjPrev();}catch(e){showToast('⚠ '+e.message,'error');}btn.disabled=false;btn.textContent='◆ Créer le PNJ';};
+window.deletePNJ=async function(id){if(!window._isAdmin)return;if(!confirm('Supprimer définitivement ce PNJ ?'))return;try{await deleteDoc(doc(db,'pnj',id));document.querySelector(`.pnj-card[data-id="${id}"]`)?.remove();showToast('PNJ supprimé.','error');}catch(e){showToast('Erreur: '+e.message,'error');}};
+(async()=>{await loadFilters();const sel=document.getElementById('pnj-category');window._filters.forEach(f=>{const opt=document.createElement('option');opt.value=f.id;opt.textContent=f.label;sel.appendChild(opt);});loadPNJ();})();
+window._refreshCategorySelect=function(){const sel=document.getElementById('pnj-category');while(sel.options.length>1)sel.remove(1);window._filters.forEach(f=>{const opt=document.createElement('option');opt.value=f.id;opt.textContent=f.label;sel.appendChild(opt);});};
 </script>
 
 <link rel="stylesheet" href="css/jaharta.css">
 <style>
-:root {
-  --accent:        var(--magenta);
-  --accent-rgb:    255,0,110;
-  --accent-border: rgba(255,0,110,0.22);
-  --accent-bg:     rgba(255,0,110,0.05);
-  --accent-grid:   rgba(255,0,110,0.02);
-}
-
-/* ADMIN ONLY */
-.admin-only{display:none;}
-.admin-only-block{display:none;}
-
-/* PAGE HERO */
-.page-hero{position:relative;z-index:1;padding:52px 44px 44px;border-bottom:1px solid rgba(255,0,110,0.15);background:linear-gradient(180deg,rgba(255,0,110,0.04) 0%,transparent 100%);overflow:hidden;}
+:root{--accent:var(--magenta);--accent-rgb:255,0,110;--accent-border:rgba(255,0,110,0.22);--accent-bg:rgba(255,0,110,0.05);--accent-grid:rgba(255,0,110,0.02);}
+/* ── v5 Shared ── */
+.scroll-progress{position:fixed;top:0;left:0;z-index:9998;width:0%;height:2px;background:linear-gradient(90deg,var(--cyan),var(--magenta),var(--gold));pointer-events:none;}
+.noise{position:fixed;inset:0;z-index:9997;pointer-events:none;opacity:.035;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-size:200px;}
+.nav-toggle{display:none;background:none;border:1px solid var(--border);color:var(--cyan);cursor:pointer;width:40px;height:40px;align-items:center;justify-content:center;font-size:1.1rem;}
+@media(max-width:880px){.nav-toggle{display:flex;}header nav{position:fixed;top:68px;right:0;bottom:0;width:280px;background:rgba(6,6,12,.98);border-left:1px solid var(--border);backdrop-filter:blur(24px);flex-direction:column;gap:0;padding:20px 0;transform:translateX(100%);transition:transform .35s cubic-bezier(.4,0,.2,1);z-index:200;}header nav.open{transform:translateX(0);}header nav a{padding:14px 28px;border:none;font-size:.72rem;}header nav a span{display:inline!important;}.nav-backdrop{position:fixed;inset:0;z-index:99;background:rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .3s;}.nav-backdrop.open{opacity:1;pointer-events:all;}}
+[data-reveal]{opacity:0;transform:translateY(20px);}[data-reveal].revealed{opacity:1;transform:translateY(0);transition:all .6s cubic-bezier(.4,0,.2,1);}
+.section-head{display:flex;align-items:center;gap:16px;margin-bottom:28px;}
+.sh-num{font-family:'Orbitron',sans-serif;font-size:.68rem;font-weight:700;color:var(--gold);letter-spacing:.1em;}
+.sh-title{font-family:'Orbitron',sans-serif;font-weight:700;font-size:clamp(.8rem,2vw,1rem);letter-spacing:.2em;color:#fff;text-transform:uppercase;white-space:nowrap;}
+.sh-line{flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent);}
+/* ── Admin ── */
+.admin-only{display:none;}.admin-only-block{display:none;}
+/* ── Hero ── */
+.page-hero{position:relative;z-index:1;padding:56px 44px 48px;border-bottom:1px solid rgba(255,0,110,0.15);background:linear-gradient(180deg,rgba(255,0,110,0.04) 0%,transparent 100%);overflow:hidden;}
 .page-hero::before{content:'';position:absolute;top:-60px;left:50%;transform:translateX(-50%);width:700px;height:400px;background:radial-gradient(ellipse,rgba(255,0,110,0.07) 0%,transparent 65%);pointer-events:none;}
 .page-hero-inner{max-width:1380px;margin:0 auto;position:relative;z-index:1;display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;}
-.ph-left{}
-.ph-tag{font-family:'Share Tech Mono',monospace;font-size:0.62rem;letter-spacing:0.4em;color:var(--magenta);text-shadow:0 0 10px var(--magenta);margin-bottom:10px;}
-.ph-title{font-family:'Orbitron',sans-serif;font-weight:900;font-size:clamp(2rem,5vw,3.4rem);color:#fff;letter-spacing:0.06em;line-height:1;}
+.ph-tag{font-family:'Rajdhani',sans-serif;font-size:.62rem;letter-spacing:.4em;color:var(--magenta);text-shadow:0 0 10px var(--magenta);margin-bottom:10px;}
+.ph-title{font-family:'Orbitron',sans-serif;font-weight:900;font-size:clamp(2rem,5vw,3.4rem);color:#fff;letter-spacing:.06em;line-height:1;}
 .ph-title span{color:var(--magenta);text-shadow:0 0 22px var(--magenta);}
-.ph-sub{font-family:'Share Tech Mono',monospace;font-size:0.62rem;color:var(--muted);letter-spacing:0.15em;margin-top:10px;line-height:1.7;}
-
-/* BIG ADD BUTTON */
+.ph-sub{font-family:'Rajdhani',sans-serif;font-size:.62rem;color:var(--muted);letter-spacing:.15em;margin-top:10px;line-height:1.7;}
 .big-add-btn{font-family:'Orbitron',sans-serif;font-weight:800;font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;color:var(--dark);background:var(--magenta);border:none;padding:16px 28px;clip-path:polygon(12px 0%,100% 0%,calc(100% - 12px) 100%,0% 100%);cursor:pointer;transition:background .2s,box-shadow .2s;display:none;align-items:center;gap:10px;white-space:nowrap;flex-shrink:0;}
 .big-add-btn::before{content:'◆';margin-right:4px;font-size:.7rem;}
-.big-add-btn:hover{background:#fff;box-shadow:0 0 30px var(--magenta),0 0 60px rgba(255,0,110,0.25);}
-.big-add-btn.admin-shown{display:flex!important;}
-
-/* PAGE WRAP */
+.big-add-btn:hover{background:#fff;box-shadow:0 0 30px var(--magenta);}
 .page-wrap{position:relative;z-index:1;padding:48px 44px;max-width:1380px;margin:0 auto;}
-
-/* FILTER BAR */
+/* ── Filters ── */
 .filter-section{margin-bottom:36px;padding-bottom:18px;border-bottom:1px solid var(--border);}
 .filter-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
-.cat-btn{font-family:'Share Tech Mono',monospace;font-size:.64rem;letter-spacing:.13em;text-transform:uppercase;background:transparent;border:1px solid rgba(200,224,240,0.22);color:var(--text);padding:7px 14px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .2s;position:relative;}
-.cat-btn:hover{background:rgba(255,255,255,0.035);border-color:rgba(255,255,255,0.18);}
-.cat-btn.active{background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.25);}
+.cat-btn{font-family:'Rajdhani',sans-serif;font-size:.64rem;letter-spacing:.13em;text-transform:uppercase;background:transparent;border:1px solid rgba(200,224,240,0.22);color:var(--text);padding:7px 14px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .2s;}
+.cat-btn:hover{background:rgba(255,255,255,0.035);}.cat-btn.active{background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.25);}
 .fdot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
-.filter-del{margin-left:4px;font-size:.55rem;opacity:.4;transition:opacity .15s,color .15s;line-height:1;}
-.filter-del:hover{opacity:1;color:#ff3030;}
+.filter-del{margin-left:4px;font-size:.55rem;opacity:.4;transition:opacity .15s;}.filter-del:hover{opacity:1;color:#ff3030;}
 .add-filter-btn{color:var(--muted)!important;border-color:rgba(90,122,144,0.25)!important;border-style:dashed!important;font-size:.6rem!important;letter-spacing:.18em!important;padding:6px 13px!important;}
-.add-filter-btn:hover{color:var(--cyan)!important;border-color:rgba(0,245,255,0.3)!important;}
-
-/* PNJ GRID */
+.add-filter-btn:hover{color:var(--cyan)!important;border-color:rgba(0,240,255,0.3)!important;}
+/* ── PNJ Grid ── */
 .pnj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:24px;}
 .pnj-card{position:relative;background:var(--dark2);border:1px solid var(--border);overflow:hidden;display:flex;flex-direction:column;transition:border-color .3s,box-shadow .3s,transform .28s;clip-path:polygon(24px 0%,100% 0%,100% calc(100% - 24px),calc(100% - 24px) 100%,0% 100%,0% 24px);}
 .pnj-card:hover{transform:translateY(-5px);border-color:rgba(255,0,110,0.3);box-shadow:0 0 24px rgba(255,0,110,0.1),0 12px 38px rgba(0,0,0,0.5);}
@@ -464,115 +90,75 @@ window._refreshCategorySelect=function(){
 .pnj-photo-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;font-size:3rem;font-weight:900;opacity:0.4;}
 .pnj-stripe{position:absolute;top:0;left:0;right:0;height:3px;z-index:2;}
 .danger-badge{position:absolute;top:12px;left:12px;z-index:3;font-family:'Orbitron',sans-serif;font-weight:800;font-size:.6rem;letter-spacing:.12em;padding:5px 12px;border:1px solid;text-transform:uppercase;}
-.cat-badge{position:absolute;top:12px;right:12px;z-index:3;font-family:'Share Tech Mono',monospace;font-size:.54rem;letter-spacing:.16em;text-transform:uppercase;padding:4px 10px;border:1px solid;}
+.cat-badge{position:absolute;top:12px;right:12px;z-index:3;font-family:'Rajdhani',sans-serif;font-size:.54rem;letter-spacing:.16em;text-transform:uppercase;padding:4px 10px;border:1px solid;}
 .pnj-body{padding:20px 22px 22px;display:flex;flex-direction:column;flex:1;}
 .pnj-title{font-family:'Orbitron',sans-serif;font-weight:800;font-size:1.1rem;color:#fff;letter-spacing:.06em;line-height:1.05;margin-bottom:4px;}
-.pnj-epithet{font-family:'Orbitron',sans-serif;font-size:.75rem;font-weight:700;letter-spacing:.16em;color:var(--accent, var(--cyan));text-shadow:0 0 12px currentColor;text-transform:uppercase;margin-bottom:14px;}
+.pnj-epithet{font-family:'Orbitron',sans-serif;font-size:.75rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;margin-bottom:14px;}
 .pnj-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
-.pnj-tag{font-family:'Share Tech Mono',monospace;font-size:.56rem;letter-spacing:.1em;text-transform:uppercase;padding:3px 10px;border:1px solid rgba(0,245,255,0.25);color:#8ab4cc;background:rgba(0,245,255,0.04);}
+.pnj-tag{font-family:'Rajdhani',sans-serif;font-size:.56rem;letter-spacing:.1em;text-transform:uppercase;padding:3px 10px;border:1px solid rgba(0,240,255,0.25);color:#8ab4cc;background:rgba(0,240,255,0.04);}
 .pnj-desc{font-size:.85rem;color:var(--muted);line-height:1.7;font-weight:300;flex:1;margin-bottom:14px;}
 .pnj-divider{height:1px;background:var(--border);margin-bottom:12px;}
 .pnj-mot-desc{font-size:.82rem;color:var(--text);line-height:1.65;margin-bottom:10px;}
 .pnj-mot-title{font-family:'Orbitron',sans-serif;font-size:.62rem;font-weight:700;letter-spacing:.18em;color:#fff;text-transform:uppercase;margin-bottom:10px;}
-.pnj-mot-item{font-family:'Share Tech Mono',monospace;font-size:.62rem;letter-spacing:.08em;color:var(--muted);line-height:1.65;margin-bottom:6px;}
-.pnj-mot-lbl{font-weight:700;}
 .admin-actions{display:flex;}
-.pnj-edit-btn{font-family:'Share Tech Mono',monospace;font-size:.6rem;letter-spacing:.1em;background:rgba(0,245,255,.08);border:1px solid rgba(0,245,255,.3);color:var(--cyan);padding:6px 12px;cursor:pointer;transition:all .2s;}
-.pnj-edit-btn:hover{background:rgba(0,245,255,.15);border-color:var(--cyan);}
-.pnj-del-btn{font-family:'Share Tech Mono',monospace;font-size:.56rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);background:transparent;border:1px solid rgba(90,122,144,0.3);padding:5px 12px;cursor:pointer;transition:all .2s;margin-top:10px;align-self:flex-start;display:flex;align-items:center;gap:6px;}
-.pnj-del-btn:hover{color:#ff3030;border-color:rgba(255,48,48,0.35);background:rgba(255,48,48,0.04);}
+.pnj-edit-btn{font-family:'Rajdhani',sans-serif;font-size:.6rem;letter-spacing:.1em;background:rgba(0,240,255,.08);border:1px solid rgba(0,240,255,.3);color:var(--cyan);padding:6px 12px;cursor:pointer;transition:all .2s;}.pnj-edit-btn:hover{background:rgba(0,240,255,.15);}
+.pnj-del-btn{font-family:'Rajdhani',sans-serif;font-size:.56rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);background:transparent;border:1px solid rgba(90,122,144,0.3);padding:5px 12px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px;}.pnj-del-btn:hover{color:#ff3030;border-color:rgba(255,48,48,0.35);}
 .pnj-deco{position:absolute;bottom:0;right:0;width:24px;height:24px;border-top:1px solid var(--border);border-left:1px solid var(--border);pointer-events:none;z-index:2;}
-
-/* ── Stats bar PNJ (même style que fiches) ── */
 .pnj-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin:10px 0 4px;padding:8px 0 6px;border-top:1px solid var(--border);}
 .pnj-sb-item{display:flex;flex-direction:column;align-items:center;gap:2px;}
-.pnj-sb-lbl{font-family:'Share Tech Mono',monospace;font-size:.38rem;letter-spacing:.04em;text-transform:uppercase;opacity:.6;}
+.pnj-sb-lbl{font-family:'Rajdhani',sans-serif;font-size:.38rem;letter-spacing:.04em;text-transform:uppercase;opacity:.6;}
 .pnj-sb-val{font-family:'Orbitron',sans-serif;font-size:.62rem;font-weight:800;line-height:1;}
 .pnj-sb-bar{width:100%;height:2px;background:rgba(255,255,255,.08);border-radius:1px;margin-top:2px;overflow:hidden;}
 .pnj-sb-fill{height:100%;border-radius:1px;}
-/* Couleurs identiques aux fiches */
 .pnj-sb-str .pnj-sb-lbl,.pnj-sb-str .pnj-sb-val{color:#ff6060;}.pnj-sb-str .pnj-sb-fill{background:#ff6060;}
 .pnj-sb-agi .pnj-sb-lbl,.pnj-sb-agi .pnj-sb-val{color:#44ff88;}.pnj-sb-agi .pnj-sb-fill{background:#44ff88;}
-.pnj-sb-spd .pnj-sb-lbl,.pnj-sb-spd .pnj-sb-val{color:#00f5ff;}.pnj-sb-spd .pnj-sb-fill{background:#00f5ff;}
+.pnj-sb-spd .pnj-sb-lbl,.pnj-sb-spd .pnj-sb-val{color:#00f0ff;}.pnj-sb-spd .pnj-sb-fill{background:#00f0ff;}
 .pnj-sb-int .pnj-sb-lbl,.pnj-sb-int .pnj-sb-val{color:#60a5fa;}.pnj-sb-int .pnj-sb-fill{background:#60a5fa;}
 .pnj-sb-mana .pnj-sb-lbl,.pnj-sb-mana .pnj-sb-val{color:#b06eff;}.pnj-sb-mana .pnj-sb-fill{background:#b06eff;}
 .pnj-sb-res .pnj-sb-lbl,.pnj-sb-res .pnj-sb-val{color:#fbbf24;}.pnj-sb-res .pnj-sb-fill{background:#fbbf24;}
 .pnj-sb-cha .pnj-sb-lbl,.pnj-sb-cha .pnj-sb-val{color:#f97316;}.pnj-sb-cha .pnj-sb-fill{background:#f97316;}
 .pnj-sb-aura .pnj-sb-lbl,.pnj-sb-aura .pnj-sb-val{color:#e040fb;}.pnj-sb-aura .pnj-sb-fill{background:#e040fb;}
-
-/* ── Pouvoirs PNJ ── */
 .pnj-powers{margin-top:8px;padding-top:8px;border-top:1px solid var(--border);}
-.pnj-powers-title{font-family:'Share Tech Mono',monospace;font-size:.5rem;letter-spacing:.25em;color:var(--muted);text-transform:uppercase;margin-bottom:5px;}
+.pnj-powers-title{font-family:'Rajdhani',sans-serif;font-size:.5rem;letter-spacing:.25em;color:var(--muted);text-transform:uppercase;margin-bottom:5px;}
 .pnj-power-item{font-family:'Rajdhani',sans-serif;font-size:.82rem;color:#c8e0f0;line-height:1.4;padding:3px 8px;border-left:2px solid;margin-bottom:3px;}
-.pnj-power-name{font-weight:600;letter-spacing:.04em;}
-.pnj-power-desc{font-size:.75rem;color:var(--muted);margin-top:1px;}
-
-/* ── Affinité PNJ ── */
-.pnj-affinity{font-family:'Share Tech Mono',monospace;font-size:.55rem;letter-spacing:.12em;color:var(--muted);margin-top:4px;display:flex;gap:5px;align-items:center;flex-wrap:wrap;}
+.pnj-power-name{font-weight:600;letter-spacing:.04em;}.pnj-power-desc{font-size:.75rem;color:var(--muted);margin-top:1px;}
+.pnj-affinity{font-family:'Rajdhani',sans-serif;font-size:.55rem;letter-spacing:.12em;color:var(--muted);margin-top:4px;display:flex;gap:5px;align-items:center;flex-wrap:wrap;}
 .pnj-aff-label{font-size:.48rem;letter-spacing:.2em;text-transform:uppercase;opacity:.55;}
-
-/* ── MODAL SHARED ── */
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(4,6,15,0.94);z-index:1000;align-items:flex-start;justify-content:center;padding:30px 16px;overflow-y:auto;}
+/* ── Modals ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(6,6,12,0.94);z-index:1000;align-items:flex-start;justify-content:center;padding:30px 16px;overflow-y:auto;backdrop-filter:blur(4px);}
 .modal-overlay.open{display:flex;}
-.modal{background:var(--dark2);border:1px solid var(--border);width:92%;max-width:660px;position:relative;animation:mIn .28s ease;margin:auto;}
-.modal.sm{max-width:420px;}
+.modal{background:var(--dark2);border:1px solid var(--border);width:92%;max-width:660px;position:relative;animation:mIn .28s ease;margin:auto;}.modal.sm{max-width:420px;}
 @keyframes mIn{from{opacity:0;transform:scale(.96) translateY(12px)}to{opacity:1;transform:none}}
-.mac-magenta{height:3px;background:linear-gradient(90deg,var(--magenta),var(--gold));}
-.mac-cyan{height:3px;background:linear-gradient(90deg,var(--cyan),var(--magenta));}
+.mac-magenta{height:3px;background:linear-gradient(90deg,var(--magenta),var(--gold));}.mac-cyan{height:3px;background:linear-gradient(90deg,var(--cyan),var(--magenta));}
 .mi{padding:28px 30px 32px;}
-.mt{font-family:'Orbitron',sans-serif;font-size:.85rem;font-weight:700;letter-spacing:.25em;text-transform:uppercase;margin-bottom:6px;}
-.mt.mag{color:var(--magenta);}
-.mt.cyan{color:var(--cyan);}
-.msub{font-family:'Share Tech Mono',monospace;font-size:.6rem;color:var(--muted);letter-spacing:.1em;margin-bottom:22px;border-left:2px solid rgba(255,0,110,0.4);padding-left:12px;line-height:1.7;}
-.form-section{margin-bottom:20px;}
-.form-section-title{font-family:'Orbitron',sans-serif;font-size:.62rem;font-weight:700;letter-spacing:.22em;color:var(--muted);text-transform:uppercase;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
-.form-section-title::before{content:'';display:block;width:3px;height:12px;background:var(--magenta);}
-.frow{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-.frow3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
-.fg{margin-bottom:12px;}
-.fg:last-child{margin-bottom:0;}
-.fl{display:block;font-family:'Share Tech Mono',monospace;font-size:.56rem;letter-spacing:.2em;color:var(--muted);text-transform:uppercase;margin-bottom:5px;}
-.req{color:var(--magenta);}
-.fi,.fs,.fta{width:100%;background:rgba(255,0,110,0.03);border:1px solid var(--border);color:var(--text);font-family:'Rajdhani',sans-serif;font-size:.9rem;padding:9px 12px;outline:none;transition:border-color .2s;}
-.fi:focus,.fs:focus,.fta:focus{border-color:rgba(255,0,110,0.5);}
-.fs option{background:var(--dark2);}
-.fta{resize:vertical;min-height:72px;}
+.mt{font-family:'Orbitron',sans-serif;font-size:.85rem;font-weight:700;letter-spacing:.25em;text-transform:uppercase;margin-bottom:6px;}.mt.mag{color:var(--magenta);}.mt.cyan{color:var(--cyan);}
+.msub{font-family:'Rajdhani',sans-serif;font-size:.6rem;color:var(--muted);letter-spacing:.1em;margin-bottom:22px;border-left:2px solid rgba(255,0,110,0.4);padding-left:12px;line-height:1.7;}
+.form-section{margin-bottom:20px;}.form-section-title{font-family:'Orbitron',sans-serif;font-size:.62rem;font-weight:700;letter-spacing:.22em;color:var(--muted);text-transform:uppercase;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}.form-section-title::before{content:'';display:block;width:3px;height:12px;background:var(--magenta);}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:12px;}.frow3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+.fg{margin-bottom:12px;}.fl{display:block;font-family:'Rajdhani',sans-serif;font-size:.56rem;letter-spacing:.2em;color:var(--muted);text-transform:uppercase;margin-bottom:5px;}.req{color:var(--magenta);}
+.fi,.fs,.fta{width:100%;background:rgba(255,0,110,0.03);border:1px solid var(--border);color:var(--text);font-family:'Rajdhani',sans-serif;font-size:.9rem;padding:9px 12px;outline:none;transition:border-color .2s;box-sizing:border-box;}.fi:focus,.fs:focus,.fta:focus{border-color:rgba(255,0,110,0.5);}.fs option{background:var(--dark2);}.fta{resize:vertical;min-height:72px;}
+.photo-drop{width:100%;height:90px;background:rgba(255,0,110,0.03);border:1px dashed rgba(255,0,110,0.25);display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer;transition:border-color .2s;overflow:hidden;}.photo-drop:hover{border-color:var(--magenta);}
+.photo-drop img.prev-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}.photo-drop input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;}
+.pdtxt{font-family:'Rajdhani',sans-serif;font-size:.56rem;color:var(--muted);letter-spacing:.1em;text-align:center;pointer-events:none;}
+.bsub{width:100%;font-family:'Orbitron',sans-serif;font-size:.7rem;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--dark);background:var(--magenta);border:none;padding:13px;cursor:pointer;margin-top:6px;clip-path:polygon(12px 0%,100% 0%,calc(100% - 12px) 100%,0% 100%);transition:background .2s,box-shadow .2s;}.bsub:hover{background:#fff;box-shadow:0 0 24px var(--magenta);}.bsub:disabled{background:var(--muted);cursor:not-allowed;}
+.bsub.cyan-btn{background:var(--cyan);}.bsub.cyan-btn:hover{background:#fff;box-shadow:0 0 24px var(--cyan);}
+.mclose{position:absolute;top:14px;right:14px;background:transparent;border:1px solid var(--border);color:var(--muted);width:28px;height:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.85rem;transition:all .2s;}.mclose:hover{color:var(--magenta);border-color:var(--magenta);}
+.color-preview{width:38px;height:38px;border:1px solid var(--border);overflow:hidden;cursor:pointer;}.color-preview input[type=color]{width:160%;height:160%;margin:-30%;border:none;cursor:pointer;background:transparent;}
+.color-row{display:flex;gap:10px;align-items:flex-end;}.color-row .fg{flex:1;}
 .mot-block{background:rgba(0,0,0,0.2);border:1px solid var(--border);padding:14px 16px;}
-.mot-label{font-family:'Share Tech Mono',monospace;font-size:.58rem;letter-spacing:.18em;text-transform:uppercase;margin-bottom:5px;display:block;}
-.mot-label.social{color:#60a5fa;}.mot-label.eco{color:#ffd60a;}.mot-label.mil{color:#ff3030;}
-.photo-drop{width:100%;height:90px;background:rgba(255,0,110,0.03);border:1px dashed rgba(255,0,110,0.25);display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer;transition:border-color .2s;overflow:hidden;}
-.photo-drop:hover{border-color:var(--magenta);}
-.photo-drop img.prev-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
-.photo-drop input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;}
-.pdtxt{font-family:'Share Tech Mono',monospace;font-size:.56rem;color:var(--muted);letter-spacing:.1em;text-align:center;pointer-events:none;}
-.bsub{width:100%;font-family:'Orbitron',sans-serif;font-size:.7rem;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--dark);background:var(--magenta);border:none;padding:13px;cursor:pointer;margin-top:6px;clip-path:polygon(12px 0%,100% 0%,calc(100% - 12px) 100%,0% 100%);transition:background .2s,box-shadow .2s;}
-.bsub:hover{background:#fff;box-shadow:0 0 24px var(--magenta);}
-.bsub:disabled{background:var(--muted);cursor:not-allowed;}
-.bsub.cyan-btn{background:var(--cyan);color:var(--dark);}
-.bsub.cyan-btn:hover{background:#fff;box-shadow:0 0 24px var(--cyan);}
-.mclose{position:absolute;top:14px;right:14px;background:transparent;border:1px solid var(--border);color:var(--muted);width:28px;height:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.85rem;transition:all .2s;}
-.mclose:hover{color:var(--magenta);border-color:var(--magenta);}
-
-/* Color picker row */
-.color-preview{width:38px;height:38px;border:1px solid var(--border);border-radius:0;flex-shrink:0;overflow:hidden;cursor:pointer;}
-.color-preview input[type=color]{width:160%;height:160%;margin:-30%;border:none;cursor:pointer;background:transparent;}
-.color-row{display:flex;gap:10px;align-items:flex-end;}
-.color-row .fg{flex:1;}
-
-/* TOAST */
-.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--dark2);border:1px solid var(--border);font-family:'Share Tech Mono',monospace;font-size:.67rem;letter-spacing:.12em;color:var(--text);padding:13px 26px;z-index:9000;transition:transform .35s,opacity .35s;opacity:0;clip-path:polygon(10px 0%,100% 0%,calc(100% - 10px) 100%,0% 100%);}
-.toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
-.toast.success{border-color:rgba(0,255,136,0.5);color:#00ff88;}
-.toast.error{border-color:rgba(255,48,48,0.5);color:#ff3030;}
-
-footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:22px 44px;display:flex;align-items:center;justify-content:space-between;margin-top:60px;}
-.fl2{font-family:'Orbitron',sans-serif;font-weight:900;font-size:.8rem;letter-spacing:.28em;color:var(--cyan);opacity:.38;}
-.ft{font-family:'Share Tech Mono',monospace;font-size:.57rem;color:var(--muted);letter-spacing:.13em;}
-.fls{display:flex;gap:14px;}
-.fls a{font-family:'Share Tech Mono',monospace;font-size:.55rem;color:var(--muted);text-decoration:none;letter-spacing:.1em;transition:color .2s;}
-.fls a:hover{color:var(--cyan);}
-@keyframes p{0%,100%{opacity:1}50%{opacity:.3}}
-@media(max-width:880px){header{padding:0 16px}nav a span{display:none}.page-wrap,.page-hero{padding:32px 16px}footer{flex-direction:column;gap:10px;text-align:center;padding:20px 16px}.pnj-grid{grid-template-columns:1fr}.frow,.frow3{grid-template-columns:1fr}}
+/* ── v5 Footer ── */
+footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:40px 44px 32px;margin-top:60px;}
+.footer-inner{max-width:1380px;margin:0 auto;display:grid;grid-template-columns:1fr auto 1fr;align-items:start;gap:40px;}
+.f-logo{font-family:'Orbitron',sans-serif;font-weight:900;font-size:.9rem;letter-spacing:.28em;color:var(--cyan);opacity:.5;margin-bottom:8px;}
+.f-tagline{font-family:'Rajdhani',sans-serif;font-size:.52rem;color:var(--muted);letter-spacing:.14em;}
+.f-status{text-align:center;}.f-status-dot{display:inline-flex;align-items:center;gap:7px;font-family:'Rajdhani',sans-serif;font-size:.56rem;color:var(--muted);letter-spacing:.15em;}
+.f-version{font-family:'Rajdhani',sans-serif;font-size:.5rem;color:rgba(90,122,144,.5);letter-spacing:.12em;margin-top:6px;}
+.f-links-col{text-align:right;}.f-links{display:flex;gap:18px;justify-content:flex-end;flex-wrap:wrap;}
+.f-links a{font-family:'Rajdhani',sans-serif;font-size:.56rem;color:var(--muted);text-decoration:none;letter-spacing:.1em;transition:color .2s;}.f-links a:hover{color:var(--cyan);}
+.f-bottom{max-width:1380px;margin:28px auto 0;padding-top:20px;border-top:1px solid var(--border);text-align:center;}
+.f-copy{font-family:'Rajdhani',sans-serif;font-size:.48rem;color:rgba(90,122,144,.4);letter-spacing:.16em;}
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--dark2);border:1px solid var(--border);font-family:'Rajdhani',sans-serif;font-size:.67rem;letter-spacing:.12em;color:var(--text);padding:13px 26px;z-index:9000;transition:transform .35s,opacity .35s;opacity:0;clip-path:polygon(10px 0%,100% 0%,calc(100% - 10px) 100%,0% 100%);}.toast.show{transform:translateX(-50%) translateY(0);opacity:1;}.toast.success{border-color:rgba(0,255,136,0.5);color:#00ff88;}.toast.error{border-color:rgba(255,48,48,0.5);color:#ff3030;}
+@media(max-width:880px){.page-wrap,.page-hero{padding:32px 16px}.pnj-grid{grid-template-columns:1fr}.frow,.frow3{grid-template-columns:1fr}.footer-inner{grid-template-columns:1fr;text-align:center;gap:24px}.f-links-col{text-align:center}.f-links{justify-content:center}footer{padding:32px 20px 24px}}
 </style>
 <script src="js/debug.js"></script>
 <script src="js/constants.js"></script>
@@ -580,340 +166,127 @@ footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:22
 <script type="module" src="js/auth-badge.js"></script>
 </head>
 <body>
+<div class="page-transition-overlay" id="page-transition"><div class="pt-logo">JAHARTA</div><div class="pt-bar"></div><div class="pt-text">Chargement</div></div>
+<div class="scroll-progress" id="scroll-progress"></div>
+<div class="noise"></div>
+
 <div class="toast" id="toast"></div>
 
-<header>
-  <a href="index.html" class="logo">JAHARTA <span class="logo-slash">//</span> RP<span class="logo-sub">UNIVERS JAHARTA · ROLEPLAY OFFICIEL</span></a>
-  <nav>
-    <a href="index.html">⌂ <span>Accueil</span></a>
-    <a href="fiches.html">◈ <span>Fiches RP</span></a>
-    <a href="pnj.html" class="active">◆ <span>PNJ</span></a>
-    <a href="portail.html">⬡ <span>Portail</span></a>
-    <a href="racesjouables.html">◈ <span>Races</span></a>
-    <a href="admin.html" class="admin-badge" id="admin-badge">ADMIN</a>
-    <a href="admin.html" class="nav-admin">⚙ Connexion</a>
-  </nav>
-</header>
-
-<!-- PAGE HERO -->
-<div class="page-hero">
-  <div class="page-hero-inner">
-    <div class="ph-left">
-      <p class="ph-tag">▸ PERSONNAGES NON-JOUEURS · FIGURES CLÉS DE L'UNIVERS</p>
-      <h1 class="ph-title">PNJ <span>Importants</span></h1>
-      <p class="ph-sub">Les entités, seigneurs et figures mythiques qui façonnent le destin de Jaharta.<br>Personnages gérés par les administrateurs du serveur.</p>
+  <nav class="nav" id="nav">
+    <a href="index.html" class="nav-logo">JAHARTA</a>
+    <div class="nav-links" id="nav-links">
+      <a href="index.html">Accueil</a>
+      <a href="fiches.html">Fiches RP</a>
+      <a href="pnj.html" class="active">PNJ</a>
+      <a href="portail.html">Portail</a>
+      <a href="racesjouables.html">Races</a>
+      <a href="admin.html" class="nav-admin-link">Admin</a>
+      <a href="admin.html" class="admin-badge" id="admin-badge">ADMIN</a>
     </div>
-    <!-- BIG ADD BUTTON — admin only -->
-    <button class="big-add-btn admin-only" onclick="openPNJModal()">Créer un PNJ</button>
-  </div>
-</div>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Menu">☰</button>
+  </nav>
+
+<section class="hero hero--sub" id="hero">
+    <canvas id="particles-canvas"></canvas>
+    <div class="hero-bg" style="opacity:0"></div>
+    <div class="hero-grid"></div>
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <p class="hero-pretitle">Personnages Non-Joueurs · Figures Clés</p>
+      <h1 class="hero-title hero-title--sub" data-text="PNJ IMPORTANTS">
+        <span class="glow-text">PNJ IMPORTANTS</span>
+      </h1>
+      <p class="hero-subtitle">Les figures majeures qui façonnent la politique, la mystique et les conflits de Jaharta</p>
+      <button class="hero-cta hero-cta--sm admin-only" onclick="openPNJModal()" style="display:none;animation:none;opacity:1;">+ Créer un PNJ</button>
+    </div>
+  </section>
 
 <div class="page-wrap">
-
-  <!-- FILTER BAR — dynamic -->
-  <div class="filter-section">
-    <div class="filter-bar" id="filter-bar">
-      <button class="cat-btn active" onclick="applyFilter('all',this)">Tous</button>
-      <!-- filters injected by JS -->
-    </div>
+  <div class="section-head" data-reveal>
+    <span class="sh-num">01 //</span>
+    <h2 class="sh-title">Figures de Jaharta</h2>
+    <div class="sh-line"></div>
   </div>
-
-  <!-- PNJ GRID -->
+  <div class="filter-section" data-reveal data-delay="100">
+    <div class="filter-bar" id="filter-bar"><button class="cat-btn active" onclick="applyFilter('all',this)">Tous</button></div>
+  </div>
   <div class="pnj-grid" id="pnj-container">
-    <div id="no-results" style="display:none;grid-column:1/-1;text-align:center;padding:60px;font-family:'Share Tech Mono',monospace;color:var(--muted);letter-spacing:.2em;font-size:.72rem;">◈ Aucun PNJ dans cette catégorie.</div>
-    <div id="empty-state" style="grid-column:1/-1;text-align:center;padding:70px;font-family:'Share Tech Mono',monospace;color:var(--muted);letter-spacing:.18em;font-size:.7rem;">⟳ Chargement des PNJ...</div>
+    <div id="no-results" style="display:none;grid-column:1/-1;text-align:center;padding:60px;font-family:'Rajdhani',sans-serif;color:var(--muted);letter-spacing:.2em;font-size:.72rem;">◈ Aucun PNJ dans cette catégorie.</div>
+    <div id="empty-state" style="grid-column:1/-1;text-align:center;padding:70px;font-family:'Rajdhani',sans-serif;color:var(--muted);letter-spacing:.18em;font-size:.7rem;">⟳ Chargement des PNJ...</div>
   </div>
-
 </div>
 
-<!-- ═══════════════ MODAL : CRÉER PNJ ═══════════════ -->
+<!-- MODAL : CRÉER PNJ -->
 <div class="modal-overlay" id="pnj-modal">
-  <div class="modal">
-    <div class="mac-magenta"></div>
-    <button class="mclose" onclick="closePNJModal()">✕</button>
+  <div class="modal"><div class="mac-magenta"></div><button class="mclose" onclick="closePNJModal()">✕</button>
     <div class="mi">
       <div class="mt mag" id="pnj-modal-title">◆ Créer un PNJ</div>
       <p class="msub">Réservé aux administrateurs Jaharta.<br>Le PNJ apparaît immédiatement sur la page publique.</p>
-
-      <div class="form-section">
-        <div class="form-section-title">Identité</div>
-        <div class="frow">
-          <div class="fg"><label class="fl">Nom <span class="req">*</span></label><input type="text" class="fi" id="pnj-nom" placeholder="Ex: VERATH"></div>
-          <div class="fg"><label class="fl">Prénom <span class="req">*</span></label><input type="text" class="fi" id="pnj-prenom" placeholder="Ex: Morthis"></div>
-        </div>
-        <div class="frow3">
-          <div class="fg"><label class="fl">Âge</label><input type="text" class="fi" id="pnj-age" placeholder="Ex: 800 ans"></div>
-          <div class="fg"><label class="fl">Race</label><input type="text" class="fi" id="pnj-race" placeholder="Ex: Démon ancien"></div>
-          <div class="fg"><label class="fl">Taille</label><input type="text" class="fi" id="pnj-taille" placeholder="Ex: 2m10"></div>
-        </div>
-        <div class="frow">
-          <div class="fg"><label class="fl">Rôle</label><input type="text" class="fi" id="pnj-role" placeholder="Ex: Seigneur de guerre"></div>
-          <div class="fg"><label class="fl">Statut Marital</label><input type="text" class="fi" id="pnj-marital" placeholder="Ex: Célibataire"></div>
-        </div>
-        <div class="fg"><label class="fl">Titre Spécial</label><input type="text" class="fi" id="pnj-titre" placeholder="Ex: Le Consumé · Terres Ravagées"></div>
-      </div>
-
-      <div class="form-section">
-        <div class="form-section-title">Classification</div>
-        <div class="frow">
-          <div class="fg"><label class="fl">Catégorie</label>
-            <select class="fs" id="pnj-category">
-              <option value="">— Aucune —</option>
-            </select>
-          </div>
-          <div class="fg"><label class="fl">Niveau de danger</label>
-            <select class="fs" id="pnj-danger">
-              <option value="RANG : F">RANG : F</option><option value="RANG : E">RANG : E</option>
-              <option value="RANG : D">RANG : D</option><option value="RANG : C">RANG : C</option>
-              <option value="RANG : B">RANG : B</option><option value="RANG : A">RANG : A</option>
-              <option value="DANGER : S">DANGER : S</option><option value="DANGER : SS">DANGER : SS</option>
-              <option value="DANGER : SSS">DANGER : SSS</option>
-              <option value="DANGER : X">DANGER : X</option>
-              <option value="DANGER : Z">DANGER : Z</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <div class="form-section">
-        <div class="form-section-title">Illustration</div>
-        <div class="fg">
-          <label class="fl">Uploader une image</label>
-          <div class="photo-drop" onclick="document.getElementById('pnj-file').click()">
-            <input type="file" id="pnj-file" accept="image/*" onchange="pnjPrevFile(event)">
-            <div class="pdtxt" id="pnj-pdtxt"><div style="font-size:1.2rem;opacity:.3;margin-bottom:3px">⬆</div>Cliquer pour uploader</div>
-          </div>
-        </div>
-        <div class="fg"><label class="fl">Ou URL d'image</label><input type="url" class="fi" id="pnj-photo-url" placeholder="https://..." oninput="pnjPrevUrl(this.value)"></div>
-      </div>
-
-      <div class="form-section">
-        <div class="form-section-title">Description</div>
-        <div class="fg"><label class="fl">Description courte <span class="req">*</span></label><textarea class="fta" id="pnj-desc" placeholder="Résumez ce PNJ en 2-4 phrases..." style="min-height:88px"></textarea></div>
-      </div>
-
-      <div class="form-section">
-        <div class="form-section-title">Motivations</div>
-        <div class="mot-block">
-          <div class="fg"><label class="fl">Description des motivations</label><textarea class="fta" id="pnj-mot-desc" placeholder="Décrivez les ambitions générales de ce PNJ..." style="min-height:72px"></textarea></div>
-
-        </div>
-      </div>
-
+      <div class="form-section"><div class="form-section-title">Identité</div><div class="frow"><div class="fg"><label class="fl">Nom <span class="req">*</span></label><input type="text" class="fi" id="pnj-nom" placeholder="Ex: VERATH"></div><div class="fg"><label class="fl">Prénom <span class="req">*</span></label><input type="text" class="fi" id="pnj-prenom" placeholder="Ex: Morthis"></div></div><div class="frow3"><div class="fg"><label class="fl">Âge</label><input type="text" class="fi" id="pnj-age" placeholder="800 ans"></div><div class="fg"><label class="fl">Race</label><input type="text" class="fi" id="pnj-race" placeholder="Démon ancien"></div><div class="fg"><label class="fl">Taille</label><input type="text" class="fi" id="pnj-taille" placeholder="2m10"></div></div><div class="frow"><div class="fg"><label class="fl">Rôle</label><input type="text" class="fi" id="pnj-role" placeholder="Seigneur de guerre"></div><div class="fg"><label class="fl">Statut Marital</label><input type="text" class="fi" id="pnj-marital" placeholder="Célibataire"></div></div><div class="fg"><label class="fl">Titre Spécial</label><input type="text" class="fi" id="pnj-titre" placeholder="Le Consumé · Terres Ravagées"></div></div>
+      <div class="form-section"><div class="form-section-title">Classification</div><div class="frow"><div class="fg"><label class="fl">Catégorie</label><select class="fs" id="pnj-category"><option value="">— Aucune —</option></select></div><div class="fg"><label class="fl">Niveau de danger</label><select class="fs" id="pnj-danger"><option value="RANG : F">RANG : F</option><option value="RANG : E">RANG : E</option><option value="RANG : D">RANG : D</option><option value="RANG : C">RANG : C</option><option value="RANG : B">RANG : B</option><option value="RANG : A">RANG : A</option><option value="DANGER : S">DANGER : S</option><option value="DANGER : SS">DANGER : SS</option><option value="DANGER : SSS">DANGER : SSS</option><option value="DANGER : X">DANGER : X</option><option value="DANGER : Z">DANGER : Z</option></select></div></div></div>
+      <div class="form-section"><div class="form-section-title">Illustration</div><div class="fg"><label class="fl">Uploader une image</label><div class="photo-drop" onclick="document.getElementById('pnj-file').click()"><input type="file" id="pnj-file" accept="image/*" onchange="pnjPrevFile(event)"><div class="pdtxt" id="pnj-pdtxt"><div style="font-size:1.2rem;opacity:.3;margin-bottom:3px">⬆</div>Cliquer pour uploader</div></div></div><div class="fg"><label class="fl">Ou URL d'image</label><input type="url" class="fi" id="pnj-photo-url" placeholder="https://..." oninput="pnjPrevUrl(this.value)"></div></div>
+      <div class="form-section"><div class="form-section-title">Description</div><div class="fg"><label class="fl">Description courte <span class="req">*</span></label><textarea class="fta" id="pnj-desc" placeholder="Résumez ce PNJ en 2-4 phrases..." style="min-height:88px"></textarea></div></div>
+      <div class="form-section"><div class="form-section-title">Motivations</div><div class="mot-block"><div class="fg"><label class="fl">Description des motivations</label><textarea class="fta" id="pnj-mot-desc" placeholder="Décrivez les ambitions générales..." style="min-height:72px"></textarea></div></div></div>
       <button class="bsub" id="pnj-submit-btn" onclick="submitPNJ()">◆ Créer le PNJ</button>
     </div>
   </div>
 </div>
 
-<!-- ═══════════════ MODAL : NOUVEAU FILTRE ═══════════════ -->
+<!-- MODAL : NOUVEAU FILTRE -->
 <div class="modal-overlay" id="filter-modal">
-  <div class="modal sm">
-    <div class="mac-cyan"></div>
-    <button class="mclose" onclick="closeFilterModal()">✕</button>
+  <div class="modal sm"><div class="mac-cyan"></div><button class="mclose" onclick="closeFilterModal()">✕</button>
     <div class="mi">
       <div class="mt cyan">◈ Nouveau Filtre</div>
-      <p class="msub" style="border-left-color:rgba(0,245,255,0.4)">Créez un filtre personnalisé qui apparaîtra dans la barre de tri de la page PNJ.</p>
-      <div class="fg"><label class="fl">Nom du filtre <span class="req">*</span></label><input type="text" class="fi" id="new-filter-label" placeholder="Ex: Antagoniste, Gardien, Légendaire..."></div>
-      <div class="fg color-row">
-        <div class="fg" style="margin-bottom:0;flex:1"><label class="fl">Couleur</label><input type="text" class="fi" id="new-filter-color-hex" value="#b06eff" placeholder="#b06eff" oninput="syncColor(this.value)"></div>
-        <div class="color-preview" id="color-preview-box" style="background:#b06eff">
-          <input type="color" id="new-filter-color" value="#b06eff" oninput="syncHex(this.value)">
-        </div>
-      </div>
-      <!-- Preview -->
-      <div style="margin:16px 0 18px;padding:12px 16px;background:rgba(0,0,0,0.2);border:1px solid var(--border);">
-        <div style="font-family:'Share Tech Mono',monospace;font-size:.54rem;color:var(--muted);letter-spacing:.18em;margin-bottom:10px;text-transform:uppercase;">Aperçu :</div>
-        <div id="filter-preview-btn" style="display:inline-flex;align-items:center;gap:6px;font-family:'Share Tech Mono',monospace;font-size:.64rem;letter-spacing:.13em;text-transform:uppercase;padding:7px 14px;border:1px solid;color:#b06eff;border-color:rgba(176,110,255,0.44);">
-          <span id="fp-dot" style="width:6px;height:6px;border-radius:50%;background:#b06eff;box-shadow:0 0 5px #b06eff;display:inline-block"></span>
-          <span id="fp-label">Nouveau filtre</span>
-        </div>
-      </div>
+      <p class="msub" style="border-left-color:rgba(0,240,255,0.4)">Créez un filtre personnalisé pour la barre de tri.</p>
+      <div class="fg"><label class="fl">Nom du filtre <span class="req">*</span></label><input type="text" class="fi" id="new-filter-label" placeholder="Ex: Antagoniste, Gardien..."></div>
+      <div class="fg color-row"><div class="fg" style="margin-bottom:0;flex:1"><label class="fl">Couleur</label><input type="text" class="fi" id="new-filter-color-hex" value="#b06eff" oninput="syncColor(this.value)"></div><div class="color-preview" id="color-preview-box" style="background:#b06eff"><input type="color" id="new-filter-color" value="#b06eff" oninput="syncHex(this.value)"></div></div>
+      <div style="margin:16px 0 18px;padding:12px 16px;background:rgba(0,0,0,0.2);border:1px solid var(--border);"><div style="font-family:'Rajdhani',sans-serif;font-size:.54rem;color:var(--muted);letter-spacing:.18em;margin-bottom:10px;text-transform:uppercase;">Aperçu :</div><div id="filter-preview-btn" style="display:inline-flex;align-items:center;gap:6px;font-family:'Rajdhani',sans-serif;font-size:.64rem;letter-spacing:.13em;text-transform:uppercase;padding:7px 14px;border:1px solid;color:#b06eff;border-color:rgba(176,110,255,0.44);"><span id="fp-dot" style="width:6px;height:6px;border-radius:50%;background:#b06eff;box-shadow:0 0 5px #b06eff;display:inline-block"></span><span id="fp-label">Nouveau filtre</span></div></div>
       <button class="bsub cyan-btn" id="filter-save-btn" onclick="saveFilter()">◈ Créer le filtre</button>
     </div>
   </div>
 </div>
 
 <footer>
-  <div class="fl2">JAHARTA // RP</div>
-  <div class="ft"><span class="hdot"></span>PNJ · FIREBASE POWERED · v4.0.0</div>
-  <div class="fls">
-    <a href="index.html">Accueil</a><a href="fiches.html">Fiches RP</a>
-    <a href="portail.html">Portail</a><a href="admin.html">Admin</a>
-    <a href="https://discord.gg/jaharta" target="_blank">Discord ↗</a>
+  <div class="footer-inner">
+    <div><div class="f-logo">JAHARTA // RP</div><div class="f-tagline">Univers Jaharta · Roleplay Officiel</div></div>
+    <div class="f-status"><div class="f-status-dot"><span class="hdot"></span> PNJ · FIREBASE POWERED</div><div class="f-version">v5.0.0</div></div>
+    <div class="f-links-col"><div class="f-links"><a href="index.html">Accueil</a><a href="fiches.html">Fiches RP</a><a href="portail.html">Portail</a><a href="admin.html">Admin</a><a href="https://discord.gg/jBMnmeR944" target="_blank">Discord ↗</a></div></div>
   </div>
+  <div class="f-bottom"><div class="f-copy">© 2024 — 2026 JAHARTA RP · TOUS DROITS RÉSERVÉS</div></div>
 </footer>
 
 <script>
-/* ════════════════════════════════════════════════════════
-   SECOND BLOC SCRIPT (non-module)
-   Fonctions appelées depuis les attributs onclick HTML.
-   Utilisent les globals window._ exposés par le module ESM.
-   ════════════════════════════════════════════════════════ */
-
-/**
- * Ouvre le modal en mode édition et pré-remplit les champs.
- * Change le bouton submit en mode 'Mettre à jour'.
- * @param {string} id - ID du document PNJ dans Firestore
- */
-window.openEditPNJ = async function(id){
-  const snap = await window._getDoc(window._doc(window._db,'pnj',id));
-  if(!snap.exists()) return;
-  const p = snap.data();
-
-  // Populate modal fields
-  const _pmt2=document.getElementById('pnj-modal-title'); if(_pmt2) _pmt2.textContent='✎ Modifier le PNJ';
-  document.getElementById('pnj-nom').value     = p.nom     || '';
-  document.getElementById('pnj-prenom').value  = p.prenom  || '';
-  document.getElementById('pnj-age').value     = p.age     || '';
-  document.getElementById('pnj-race').value    = p.race    || '';
-  document.getElementById('pnj-role').value    = p.role    || '';
-  document.getElementById('pnj-titre').value   = p.titre   || '';
-  document.getElementById('pnj-marital').value = p.marital || '';
-  document.getElementById('pnj-taille').value  = p.taille  || '';
-  document.getElementById('pnj-desc').value    = p.desc    || '';
-  document.getElementById('pnj-danger').value  = p.danger  || '';
-  document.getElementById('pnj-photo-url').value = p.photoUrl || '';
-  document.getElementById('pnj-mot-desc').value  = p.motivations?.desc    || '';
-
-  if(p.photoUrl) pnjPrevUrl(p.photoUrl);
-
-  // Switch submit button to update mode
-  const btn = document.getElementById('pnj-submit-btn');
-  btn.textContent = '✎ Mettre à jour';
-  btn.onclick = () => updatePNJ(id);
-
-  // Set category
-  if(window._refreshCategorySelect) window._refreshCategorySelect();
-  setTimeout(()=>{ document.getElementById('pnj-category').value = p.category || ''; }, 100);
-
-  document.getElementById('pnj-modal').classList.add('open');
-  document.body.style.overflow = 'hidden';
-};
-
-/**
- * Met à jour un PNJ existant dans Firestore.
- * Gère l'upload d'une nouvelle photo si fournie.
- * Remplace la carte dans le DOM sans rechargement.
- * @param {string} id - ID du document Firestore
- */
-window.updatePNJ = async function(id){
-  if(!window._isAdmin){ showToast('⚠ Connexion admin requise','error'); return; }
-  const nom     = document.getElementById('pnj-nom').value.trim();
-  const prenom  = document.getElementById('pnj-prenom').value.trim();
-  const age     = document.getElementById('pnj-age').value.trim();
-  const race    = document.getElementById('pnj-race').value.trim();
-  const role    = document.getElementById('pnj-role').value.trim();
-  const titre   = document.getElementById('pnj-titre').value.trim();
-  const marital = document.getElementById('pnj-marital').value.trim();
-  const taille  = document.getElementById('pnj-taille').value.trim();
-  const category= document.getElementById('pnj-category').value;
-  const danger  = document.getElementById('pnj-danger').value;
-  const photoUrl= document.getElementById('pnj-photo-url').value.trim();
-  const desc    = document.getElementById('pnj-desc').value.trim();
-  const motDesc = document.getElementById('pnj-mot-desc').value.trim();
-
-  if(!nom||!prenom||!desc){ showToast('Remplissez Nom, Prénom et Description','error'); return; }
-
-  const btn = document.getElementById('pnj-submit-btn');
-  btn.disabled = true; btn.textContent = '⟳ Mise à jour...';
-
-  let finalPhoto = photoUrl;
-  const photoFile = document.getElementById('pnj-file').files[0];
-  if(photoFile){
-    try{
-      const r2=window._ref(window._storage,`pnj/${Date.now()}_${photoFile.name}`);
-      const s2=await window._uploadBytes(r2,photoFile);
-      finalPhoto=await window._getDownloadURL(s2.ref);
-    }catch(e){ console.warn('Photo upload:',e.message); }
-  }
-
-  try{
-    await window._updateDoc(window._doc(window._db,'pnj',id),{nom,prenom,age,race,role,titre,marital,taille,category,danger,photoUrl:finalPhoto,desc,motivations:{desc:motDesc,social:'',economique:'',militaire:''}});
-    showToast('✓ PNJ mis à jour !','success');
-    // Update card in DOM
-    const oldCard = document.querySelector(`.pnj-card[data-id="${id}"]`);
-    if(oldCard){ const newCard=buildPNJCard({id,...{nom,prenom,age,race,role,titre,marital,taille,category,danger,photoUrl:finalPhoto,desc,motivations:{desc:motDesc,social:'',economique:'',militaire:''}}}); oldCard.replaceWith(newCard); }
-    closePNJModal();
-  }catch(e){ showToast('⚠ '+e.message,'error'); }
-  btn.disabled=false; btn.textContent='✎ Mettre à jour';
-  // Reset button for next creation
-  setTimeout(()=>{ btn.textContent='◆ Créer le PNJ'; btn.onclick=submitPNJ; }, 500);
-};
-
-function openPNJModal(){
-  if(window._refreshCategorySelect) window._refreshCategorySelect();
-  const _pmt=document.getElementById('pnj-modal-title'); if(_pmt) _pmt.textContent='◆ Créer un PNJ';
-  const btn=document.getElementById('pnj-submit-btn');
-  btn.textContent='◆ Créer le PNJ'; btn.onclick=submitPNJ;
-  document.getElementById('pnj-modal').classList.add('open');
-  document.body.style.overflow = 'hidden';
-  document.body.classList.add('modal-open');
-}
-function closePNJModal(){
-  document.getElementById('pnj-modal').classList.remove('open');
-  document.body.style.overflow = '';
-  document.body.classList.remove('modal-open');
-}
-function openFilterModal(){
-  document.getElementById('new-filter-label').value='';
-  document.getElementById('new-filter-color').value='#b06eff';
-  document.getElementById('new-filter-color-hex').value='#b06eff';
-  document.getElementById('color-preview-box').style.background='#b06eff';
-  updateFilterPreview('#b06eff','Nouveau filtre');
-  document.getElementById('filter-modal').classList.add('open');
-  document.body.style.overflow = 'hidden';
-  document.body.classList.add('modal-open');
-}
-function closeFilterModal(){
-  document.getElementById('filter-modal').classList.remove('open');
-  document.body.style.overflow = '';
-  document.body.classList.remove('modal-open');
-}
-
-/* Close on backdrop click */
+/* ═══ Original PNJ non-module JS — preserved ═══ */
+window.openEditPNJ=async function(id){const snap=await window._getDoc(window._doc(window._db,'pnj',id));if(!snap.exists())return;const p=snap.data();const _pmt2=document.getElementById('pnj-modal-title');if(_pmt2)_pmt2.textContent='✎ Modifier le PNJ';document.getElementById('pnj-nom').value=p.nom||'';document.getElementById('pnj-prenom').value=p.prenom||'';document.getElementById('pnj-age').value=p.age||'';document.getElementById('pnj-race').value=p.race||'';document.getElementById('pnj-role').value=p.role||'';document.getElementById('pnj-titre').value=p.titre||'';document.getElementById('pnj-marital').value=p.marital||'';document.getElementById('pnj-taille').value=p.taille||'';document.getElementById('pnj-desc').value=p.desc||'';document.getElementById('pnj-danger').value=p.danger||'';document.getElementById('pnj-photo-url').value=p.photoUrl||'';document.getElementById('pnj-mot-desc').value=p.motivations?.desc||'';if(p.photoUrl)pnjPrevUrl(p.photoUrl);const btn=document.getElementById('pnj-submit-btn');btn.textContent='✎ Mettre à jour';btn.onclick=()=>updatePNJ(id);if(window._refreshCategorySelect)window._refreshCategorySelect();setTimeout(()=>{document.getElementById('pnj-category').value=p.category||'';},100);document.getElementById('pnj-modal').classList.add('open');document.body.style.overflow='hidden';};
+window.updatePNJ=async function(id){if(!window._isAdmin){showToast('⚠ Connexion admin requise','error');return;}const nom=document.getElementById('pnj-nom').value.trim();const prenom=document.getElementById('pnj-prenom').value.trim();const age=document.getElementById('pnj-age').value.trim();const race=document.getElementById('pnj-race').value.trim();const role=document.getElementById('pnj-role').value.trim();const titre=document.getElementById('pnj-titre').value.trim();const marital=document.getElementById('pnj-marital').value.trim();const taille=document.getElementById('pnj-taille').value.trim();const category=document.getElementById('pnj-category').value;const danger=document.getElementById('pnj-danger').value;const photoUrl=document.getElementById('pnj-photo-url').value.trim();const desc=document.getElementById('pnj-desc').value.trim();const motDesc=document.getElementById('pnj-mot-desc').value.trim();if(!nom||!prenom||!desc){showToast('Remplissez Nom, Prénom et Description','error');return;}const btn=document.getElementById('pnj-submit-btn');btn.disabled=true;btn.textContent='⟳ Mise à jour...';let finalPhoto=photoUrl;const photoFile=document.getElementById('pnj-file').files[0];if(photoFile){try{const r2=window._ref(window._storage,`pnj/${Date.now()}_${photoFile.name}`);const s2=await window._uploadBytes(r2,photoFile);finalPhoto=await window._getDownloadURL(s2.ref);}catch(e){console.warn('Photo:',e.message);}}try{await window._updateDoc(window._doc(window._db,'pnj',id),{nom,prenom,age,race,role,titre,marital,taille,category,danger,photoUrl:finalPhoto,desc,motivations:{desc:motDesc,social:'',economique:'',militaire:''}});showToast('✓ PNJ mis à jour !','success');closePNJModal();}catch(e){showToast('⚠ '+e.message,'error');}btn.disabled=false;btn.textContent='✎ Mettre à jour';setTimeout(()=>{btn.textContent='◆ Créer le PNJ';btn.onclick=submitPNJ;},500);};
+function openPNJModal(){if(window._refreshCategorySelect)window._refreshCategorySelect();const _pmt=document.getElementById('pnj-modal-title');if(_pmt)_pmt.textContent='◆ Créer un PNJ';const btn=document.getElementById('pnj-submit-btn');btn.textContent='◆ Créer le PNJ';btn.onclick=submitPNJ;document.getElementById('pnj-modal').classList.add('open');document.body.style.overflow='hidden';document.body.classList.add('modal-open');}
+function closePNJModal(){document.getElementById('pnj-modal').classList.remove('open');document.body.style.overflow='';document.body.classList.remove('modal-open');}
+function openFilterModal(){document.getElementById('new-filter-label').value='';document.getElementById('new-filter-color').value='#b06eff';document.getElementById('new-filter-color-hex').value='#b06eff';document.getElementById('color-preview-box').style.background='#b06eff';updateFilterPreview('#b06eff','Nouveau filtre');document.getElementById('filter-modal').classList.add('open');document.body.style.overflow='hidden';document.body.classList.add('modal-open');}
+function closeFilterModal(){document.getElementById('filter-modal').classList.remove('open');document.body.style.overflow='';document.body.classList.remove('modal-open');}
 document.getElementById('pnj-modal').addEventListener('click',e=>{if(e.target===e.currentTarget)closePNJModal();});
 document.getElementById('filter-modal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeFilterModal();});
-
-/* ── Synchronisation du color picker (hex ↔ input couleur ↔ aperçu) ── */
-function syncHex(v){
-  document.getElementById('new-filter-color-hex').value=v;
-  document.getElementById('color-preview-box').style.background=v;
-  updateFilterPreview(v, document.getElementById('new-filter-label').value||'Nouveau filtre');
-}
-function syncColor(v){
-  if(/^#[0-9a-fA-F]{6}$/.test(v)){
-    document.getElementById('new-filter-color').value=v;
-    document.getElementById('color-preview-box').style.background=v;
-    updateFilterPreview(v, document.getElementById('new-filter-label').value||'Nouveau filtre');
-  }
-}
-function updateFilterPreview(color,label){
-  const btn=document.getElementById('filter-preview-btn');
-  const dot=document.getElementById('fp-dot');
-  const lbl=document.getElementById('fp-label');
-  btn.style.color=color; btn.style.borderColor=color+'66';
-  dot.style.background=color; dot.style.boxShadow='0 0 5px '+color;
-  lbl.textContent=label||'Nouveau filtre';
-}
-document.getElementById('new-filter-label').addEventListener('input',e=>{
-  updateFilterPreview(document.getElementById('new-filter-color').value, e.target.value||'Nouveau filtre');
-});
-
-/* ── Prévisualisation photo dans le modal PNJ ── */
+function syncHex(v){document.getElementById('new-filter-color-hex').value=v;document.getElementById('color-preview-box').style.background=v;updateFilterPreview(v,document.getElementById('new-filter-label').value||'Nouveau filtre');}
+function syncColor(v){if(/^#[0-9a-fA-F]{6}$/.test(v)){document.getElementById('new-filter-color').value=v;document.getElementById('color-preview-box').style.background=v;updateFilterPreview(v,document.getElementById('new-filter-label').value||'Nouveau filtre');}}
+function updateFilterPreview(color,label){const btn=document.getElementById('filter-preview-btn');const dot=document.getElementById('fp-dot');const lbl=document.getElementById('fp-label');btn.style.color=color;btn.style.borderColor=color+'66';dot.style.background=color;dot.style.boxShadow='0 0 5px '+color;lbl.textContent=label||'Nouveau filtre';}
+document.getElementById('new-filter-label').addEventListener('input',e=>{updateFilterPreview(document.getElementById('new-filter-color').value,e.target.value||'Nouveau filtre');});
 function pnjPrevFile(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{showPnjPrev(ev.target.result);document.getElementById('pnj-photo-url').value='';};r.readAsDataURL(f);}
 function pnjPrevUrl(u){if(!u){clearPnjPrev();return;}showPnjPrev(u);}
 function showPnjPrev(src){document.getElementById('pnj-pdtxt').style.display='none';let img=document.querySelector('.photo-drop img.prev-img');if(!img){img=document.createElement('img');img.className='prev-img';document.querySelector('.photo-drop').appendChild(img);}img.src=src;}
 function clearPnjPrev(){document.getElementById('pnj-pdtxt').style.display='';const img=document.querySelector('.photo-drop img.prev-img');if(img)img.remove();}
-
-/* ── Après création d'un filtre, met à jour le select 'Catégorie' du modal PNJ ── */
-const _origSaveFilter=window.saveFilter;
-window.saveFilter=async function(){
-  await _origSaveFilter();
-  // after creating filter, update category select in PNJ modal
-  if(window._refreshCategorySelect) window._refreshCategorySelect();
-};
+const _origSaveFilter=window.saveFilter;window.saveFilter=async function(){await _origSaveFilter();if(window._refreshCategorySelect)window._refreshCategorySelect();};
 </script>
-
+<!-- v5 Shared UI Scripts -->
+<script>
+(function(){const bar=document.getElementById('scroll-progress');let t=false;window.addEventListener('scroll',()=>{if(!t){requestAnimationFrame(()=>{const h=document.documentElement.scrollHeight-window.innerHeight;bar.style.width=h>0?(window.scrollY/h*100)+'%':'0%';t=false;});t=true;}},{passive:true});})();
+(function(){const els=document.querySelectorAll('[data-reveal]');if(!('IntersectionObserver' in window)){els.forEach(el=>el.classList.add('revealed'));return;}const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){setTimeout(()=>e.target.classList.add('revealed'),parseInt(e.target.dataset.delay||'0'));obs.unobserve(e.target);}});},{threshold:.15,rootMargin:'0px 0px -40px 0px'});els.forEach(el=>obs.observe(el));})();
+(function(){const toggle=document.getElementById('nav-toggle');const nav=document.getElementById('nav-links');const bd=document.getElementById('nav-backdrop');if(!toggle||!nav)return;function cl(){nav.classList.remove('open');bd.classList.remove('open');toggle.textContent='☰';}function op(){nav.classList.add('open');bd.classList.add('open');toggle.textContent='✕';}toggle.addEventListener('click',()=>{nav.classList.contains('open')?cl():op();});bd.addEventListener('click',cl);nav.querySelectorAll('a').forEach(a=>a.addEventListener('click',cl));})();
+(function(){const h=document.querySelector('header');if(!h)return;let s=false;window.addEventListener('scroll',()=>{const v=window.scrollY>80;if(v!==s){s=v;h.style.height=v?'56px':'';h.style.borderBottomColor=v?'rgba(0,240,255,.22)':'';}},{passive:true});})();
+</script>
+<script src="js/script.js"></script>
+<script>
+(function(){var t=document.getElementById('nav-toggle'),n=document.getElementById('nav-links');if(!t||!n)return;t.addEventListener('click',function(){var o=n.classList.toggle('open');t.textContent=o?'\u2715':'\u2630';});document.addEventListener('click',function(e){if(!n.contains(e.target)&&!t.contains(e.target)){n.classList.remove('open');t.textContent='\u2630';}});})();
+</script>
+<script src="js/page-transition.js"></script>
 <script src="js/music-player.js"></script>
 </body>
 </html>

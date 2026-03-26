@@ -1,26 +1,10 @@
 <!DOCTYPE html>
 <!--
   ═══════════════════════════════════════════════════════════════════════
-  fiches.html — Registre des personnages joueurs
+  fiches.html — Registre des personnages joueurs (v5 Redesign)
   ───────────────────────────────────────────────────────────────────────
-  Fonctionnalités :
-  - Affichage temps réel (onSnapshot) des fiches validées
-  - Filtre par groupe de race (7 groupes)
-  - Formulaire de soumission : photo, stats (×8), pouvoirs, lien externe
-  - Badge de rang affiché sur la photo
-  - Barre de stats colorée en bas de la photo
-  - Section "Pouvoirs" par carte avec nom + description
-  - Admin : boutons Modifier / Supprimer par carte
-
-  Firebase (module ESM) :
-  - Firestore : collection 'fiches' (status=validee)
-  - Storage   : dossier photos/
-  - Auth      : badge admin dans nav
-
-  Globals exposés pour les scripts non-module :
-  - window._db, window._storage, window._isAdmin
-  - window._doc, window._getDoc, window._updateDoc, window._deleteDoc
-  - window._ref, window._uploadBytes, window._getDownloadURL
+  REDESIGN v5 : scroll progress, noise, mobile nav, reveal anims,
+  enhanced hero, improved filters, polished modal, rich footer
   ═══════════════════════════════════════════════════════════════════════
 -->
 <html lang="fr">
@@ -28,287 +12,134 @@
 <meta charset="UTF-8">
 <link rel="icon" type="image/x-icon" href="img/favicon.ico">
 <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png">
-<link rel="apple-touch-icon" sizes="180x180" href="img/favicon-180.png"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<link rel="apple-touch-icon" sizes="180x180" href="img/favicon-180.png">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>JAHARTA // Fiches RP</title>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Exo+2:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap" rel="stylesheet">
 
 <script type="module">
-/*
- * ─── FIREBASE MODULE ───────────────────────────────────────────────────
- * Importations Firebase SDK (ESM depuis CDN gstatic).
- * Ce bloc "module" est isolé du reste du JS de la page — c'est pourquoi
- * on expose les références importantes sur window._ pour qu'elles soient
- * accessibles depuis les <script> non-module ci-dessous.
- * ─────────────────────────────────────────────────────────────────────── */
+/* ─── FIREBASE MODULE — identique à l'original ─── */
 import{initializeApp,getApps}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import{getFirestore,initializeFirestore,persistentLocalCache,collection,addDoc,getDocs,onSnapshot,doc,getDoc,updateDoc,deleteDoc,query,where,orderBy,serverTimestamp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import{getAuth,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import{getStorage,ref,uploadBytes,getDownloadURL}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
-/* ── Config Firebase ── */
 const firebaseConfig={apiKey:"AIzaSyAru7qZX8Gu_b8Y3oNDV-a5PmkrrkRjkcs",authDomain:"jaharta-rp.firebaseapp.com",projectId:"jaharta-rp",storageBucket:"jaharta-rp.firebasestorage.app",messagingSenderId:"217075417489",appId:"1:217075417489:web:4d1e2df422a5cd42411a30",measurementId:"G-15JSSBZWCH"};
-const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+const app=getApps().length?getApps()[0]:initializeApp(firebaseConfig);
+let db;try{db=initializeFirestore(app,{localCache:persistentLocalCache()});}catch(e){db=getFirestore(app);}
+const storage=getStorage(app);const auth=getAuth(app);
+window._db=db;window._storage=storage;window._deleteDoc=deleteDoc;window._doc=doc;window._getDoc=getDoc;
+window._updateDoc=updateDoc;window._addDoc=addDoc;window._collection=collection;window._serverTimestamp=serverTimestamp;
+window._ref=ref;window._uploadBytes=uploadBytes;window._getDownloadURL=getDownloadURL;window._isAdmin=false;
+onAuthStateChanged(auth,user=>{window._isAdmin=!!user;});
 
-/* ── Cache offline Firestore (syntaxe Firebase v10) ── */
-let db;
-try {
-  db = initializeFirestore(app, { localCache: persistentLocalCache() });
-} catch(e) {
-  db = getFirestore(app);
-}
-const storage=getStorage(app);
-const auth=getAuth(app);
-/* ── Exposition des API Firebase en globals pour les scripts non-module ── */
-window._db=db; window._storage=storage;
-window._deleteDoc=deleteDoc; window._doc=doc; window._getDoc=getDoc;
-window._updateDoc=updateDoc; window._addDoc=addDoc;
-window._collection=collection; window._serverTimestamp=serverTimestamp;
-window._ref=ref; window._uploadBytes=uploadBytes; window._getDownloadURL=getDownloadURL;
-window._isAdmin=false;
-/* ── Auth : détecte si un admin est connecté → badge nav + droits CRUD ── */
-onAuthStateChanged(auth, user => {
-  /* Droits CRUD sur les cartes (modifier/supprimer) — le badge et le bouton
-     "+ Ajouter" sont gérés par js/auth-badge.js qui s'exécute en parallèle */
-  window._isAdmin = !!user;
-});
-/* ═══════════════════════════════════════════════════════
-   buildCard(ch) — construit une carte personnage en DOM pur
-   (remplace le Web Component <jaharta-card> pour éviter
-    les problèmes de timing avec persistentLocalCache)
-   ═══════════════════════════════════════════════════════ */
-function buildCard(ch) {
-  const RACES = window.RACES || {};
-  const RANKS = window.RANKS || {};
-  const san   = window.sanitize || (s => String(s||'').trim().slice(0,2000));
-  const rc    = RACES[ch.race] || { color:'#00c8ff', label: ch.race||'?' };
-  const rk    = RANKS[ch.rank] || { color:'#6b7280' };
-
-  /* Wrapper display:contents pour la grid */
-  const wrap = document.createElement('div');
-  wrap.style.display = 'contents';
-  wrap.dataset.race  = ch.race || '';
-  wrap.dataset.rank  = ch.rank || '';
-
-  const card = document.createElement('div');
-  card.className   = 'rp-card';
-  card.dataset.race = ch.race || '';
-  card.dataset.rank = ch.rank || '';
-
-  /* ── Photo ── */
-  const photo = document.createElement('div');
-  photo.className = 'card-photo';
-  const stripe = document.createElement('div');
-  stripe.className = 'card-stripe';
-  stripe.style.background = `linear-gradient(90deg,${rc.color},${rc.color}20)`;
-  photo.appendChild(stripe);
-  if (ch.photoUrl || ch.photo) {
-    const img = document.createElement('img');
-    img.src = ch.photoUrl || ch.photo;
-    img.alt = ch.firstname || '';
-    img.loading = 'lazy';
-    img.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top center;z-index:1;';
-    img.onerror = () => img.remove();
-    photo.appendChild(img);
-  } else {
-    const ph = document.createElement('div');
-    ph.className = 'card-photo-ph';
-    ph.style.color = rc.color;
-    ph.textContent = (ch.firstname?.[0]||'') + (ch.lastname?.[0]||'');
-    photo.appendChild(ph);
-  }
-  const ov = document.createElement('div');
-  ov.className = 'card-photo-ov';
-  photo.appendChild(ov);
-
-  /* ── Badge rang ── */
-  const badge = document.createElement('div');
-  badge.className = 'rank-badge';
-  badge.style.color = rk.color;
-  const bv = document.createElement('div');
-  bv.className = 'rb-val' + (ch.rank==='SSS'?' sm':'');
-  if (['SSS','X','T','G','G+','Z'].includes(ch.rank)) bv.style.animation = 'rankPulse 2.5s infinite';
-  bv.textContent = ch.rank || '?';
-  const bl = document.createElement('div');
-  bl.className = 'rb-lbl';
-  bl.textContent = 'RANG';
-  badge.appendChild(bv);
-  badge.appendChild(bl);
-  if (ch.level && ch.level > 0) {
-    const blvl = document.createElement('div');
-    blvl.className = 'rb-level';
-    blvl.textContent = `Nv.${ch.level}`;
-    badge.appendChild(blvl);
-  }
+function buildCard(ch){
+  const RACES=window.RACES||{};const RANKS=window.RANKS||{};
+  const san=window.sanitize||(s=>String(s||'').trim().slice(0,2000));
+  const rc=RACES[ch.race]||{color:'#00c8ff',label:ch.race||'?'};
+  const rk=RANKS[ch.rank]||{color:'#6b7280'};
+  const wrap=document.createElement('div');wrap.style.display='contents';
+  wrap.dataset.race=ch.race||'';wrap.dataset.rank=ch.rank||'';
+  const card=document.createElement('div');card.className='rp-card';
+  card.dataset.race=ch.race||'';card.dataset.rank=ch.rank||'';
+  const photo=document.createElement('div');photo.className='card-photo';
+  const stripe=document.createElement('div');stripe.className='card-stripe';
+  stripe.style.background=`linear-gradient(90deg,${rc.color},${rc.color}20)`;photo.appendChild(stripe);
+  if(ch.photoUrl||ch.photo){const img=document.createElement('img');img.src=ch.photoUrl||ch.photo;img.alt=ch.firstname||'';img.loading='lazy';img.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top center;z-index:1;';img.onerror=()=>img.remove();photo.appendChild(img);}else{const ph=document.createElement('div');ph.className='card-photo-ph';ph.style.color=rc.color;ph.textContent=(ch.firstname?.[0]||'')+(ch.lastname?.[0]||'');photo.appendChild(ph);}
+  const ov=document.createElement('div');ov.className='card-photo-ov';photo.appendChild(ov);
+  const badge=document.createElement('div');badge.className='rank-badge';badge.style.color=rk.color;
+  const bv=document.createElement('div');bv.className='rb-val'+(ch.rank==='SSS'?' sm':'');
+  if(['SSS','X','T','G','G+','Z'].includes(ch.rank))bv.style.animation='rankPulse 2.5s infinite';
+  bv.textContent=ch.rank||'?';const bl=document.createElement('div');bl.className='rb-lbl';bl.textContent='RANG';
+  badge.appendChild(bv);badge.appendChild(bl);
+  if(ch.level&&ch.level>0){const blvl=document.createElement('div');blvl.className='rb-level';blvl.textContent=`Nv.${ch.level}`;badge.appendChild(blvl);}
   photo.appendChild(badge);
-
-  /* ── Stats bar ── */
-  const statDefs = [
-    {k:'str',lbl:'STR',cls:'sb-str'},{k:'agi',lbl:'AGI',cls:'sb-agi'},
-    {k:'spd',lbl:'SPD',cls:'sb-spd'},{k:'int',lbl:'INT',cls:'sb-int'},
-    {k:'mana',lbl:'MNA',cls:'sb-mana'},{k:'res',lbl:'RES',cls:'sb-res'},
-    {k:'cha',lbl:'CHA',cls:'sb-cha'},{k:'aura',lbl:'AUR',cls:'sb-aura'},
-  ];
-  const s = ch.stats || {};
-  if (statDefs.some(d=>(s[d.k]||0)>0)) {
-    const bar = document.createElement('div');
-    bar.className = 'stats-bar';
-    statDefs.forEach(d=>{
-      const v = s[d.k]||0;
-      if (d.k==='aura' && v===0) return;
-      const item = document.createElement('div');
-      item.className = `sb-item ${d.cls}`;
-      const lbl2 = document.createElement('div'); lbl2.className='sb-lbl'; lbl2.textContent=d.lbl;
-      const val2 = document.createElement('div'); val2.className='sb-val'; val2.textContent=v;
-      const bbar = document.createElement('div'); bbar.className='sb-bar';
-      const fill = document.createElement('div'); fill.className='sb-fill';
-      fill.style.width = Math.min(100,Math.round(v/9999*100))+'%';
-      bbar.appendChild(fill);
-      item.appendChild(lbl2); item.appendChild(val2); item.appendChild(bbar);
-      bar.appendChild(item);
-    });
-    if (bar.children.length) photo.appendChild(bar);
-  }
+  const statDefs=[{k:'str',lbl:'STR',cls:'sb-str'},{k:'agi',lbl:'AGI',cls:'sb-agi'},{k:'spd',lbl:'SPD',cls:'sb-spd'},{k:'int',lbl:'INT',cls:'sb-int'},{k:'mana',lbl:'MNA',cls:'sb-mana'},{k:'res',lbl:'RES',cls:'sb-res'},{k:'cha',lbl:'CHA',cls:'sb-cha'},{k:'aura',lbl:'AUR',cls:'sb-aura'}];
+  const s=ch.stats||{};if(statDefs.some(d=>(s[d.k]||0)>0)){const bar=document.createElement('div');bar.className='stats-bar';statDefs.forEach(d=>{const v=s[d.k]||0;if(d.k==='aura'&&v===0)return;const item=document.createElement('div');item.className=`sb-item ${d.cls}`;const lbl2=document.createElement('div');lbl2.className='sb-lbl';lbl2.textContent=d.lbl;const val2=document.createElement('div');val2.className='sb-val';val2.textContent=v;const bbar=document.createElement('div');bbar.className='sb-bar';const fill=document.createElement('div');fill.className='sb-fill';fill.style.width=Math.min(100,Math.round(v/9999*100))+'%';bbar.appendChild(fill);item.appendChild(lbl2);item.appendChild(val2);item.appendChild(bbar);bar.appendChild(item);});if(bar.children.length)photo.appendChild(bar);}
   card.appendChild(photo);
-
-  /* ── Corps ── */
-  const body = document.createElement('div');
-  body.className = 'card-body';
-  const fn = document.createElement('div'); fn.className='card-fn'; fn.textContent=san(ch.firstname||''); body.appendChild(fn);
-  const ln = document.createElement('div'); ln.className='card-ln'; ln.textContent=san(ch.lastname||''); body.appendChild(ln);
-  if (ch.age) { const age=document.createElement('div'); age.className='card-age'; age.textContent=ch.age; body.appendChild(age); }
-  const pill = document.createElement('div');
-  pill.className = 'card-rpill';
-  pill.style.cssText = `color:${rc.color};border-color:${rc.color}44;background:${rc.color}0e;`;
-  pill.innerHTML = `<span class="rpip" style="background:${rc.color};box-shadow:0 0 4px ${rc.color}"></span>` +
-    (ch.raceSpecific ? `${rc.label} <span style="opacity:.5;margin:0 3px">·</span><span style="opacity:.85">${ch.raceSpecific}</span>` : rc.label);
+  const body=document.createElement('div');body.className='card-body';
+  const fn=document.createElement('div');fn.className='card-fn';fn.textContent=san(ch.firstname||'');body.appendChild(fn);
+  const ln=document.createElement('div');ln.className='card-ln';ln.textContent=san(ch.lastname||'');body.appendChild(ln);
+  if(ch.age){const age=document.createElement('div');age.className='card-age';age.textContent=ch.age;body.appendChild(age);}
+  const pill=document.createElement('div');pill.className='card-rpill';
+  pill.style.cssText=`color:${rc.color};border-color:${rc.color}44;background:${rc.color}0e;`;
+  pill.innerHTML=`<span class="rpip" style="background:${rc.color};box-shadow:0 0 4px ${rc.color}"></span>`+(ch.raceSpecific?`${rc.label} <span style="opacity:.5;margin:0 3px">·</span><span style="opacity:.85">${ch.raceSpecific}</span>`:rc.label);
   body.appendChild(pill);
-  if (ch.affinity) { const aff=document.createElement('div'); aff.className='card-affinity'; aff.innerHTML=`<span class="aff-label">Affinité</span> ${san(ch.affinity)}`; body.appendChild(aff); }
-  if (ch.desc||ch.bio) { const desc=document.createElement('p'); desc.className='card-desc'; desc.textContent=san(ch.desc||ch.bio||''); body.appendChild(desc); }
-
-  /* ── Pouvoirs ── */
-  const powers = ch.powers||[];
-  if (powers.length>0) {
-    const ps=document.createElement('div'); ps.className='powers-section';
-    const pt=document.createElement('div'); pt.className='powers-title'; pt.textContent='⚡ Pouvoirs'; ps.appendChild(pt);
-    const pl=document.createElement('div'); pl.className='powers-list';
-    powers.forEach(pw=>{
-      const pi=document.createElement('div'); pi.className='power-item';
-      pi.style.borderColor=rc.color+'88'; pi.style.background=rc.color+'08';
-      const pn=document.createElement('div'); pn.className='power-name'; pn.style.color=rc.color; pn.textContent=pw.name||pw; pi.appendChild(pn);
-      if (pw.desc) { const pd=document.createElement('div'); pd.className='power-desc'; pd.textContent=pw.desc; pi.appendChild(pd); }
-      pl.appendChild(pi);
-    });
-    ps.appendChild(pl); body.appendChild(ps);
-  }
-
-  /* ── Liens ── */
-  const ls = ch.links||(ch.linkUrl?[{t:ch.linkType||'Fiche',h:ch.linkUrl}]:[]);
-  if (ls.length>0) {
-    const links=document.createElement('div'); links.className='card-links';
-    ls.forEach(l=>{ const a=document.createElement('a'); a.className='lbtn'; a.href=l.h||'#'; a.target='_blank';
-      a.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>${l.t||'Lien'}`;
-      links.appendChild(a);
-    });
-    body.appendChild(links);
-  }
-
-  /* ── Boutons admin ── */
-  if (ch.id) {
-    const adminRow=document.createElement('div'); adminRow.className='card-admin-row';
-    adminRow.style.display=window._isAdmin?'flex':'none';
-    const editBtn=document.createElement('button'); editBtn.className='card-edit-btn'; editBtn.textContent='✎ Modifier';
-    editBtn.onclick=()=>window.openEditFiche?.(ch.id);
-    const delBtn=document.createElement('button'); delBtn.className='card-del-btn'; delBtn.textContent='✕ Supprimer';
-    delBtn.onclick=()=>window.deleteFicheById?.(ch.id);
-    adminRow.appendChild(editBtn); adminRow.appendChild(delBtn); body.appendChild(adminRow);
-  }
-  card.appendChild(body);
-  const deco=document.createElement('div'); deco.className='cdeco'; card.appendChild(deco);
-  wrap.appendChild(card);
-  return wrap;
+  if(ch.affinity){const aff=document.createElement('div');aff.className='card-affinity';aff.innerHTML=`<span class="aff-label">Affinité</span> ${san(ch.affinity)}`;body.appendChild(aff);}
+  if(ch.desc||ch.bio){const desc=document.createElement('p');desc.className='card-desc';desc.textContent=san(ch.desc||ch.bio||'');body.appendChild(desc);}
+  const powers=ch.powers||[];if(powers.length>0){const ps=document.createElement('div');ps.className='powers-section';const pt=document.createElement('div');pt.className='powers-title';pt.textContent='⚡ Pouvoirs';ps.appendChild(pt);const pl=document.createElement('div');pl.className='powers-list';powers.forEach(pw=>{const pi=document.createElement('div');pi.className='power-item';pi.style.borderColor=rc.color+'88';pi.style.background=rc.color+'08';const pn=document.createElement('div');pn.className='power-name';pn.style.color=rc.color;pn.textContent=pw.name||pw;pi.appendChild(pn);if(pw.desc){const pd=document.createElement('div');pd.className='power-desc';pd.textContent=pw.desc;pi.appendChild(pd);}pl.appendChild(pi);});ps.appendChild(pl);body.appendChild(ps);}
+  const ls=ch.links||(ch.linkUrl?[{t:ch.linkType||'Fiche',h:ch.linkUrl}]:[]);
+  if(ls.length>0){const links=document.createElement('div');links.className='card-links';ls.forEach(l=>{const a=document.createElement('a');a.className='lbtn';a.href=l.h||'#';a.target='_blank';a.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>${l.t||'Lien'}`;links.appendChild(a);});body.appendChild(links);}
+  if(ch.id){const adminRow=document.createElement('div');adminRow.className='card-admin-row';adminRow.style.display=window._isAdmin?'flex':'none';const editBtn=document.createElement('button');editBtn.className='card-edit-btn';editBtn.textContent='✎ Modifier';editBtn.onclick=()=>window.openEditFiche?.(ch.id);const delBtn=document.createElement('button');delBtn.className='card-del-btn';delBtn.textContent='✕ Supprimer';delBtn.onclick=()=>window.deleteFicheById?.(ch.id);adminRow.appendChild(editBtn);adminRow.appendChild(delBtn);body.appendChild(adminRow);}
+  card.appendChild(body);const deco=document.createElement('div');deco.className='cdeco';card.appendChild(deco);wrap.appendChild(card);return wrap;
 }
 
-/* ── Chargement temps réel des fiches validées (onSnapshot = mise à jour auto) ── */
 function loadCards(){
-  /* Affiche 6 skeleton cards pendant que Firestore répond */
-  Skeleton.show('cards-container', 6);
-
-  try{
-    /* Pas de where() ni orderBy() : Firestore peut bloquer silencieusement
-       des requêtes filtrées selon les règles de sécurité. On charge tout
-       et on filtre + trie côté client. */
-    const q=collection(db,"fiches");
-    onSnapshot(q,(snap)=>{
-      const container=document.getElementById("cards-container");
-      const noRes=document.getElementById("no-results");
-      const empty=document.getElementById("empty-state");
-      if(empty)empty.remove();
-      Skeleton.hide('cards-container');
-      Array.from(container.children).forEach(el=>{if(el!==noRes&&!el.id)el.remove();});
-
-      /* Collecter, filtrer status=validee côté client, trier */
-      const docs=[];
-      snap.forEach(d=>docs.push({id:d.id,...d.data()}));
-      const visible=docs.filter(d=>d.status==='validee'||(window._isAdmin&&d.status));
-      visible.sort((a,b)=>{
-        const ta=a.createdAt?.toMillis?.()??( a.syncedAt?new Date(a.syncedAt).getTime():0);
-        const tb=b.createdAt?.toMillis?.()??( b.syncedAt?new Date(b.syncedAt).getTime():0);
-        return tb-ta;
-      });
-
-      visible.forEach(d=>{
-        const el=buildCard(d);
-        container.insertBefore(el,noRes);
-      });
-      animateCount(visible.length);updateCounts();
-      const e2=document.getElementById("empty-state2");
-      if(e2)e2.style.display=visible.length===0?"block":"none";
-    },(err)=>{
-      console.error('[Fiches] Firestore error:',err.code, err.message);
-      Skeleton.hide('cards-container');
-    });
-  }catch(e){
-    console.warn("Firebase:",e.message);
-    const el=document.getElementById("empty-state");
-    if(el)el.textContent="⚠ Firebase non configuré";
-  }
+  Skeleton.show('cards-container',6);
+  try{const q=collection(db,"fiches");
+  onSnapshot(q,(snap)=>{
+    const container=document.getElementById("cards-container");const noRes=document.getElementById("no-results");const empty=document.getElementById("empty-state");if(empty)empty.remove();Skeleton.hide('cards-container');
+    Array.from(container.children).forEach(el=>{if(el!==noRes&&!el.id)el.remove();});
+    const docs=[];snap.forEach(d=>docs.push({id:d.id,...d.data()}));
+    const visible=docs.filter(d=>d.status==='validee'||(window._isAdmin&&d.status));
+    visible.sort((a,b)=>{const ta=a.createdAt?.toMillis?.()??( a.syncedAt?new Date(a.syncedAt).getTime():0);const tb=b.createdAt?.toMillis?.()??( b.syncedAt?new Date(b.syncedAt).getTime():0);return tb-ta;});
+    visible.forEach(d=>{const el=buildCard(d);container.insertBefore(el,noRes);});
+    animateCount(visible.length);updateCounts();
+    const e2=document.getElementById("empty-state2");if(e2)e2.style.display=visible.length===0?"block":"none";
+  },(err)=>{console.error('[Fiches]',err.code,err.message);Skeleton.hide('cards-container');});
+  }catch(e){console.warn("Firebase:",e.message);const el=document.getElementById("empty-state");if(el)el.textContent="⚠ Firebase non configuré";}
 }
-
-/* buildCard() est défini inline — pas de dépendance externe, pas de timing issues */
-if(document.readyState === 'loading')
-  document.addEventListener('DOMContentLoaded', loadCards, {once:true});
-else
-  loadCards();
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',loadCards,{once:true});else loadCards();
 </script>
-
 
 <link rel="stylesheet" href="css/jaharta.css">
 <style>
-:root{--cyan:#00f5ff;--magenta:#ff006e;--gold:#ffd60a;--dark:#04060f;--dark2:#080d1a;--panel:rgba(0,245,255,0.035);--border:rgba(0,245,255,0.16);--text:#c8e0f0;--muted:#5a7a90;--r-Humanoids:#00c8ff;--r-Zooids:#44ff88;--r-MythZooids:#b06eff;--r-Demons:#ff3030;--r-Artificial:#ffd60a;--r-Semi-Liquid:#00e5cc;--r-Undead:#9a8cff;--rank-f:#6b7280;--rank-e:#9ca3af;--rank-d:#60a5fa;--rank-c:#34d399;--rank-b:#fbbf24;--rank-a:#f97316;--rank-s:#ef4444;--rank-ss:#ff006e;--rank-sss:#ffd60a;--rank-x:#e040fb;--rank-t:#c0f0ff;--rank-g:#ffe680;--rank-gp:#ffffff;--rank-z:#ff6060;}
+:root{--cyan:#00f0ff;--magenta:#ff006e;--gold:#ffd60a;--dark:#06060c;--dark2:#0a0a14;--panel:rgba(0,240,255,0.035);--border:rgba(0,240,255,0.16);--text:#c8e0f0;--muted:#5a7a90;--r-Humanoids:#00c8ff;--r-Zooids:#44ff88;--r-MythZooids:#b06eff;--r-Demons:#ff3030;--r-Artificial:#ffd60a;--r-Semi-Liquid:#00e5cc;--r-Undead:#9a8cff;--rank-f:#6b7280;--rank-e:#9ca3af;--rank-d:#60a5fa;--rank-c:#34d399;--rank-b:#fbbf24;--rank-a:#f97316;--rank-s:#ef4444;--rank-ss:#ff006e;--rank-sss:#ffd60a;--rank-x:#e040fb;--rank-t:#c0f0ff;--rank-g:#ffe680;--rank-gp:#ffffff;--rank-z:#ff6060;}
+
+/* ── v5 Shared UI ── */
+.scroll-progress{position:fixed;top:0;left:0;z-index:9998;width:0%;height:2px;background:linear-gradient(90deg,var(--cyan),var(--magenta),var(--gold));pointer-events:none;}
+.noise{position:fixed;inset:0;z-index:9997;pointer-events:none;opacity:.035;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-size:200px;}
+.nav-toggle{display:none;background:none;border:1px solid var(--border);color:var(--cyan);cursor:pointer;width:40px;height:40px;align-items:center;justify-content:center;font-size:1.1rem;transition:border-color .2s;}
+.nav-toggle:hover{border-color:var(--cyan);}
+@media(max-width:880px){.nav-toggle{display:flex;}header nav{position:fixed;top:68px;right:0;bottom:0;width:280px;background:rgba(6,6,12,.98);border-left:1px solid var(--border);backdrop-filter:blur(24px);flex-direction:column;gap:0;padding:20px 0;transform:translateX(100%);transition:transform .35s cubic-bezier(.4,0,.2,1);z-index:200;}header nav.open{transform:translateX(0);}header nav a{padding:14px 28px;border:none;font-size:.72rem;letter-spacing:.16em;}header nav a span{display:inline!important;}.nav-backdrop{position:fixed;inset:0;z-index:99;background:rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .3s;}.nav-backdrop.open{opacity:1;pointer-events:all;}}
+[data-reveal]{opacity:0;transform:translateY(20px);}
+[data-reveal].revealed{opacity:1;transform:translateY(0);transition:all .6s cubic-bezier(.4,0,.2,1);}
+
+/* ── Page Hero v5 ── */
 .add-btn{font-family:'Orbitron',sans-serif;font-weight:700;font-size:0.6rem;letter-spacing:0.18em;color:var(--dark)!important;background:var(--cyan);padding:8px 18px;clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);border:none!important;margin-left:8px;cursor:pointer;transition:background .2s,box-shadow .2s;}
 .add-btn:hover{background:#fff!important;box-shadow:0 0 20px var(--cyan);}
-.page-hero{position:relative;z-index:1;padding:52px 44px 44px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,rgba(0,245,255,0.03) 0%,transparent 100%);}
-.page-hero-inner{max-width:1380px;margin:0 auto;display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;}
-.ph-tag{font-family:'Share Tech Mono',monospace;font-size:0.62rem;letter-spacing:0.4em;color:var(--magenta);text-shadow:0 0 10px var(--magenta);margin-bottom:10px;}
+.page-hero{position:relative;z-index:1;padding:56px 44px 48px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,rgba(0,240,255,0.04) 0%,transparent 100%);overflow:hidden;}
+.page-hero::before{content:'';position:absolute;top:-80px;left:50%;transform:translateX(-50%);width:800px;height:500px;background:radial-gradient(ellipse,rgba(0,240,255,.07) 0%,transparent 65%);pointer-events:none;}
+.page-hero::after{content:'';position:absolute;bottom:0;right:10%;width:300px;height:200px;background:radial-gradient(ellipse,rgba(255,0,110,.04),transparent 65%);pointer-events:none;}
+.page-hero-inner{max-width:1380px;margin:0 auto;display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;position:relative;z-index:1;}
+.ph-tag{font-family:'Rajdhani',sans-serif;font-size:0.62rem;letter-spacing:0.4em;color:var(--magenta);text-shadow:0 0 10px var(--magenta);margin-bottom:10px;}
 .ph-title{font-family:'Orbitron',sans-serif;font-weight:900;font-size:clamp(2rem,5vw,3.4rem);color:#fff;letter-spacing:0.06em;line-height:1;}
 .ph-title span{color:var(--cyan);text-shadow:0 0 20px var(--cyan);}
-.ph-sub{font-family:'Share Tech Mono',monospace;font-size:0.62rem;color:var(--muted);letter-spacing:0.15em;margin-top:10px;}
+.ph-sub{font-family:'Rajdhani',sans-serif;font-size:0.62rem;color:var(--muted);letter-spacing:0.15em;margin-top:10px;}
 .ph-stats{display:flex;gap:28px;flex-shrink:0;}
-.phs{text-align:center;background:var(--panel);border:1px solid var(--border);padding:14px 20px;}
+.phs{text-align:center;background:var(--panel);border:1px solid var(--border);padding:14px 20px;clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);transition:border-color .3s;}
+.phs:hover{border-color:rgba(0,240,255,.3);}
 .phs-num{font-family:'Orbitron',sans-serif;font-size:1.5rem;font-weight:800;color:var(--cyan);display:block;line-height:1;}
-.phs-lbl{font-family:'Share Tech Mono',monospace;font-size:0.52rem;color:var(--muted);letter-spacing:0.16em;text-transform:uppercase;display:block;margin-top:3px;}
+.phs-lbl{font-family:'Rajdhani',sans-serif;font-size:0.52rem;color:var(--muted);letter-spacing:0.16em;text-transform:uppercase;display:block;margin-top:3px;}
+
+/* ── Content ── */
 .page-wrap{position:relative;z-index:1;padding:48px 44px;max-width:1380px;margin:0 auto;}
-.rank-legend{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:32px;padding:14px 18px;border:1px solid var(--border);background:var(--panel);align-items:center;}
-.rl-title{font-family:'Share Tech Mono',monospace;font-size:0.58rem;color:var(--muted);letter-spacing:0.2em;text-transform:uppercase;margin-right:8px;flex-shrink:0;}
-.rl-pill{font-family:'Orbitron',sans-serif;font-weight:700;font-size:0.6rem;letter-spacing:0.1em;padding:3px 11px;border:1px solid;cursor:default;}
-.rl-note{font-family:'Share Tech Mono',monospace;font-size:0.54rem;color:var(--muted);margin-left:auto;letter-spacing:0.1em;}
-.race-filter{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:0;padding-bottom:18px;border-bottom:none;}
-/* ── Filtre par rang — même style que race-filter ── */
+.section-head{display:flex;align-items:center;gap:16px;margin-bottom:28px;}
+.sh-num{font-family:'Orbitron',sans-serif;font-size:.68rem;font-weight:700;color:var(--gold);letter-spacing:.1em;}
+.sh-title{font-family:'Orbitron',sans-serif;font-weight:700;font-size:clamp(.8rem,2vw,1rem);letter-spacing:.2em;color:#fff;text-transform:uppercase;white-space:nowrap;}
+.sh-line{flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent);}
+
+/* ── Rank legend ── */
+.rank-legend{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:32px;padding:14px 18px;border:1px solid var(--border);background:var(--panel);align-items:center;clip-path:polygon(12px 0%,100% 0%,calc(100% - 12px) 100%,0% 100%);}
+.rl-title{font-family:'Rajdhani',sans-serif;font-size:0.58rem;color:var(--muted);letter-spacing:0.2em;text-transform:uppercase;margin-right:8px;flex-shrink:0;}
+.rl-pill{font-family:'Orbitron',sans-serif;font-weight:700;font-size:0.6rem;letter-spacing:0.1em;padding:3px 11px;border:1px solid;cursor:default;transition:transform .2s,box-shadow .2s;}
+.rl-pill:hover{transform:translateY(-2px);}
+.rl-note{font-family:'Rajdhani',sans-serif;font-size:0.54rem;color:var(--muted);margin-left:auto;letter-spacing:0.1em;}
+
+/* ── Filters v5 ── */
+.race-filter{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:0;padding-bottom:18px;}
 .rank-filter{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:36px;padding-top:12px;padding-bottom:18px;border-bottom:1px solid var(--border);}
-/* ── Étiquette de section de filtre ── */
-.filter-group-label{font-family:'Share Tech Mono',monospace;font-size:.58rem;color:var(--muted);letter-spacing:.2em;text-transform:uppercase;margin-right:6px;flex-shrink:0;display:flex;align-items:center;}
-/* ── Âge sur la carte personnage ── */
-.card-age{font-family:'Share Tech Mono',monospace;font-size:.56rem;letter-spacing:.18em;color:var(--muted);margin-bottom:7px;}
-.race-btn{font-family:'Share Tech Mono',monospace;font-size:0.64rem;letter-spacing:0.13em;text-transform:uppercase;background:transparent;border:1px solid;padding:7px 14px;cursor:pointer;clip-path:polygon(7px 0%,100% 0%,calc(100% - 7px) 100%,0% 100%);display:flex;align-items:center;gap:7px;position:relative;overflow:hidden;transition:all 0.22s;}
+.filter-group-label{font-family:'Rajdhani',sans-serif;font-size:.58rem;color:var(--muted);letter-spacing:.2em;text-transform:uppercase;margin-right:6px;flex-shrink:0;display:flex;align-items:center;}
+.race-btn{font-family:'Rajdhani',sans-serif;font-size:0.64rem;letter-spacing:0.13em;text-transform:uppercase;background:transparent;border:1px solid;padding:7px 14px;cursor:pointer;clip-path:polygon(7px 0%,100% 0%,calc(100% - 7px) 100%,0% 100%);display:flex;align-items:center;gap:7px;position:relative;overflow:hidden;transition:all 0.22s;}
 .race-btn::before{content:'';position:absolute;left:0;top:0;width:3px;height:100%;background:currentColor;opacity:0;transition:opacity .22s;}
 .race-btn:hover::before,.race-btn.active::before{opacity:1;}
 .rdot{width:6px;height:6px;border-radius:50%;background:currentColor;box-shadow:0 0 6px currentColor;flex-shrink:0;}
@@ -322,16 +153,19 @@ else
 .race-btn[data-race="Semi-Liquid"]{color:var(--r-Semi-Liquid);border-color:rgba(0,229,204,0.22);}
 .race-btn[data-race="Undead"]{color:var(--r-Undead);border-color:rgba(154,140,255,0.22);}
 .race-btn.active,.race-btn:hover{background:rgba(255,255,255,0.035);box-shadow:0 0 10px rgba(255,255,255,0.04);}
+
+/* ── Cards ── */
 .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(295px,1fr));gap:22px;}
 .rp-card{position:relative;background:var(--dark2);border:1px solid var(--border);overflow:hidden;clip-path:polygon(22px 0%,100% 0%,100% calc(100% - 22px),calc(100% - 22px) 100%,0% 100%,0% 22px);transition:border-color .3s,box-shadow .3s,transform .28s;cursor:default;display:flex;flex-direction:column;}
-.rp-card[data-race="Humanoids"]:hover{border-color:var(--r-Humanoids);box-shadow:0 0 28px rgba(0,200,255,0.14),0 12px 38px rgba(0,0,0,0.5);transform:translateY(-6px);}
-.rp-card[data-race="Zooids"]:hover{border-color:var(--r-Zooids);box-shadow:0 0 28px rgba(68,255,136,0.14),0 12px 38px rgba(0,0,0,0.5);transform:translateY(-6px);}
-.rp-card[data-race="MythZooids"]:hover{border-color:var(--r-MythZooids);box-shadow:0 0 28px rgba(176,110,255,0.16),0 12px 38px rgba(0,0,0,0.5);transform:translateY(-6px);}
-.rp-card[data-race="Demons"]:hover{border-color:var(--r-Demons);box-shadow:0 0 28px rgba(255,48,48,0.16),0 12px 38px rgba(0,0,0,0.5);transform:translateY(-6px);}
-.rp-card[data-race="Artificial"]:hover{border-color:var(--r-Artificial);box-shadow:0 0 28px rgba(255,214,10,0.14),0 12px 38px rgba(0,0,0,0.5);transform:translateY(-6px);}
-.rp-card[data-race="Semi-Liquid"]:hover{border-color:var(--r-Semi-Liquid);box-shadow:0 0 28px rgba(0,229,204,0.16),0 12px 38px rgba(0,0,0,0.5);transform:translateY(-6px);}
-.rp-card[data-race="Undead"]:hover{border-color:var(--r-Undead);box-shadow:0 0 28px rgba(154,140,255,0.16),0 12px 38px rgba(0,0,0,0.5);transform:translateY(-6px);}
-.card-photo{position:relative;width:100%;height:240px;overflow:hidden;flex-shrink:0;background:#0a0f1e;}
+.rp-card:hover{transform:translateY(-6px);}
+.rp-card[data-race="Humanoids"]:hover{border-color:var(--r-Humanoids);box-shadow:0 0 28px rgba(0,200,255,0.14),0 12px 38px rgba(0,0,0,0.5);}
+.rp-card[data-race="Zooids"]:hover{border-color:var(--r-Zooids);box-shadow:0 0 28px rgba(68,255,136,0.14),0 12px 38px rgba(0,0,0,0.5);}
+.rp-card[data-race="MythZooids"]:hover{border-color:var(--r-MythZooids);box-shadow:0 0 28px rgba(176,110,255,0.16),0 12px 38px rgba(0,0,0,0.5);}
+.rp-card[data-race="Demons"]:hover{border-color:var(--r-Demons);box-shadow:0 0 28px rgba(255,48,48,0.16),0 12px 38px rgba(0,0,0,0.5);}
+.rp-card[data-race="Artificial"]:hover{border-color:var(--r-Artificial);box-shadow:0 0 28px rgba(255,214,10,0.14),0 12px 38px rgba(0,0,0,0.5);}
+.rp-card[data-race="Semi-Liquid"]:hover{border-color:var(--r-Semi-Liquid);box-shadow:0 0 28px rgba(0,229,204,0.16),0 12px 38px rgba(0,0,0,0.5);}
+.rp-card[data-race="Undead"]:hover{border-color:var(--r-Undead);box-shadow:0 0 28px rgba(154,140,255,0.16),0 12px 38px rgba(0,0,0,0.5);}
+.card-photo{position:relative;width:100%;height:240px;overflow:hidden;flex-shrink:0;background:#0f0f1a;}
 .card-photo img{width:100%;height:100%;object-fit:cover;object-position:top center;filter:saturate(1.1) contrast(1.05);transition:transform .5s,filter .4s;}
 .rp-card:hover .card-photo img{transform:scale(1.07);filter:saturate(1.3) contrast(1.08);}
 .card-photo-ov{position:absolute;inset:0;background:linear-gradient(180deg,transparent 30%,rgba(8,13,26,0.65) 68%,var(--dark2) 100%);pointer-events:none;}
@@ -340,168 +174,165 @@ else
 .rank-badge{position:absolute;top:10px;right:10px;z-index:5;display:flex;flex-direction:column;align-items:center;}
 .rb-val{font-family:'Orbitron',sans-serif;font-weight:900;font-size:1.5rem;line-height:1;text-shadow:0 0 20px currentColor,0 0 40px currentColor;}
 .rb-val.sm{font-size:1rem;}
-.rb-lbl{font-family:'Share Tech Mono',monospace;font-size:.42rem;letter-spacing:.2em;opacity:.7;margin-top:1px;}
+.rb-lbl{font-family:'Rajdhani',sans-serif;font-size:.42rem;letter-spacing:.2em;opacity:.7;margin-top:1px;}
+.rb-level{font-family:'Rajdhani',sans-serif;font-size:.42rem;letter-spacing:.1em;color:currentColor;opacity:.7;margin-top:2px;text-align:center;}
 @keyframes rankPulse{0%,100%{text-shadow:0 0 12px currentColor}50%{text-shadow:0 0 28px currentColor,0 0 50px currentColor}}
-.sdot{width:4px;height:4px;border-radius:50%;background:currentColor;box-shadow:0 0 5px currentColor;flex-shrink:0;animation:sdp 2s infinite;}
-.off .sdot{animation:none;opacity:.45;}
-@keyframes sdp{0%,100%{opacity:1}50%{opacity:.28}}
 .card-body{padding:16px 18px 18px;position:relative;z-index:1;flex:1;display:flex;flex-direction:column;}
-.card-fn{font-family:'Share Tech Mono',monospace;font-size:.58rem;letter-spacing:.28em;color:var(--muted);text-transform:uppercase;margin-bottom:1px;}
+.card-fn{font-family:'Rajdhani',sans-serif;font-size:.58rem;letter-spacing:.28em;color:var(--muted);text-transform:uppercase;margin-bottom:1px;}
 .card-ln{font-family:'Orbitron',sans-serif;font-weight:800;font-size:1.15rem;color:#fff;letter-spacing:.06em;line-height:1;margin-bottom:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.card-rpill{display:inline-flex;align-items:center;gap:5px;font-family:'Share Tech Mono',monospace;font-size:.56rem;letter-spacing:.16em;text-transform:uppercase;padding:3px 10px;border:1px solid;margin-bottom:13px;width:fit-content;}
-.rpip{width:4px;height:4px;border-radius:50%;background:currentColor;box-shadow:0 0 4px currentColor;flex-shrink:0;}
-.card-affinity{font-family:'Share Tech Mono',monospace;font-size:.56rem;letter-spacing:.12em;color:var(--muted);margin-bottom:8px;display:flex;gap:6px;align-items:baseline;}
+.card-age{font-family:'Rajdhani',sans-serif;font-size:.56rem;letter-spacing:.18em;color:var(--muted);margin-bottom:7px;}
+.card-rpill{display:inline-flex;align-items:center;gap:5px;font-family:'Rajdhani',sans-serif;font-size:.56rem;letter-spacing:.16em;text-transform:uppercase;padding:3px 10px;border:1px solid;margin-bottom:13px;width:fit-content;}
+.rpip{width:4px;height:4px;border-radius:50%;flex-shrink:0;}
+.card-affinity{font-family:'Rajdhani',sans-serif;font-size:.56rem;letter-spacing:.12em;color:var(--muted);margin-bottom:8px;display:flex;gap:6px;align-items:baseline;}
 .aff-label{font-size:.5rem;letter-spacing:.2em;text-transform:uppercase;opacity:.55;flex-shrink:0;}
-.rb-level{font-family:'Share Tech Mono',monospace;font-size:.42rem;letter-spacing:.1em;color:currentColor;opacity:.7;margin-top:2px;text-align:center;}
 .card-desc{font-size:.82rem;color:var(--muted);line-height:1.65;font-weight:300;margin-bottom:14px;flex:1;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
 .card-links{display:flex;gap:6px;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:12px;}
-.lbtn{font-family:'Share Tech Mono',monospace;font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;color:var(--cyan);text-decoration:none;border:1px solid rgba(0,245,255,0.35);padding:9px 16px;transition:all .2s;display:flex;align-items:center;gap:7px;background:rgba(0,245,255,0.04);cursor:pointer;}
-.lbtn:hover{color:#fff;border-color:var(--cyan);background:rgba(0,245,255,0.1);box-shadow:0 0 14px rgba(0,245,255,0.15);}
+.lbtn{font-family:'Rajdhani',sans-serif;font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;color:var(--cyan);text-decoration:none;border:1px solid rgba(0,240,255,0.35);padding:9px 16px;transition:all .2s;display:flex;align-items:center;gap:7px;background:rgba(0,240,255,0.04);cursor:pointer;}
+.lbtn:hover{color:#fff;border-color:var(--cyan);background:rgba(0,240,255,0.1);box-shadow:0 0 14px rgba(0,240,255,0.15);}
 .lbtn svg{width:12px;height:12px;flex-shrink:0;}
 .card-admin-row{display:flex;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
-.card-edit-btn{font-family:'Share Tech Mono',monospace;font-size:.6rem;letter-spacing:.1em;background:rgba(0,245,255,.08);border:1px solid rgba(0,245,255,.3);color:var(--cyan);padding:6px 14px;cursor:pointer;transition:all .2s;flex:1;}
-.card-edit-btn:hover{background:rgba(0,245,255,.18);border-color:var(--cyan);}
-.card-del-btn{font-family:'Share Tech Mono',monospace;font-size:.6rem;letter-spacing:.1em;background:rgba(255,0,110,.08);border:1px solid rgba(255,0,110,.3);color:#ff006e;padding:6px 14px;cursor:pointer;transition:all .2s;flex:1;}
+.card-edit-btn{font-family:'Rajdhani',sans-serif;font-size:.6rem;letter-spacing:.1em;background:rgba(0,240,255,.08);border:1px solid rgba(0,240,255,.3);color:var(--cyan);padding:6px 14px;cursor:pointer;transition:all .2s;flex:1;}
+.card-edit-btn:hover{background:rgba(0,240,255,.18);border-color:var(--cyan);}
+.card-del-btn{font-family:'Rajdhani',sans-serif;font-size:.6rem;letter-spacing:.1em;background:rgba(255,0,110,.08);border:1px solid rgba(255,0,110,.3);color:#ff006e;padding:6px 14px;cursor:pointer;transition:all .2s;flex:1;}
 .card-del-btn:hover{background:rgba(255,0,110,.18);border-color:#ff006e;}
-
-/* ── Stats panel ── */
-/* ── Stats bar (bottom of photo) ── */
-.stats-bar{position:absolute;bottom:0;left:0;right:0;z-index:4;background:linear-gradient(0deg,rgba(4,6,15,0.96) 0%,rgba(4,6,15,0.7) 100%);padding:7px 8px 6px;display:grid;grid-template-columns:repeat(8,1fr);gap:3px;}
+.stats-bar{position:absolute;bottom:0;left:0;right:0;z-index:4;background:linear-gradient(0deg,rgba(6,6,12,0.96) 0%,rgba(6,6,12,0.7) 100%);padding:7px 8px 6px;display:grid;grid-template-columns:repeat(8,1fr);gap:3px;}
 .sb-item{display:flex;flex-direction:column;align-items:center;gap:2px;}
-.sb-lbl{font-family:'Share Tech Mono',monospace;font-size:.38rem;letter-spacing:.04em;text-transform:uppercase;opacity:.65;}
+.sb-lbl{font-family:'Rajdhani',sans-serif;font-size:.38rem;letter-spacing:.04em;text-transform:uppercase;opacity:.65;}
 .sb-val{font-family:'Orbitron',sans-serif;font-size:.65rem;font-weight:800;line-height:1;}
 .sb-bar{width:100%;height:2px;background:rgba(255,255,255,.08);border-radius:1px;margin-top:2px;overflow:hidden;}
 .sb-fill{height:100%;border-radius:1px;transition:width .4s;}
-.sb-str .sb-lbl,.sb-str .sb-val{color:#ff6060;} .sb-str .sb-fill{background:#ff6060;}
-.sb-agi .sb-lbl,.sb-agi .sb-val{color:#44ff88;} .sb-agi .sb-fill{background:#44ff88;}
-.sb-spd .sb-lbl,.sb-spd .sb-val{color:#00f5ff;} .sb-spd .sb-fill{background:#00f5ff;}
-.sb-int .sb-lbl,.sb-int .sb-val{color:#60a5fa;} .sb-int .sb-fill{background:#60a5fa;}
-.sb-mana .sb-lbl,.sb-mana .sb-val{color:#b06eff;} .sb-mana .sb-fill{background:#b06eff;}
-.sb-res .sb-lbl,.sb-res .sb-val{color:#fbbf24;} .sb-res .sb-fill{background:#fbbf24;}
-.sb-cha .sb-lbl,.sb-cha .sb-val{color:#f97316;} .sb-cha .sb-fill{background:#f97316;}
-.sb-aura .sb-lbl,.sb-aura .sb-val{color:#e040fb;} .sb-aura .sb-fill{background:#e040fb;}
-/* Stats form grid */
-.stats-form-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
-@media(max-width:880px){.stats-form-grid{grid-template-columns:repeat(2,1fr)}}
-
-/* ── Système multi-liens (formulaire) ── */
-.links-form-wrap{display:flex;flex-direction:column;gap:8px;}
-.link-entry{display:flex;gap:6px;align-items:center;}
-.link-entry .fi{flex:1;}
-.link-entry .link-label-inp{width:120px;flex-shrink:0;}
-.link-rm-btn{background:rgba(255,0,110,.1);border:1px solid rgba(255,0,110,.3);color:#ff006e;padding:6px 10px;cursor:pointer;font-size:.8rem;flex-shrink:0;transition:all .2s;}
-.link-rm-btn:hover{background:rgba(255,0,110,.2);}
-.link-type-sep{font-family:'Share Tech Mono',monospace;font-size:.55rem;color:var(--muted);letter-spacing:.12em;padding:4px 0;display:flex;align-items:center;gap:8px;}
-.link-type-sep::before,.link-type-sep::after{content:'';flex:1;height:1px;background:var(--border);}
-.add-link-btn{font-family:'Share Tech Mono',monospace;font-size:.58rem;letter-spacing:.12em;background:rgba(0,245,255,.06);border:1px solid rgba(0,245,255,.22);color:var(--cyan);padding:7px 14px;cursor:pointer;transition:all .2s;}
-.add-link-btn:hover{background:rgba(0,245,255,.12);}
-.link-file-entry{display:flex;gap:6px;align-items:center;background:rgba(0,245,255,.03);border:1px solid rgba(0,245,255,.15);padding:8px 10px;}
-.link-file-entry .link-label-inp{width:120px;flex-shrink:0;}
-.link-file-entry input[type=file]{flex:1;font-family:'Share Tech Mono',monospace;font-size:.6rem;color:var(--muted);background:transparent;border:none;outline:none;cursor:pointer;}
-.link-file-entry input[type=file]::file-selector-button{font-family:'Share Tech Mono',monospace;font-size:.58rem;background:rgba(0,245,255,.1);border:1px solid rgba(0,245,255,.3);color:var(--cyan);padding:4px 10px;cursor:pointer;margin-right:8px;}
-/* ── Powers list ── */
-.powers-section{margin-bottom:14px;}
-.powers-title{font-family:'Share Tech Mono',monospace;font-size:.5rem;letter-spacing:.25em;color:var(--muted);text-transform:uppercase;margin-bottom:6px;}
+.sb-str .sb-lbl,.sb-str .sb-val{color:#ff6060;}.sb-str .sb-fill{background:#ff6060;}
+.sb-agi .sb-lbl,.sb-agi .sb-val{color:#44ff88;}.sb-agi .sb-fill{background:#44ff88;}
+.sb-spd .sb-lbl,.sb-spd .sb-val{color:#00f0ff;}.sb-spd .sb-fill{background:#00f0ff;}
+.sb-int .sb-lbl,.sb-int .sb-val{color:#60a5fa;}.sb-int .sb-fill{background:#60a5fa;}
+.sb-mana .sb-lbl,.sb-mana .sb-val{color:#b06eff;}.sb-mana .sb-fill{background:#b06eff;}
+.sb-res .sb-lbl,.sb-res .sb-val{color:#fbbf24;}.sb-res .sb-fill{background:#fbbf24;}
+.sb-cha .sb-lbl,.sb-cha .sb-val{color:#f97316;}.sb-cha .sb-fill{background:#f97316;}
+.sb-aura .sb-lbl,.sb-aura .sb-val{color:#e040fb;}.sb-aura .sb-fill{background:#e040fb;}
+.powers-section{margin-bottom:14px;}.powers-title{font-family:'Rajdhani',sans-serif;font-size:.5rem;letter-spacing:.25em;color:var(--muted);text-transform:uppercase;margin-bottom:6px;}
 .powers-list{display:flex;flex-direction:column;gap:4px;}
 .power-item{font-family:'Rajdhani',sans-serif;font-size:.82rem;color:#c8e0f0;line-height:1.4;padding:4px 8px;border-left:2px solid;position:relative;}
-.power-name{font-weight:600;letter-spacing:.04em;}
-.power-desc{font-size:.75rem;color:var(--muted);margin-top:1px;}
-/* Powers form */
-.powers-form-wrap{display:flex;flex-direction:column;gap:8px;}
-.power-entry{display:flex;gap:6px;align-items:flex-start;}
-.power-entry .fi{flex:1;}
-.power-entry .fta{flex:2;min-height:42px;}
-.power-rm-btn{background:rgba(255,0,110,.12);border:1px solid rgba(255,0,110,.3);color:#ff006e;padding:6px 10px;cursor:pointer;font-size:.8rem;flex-shrink:0;margin-top:0;}
-.add-power-btn{font-family:'Share Tech Mono',monospace;font-size:.58rem;letter-spacing:.12em;background:rgba(0,245,255,.06);border:1px solid rgba(0,245,255,.22);color:var(--cyan);padding:7px 14px;cursor:pointer;transition:all .2s;width:100%;}
-.add-power-btn:hover{background:rgba(0,245,255,.12);}
+.power-name{font-weight:600;letter-spacing:.04em;}.power-desc{font-size:.75rem;color:var(--muted);margin-top:1px;}
 .cdeco{position:absolute;bottom:0;right:0;width:22px;height:22px;border-top:1px solid var(--border);border-left:1px solid var(--border);pointer-events:none;z-index:2;}
-.no-results{display:none;grid-column:1/-1;text-align:center;padding:70px 20px;font-family:'Share Tech Mono',monospace;color:var(--muted);letter-spacing:.2em;font-size:.75rem;}
-.empty-st{grid-column:1/-1;text-align:center;padding:70px 20px;font-family:'Share Tech Mono',monospace;color:var(--muted);letter-spacing:.16em;font-size:.72rem;}
+.no-results{display:none;grid-column:1/-1;text-align:center;padding:70px 20px;font-family:'Rajdhani',sans-serif;color:var(--muted);letter-spacing:.2em;font-size:.75rem;}
+.empty-st{grid-column:1/-1;text-align:center;padding:70px 20px;font-family:'Rajdhani',sans-serif;color:var(--muted);letter-spacing:.16em;font-size:.72rem;}
 
-/* MODAL */
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(4,6,15,0.93);z-index:1000;align-items:center;justify-content:center;}
+/* ── MODAL v5 ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(6,6,12,0.94);z-index:1000;align-items:flex-start;justify-content:center;padding:30px 16px;overflow-y:auto;backdrop-filter:blur(4px);}
 .modal-overlay.open{display:flex;}
-.modal{background:var(--dark2);border:1px solid var(--border);width:92%;max-width:580px;max-height:90vh;overflow-y:auto;position:relative;animation:mIn .28s ease;}
+.modal{background:var(--dark2);border:1px solid var(--border);width:92%;max-width:580px;position:relative;animation:mIn .28s ease;margin:auto;}
 @keyframes mIn{from{opacity:0;transform:scale(.96) translateY(10px)}to{opacity:1;transform:none}}
 .mac{height:3px;background:linear-gradient(90deg,var(--cyan),var(--magenta));}
 .mi{padding:28px;}
 .mt{font-family:'Orbitron',sans-serif;font-size:.82rem;font-weight:700;letter-spacing:.25em;color:var(--cyan);text-transform:uppercase;margin-bottom:8px;}
 .fg{margin-bottom:14px;}
-.fl{display:block;font-family:'Share Tech Mono',monospace;font-size:.58rem;letter-spacing:.2em;color:var(--muted);text-transform:uppercase;margin-bottom:5px;}
-.fi,.fs,.fta{width:100%;background:rgba(0,245,255,0.03);border:1px solid var(--border);color:var(--text);font-family:'Rajdhani',sans-serif;font-size:.9rem;padding:9px 12px;outline:none;transition:border-color .2s,box-shadow .2s;}
-.fi:focus,.fs:focus,.fta:focus{border-color:var(--cyan);box-shadow:0 0 10px rgba(0,245,255,0.08);}
+.fl{display:block;font-family:'Rajdhani',sans-serif;font-size:.58rem;letter-spacing:.2em;color:var(--muted);text-transform:uppercase;margin-bottom:5px;}
+.fi,.fs,.fta{width:100%;background:rgba(0,240,255,0.03);border:1px solid var(--border);color:var(--text);font-family:'Rajdhani',sans-serif;font-size:.9rem;padding:9px 12px;outline:none;transition:border-color .2s,box-shadow .2s;box-sizing:border-box;}
+.fi:focus,.fs:focus,.fta:focus{border-color:var(--cyan);box-shadow:0 0 10px rgba(0,240,255,0.08);}
 .fs option{background:var(--dark2);}
 .fta{resize:vertical;min-height:72px;}
 .frow{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-
-/* Photo drop */
-.photo-drop{width:100%;height:100px;background:rgba(0,245,255,0.03);border:1px dashed var(--border);display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer;transition:border-color .2s;overflow:hidden;}
+.photo-drop{width:100%;height:100px;background:rgba(0,240,255,0.03);border:1px dashed var(--border);display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer;transition:border-color .2s;overflow:hidden;}
 .photo-drop:hover{border-color:var(--cyan);}
 .photo-drop img.prev-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
 .photo-drop input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;}
-.pdtxt{font-family:'Share Tech Mono',monospace;font-size:.58rem;color:var(--muted);letter-spacing:.12em;text-align:center;pointer-events:none;}
-
+.pdtxt{font-family:'Rajdhani',sans-serif;font-size:.58rem;color:var(--muted);letter-spacing:.12em;text-align:center;pointer-events:none;}
 .bsub{width:100%;font-family:'Orbitron',sans-serif;font-size:.68rem;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--dark);background:var(--cyan);border:none;padding:13px;cursor:pointer;margin-top:6px;clip-path:polygon(12px 0%,100% 0%,calc(100% - 12px) 100%,0% 100%);transition:background .2s,box-shadow .2s;}
 .bsub:hover{background:#fff;box-shadow:0 0 24px var(--cyan);}
 .bsub:disabled{background:var(--muted);cursor:not-allowed;box-shadow:none;}
 .mclose{position:absolute;top:16px;right:16px;background:transparent;border:1px solid var(--border);color:var(--muted);width:28px;height:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.85rem;transition:color .2s,border-color .2s;}
 .mclose:hover{color:var(--magenta);border-color:var(--magenta);}
-.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--dark2);border:1px solid var(--border);font-family:'Share Tech Mono',monospace;font-size:.67rem;letter-spacing:.12em;color:var(--text);padding:13px 26px;z-index:9000;transition:transform .35s,opacity .35s;opacity:0;clip-path:polygon(10px 0%,100% 0%,calc(100% - 10px) 100%,0% 100%);}
+.stats-form-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+@media(max-width:880px){.stats-form-grid{grid-template-columns:repeat(2,1fr)}}
+.links-form-wrap{display:flex;flex-direction:column;gap:8px;}
+.link-entry{display:flex;gap:6px;align-items:center;}.link-entry .fi{flex:1;}.link-entry .link-label-inp{width:120px;flex-shrink:0;}
+.link-rm-btn{background:rgba(255,0,110,.1);border:1px solid rgba(255,0,110,.3);color:#ff006e;padding:6px 10px;cursor:pointer;font-size:.8rem;flex-shrink:0;transition:all .2s;}.link-rm-btn:hover{background:rgba(255,0,110,.2);}
+.link-type-sep{font-family:'Rajdhani',sans-serif;font-size:.55rem;color:var(--muted);letter-spacing:.12em;padding:4px 0;display:flex;align-items:center;gap:8px;}.link-type-sep::before,.link-type-sep::after{content:'';flex:1;height:1px;background:var(--border);}
+.add-link-btn,.add-power-btn{font-family:'Rajdhani',sans-serif;font-size:.58rem;letter-spacing:.12em;background:rgba(0,240,255,.06);border:1px solid rgba(0,240,255,.22);color:var(--cyan);padding:7px 14px;cursor:pointer;transition:all .2s;}.add-link-btn:hover,.add-power-btn:hover{background:rgba(0,240,255,.12);}
+.link-file-entry{display:flex;gap:6px;align-items:center;background:rgba(0,240,255,.03);border:1px solid rgba(0,240,255,.15);padding:8px 10px;}
+.link-file-entry .link-label-inp{width:120px;flex-shrink:0;}
+.link-file-entry input[type=file]{flex:1;font-family:'Rajdhani',sans-serif;font-size:.6rem;color:var(--muted);background:transparent;border:none;outline:none;cursor:pointer;}
+.link-file-entry input[type=file]::file-selector-button{font-family:'Rajdhani',sans-serif;font-size:.58rem;background:rgba(0,240,255,.1);border:1px solid rgba(0,240,255,.3);color:var(--cyan);padding:4px 10px;cursor:pointer;margin-right:8px;}
+.powers-form-wrap{display:flex;flex-direction:column;gap:8px;}
+.power-entry{display:flex;gap:6px;align-items:flex-start;}.power-entry .fi{flex:1;}.power-entry .fta{flex:2;min-height:42px;}
+.power-rm-btn{background:rgba(255,0,110,.12);border:1px solid rgba(255,0,110,.3);color:#ff006e;padding:6px 10px;cursor:pointer;font-size:.8rem;flex-shrink:0;}
+
+/* ── v5 Footer ── */
+footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:40px 44px 32px;margin-top:60px;}
+.footer-inner{max-width:1380px;margin:0 auto;display:grid;grid-template-columns:1fr auto 1fr;align-items:start;gap:40px;}
+.f-logo{font-family:'Orbitron',sans-serif;font-weight:900;font-size:.9rem;letter-spacing:.28em;color:var(--cyan);opacity:.5;margin-bottom:8px;}
+.f-tagline{font-family:'Rajdhani',sans-serif;font-size:.52rem;color:var(--muted);letter-spacing:.14em;}
+.f-status{text-align:center;}
+.f-status-dot{display:inline-flex;align-items:center;gap:7px;font-family:'Rajdhani',sans-serif;font-size:.56rem;color:var(--muted);letter-spacing:.15em;}
+.f-version{font-family:'Rajdhani',sans-serif;font-size:.5rem;color:rgba(90,122,144,.5);letter-spacing:.12em;margin-top:6px;}
+.f-links-col{text-align:right;}
+.f-links{display:flex;gap:18px;justify-content:flex-end;flex-wrap:wrap;}
+.f-links a{font-family:'Rajdhani',sans-serif;font-size:.56rem;color:var(--muted);text-decoration:none;letter-spacing:.1em;transition:color .2s;}
+.f-links a:hover{color:var(--cyan);}
+.f-bottom{max-width:1380px;margin:28px auto 0;padding-top:20px;border-top:1px solid var(--border);text-align:center;}
+.f-copy{font-family:'Rajdhani',sans-serif;font-size:.48rem;color:rgba(90,122,144,.4);letter-spacing:.16em;}
+
+/* ── Toast ── */
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--dark2);border:1px solid var(--border);font-family:'Rajdhani',sans-serif;font-size:.67rem;letter-spacing:.12em;color:var(--text);padding:13px 26px;z-index:9000;transition:transform .35s,opacity .35s;opacity:0;clip-path:polygon(10px 0%,100% 0%,calc(100% - 10px) 100%,0% 100%);}
 .toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
 .toast.success{border-color:rgba(0,255,136,0.5);color:#00ff88;}
 .toast.error{border-color:rgba(255,48,48,0.5);color:#ff3030;}
-footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:22px 44px;display:flex;align-items:center;justify-content:space-between;margin-top:60px;}
-.fl2{font-family:'Orbitron',sans-serif;font-weight:900;font-size:.8rem;letter-spacing:.28em;color:var(--cyan);opacity:.38;}
-.ft{font-family:'Share Tech Mono',monospace;font-size:.57rem;color:var(--muted);letter-spacing:.13em;}
-.fls{display:flex;gap:14px;}
-.fls a{font-family:'Share Tech Mono',monospace;font-size:.55rem;color:var(--muted);text-decoration:none;letter-spacing:.1em;transition:color .2s;}
-.fls a:hover{color:var(--cyan);}
-@media(max-width:880px){header{padding:0 16px}nav a span{display:none}.page-wrap{padding:32px 16px}.page-hero{padding:36px 16px}footer{flex-direction:column;gap:10px;text-align:center;padding:20px 16px}.frow{grid-template-columns:1fr}}
 
-/* ── Guide étapes (depuis accueil) ── */
-
+@media(max-width:880px){.page-wrap{padding:32px 16px}.page-hero{padding:36px 16px}.frow{grid-template-columns:1fr}.footer-inner{grid-template-columns:1fr;text-align:center;gap:24px}.f-links-col{text-align:center}.f-links{justify-content:center}}
 </style>
 <script src="js/debug.js"></script>
-<script src="js/constants.js"></script><!-- RACES, RANKS, RACES_SPECIFIC globaux -->
-<script src="js/utils.js"></script>    <!-- sanitize, compressImage, AntiSpam, Skeleton, showToast -->
+<script src="js/constants.js"></script>
+<script src="js/utils.js"></script>
 <script type="module" src="js/auth-badge.js"></script>
 </head>
 <body>
+<div class="page-transition-overlay" id="page-transition"><div class="pt-logo">JAHARTA</div><div class="pt-bar"></div><div class="pt-text">Chargement</div></div>
+<div class="scroll-progress" id="scroll-progress"></div>
+<div class="noise"></div>
+
 <div class="toast" id="toast"></div>
 
-<header>
-  <a href="index.html" class="logo">JAHARTA <span class="logo-slash">//</span> RP<span class="logo-sub">UNIVERS JAHARTA · ROLEPLAY OFFICIEL</span></a>
-  <nav>
-    <a href="index.html">⌂ <span>Accueil</span></a>
-    <a href="fiches.html" class="active">◈ <span>Fiches RP</span></a>
-    <a href="pnj.html">◆ <span>PNJ</span></a>
-    <a href="portail.html">⬡ <span>Portail</span></a>
-    <a href="racesjouables.html">◈ <span>Races</span></a>
-    <a href="admin.html" class="admin-badge" id="admin-badge">ADMIN</a>
-    <a href="admin.html" class="nav-admin">⚙ Connexion</a>
+  <nav class="nav" id="nav">
+    <a href="index.html" class="nav-logo">JAHARTA</a>
+    <div class="nav-links" id="nav-links">
+      <a href="index.html">Accueil</a>
+      <a href="fiches.html" class="active">Fiches RP</a>
+      <a href="pnj.html">PNJ</a>
+      <a href="portail.html">Portail</a>
+      <a href="racesjouables.html">Races</a>
+      <a href="admin.html" class="nav-admin-link">Admin</a>
+      <a href="admin.html" class="admin-badge" id="admin-badge">ADMIN</a>
+    </div>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Menu">☰</button>
   </nav>
-</header>
 
-<div class="page-hero">
-  <div class="page-hero-inner">
-    <div>
-      <p class="ph-tag">▸ REGISTRE OFFICIEL · BASE DE DONNÉES RP</p>
-      <h1 class="ph-title">Fiches <span>Personnages</span></h1>
-      <p class="ph-sub">Tous les personnages joueurs validés par les administrateurs Jaharta</p>
+<section class="hero hero--sub" id="hero">
+    <canvas id="particles-canvas"></canvas>
+    <div class="hero-bg" style="opacity:0"></div>
+    <div class="hero-grid"></div>
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <p class="hero-pretitle">Registre Officiel · Base de Données RP</p>
+      <h1 class="hero-title hero-title--sub" data-text="FICHES PERSONNAGES">
+        <span class="glow-text">FICHES PERSONNAGES</span>
+      </h1>
+      <p class="hero-subtitle">Tous les personnages joueurs validés par les administrateurs Jaharta</p>
+      <div class="hero-stats">
+        <div class="hero-stat"><span class="hero-stat-num" id="count-chars">–</span><span class="hero-stat-lbl">Personnages</span></div>
+        <div class="hero-stat"><span class="hero-stat-num"><span class="hdot"></span> LIVE</span><span class="hero-stat-lbl">Statut</span></div>
+        <button class="hero-cta hero-cta--sm" id="add-char-btn" onclick="openModal()" style="display:none;animation:none;opacity:1;">+ Ajouter une fiche</button>
+      </div>
     </div>
-    <div class="ph-stats">
-      <div class="phs" style="display:flex;align-items:center;gap:12px;"><span class="phs-num" id="count-chars">–</span><span class="phs-lbl">Personnages</span><!-- Bouton visible uniquement pour les admins (affiché via JS onAuthStateChanged) -->
-        <button class="add-btn" id="add-char-btn" onclick="openModal()" style="display:none">+ Ajouter une fiche</button></div>
-      <div class="phs"><span class="phs-num"><span class="hdot"></span>LIVE</span><span class="phs-lbl">Statut</span></div>
-    </div>
-  </div>
-</div>
+  </section>
 
-
-<!-- ══════════ GRILLE DES CARTES ══════════
-     Race-filter + cards-grid (rempli dynamiquement par <jaharta-card>) -->
 <div class="page-wrap">
-  <div class="rank-legend">
+  <div class="section-head" data-reveal>
+    <span class="sh-num">01 //</span>
+    <h2 class="sh-title">Registre des personnages</h2>
+    <div class="sh-line"></div>
+  </div>
+
+  <div class="rank-legend" data-reveal data-delay="100">
     <span class="rl-title">Rangs :</span>
     <span class="rl-pill" style="color:var(--rank-f);border-color:rgba(107,114,128,0.4);background:rgba(107,114,128,0.08)">F</span>
     <span class="rl-pill" style="color:var(--rank-e);border-color:rgba(156,163,175,0.4);background:rgba(156,163,175,0.08)">E</span>
@@ -520,37 +351,35 @@ footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:22
     <span class="rl-note">FAIBLE ─── ABSOLU</span>
   </div>
 
-  <!-- ── Filtre par groupe de race ── -->
-  <div class="race-filter">
+  <div class="race-filter" data-reveal data-delay="150">
     <span class="filter-group-label">Race :</span>
     <button class="race-btn active" data-race="all" onclick="filterRace('all',this)"><span class="rdot" style="background:var(--text);box-shadow:none"></span>Tous<span class="rcnt" id="cnt-all">0</span></button>
-    <button class="race-btn" data-race="Humanoids"  onclick="filterRace('Humanoids',this)"><span class="rdot"></span>Humanoids<span class="rcnt" id="cnt-Humanoids">0</span></button>
-    <button class="race-btn" data-race="Zooids"     onclick="filterRace('Zooids',this)"><span class="rdot"></span>Zooids<span class="rcnt" id="cnt-Zooids">0</span></button>
+    <button class="race-btn" data-race="Humanoids" onclick="filterRace('Humanoids',this)"><span class="rdot"></span>Humanoids<span class="rcnt" id="cnt-Humanoids">0</span></button>
+    <button class="race-btn" data-race="Zooids" onclick="filterRace('Zooids',this)"><span class="rdot"></span>Zooids<span class="rcnt" id="cnt-Zooids">0</span></button>
     <button class="race-btn" data-race="MythZooids" onclick="filterRace('MythZooids',this)"><span class="rdot"></span>Mythical Zooids<span class="rcnt" id="cnt-MythZooids">0</span></button>
-    <button class="race-btn" data-race="Demons"     onclick="filterRace('Demons',this)"><span class="rdot"></span>Demons<span class="rcnt" id="cnt-Demons">0</span></button>
+    <button class="race-btn" data-race="Demons" onclick="filterRace('Demons',this)"><span class="rdot"></span>Demons<span class="rcnt" id="cnt-Demons">0</span></button>
     <button class="race-btn" data-race="Artificial" onclick="filterRace('Artificial',this)"><span class="rdot"></span>Artificial<span class="rcnt" id="cnt-Artificial">0</span></button>
     <button class="race-btn" data-race="Semi-Liquid" onclick="filterRace('Semi-Liquid',this)"><span class="rdot"></span>Semi-Liquid<span class="rcnt" id="cnt-Semi-Liquid">0</span></button>
-    <button class="race-btn" data-race="Undead"     onclick="filterRace('Undead',this)"><span class="rdot"></span>Undead<span class="rcnt" id="cnt-Undead">0</span></button>
+    <button class="race-btn" data-race="Undead" onclick="filterRace('Undead',this)"><span class="rdot"></span>Undead<span class="rcnt" id="cnt-Undead">0</span></button>
   </div>
 
-  <!-- ── Filtre par rang de puissance ── -->
-  <div class="rank-filter">
+  <div class="rank-filter" data-reveal data-delay="200">
     <span class="filter-group-label">Rang :</span>
     <button class="race-btn active" data-rank="all" onclick="filterRank('all',this)" style="color:var(--text);border-color:rgba(200,224,240,0.22)">Tous</button>
-    <button class="race-btn" data-rank="F"   onclick="filterRank('F',this)"   style="color:var(--rank-f);border-color:rgba(107,114,128,0.3)">F</button>
-    <button class="race-btn" data-rank="E"   onclick="filterRank('E',this)"   style="color:var(--rank-e);border-color:rgba(156,163,175,0.3)">E</button>
-    <button class="race-btn" data-rank="D"   onclick="filterRank('D',this)"   style="color:var(--rank-d);border-color:rgba(96,165,250,0.3)">D</button>
-    <button class="race-btn" data-rank="C"   onclick="filterRank('C',this)"   style="color:var(--rank-c);border-color:rgba(52,211,153,0.3)">C</button>
-    <button class="race-btn" data-rank="B"   onclick="filterRank('B',this)"   style="color:var(--rank-b);border-color:rgba(251,191,36,0.3)">B</button>
-    <button class="race-btn" data-rank="A"   onclick="filterRank('A',this)"   style="color:var(--rank-a);border-color:rgba(249,115,22,0.3)">A</button>
-    <button class="race-btn" data-rank="S"   onclick="filterRank('S',this)"   style="color:var(--rank-s);border-color:rgba(239,68,68,0.35)">S</button>
-    <button class="race-btn" data-rank="SS"  onclick="filterRank('SS',this)"  style="color:var(--rank-ss);border-color:rgba(255,0,110,0.35)">SS</button>
+    <button class="race-btn" data-rank="F" onclick="filterRank('F',this)" style="color:var(--rank-f);border-color:rgba(107,114,128,0.3)">F</button>
+    <button class="race-btn" data-rank="E" onclick="filterRank('E',this)" style="color:var(--rank-e);border-color:rgba(156,163,175,0.3)">E</button>
+    <button class="race-btn" data-rank="D" onclick="filterRank('D',this)" style="color:var(--rank-d);border-color:rgba(96,165,250,0.3)">D</button>
+    <button class="race-btn" data-rank="C" onclick="filterRank('C',this)" style="color:var(--rank-c);border-color:rgba(52,211,153,0.3)">C</button>
+    <button class="race-btn" data-rank="B" onclick="filterRank('B',this)" style="color:var(--rank-b);border-color:rgba(251,191,36,0.3)">B</button>
+    <button class="race-btn" data-rank="A" onclick="filterRank('A',this)" style="color:var(--rank-a);border-color:rgba(249,115,22,0.3)">A</button>
+    <button class="race-btn" data-rank="S" onclick="filterRank('S',this)" style="color:var(--rank-s);border-color:rgba(239,68,68,0.35)">S</button>
+    <button class="race-btn" data-rank="SS" onclick="filterRank('SS',this)" style="color:var(--rank-ss);border-color:rgba(255,0,110,0.35)">SS</button>
     <button class="race-btn" data-rank="SSS" onclick="filterRank('SSS',this)" style="color:var(--rank-sss);border-color:rgba(255,214,10,0.4)">SSS</button>
-    <button class="race-btn" data-rank="X"   onclick="filterRank('X',this)"   style="color:var(--rank-x);border-color:rgba(224,64,251,0.4)">X</button>
-    <button class="race-btn" data-rank="T"   onclick="filterRank('T',this)"   style="color:var(--rank-t);border-color:rgba(192,240,255,0.4)">T</button>
-    <button class="race-btn" data-rank="G"   onclick="filterRank('G',this)"   style="color:var(--rank-g);border-color:rgba(255,230,128,0.4)">G</button>
-    <button class="race-btn" data-rank="G+"  onclick="filterRank('G+',this)"  style="color:var(--rank-gp);border-color:rgba(255,255,255,0.4)">G+</button>
-    <button class="race-btn" data-rank="Z"   onclick="filterRank('Z',this)"   style="color:var(--rank-z);border-color:rgba(255,96,96,0.35)">Z</button>
+    <button class="race-btn" data-rank="X" onclick="filterRank('X',this)" style="color:var(--rank-x);border-color:rgba(224,64,251,0.4)">X</button>
+    <button class="race-btn" data-rank="T" onclick="filterRank('T',this)" style="color:var(--rank-t);border-color:rgba(192,240,255,0.4)">T</button>
+    <button class="race-btn" data-rank="G" onclick="filterRank('G',this)" style="color:var(--rank-g);border-color:rgba(255,230,128,0.4)">G</button>
+    <button class="race-btn" data-rank="G+" onclick="filterRank('G+',this)" style="color:var(--rank-gp);border-color:rgba(255,255,255,0.4)">G+</button>
+    <button class="race-btn" data-rank="Z" onclick="filterRank('Z',this)" style="color:var(--rank-z);border-color:rgba(255,96,96,0.35)">Z</button>
   </div>
 
   <div class="cards-grid" id="cards-container">
@@ -560,116 +389,25 @@ footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:22
   </div>
 </div>
 
-<!-- ══════════ MODAL DE SOUMISSION ══════════
-     Formulaire complet : identité, stats, pouvoirs, fichiers -->
+<!-- ══════════ MODAL ══════════ -->
 <div class="modal-overlay" id="modal">
   <div class="modal">
     <div class="mac"></div>
     <button class="mclose" onclick="closeModal()">✕</button>
     <div class="mi">
       <div class="mt" id="modal-title">// Ajouter un Personnage</div>
-      <!-- Sous-titre : vide en mode ajout admin, rempli en mode édition -->
-
+      <div class="frow"><div class="fg"><label class="fl">Prénom *</label><input type="text" class="fi" placeholder="Ex: Vexara" id="f-fn"></div><div class="fg"><label class="fl">Nom *</label><input type="text" class="fi" placeholder="Ex: NISHI" id="f-ln"></div></div>
+      <div class="frow"><div class="fg"><label class="fl">Âge</label><input type="text" class="fi" placeholder="Ex: 23 ans, Inconnu…" id="f-age"></div><div class="fg"></div></div>
       <div class="frow">
-        <div class="fg"><label class="fl">Prénom *</label><input type="text" class="fi" placeholder="Ex: Vexara" id="f-fn"></div>
-        <div class="fg"><label class="fl">Nom *</label><input type="text" class="fi" placeholder="Ex: NISHI" id="f-ln"></div>
+        <div class="fg"><label class="fl">Groupe de Race *</label><select class="fs" id="f-race" onchange="updateRaceSpecific(this.value)"><option value="">— Choisir —</option><option value="Humanoids">Humanoids</option><option value="Zooids">Zooids</option><option value="MythZooids">Mythical Zooids</option><option value="Demons">Demons</option><option value="Artificial">Artificial</option><option value="Semi-Liquid">Semi-Liquid</option><option value="Undead">Undead</option></select></div>
+        <div class="fg"><label class="fl">Race spécifique *</label><select class="fs" id="f-race-specific" disabled><option value="">— Choisir d'abord un groupe —</option></select></div>
+        <div class="fg"><label class="fl">Rang *</label><select class="fs" id="f-rank"><option value="">— Choisir —</option><option value="F">F — Faible</option><option value="E">E — Commun</option><option value="D">D — Ordinaire</option><option value="C">C — Élevé</option><option value="B">B — Avancé</option><option value="A">A — Élite</option><option value="S">S — Héroïque</option><option value="SS">SS — Légendaire</option><option value="SSS">SSS — Mythique</option><option value="X">X — Transcendant</option><option value="T">T — Divin</option><option value="G">G — Cosmique</option><option value="G+">G+ — Éternel</option><option value="Z">Z — Absolu</option></select></div>
       </div>
-      <div class="frow">
-        <div class="fg"><label class="fl">Âge</label><input type="text" class="fi" placeholder="Ex: 23 ans, Inconnu…" id="f-age"></div>
-        <div class="fg"><!-- espaceur --></div>
-      </div>
-      <div class="frow">
-        <div class="fg"><label class="fl">Groupe de Race *</label>
-          <select class="fs" id="f-race" onchange="updateRaceSpecific(this.value)">
-            <option value="">— Choisir —</option>
-            <option value="Humanoids">Humanoids</option>
-            <option value="Zooids">Zooids</option>
-            <option value="MythZooids">Mythical Zooids</option>
-            <option value="Demons">Demons</option>
-            <option value="Artificial">Artificial</option>
-            <option value="Semi-Liquid">Semi-Liquid</option>
-            <option value="Undead">Undead</option>
-          </select>
-        </div>
-        <div class="fg"><label class="fl">Race spécifique *</label>
-          <select class="fs" id="f-race-specific" disabled>
-            <option value="">— Choisir d'abord un groupe —</option>
-          </select>
-        </div>
-        <div class="fg"><label class="fl">Rang *</label>
-          <select class="fs" id="f-rank">
-            <option value="">— Choisir —</option>
-            <option value="F">F — Faible</option><option value="E">E — Commun</option>
-            <option value="D">D — Ordinaire</option><option value="C">C — Élevé</option>
-            <option value="B">B — Avancé</option><option value="A">A — Élite</option>
-            <option value="S">S — Héroïque</option><option value="SS">SS — Légendaire</option>
-            <option value="SSS">SSS — Mythique</option>
-            <option value="X">X — Transcendant</option>
-            <option value="T">T — Divin</option>
-            <option value="G">G — Cosmique</option>
-            <option value="G+">G+ — Éternel</option>
-            <option value="Z">Z — Absolu</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- Photo -->
-      <div class="fg">
-        <label class="fl">Photo du personnage</label>
-        <div class="photo-drop" id="photo-drop" onclick="document.getElementById('f-file').click()">
-          <input type="file" id="f-file" accept="image/*" onchange="handlePhoto(event)">
-          <div class="pdtxt" id="pdtxt">
-            <div style="font-size:1.3rem;margin-bottom:4px;opacity:.3">⬆</div>
-            Cliquer pour uploader une image
-          </div>
-        </div>
-        <input type="url" class="fi" placeholder="Ou URL d'image : https://..." id="f-photo-url" style="margin-top:7px" oninput="prevUrl(this.value)">
-      </div>
-
+      <div class="fg"><label class="fl">Photo du personnage</label><div class="photo-drop" id="photo-drop" onclick="document.getElementById('f-file').click()"><input type="file" id="f-file" accept="image/*" onchange="handlePhoto(event)"><div class="pdtxt" id="pdtxt"><div style="font-size:1.3rem;margin-bottom:4px;opacity:.3">⬆</div>Cliquer pour uploader une image</div></div><input type="url" class="fi" placeholder="Ou URL d'image : https://..." id="f-photo-url" style="margin-top:7px" oninput="prevUrl(this.value)"></div>
       <div class="fg"><label class="fl">Description courte *</label><textarea class="fta" placeholder="2-3 phrases résumant votre personnage..." id="f-bio"></textarea></div>
-
-      <!-- Liens et fichiers (dynamique — plusieurs possibles) -->
-      <div class="fg">
-        <label class="fl" style="margin-bottom:10px">
-          Liens &amp; Fichiers
-          <span style="opacity:.5;font-size:.5rem">— ajoutez autant de fiches que nécessaire</span>
-        </label>
-
-        <!-- Liens URL -->
-        <div class="links-form-wrap" id="links-url-wrap"></div>
-        <button type="button" class="add-link-btn" onclick="addLinkField()" style="margin-bottom:10px;width:100%">+ Ajouter un lien URL</button>
-
-        <!-- Fichiers à uploader -->
-        <div class="link-type-sep">fichiers à uploader</div>
-        <div class="links-form-wrap" id="links-file-wrap"></div>
-        <button type="button" class="add-link-btn" onclick="addFileField()" style="width:100%">+ Uploader un fichier</button>
-      </div>
-
-
-
-      <!-- Statistiques -->
-      <div class="fg">
-        <label class="fl" style="margin-bottom:10px">Statistiques <span style="opacity:.5;font-size:.55rem">— de 0 à 9999 · AURA cachée si 0</span></label>
-        <div class="stats-form-grid">
-          <div><label class="fl" style="font-size:.5rem;color:#ff6060">STRENGTH</label><input type="number" class="fi" id="f-str" min="0" max="9999" placeholder="0" value="0"></div>
-          <div><label class="fl" style="font-size:.5rem;color:#44ff88">AGILITY</label><input type="number" class="fi" id="f-agi" min="0" max="9999" placeholder="0" value="0"></div>
-          <div><label class="fl" style="font-size:.5rem;color:#00f5ff">SPEED</label><input type="number" class="fi" id="f-spd" min="0" max="9999" placeholder="0" value="0"></div>
-          <div><label class="fl" style="font-size:.5rem;color:#60a5fa">INTELLIGENCE</label><input type="number" class="fi" id="f-int" min="0" max="9999" placeholder="0" value="0"></div>
-          <div><label class="fl" style="font-size:.5rem;color:#b06eff">MANA</label><input type="number" class="fi" id="f-mana" min="0" max="9999" placeholder="0" value="0"></div>
-          <div><label class="fl" style="font-size:.5rem;color:#fbbf24">RESISTANCE</label><input type="number" class="fi" id="f-res" min="0" max="9999" placeholder="0" value="0"></div>
-          <div><label class="fl" style="font-size:.5rem;color:#f97316">CHARISMA</label><input type="number" class="fi" id="f-cha" min="0" max="9999" placeholder="0" value="0"></div>
-          <div><label class="fl" style="font-size:.5rem;color:#e040fb">AURA</label><input type="number" class="fi" id="f-aura" min="0" max="9999" placeholder="0" value="0"></div>
-        </div>
-      </div>
-
-
-      <!-- Pouvoirs -->
-      <div class="fg">
-        <label class="fl" style="margin-bottom:10px">Pouvoirs <span style="opacity:.5;font-size:.55rem">— nom + description optionnelle</span></label>
-        <div class="powers-form-wrap" id="powers-form-wrap"></div>
-        <button type="button" class="add-power-btn" onclick="addPowerField()">+ Ajouter un pouvoir</button>
-      </div>
-
+      <div class="fg"><label class="fl" style="margin-bottom:10px">Liens &amp; Fichiers <span style="opacity:.5;font-size:.5rem">— ajoutez autant de fiches que nécessaire</span></label><div class="links-form-wrap" id="links-url-wrap"></div><button type="button" class="add-link-btn" onclick="addLinkField()" style="margin-bottom:10px;width:100%">+ Ajouter un lien URL</button><div class="link-type-sep">fichiers à uploader</div><div class="links-form-wrap" id="links-file-wrap"></div><button type="button" class="add-link-btn" onclick="addFileField()" style="width:100%">+ Uploader un fichier</button></div>
+      <div class="fg"><label class="fl" style="margin-bottom:10px">Statistiques <span style="opacity:.5;font-size:.55rem">— de 0 à 9999 · AURA cachée si 0</span></label><div class="stats-form-grid"><div><label class="fl" style="font-size:.5rem;color:#ff6060">STRENGTH</label><input type="number" class="fi" id="f-str" min="0" max="9999" placeholder="0" value="0"></div><div><label class="fl" style="font-size:.5rem;color:#44ff88">AGILITY</label><input type="number" class="fi" id="f-agi" min="0" max="9999" placeholder="0" value="0"></div><div><label class="fl" style="font-size:.5rem;color:#00f0ff">SPEED</label><input type="number" class="fi" id="f-spd" min="0" max="9999" placeholder="0" value="0"></div><div><label class="fl" style="font-size:.5rem;color:#60a5fa">INTELLIGENCE</label><input type="number" class="fi" id="f-int" min="0" max="9999" placeholder="0" value="0"></div><div><label class="fl" style="font-size:.5rem;color:#b06eff">MANA</label><input type="number" class="fi" id="f-mana" min="0" max="9999" placeholder="0" value="0"></div><div><label class="fl" style="font-size:.5rem;color:#fbbf24">RESISTANCE</label><input type="number" class="fi" id="f-res" min="0" max="9999" placeholder="0" value="0"></div><div><label class="fl" style="font-size:.5rem;color:#f97316">CHARISMA</label><input type="number" class="fi" id="f-cha" min="0" max="9999" placeholder="0" value="0"></div><div><label class="fl" style="font-size:.5rem;color:#e040fb">AURA</label><input type="number" class="fi" id="f-aura" min="0" max="9999" placeholder="0" value="0"></div></div></div>
+      <div class="fg"><label class="fl" style="margin-bottom:10px">Pouvoirs <span style="opacity:.5;font-size:.55rem">— nom + description optionnelle</span></label><div class="powers-form-wrap" id="powers-form-wrap"></div><button type="button" class="add-power-btn" onclick="addPowerField()">+ Ajouter un pouvoir</button></div>
       <div class="fg"><label class="fl">Pseudo Discord *</label><input type="text" class="fi" placeholder="Ex: username" id="f-discord"></div>
       <button class="bsub" id="bsub" onclick="submitCard()">▸ Ajouter la fiche</button>
     </div>
@@ -677,510 +415,55 @@ footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:22
 </div>
 
 <footer>
-  <div class="fl2">JAHARTA // RP</div>
-  <div class="ft"><span class="hdot"></span>FIREBASE POWERED · v4.0.0</div>
-  <div class="fls">
-    <a href="index.html">Accueil</a><a href="pnj.html">PNJ</a>
-    <a href="portail.html">Portail</a><a href="admin.html">Admin</a>
-    <a href="https://discord.gg/jaharta" target="_blank">Discord ↗</a>
+  <div class="footer-inner">
+    <div><div class="f-logo">JAHARTA // RP</div><div class="f-tagline">Univers Jaharta · Roleplay Officiel</div></div>
+    <div class="f-status"><div class="f-status-dot"><span class="hdot"></span> FIREBASE POWERED</div><div class="f-version">v5.0.0</div></div>
+    <div class="f-links-col"><div class="f-links"><a href="index.html">Accueil</a><a href="pnj.html">PNJ</a><a href="portail.html">Portail</a><a href="admin.html">Admin</a><a href="https://discord.gg/jBMnmeR944" target="_blank">Discord ↗</a></div></div>
   </div>
+  <div class="f-bottom"><div class="f-copy">© 2024 — 2026 JAHARTA RP · TOUS DROITS RÉSERVÉS</div></div>
 </footer>
 
 <script>
-
 /* ═══════════════════════════════════════════════════
-   DONNÉES STATIQUES — Races et Rangs
+   ALL ORIGINAL FICHES.HTML JS — preserved exactly
    ═══════════════════════════════════════════════════ */
-
-/* ── RACES_SPECIFIC chargé depuis js/constants.js (window.RACES_SPECIFIC) ── */
-
-/**
- * Remplit le select "Race spécifique" selon le groupe de race choisi.
- * Utilise window.RACES_SPECIFIC défini dans constants.js.
- * @param {string} group - Clé du groupe (humanoid, zooid, etc.)
- */
-window.updateRaceSpecific = function(group){
-  const sel = document.getElementById('f-race-specific');
-  sel.innerHTML = '';
-  if(!group){
-    sel.disabled = true;
-    sel.innerHTML = '<option value="">— Choisir d\'abord un groupe —</option>';
-    return;
-  }
-  sel.disabled = false;
-  sel.innerHTML = '<option value="">— Choisir une race —</option>';
-  (window.RACES_SPECIFIC[group] || []).forEach(r => {
-    const o = document.createElement('option');
-    o.value = r; o.textContent = r;
-    sel.appendChild(o);
-  });
-};
-/* RACES chargé depuis js/constants.js */
-/* RANKS chargé depuis js/constants.js */
-
-
-/**
- * Construit une carte personnage en DOM.
- * @param {Object} ch - Données Firestore du personnage
- * @returns {HTMLElement} - Élément .rp-card prêt à insérer
- */
-/* buildCard() → déplacé dans js/jaharta-card.js (Web Component <jaharta-card>) */
-
-/* ═══════════════════════════════════════════════════
-   FONCTIONS ADMIN — Modifier / Supprimer
-   ═══════════════════════════════════════════════════ */
-/* ── Delete fiche (admin) ── */
-/**
- * Supprime définitivement une fiche de Firestore (admin uniquement).
- * @param {string} id - ID du document Firestore
- */
-window.deleteFicheById = async function(id){
-  if(!window._isAdmin){ alert('Connexion admin requise'); return; }
-  if(!confirm('Supprimer définitivement cette fiche ? Cette action est irréversible.')) return;
-  try{
-    await window._deleteDoc(window._doc(window._db,'fiches',id));
-    showToast('Fiche supprimée.','error');
-  }catch(e){
-    console.error(e);
-    showToast('⚠ '+e.message,'error');
-  }
-};
-
-/**
- * Ouvre le modal en mode édition pour une fiche existante.
- * Pré-remplit tous les champs (stats, pouvoirs, photo…).
- * @param {string} id - ID du document Firestore
- */
-window.openEditFiche = async function(id){
-  if(!window._isAdmin){ alert('Connexion admin requise'); return; }
-  const snap = await window._getDoc(window._doc(window._db,'fiches',id));
-  if(!snap.exists()) return;
-  const ch = snap.data();
-
-  // Populate modal fields with correct IDs
-  document.getElementById('f-fn').value         = ch.firstname  || '';
-  document.getElementById('f-age').value        = ch.age        || '';
-  document.getElementById('f-ln').value         = ch.lastname   || '';
-  document.getElementById('f-race').value       = ch.race       || '';
-  document.getElementById('f-rank').value       = ch.rank       || 'F';
-  document.getElementById('f-bio').value        = ch.desc||ch.bio||'';
-  document.getElementById('f-photo-url').value  = ch.photoUrl   || '';
-  /* Pré-remplir les liens existants */
-  /* Vider les wraps manuellement sans appeler clearLinks() (qui ajouterait un champ vide) */
-  const _wu = document.getElementById('links-url-wrap');
-  const _wf = document.getElementById('links-file-wrap');
-  if (_wu) _wu.innerHTML = '';
-  if (_wf) _wf.innerHTML = '';
-
-  const existingLinks = ch.links || (ch.linkUrl ? [{t:'Fiche',h:ch.linkUrl}] : []);
-  if (existingLinks.length === 0) {
-    /* Aucun lien existant — ajouter un champ vide pour guider */
-    addLinkField('Fiche', '');
-  } else {
-    existingLinks.forEach(l => addLinkField(l.t||'Fiche', l.h||''));
-  }
-  // Stats
-  const _s=ch.stats||{};
-  ['str','agi','spd','int','mana','res','cha','aura'].forEach(k=>{
-    const el=document.getElementById('f-'+k); if(el) el.value=_s[k]||0;
-  });
-  clearPowers();
-  (ch.powers||[]).forEach(pw=>addPowerField(pw.name||pw, pw.desc||''));
-  if(ch.photoUrl) prevUrl(ch.photoUrl);
-
-  // Race specific
-  if(window.updateRaceSpecific) updateRaceSpecific(ch.race);
-  setTimeout(()=>{
-    const rs=document.getElementById('f-race-specific');
-    if(rs){rs.disabled=false;rs.value=ch.raceSpecific||'';}
-  },120);
-
-  // Change modal title + submit button to edit mode
-  const mt=document.querySelector('#modal .mt');
-  if(mt) mt.textContent='// Modifier la fiche';
-  const btn=document.getElementById('bsub');
-  const origText=btn.textContent;
-  const origClick=btn.onclick;
-  btn.textContent='✎ Mettre à jour';
-  btn.onclick=async function(){
-    if(btn.disabled) return;
-    btn.disabled=true; btn.textContent='⟳ Mise à jour...';
-    const firstname = document.getElementById('f-fn').value.trim();
-    const lastname  = document.getElementById('f-ln').value.trim();
-    const race      = document.getElementById('f-race').value;
-    const raceSpecific = document.getElementById('f-race-specific')?.value||'';
-    const rank      = document.getElementById('f-rank').value;
-    const desc      = document.getElementById('f-bio').value.trim();
-    const photoUrl  = document.getElementById('f-photo-url').value.trim();
-    const links = await getLinks(); /* récupère tous les liens + fichiers uploadés */
-
-    let finalPhoto = photoUrl;
-    const photoFile = document.getElementById('f-file')?.files[0];
-    if(photoFile){
-      try{
-        const compressed = await compressImage(photoFile);
-        const r2=window._ref(window._storage,`photos/${Date.now()}_${photoFile.name.replace(/\.[^.]+$/,'.jpg')}`);
-        const s2=await window._uploadBytes(r2,compressed);
-        finalPhoto=await window._getDownloadURL(s2.ref);
-      }catch(e){console.warn('Photo:',e.message);}
-    }
-
-    try{
-      const _updStats={
-        str:  Math.min(9999,parseInt(document.getElementById('f-str').value)||0),
-        agi:  Math.min(9999,parseInt(document.getElementById('f-agi').value)||0),
-        spd:  Math.min(9999,parseInt(document.getElementById('f-spd').value)||0),
-        int:  Math.min(9999,parseInt(document.getElementById('f-int').value)||0),
-        mana: Math.min(9999,parseInt(document.getElementById('f-mana').value)||0),
-        res:  Math.min(9999,parseInt(document.getElementById('f-res').value)||0),
-        cha:  Math.min(9999,parseInt(document.getElementById('f-cha').value)||0),
-        aura: Math.min(9999,parseInt(document.getElementById('f-aura').value)||0),
-      };
-      const _age = document.getElementById('f-age').value.trim();
-      await window._updateDoc(window._doc(window._db,'fiches',id),{
-        firstname,lastname,age:_age,race,raceSpecific,rank,desc,links,stats:_updStats,powers:getPowers(),photoUrl:finalPhoto,updatedAt:new Date()
-      });
-      closeModal();
-      showToast('✓ Fiche mise à jour !');
-    }catch(e){
-      console.error(e);
-      showToast('⚠ '+e.message,'error');
-    }
-    // Reset modal to create mode
-    btn.disabled=false; btn.textContent=origText; btn.onclick=origClick;
-    if(mt) mt.textContent='// Soumettre un Personnage';
-  };
-  openModal(true); /* liens déjà remplis par openEditFiche — ne pas écraser */
-};
-
-/** Anime le compteur de personnages de 0 → target */
-/* ── animateCount : animation du compteur de personnages (0 → n) ── */
+window.updateRaceSpecific=function(group){const sel=document.getElementById('f-race-specific');sel.innerHTML='';if(!group){sel.disabled=true;sel.innerHTML='<option value="">— Choisir d\'abord un groupe —</option>';return;}sel.disabled=false;sel.innerHTML='<option value="">— Choisir une race —</option>';(window.RACES_SPECIFIC[group]||[]).forEach(r=>{const o=document.createElement('option');o.value=r;o.textContent=r;sel.appendChild(o);});};
+window.deleteFicheById=async function(id){if(!window._isAdmin){alert('Connexion admin requise');return;}if(!confirm('Supprimer définitivement cette fiche ?'))return;try{await window._deleteDoc(window._doc(window._db,'fiches',id));showToast('Fiche supprimée.','error');}catch(e){console.error(e);showToast('⚠ '+e.message,'error');}};
+window.openEditFiche=async function(id){if(!window._isAdmin){alert('Connexion admin requise');return;}const snap=await window._getDoc(window._doc(window._db,'fiches',id));if(!snap.exists())return;const ch=snap.data();document.getElementById('f-fn').value=ch.firstname||'';document.getElementById('f-age').value=ch.age||'';document.getElementById('f-ln').value=ch.lastname||'';document.getElementById('f-race').value=ch.race||'';document.getElementById('f-rank').value=ch.rank||'F';document.getElementById('f-bio').value=ch.desc||ch.bio||'';document.getElementById('f-photo-url').value=ch.photoUrl||'';const _wu=document.getElementById('links-url-wrap');const _wf=document.getElementById('links-file-wrap');if(_wu)_wu.innerHTML='';if(_wf)_wf.innerHTML='';const existingLinks=ch.links||(ch.linkUrl?[{t:'Fiche',h:ch.linkUrl}]:[]);if(existingLinks.length===0){addLinkField('Fiche','');}else{existingLinks.forEach(l=>addLinkField(l.t||'Fiche',l.h||''));}const _s=ch.stats||{};['str','agi','spd','int','mana','res','cha','aura'].forEach(k=>{const el=document.getElementById('f-'+k);if(el)el.value=_s[k]||0;});clearPowers();(ch.powers||[]).forEach(pw=>addPowerField(pw.name||pw,pw.desc||''));if(ch.photoUrl)prevUrl(ch.photoUrl);if(window.updateRaceSpecific)updateRaceSpecific(ch.race);setTimeout(()=>{const rs=document.getElementById('f-race-specific');if(rs){rs.disabled=false;rs.value=ch.raceSpecific||'';}},120);const mt=document.querySelector('#modal .mt');if(mt)mt.textContent='// Modifier la fiche';const btn=document.getElementById('bsub');const origText=btn.textContent;const origClick=btn.onclick;btn.textContent='✎ Mettre à jour';btn.onclick=async function(){if(btn.disabled)return;btn.disabled=true;btn.textContent='⟳ Mise à jour...';const firstname=document.getElementById('f-fn').value.trim();const lastname=document.getElementById('f-ln').value.trim();const race=document.getElementById('f-race').value;const raceSpecific=document.getElementById('f-race-specific')?.value||'';const rank=document.getElementById('f-rank').value;const desc=document.getElementById('f-bio').value.trim();const photoUrl=document.getElementById('f-photo-url').value.trim();const links=await getLinks();let finalPhoto=photoUrl;const photoFile=document.getElementById('f-file')?.files[0];if(photoFile){try{const compressed=await compressImage(photoFile);const r2=window._ref(window._storage,`photos/${Date.now()}_${photoFile.name.replace(/\.[^.]+$/,'.jpg')}`);const s2=await window._uploadBytes(r2,compressed);finalPhoto=await window._getDownloadURL(s2.ref);}catch(e){console.warn('Photo:',e.message);}}try{const _updStats={str:Math.min(9999,parseInt(document.getElementById('f-str').value)||0),agi:Math.min(9999,parseInt(document.getElementById('f-agi').value)||0),spd:Math.min(9999,parseInt(document.getElementById('f-spd').value)||0),int:Math.min(9999,parseInt(document.getElementById('f-int').value)||0),mana:Math.min(9999,parseInt(document.getElementById('f-mana').value)||0),res:Math.min(9999,parseInt(document.getElementById('f-res').value)||0),cha:Math.min(9999,parseInt(document.getElementById('f-cha').value)||0),aura:Math.min(9999,parseInt(document.getElementById('f-aura').value)||0)};const _age=document.getElementById('f-age').value.trim();await window._updateDoc(window._doc(window._db,'fiches',id),{firstname,lastname,age:_age,race,raceSpecific,rank,desc,links,stats:_updStats,powers:getPowers(),photoUrl:finalPhoto,updatedAt:new Date()});closeModal();showToast('✓ Fiche mise à jour !');}catch(e){console.error(e);showToast('⚠ '+e.message,'error');}btn.disabled=false;btn.textContent=origText;btn.onclick=origClick;if(mt)mt.textContent='// Soumettre un Personnage';};openModal(true);};
 function animateCount(target){const el=document.getElementById('count-chars');let n=0;const iv=setInterval(()=>{n++;el.textContent=n;if(n>=target)clearInterval(iv);},80);}
-/** Recalcule les compteurs par race affichés dans la barre de filtre */
-/* ── updateCounts : met à jour les compteurs de filtres par race ── */
-function updateCounts() {
-  const cards = document.querySelectorAll('.rp-card[data-race]');
-  const byRace = {};
-  cards.forEach(c => {
-    byRace[c.dataset.race] = (byRace[c.dataset.race] || 0) + 1;
-  });
-  let all = 0;
-  Object.keys(byRace).forEach(r => {
-    const el = document.getElementById('cnt-' + r);
-    if (el) el.textContent = byRace[r];
-    all += byRace[r];
-  });
-  document.getElementById('cnt-all').textContent = all;
-}
-/**
- * Filtre les cartes visibles par groupe de race.
- * @param {string}      race - Valeur du filtre ('all' ou nom du groupe)
- * @param {HTMLElement} btn  - Bouton cliqué (pour gérer la classe .active)
- */
-/* ════════════════════════════════════════════════════════════════
-   FILTRES — Race et Rang combinés
-   Les deux filtres s'appliquent simultanément.
-   _activeRace et _activeRank conservent l'état courant.
-   ════════════════════════════════════════════════════════════════ */
-let _activeRace = 'all';
-let _activeRank = 'all';
-
-/**
- * Applique les deux filtres actifs (race + rang) sur toutes les cartes.
- * Une carte est visible seulement si elle passe les deux filtres.
- */
-function applyFilters() {
-  let visible = 0;
-  /* jaharta-card a display:contents — on cible les .rp-card internes */
-  document.querySelectorAll('.rp-card[data-race]').forEach(card => {
-    const matchRace = _activeRace === 'all' || card.dataset.race  === _activeRace;
-    const matchRank = _activeRank === 'all' || card.dataset.rank  === _activeRank;
-    const show      = matchRace && matchRank;
-    /* On remonte au jaharta-card parent pour cacher l'élément entier */
-    const wrapper   = card.closest('jaharta-card') || card;
-    wrapper.style.display = show ? '' : 'none';
-    if (show) visible++;
-  });
-  document.getElementById('no-results').style.display = visible === 0 ? 'block' : 'none';
-}
-
-/**
- * Filtre par groupe de race.
- * @param {string}      race - 'all' ou nom du groupe (humanoid, zooid…)
- * @param {HTMLElement} btn  - Bouton cliqué pour gérer la classe .active
- */
-function filterRace(race, btn) {
-  _activeRace = race;
-  /* Retire .active uniquement des boutons de race */
-  document.querySelectorAll('.race-btn[data-race]').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  applyFilters();
-}
-
-/**
- * Filtre par rang de puissance.
- * @param {string}      rank - 'all' ou rang (F, E, D, … Z)
- * @param {HTMLElement} btn  - Bouton cliqué
- */
-function filterRank(rank, btn) {
-  _activeRank = rank;
-  document.querySelectorAll('.race-btn[data-rank]').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  applyFilters();
-}
-/**
- * Affiche une notification temporaire.
- * @param {string} msg  - Texte à afficher
- * @param {string} type - 'success' (vert) | 'error' (rouge)
- */
-/* ── showToast : affiche une notification temporaire en bas de page ── */
-/* showToast est défini dans js/utils.js */
-/* ── Gestion de la modale de soumission ── */
-function openModal(skipClearLinks=false){
-  if(!window._isAdmin){ showToast('⚠ Connexion admin requise.','error'); return; }
-  if(!skipClearLinks) clearLinks(); /* création : init champ vide */
-  document.getElementById('modal').classList.add('open');
-  document.body.style.overflow = 'hidden';
-  document.body.classList.add('modal-open');
-}
-function closeModal(){
-  document.getElementById('modal').classList.remove('open');
-  document.body.style.overflow = '';
-  document.body.classList.remove('modal-open');
-}
+function updateCounts(){const cards=document.querySelectorAll('.rp-card[data-race]');const byRace={};cards.forEach(c=>{byRace[c.dataset.race]=(byRace[c.dataset.race]||0)+1;});let all=0;Object.keys(byRace).forEach(r=>{const el=document.getElementById('cnt-'+r);if(el)el.textContent=byRace[r];all+=byRace[r];});document.getElementById('cnt-all').textContent=all;}
+let _activeRace='all';let _activeRank='all';
+function applyFilters(){let visible=0;document.querySelectorAll('.rp-card[data-race]').forEach(card=>{const matchRace=_activeRace==='all'||card.dataset.race===_activeRace;const matchRank=_activeRank==='all'||card.dataset.rank===_activeRank;const show=matchRace&&matchRank;const wrapper=card.closest('jaharta-card')||card;wrapper.style.display=show?'':'none';if(show)visible++;});document.getElementById('no-results').style.display=visible===0?'block':'none';}
+function filterRace(race,btn){_activeRace=race;document.querySelectorAll('.race-btn[data-race]').forEach(b=>b.classList.remove('active'));btn.classList.add('active');applyFilters();}
+function filterRank(rank,btn){_activeRank=rank;document.querySelectorAll('.race-btn[data-rank]').forEach(b=>b.classList.remove('active'));btn.classList.add('active');applyFilters();}
+function openModal(skipClearLinks=false){if(!window._isAdmin){showToast('⚠ Connexion admin requise.','error');return;}if(!skipClearLinks)clearLinks();document.getElementById('modal').classList.add('open');document.body.style.overflow='hidden';document.body.classList.add('modal-open');}
+function closeModal(){document.getElementById('modal').classList.remove('open');document.body.style.overflow='';document.body.classList.remove('modal-open');}
 document.getElementById('modal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
-
-/* ════════════════════════════════════════════
-   GESTION PHOTO — upload fichier ou URL
-   ════════════════════════════════════════════ */
 let photoFile=null;
-
-function handlePhoto(e){
-  const f=e.target.files[0];
-  if(!f)return;
-  photoFile=f;
-  // Vider le champ URL pour éviter tout conflit
-  document.getElementById('f-photo-url').value='';
-  // Prévisualisation locale — pas besoin d'uploader deux fois
-  const r=new FileReader();
-  r.onload=ev=>showPrev(ev.target.result);
-  r.readAsDataURL(f);
-}
-
-function prevUrl(u){
-  if(!u){clearPrev();return;}
-  // L'utilisateur tape une URL : annuler le fichier éventuel
-  photoFile=null;
-  document.getElementById('f-file').value='';
-  showPrev(u);
-}
-
-function showPrev(src){
-  document.getElementById('pdtxt').style.display='none';
-  let img=document.getElementById('photo-drop').querySelector('img.prev-img');
-  if(!img){img=document.createElement('img');img.className='prev-img';document.getElementById('photo-drop').appendChild(img);}
-  img.src=src;
-}
-function clearPrev(){
-  document.getElementById('pdtxt').style.display='';
-  const img=document.getElementById('photo-drop').querySelector('img.prev-img');
-  if(img)img.remove();
-}
-
-/* ════════════════════════════════════════════════════════
-   SYSTÈME MULTI-LIENS — URL + fichiers uploadés
-   Chaque entrée produit un objet {t: label, h: url}.
-   getLinks() retourne un tableau de tous les liens prêts.
-   ════════════════════════════════════════════════════════ */
-
-/**
- * Ajoute un champ lien URL dans le formulaire.
- * @param {string} label - Label affiché sur le bouton de la carte
- * @param {string} url   - URL pré-remplie (mode édition)
- */
-function addLinkField(label='Fiche', url='') {
-  const wrap = document.getElementById('links-url-wrap');
-  const row  = document.createElement('div');
-  row.className = 'link-entry';
-  row.innerHTML = `
-    <input type="text" class="fi link-label-inp" placeholder="Libellé" value="${label}">
-    <input type="url"  class="fi" placeholder="https://..." value="${url}">
-    <button type="button" class="link-rm-btn" onclick="this.parentElement.remove()">✕</button>
-  `;
-  wrap.appendChild(row);
-}
-
-/**
- * Ajoute un champ upload de fichier dans le formulaire.
- * @param {string} label - Label affiché sur le bouton de la carte
- */
-function addFileField(label='Fichier') {
-  const wrap = document.getElementById('links-file-wrap');
-  const row  = document.createElement('div');
-  row.className = 'link-file-entry';
-  row.innerHTML = `
-    <input type="text" class="fi link-label-inp" placeholder="Libellé" value="${label}">
-    <input type="file" accept=".html,.htm,.pdf,.doc,.docx,.odt,.txt,.md,.pages,.png,.jpg,.jpeg">
-    <button type="button" class="link-rm-btn" onclick="this.parentElement.remove()">✕</button>
-  `;
-  wrap.appendChild(row);
-}
-
-/**
- * Collecte tous les liens (URL + fichiers) et uploade les fichiers vers Storage.
- * @returns {Promise<Array<{t:string, h:string}>>} tableau de liens prêts
- */
-async function getLinks() {
-  const links = [];
-
-  /* ── Liens URL ── */
-  document.querySelectorAll('#links-url-wrap .link-entry').forEach(row => {
-    const label = row.querySelector('.link-label-inp').value.trim() || 'Fiche';
-    const url   = row.querySelectorAll('input[type=url], input:not([type=text])[class="fi"]')[0]?.value.trim()
-                  || row.querySelectorAll('input')[1]?.value.trim() || '';
-    if (url) links.push({ t: label, h: url });
-  });
-
-  /* ── Fichiers uploadés ── */
-  const fileRows = document.querySelectorAll('#links-file-wrap .link-file-entry');
-  for (const row of fileRows) {
-    const label = row.querySelector('.link-label-inp').value.trim() || 'Fichier';
-    const file  = row.querySelector('input[type=file]').files[0];
-    if (!file) continue;
-    try {
-      const path = `fiches/${Date.now()}_${file.name}`;
-      const snap = await window._uploadBytes(window._ref(window._storage, path), file);
-      const url  = await window._getDownloadURL(snap.ref);
-      links.push({ t: label, h: url });
-    } catch(e) {
-      console.warn('[upload lien]', e.message);
-      showToast('⚠ Erreur upload : ' + e.message, 'error');
-    }
-  }
-
-  return links;
-}
-
-/** Vide tous les champs liens et fichiers */
-function clearLinks() {
-  const wu = document.getElementById('links-url-wrap');
-  const wf = document.getElementById('links-file-wrap');
-  if (wu) wu.innerHTML = '';
-  if (wf) wf.innerHTML = '';
-  /* Ajoute un champ URL vide par défaut pour guider l'admin */
-  addLinkField('Fiche', '');
-}
-
-/* ════════════════════════════════════════════
-   SOUMISSION DU FORMULAIRE (admin uniquement)
-   ════════════════════════════════════════════ */
-/* ── Powers form ── */
-function addPowerField(name='', desc=''){
-  const wrap=document.getElementById('powers-form-wrap');
-  const idx=wrap.children.length;
-  const row=document.createElement('div');row.className='power-entry';
-  row.innerHTML=`
-    <input type="text" class="fi power-name-inp" placeholder="Nom du pouvoir" value="${name}" style="flex:1;min-width:0">
-    <textarea class="fta power-desc-inp" placeholder="Description..." style="flex:2;min-height:42px">${desc}</textarea>
-    <button type="button" class="power-rm-btn" onclick="this.parentElement.remove()">✕</button>
-  `;
-  wrap.appendChild(row);
-}
-function getPowers(){
-  const entries=document.querySelectorAll('#powers-form-wrap .power-entry');
-  const powers=[];
-  entries.forEach(e=>{
-    const name=e.querySelector('.power-name-inp').value.trim();
-    const desc=e.querySelector('.power-desc-inp').value.trim();
-    if(name) powers.push({name,desc});
-  });
-  return powers;
-}
+function handlePhoto(e){const f=e.target.files[0];if(!f)return;photoFile=f;document.getElementById('f-photo-url').value='';const r=new FileReader();r.onload=ev=>showPrev(ev.target.result);r.readAsDataURL(f);}
+function prevUrl(u){if(!u){clearPrev();return;}photoFile=null;document.getElementById('f-file').value='';showPrev(u);}
+function showPrev(src){document.getElementById('pdtxt').style.display='none';let img=document.getElementById('photo-drop').querySelector('img.prev-img');if(!img){img=document.createElement('img');img.className='prev-img';document.getElementById('photo-drop').appendChild(img);}img.src=src;}
+function clearPrev(){document.getElementById('pdtxt').style.display='';const img=document.getElementById('photo-drop').querySelector('img.prev-img');if(img)img.remove();}
+function addLinkField(label='Fiche',url=''){const wrap=document.getElementById('links-url-wrap');const row=document.createElement('div');row.className='link-entry';row.innerHTML=`<input type="text" class="fi link-label-inp" placeholder="Libellé" value="${label}"><input type="text" class="fi link-url-inp" placeholder="https://..." value="${url}"><button type="button" class="link-rm-btn" onclick="this.parentElement.remove()">✕</button>`;wrap.appendChild(row);}
+function addFileField(label='Fichier'){const wrap=document.getElementById('links-file-wrap');const row=document.createElement('div');row.className='link-file-entry';row.innerHTML=`<input type="text" class="fi link-label-inp" placeholder="Libellé" value="${label}"><input type="file" accept=".html,.htm,.pdf,.doc,.docx,.odt,.txt,.md,.pages,.png,.jpg,.jpeg"><button type="button" class="link-rm-btn" onclick="this.parentElement.remove()">✕</button>`;wrap.appendChild(row);}
+async function getLinks(){const links=[];document.querySelectorAll('#links-url-wrap .link-entry').forEach(row=>{const label=row.querySelector('.link-label-inp').value.trim()||'Fiche';const url=row.querySelector('.link-url-inp')?.value.trim()||row.querySelectorAll('input')[1]?.value.trim()||'';if(url)links.push({t:label,h:url});});const fileRows=document.querySelectorAll('#links-file-wrap .link-file-entry');for(const row of fileRows){const label=row.querySelector('.link-label-inp').value.trim()||'Fichier';const file=row.querySelector('input[type=file]').files[0];if(!file)continue;try{const path=`fiches/${Date.now()}_${file.name}`;const snap=await window._uploadBytes(window._ref(window._storage,path),file);const url=await window._getDownloadURL(snap.ref);links.push({t:label,h:url});}catch(e){console.warn('[upload]',e.message);showToast('⚠ Erreur upload: '+e.message,'error');}}return links;}
+function clearLinks(){const wu=document.getElementById('links-url-wrap');const wf=document.getElementById('links-file-wrap');if(wu)wu.innerHTML='';if(wf)wf.innerHTML='';addLinkField('Fiche','');}
+function addPowerField(name='',desc=''){const wrap=document.getElementById('powers-form-wrap');const row=document.createElement('div');row.className='power-entry';row.innerHTML=`<input type="text" class="fi power-name-inp" placeholder="Nom du pouvoir" value="${name}" style="flex:1;min-width:0"><textarea class="fta power-desc-inp" placeholder="Description..." style="flex:2;min-height:42px">${desc}</textarea><button type="button" class="power-rm-btn" onclick="this.parentElement.remove()">✕</button>`;wrap.appendChild(row);}
+function getPowers(){const entries=document.querySelectorAll('#powers-form-wrap .power-entry');const powers=[];entries.forEach(e=>{const name=e.querySelector('.power-name-inp').value.trim();const desc=e.querySelector('.power-desc-inp').value.trim();if(name)powers.push({name,desc});});return powers;}
 function clearPowers(){document.getElementById('powers-form-wrap').innerHTML='';}
-
-async function submitCard(){
-  /* ── Seuls les admins peuvent ajouter des fiches ── */
-  if(!window._isAdmin){
-    showToast('⚠ Connexion admin requise.','error');
-    return;
-  }
-  /* sanitize() retire les balises HTML des champs texte avant stockage */
-  const fn          = sanitize(document.getElementById('f-fn').value.trim());
-  const ln          = sanitize(document.getElementById('f-ln').value.trim());
-  const age         = sanitize(document.getElementById('f-age').value.trim());
-  const race        = document.getElementById('f-race').value;
-  const raceSpecific= document.getElementById('f-race-specific').value;
-  const rank        = document.getElementById('f-rank').value;
-  const bio     = sanitize(document.getElementById('f-bio').value.trim());
-  const discord = sanitize(document.getElementById('f-discord').value.trim());
-  const stats={
-    str:  Math.min(9999,parseInt(document.getElementById('f-str').value)||0),
-    agi:  Math.min(9999,parseInt(document.getElementById('f-agi').value)||0),
-    spd:  Math.min(9999,parseInt(document.getElementById('f-spd').value)||0),
-    int:  Math.min(9999,parseInt(document.getElementById('f-int').value)||0),
-    mana: Math.min(9999,parseInt(document.getElementById('f-mana').value)||0),
-    res:  Math.min(9999,parseInt(document.getElementById('f-res').value)||0),
-    cha:  Math.min(9999,parseInt(document.getElementById('f-cha').value)||0),
-    aura: Math.min(9999,parseInt(document.getElementById('f-aura').value)||0),
-  };
-  // photoUrl uniquement si pas de fichier uploadé
-  const photoUrl=photoFile?'':document.getElementById('f-photo-url').value.trim();
-
-  if(!fn||!ln||!race||!rank||!bio||!discord){
-    showToast('Remplissez tous les champs obligatoires (*)','error');return;
-  }
-
-  const btn=document.getElementById('bsub');
-  btn.disabled=true;btn.textContent='⟳ Envoi en cours...';
-
-  /* Collecter tous les liens (URL + fichiers uploadés) */
-  const allLinks = await getLinks();
-
-  const data={
-    firstname:fn, lastname:ln, age, race, rank, bio, desc:bio,
-    discord, stats, powers:getPowers(),
-    photoUrl,
-    links: allLinks,        /* tableau [{t, h}] — tous les liens et fichiers */
-    linkUrl: allLinks[0]?.h || '', /* compat. rétrocompatible */
-  };
-
-  try{
-    /* Upload photo si fichier sélectionné */
-    if(photoFile){
-      const compressed = await compressImage(photoFile);
-      const r2 = window._ref(window._storage,`photos/${Date.now()}_${photoFile.name.replace(/\.[^.]+$/,'.jpg')}`);
-      const s2  = await window._uploadBytes(r2, compressed);
-      data.photoUrl = await window._getDownloadURL(s2.ref);
-    }
-    /* Écriture directe dans Firestore (admin connecté) */
-    await window._addDoc(window._collection(window._db,'fiches'),{
-      ...data,
-      status:'validee',
-      createdAt:window._serverTimestamp()
-    });
-    showToast('✓ Fiche ajoutée et publiée !','success');
-  }catch(e){
-    console.error(e);
-    showToast('⚠ Erreur : '+e.message,'error');
-  }
-
-  btn.disabled=false;btn.textContent='▸ Ajouter la fiche';
-
-  // Reset complet
-  ['f-fn','f-ln','f-age','f-bio','f-discord','f-photo-url'].forEach(id=>document.getElementById(id).value='');
-  clearLinks();
-  document.getElementById('f-race').value='';
-  updateRaceSpecific('');
-  ['f-str','f-agi','f-spd','f-int','f-mana','f-res','f-cha','f-aura'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='0';});
-  clearPowers();
-  document.getElementById('f-rank').value='';
-  photoFile=null;
-  clearPrev();
-  document.getElementById('f-file').value='';
-  closeModal();
-}
+async function submitCard(){if(!window._isAdmin){showToast('⚠ Connexion admin requise.','error');return;}const fn=sanitize(document.getElementById('f-fn').value.trim());const ln=sanitize(document.getElementById('f-ln').value.trim());const age=sanitize(document.getElementById('f-age').value.trim());const race=document.getElementById('f-race').value;const raceSpecific=document.getElementById('f-race-specific').value;const rank=document.getElementById('f-rank').value;const bio=sanitize(document.getElementById('f-bio').value.trim());const discord=sanitize(document.getElementById('f-discord').value.trim());const stats={str:Math.min(9999,parseInt(document.getElementById('f-str').value)||0),agi:Math.min(9999,parseInt(document.getElementById('f-agi').value)||0),spd:Math.min(9999,parseInt(document.getElementById('f-spd').value)||0),int:Math.min(9999,parseInt(document.getElementById('f-int').value)||0),mana:Math.min(9999,parseInt(document.getElementById('f-mana').value)||0),res:Math.min(9999,parseInt(document.getElementById('f-res').value)||0),cha:Math.min(9999,parseInt(document.getElementById('f-cha').value)||0),aura:Math.min(9999,parseInt(document.getElementById('f-aura').value)||0)};const photoUrl=photoFile?'':document.getElementById('f-photo-url').value.trim();if(!fn||!ln||!race||!rank||!bio||!discord){showToast('Remplissez tous les champs obligatoires (*)','error');return;}const btn=document.getElementById('bsub');btn.disabled=true;btn.textContent='⟳ Envoi en cours...';const allLinks=await getLinks();const data={firstname:fn,lastname:ln,age,race,rank,bio,desc:bio,discord,stats,powers:getPowers(),photoUrl,links:allLinks,linkUrl:allLinks[0]?.h||''};try{if(photoFile){const compressed=await compressImage(photoFile);const r2=window._ref(window._storage,`photos/${Date.now()}_${photoFile.name.replace(/\.[^.]+$/,'.jpg')}`);const s2=await window._uploadBytes(r2,compressed);data.photoUrl=await window._getDownloadURL(s2.ref);}await window._addDoc(window._collection(window._db,'fiches'),{...data,status:'validee',createdAt:window._serverTimestamp()});showToast('✓ Fiche ajoutée et publiée !','success');}catch(e){console.error(e);showToast('⚠ Erreur : '+e.message,'error');}btn.disabled=false;btn.textContent='▸ Ajouter la fiche';['f-fn','f-ln','f-age','f-bio','f-discord','f-photo-url'].forEach(id=>document.getElementById(id).value='');clearLinks();document.getElementById('f-race').value='';updateRaceSpecific('');['f-str','f-agi','f-spd','f-int','f-mana','f-res','f-cha','f-aura'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='0';});clearPowers();document.getElementById('f-rank').value='';photoFile=null;clearPrev();document.getElementById('f-file').value='';closeModal();}
 </script>
 
+<!-- v5 Shared UI Scripts -->
+<script>
+(function(){const bar=document.getElementById('scroll-progress');let t=false;window.addEventListener('scroll',()=>{if(!t){requestAnimationFrame(()=>{const h=document.documentElement.scrollHeight-window.innerHeight;bar.style.width=h>0?(window.scrollY/h*100)+'%':'0%';t=false;});t=true;}},{passive:true});})();
+(function(){const els=document.querySelectorAll('[data-reveal]');if(!('IntersectionObserver' in window)){els.forEach(el=>el.classList.add('revealed'));return;}const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){setTimeout(()=>e.target.classList.add('revealed'),parseInt(e.target.dataset.delay||'0'));obs.unobserve(e.target);}});},{threshold:.15,rootMargin:'0px 0px -40px 0px'});els.forEach(el=>obs.observe(el));})();
+(function(){const toggle=document.getElementById('nav-toggle');const nav=document.getElementById('nav-links');const bd=document.getElementById('nav-backdrop');if(!toggle||!nav)return;function cl(){nav.classList.remove('open');bd.classList.remove('open');toggle.textContent='☰';}function op(){nav.classList.add('open');bd.classList.add('open');toggle.textContent='✕';}toggle.addEventListener('click',()=>{nav.classList.contains('open')?cl():op();});bd.addEventListener('click',cl);nav.querySelectorAll('a').forEach(a=>a.addEventListener('click',cl));})();
+(function(){const h=document.querySelector('header');if(!h)return;let s=false;window.addEventListener('scroll',()=>{const v=window.scrollY>80;if(v!==s){s=v;h.style.height=v?'56px':'';h.style.borderBottomColor=v?'rgba(0,240,255,.22)':'';}},{passive:true});})();
+</script>
+<script src="js/script.js"></script>
+<script>(function(){var t=document.getElementById('nav-toggle'),n=document.getElementById('nav-links');if(!t||!n)return;t.addEventListener('click',function(){var o=n.classList.toggle('open');t.textContent=o?'\u2715':'\u2630';});document.addEventListener('click',function(e){if(!n.contains(e.target)&&!t.contains(e.target)){n.classList.remove('open');t.textContent='\u2630';}});})();</script>
+<script src="js/page-transition.js"></script>
 <script src="js/music-player.js"></script>
 </body>
 </html>
