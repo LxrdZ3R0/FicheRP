@@ -205,7 +205,19 @@ body{background:var(--bg)!important}
 .footer-copy{font-family:var(--font-m);font-size:.45rem;color:var(--text3);letter-spacing:.15em}
 
 @media(max-width:880px){.nav-links{display:none}.hero-sub{min-height:35vh;padding:100px 1.5rem 40px}.page-wrap{padding:32px 1rem}.banners-grid{grid-template-columns:1fr}.pull-buttons{flex-direction:column;align-items:stretch}.pity-row{grid-template-columns:1fr}.multi-results{grid-template-columns:repeat(2,1fr)}.footer{flex-direction:column;text-align:center}.footer-links{justify-content:center}}
+
+/* ═══ CODE INPUT ═══ */
+.code-input-wrap{display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap}
+#link-code{font-family:var(--font-m);font-size:1.1rem;letter-spacing:.25em;text-align:center;width:200px;padding:14px 18px;background:rgba(8,12,30,0.6);border:1px solid rgba(88,101,242,0.25);border-radius:8px;color:#fff;outline:none;text-transform:uppercase;transition:border-color .3s,box-shadow .3s}
+#link-code:focus{border-color:#5865F2;box-shadow:0 0 20px rgba(88,101,242,0.15)}
+#link-code::placeholder{color:var(--text3);letter-spacing:.15em;font-size:.85rem}
+.code-spinner{display:none;width:18px;height:18px;border:2px solid rgba(255,255,255,0.2);border-top-color:#fff;border-radius:50%;animation:cspin .6s linear infinite}
+@keyframes cspin{to{transform:rotate(360deg)}}
 </style>
+
+<!-- FIREBASE (compat SDK — works in regular <script>) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
 <script src="js/debug.js"></script>
 <script src="js/constants.js"></script>
@@ -245,12 +257,17 @@ body{background:var(--bg)!important}
 
   <!-- LOGIN GATE -->
   <section class="login-gate" id="login-gate">
-    <p class="gate-sub">Connecte-toi avec Discord pour accéder au système de tirage. Tes Navarites et ton inventaire se synchronisent avec le bot.</p>
-    <button class="discord-login-btn" onclick="startLogin()">
-      <svg viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
-      <span>CONNEXION DISCORD</span>
-    </button>
-    <p class="gate-note">Connexion indépendante du panel admin · Seul ton ID Discord est utilisé</p>
+    <p class="gate-sub">Utilise la commande <strong style="color:var(--blue)">/link</strong> sur Discord pour obtenir un code, puis entre-le ici.</p>
+    <div class="code-input-wrap">
+      <input type="text" id="link-code" placeholder="JH-XXXXXX" maxlength="9" autocomplete="off" spellcheck="false" onkeydown="if(event.key==='Enter')verifyCode()">
+      <button class="discord-login-btn" onclick="verifyCode()">
+        <svg viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+        <span>VÉRIFIER</span>
+        <div class="code-spinner" id="code-spinner"></div>
+      </button>
+    </div>
+    <p id="code-error" style="color:var(--red);font-family:var(--font-m);font-size:.5rem;margin-top:1rem;display:none;letter-spacing:.08em"></p>
+    <p class="gate-note">Tape /link dans Discord pour générer un code · Expire après 5 min · Usage unique</p>
   </section>
 
   <!-- GACHA MAIN -->
@@ -308,9 +325,10 @@ body{background:var(--bg)!important}
 /* ═══════════════════════════════════════════════════════════════
    GACHA NEXUS — Client Logic
    
-   Connected to bot API via gacha_api.py (aiohttp on port 5039).
-   Discord OAuth2 for auth, JWT for sessions.
-   All pulls go through the bot — same logic, pity, inventory.
+   Auth via /link Discord command → verification code → Firestore.
+   Pulls are written to Firestore → bot processes server-side.
+   All gacha data (banners, navarites, pity) lives in Firestore.
+   No HTTP port needed — everything goes through Firebase.
    ═══════════════════════════════════════════════════════════════ */
 
 // ═══ THREE.JS BLOB ═══
@@ -557,17 +575,18 @@ function bClearOrbitals(){
 }
 initBlob();
 
-// ═══ API CONFIG ═══
-// Change this to your Cybrancee bot URL
-const API_BASE=window.location.hostname==='localhost'?'http://localhost:5039':'http://87.106.63.126:5039';
+// ═══ FIREBASE INIT ═══
+const firebaseConfig={apiKey:"AIzaSyAru7qZX8Gu_b8Y3oNDV-a5PmkrrkRjkcs",authDomain:"jaharta-rp.firebaseapp.com",projectId:"jaharta-rp",storageBucket:"jaharta-rp.firebasestorage.app",messagingSenderId:"217075417489",appId:"1:217075417489:web:4d1e2df422a5cd42411a30"};
+firebase.initializeApp(firebaseConfig);
+const db=firebase.firestore();
+
+// ═══ CONSTANTS ═══
 const RCSS={'Common':'r-c','Uncommon':'r-u','Rare':'r-r','Epic':'r-e','Legendary':'r-l','Mythic':'r-m','Unique':'r-q','Artifact':'r-a'};
 const RCOL={'Common':'#8a8fa8','Uncommon':'#44ff88','Rare':'#4DA3FF','Epic':'#8B5CF6','Legendary':'#ffd60a','Mythic':'#ff8800','Unique':'#00ffcc','Artifact':'#ff006e'};
 const RARITY_ORDER=['Common','Uncommon','Rare','Epic','Legendary','Mythic','Unique','Artifact'];
 const RC_CHIP={Common:'rc-c',Uncommon:'rc-u',Rare:'rc-r',Epic:'rc-e',Legendary:'rc-l',Mythic:'rc-m',Unique:'rc-q',Artifact:'rc-a'};
 const LR_CHIP={Common:'lr-c',Uncommon:'lr-u',Rare:'lr-r',Epic:'lr-e',Legendary:'lr-l',Mythic:'lr-m',Unique:'lr-q',Artifact:'lr-a'};
-// Default gradient backgrounds per banner (fallback if no image set)
 const DEFAULT_BG={nexus_flux:'linear-gradient(135deg,#0a1628,#0d2847,#061a30)',arcanae_memorium:'linear-gradient(135deg,#1a0a28,#2d0d47,#1a0630)',golden_nexus:'linear-gradient(135deg,#281a0a,#473d0d,#302306)'};
-// Default accent colors per banner name pattern
 function bannerAccent(id,name){
   if(id.includes('golden')||name.includes('Gold'))return '#ffd60a';
   if(id.includes('arcanae')||name.includes('Arcanae'))return '#8B5CF6';
@@ -591,66 +610,90 @@ function bannerAccent(id,name){
 
 let U=null,SB=null,BANNERS=[];
 
-// ═══ API HELPERS ═══
-function getToken(){return localStorage.getItem('gacha_jwt')}
-function setToken(t){localStorage.setItem('gacha_jwt',t)}
-function clearToken(){localStorage.removeItem('gacha_jwt')}
+// ═══ SESSION (localStorage) ═══
+function getSession(){try{return JSON.parse(localStorage.getItem('gacha_session'))}catch(e){return null}}
+function setSession(s){localStorage.setItem('gacha_session',JSON.stringify(s))}
+function clearSession(){localStorage.removeItem('gacha_session')}
 
-async function apiFetch(path,opts={}){
-  const token=getToken();
-  const headers={'Content-Type':'application/json',...(opts.headers||{})};
-  if(token)headers['Authorization']='Bearer '+token;
+// ═══ AUTH — Code verification via Firestore ═══
+async function verifyCode(){
+  const inp=document.getElementById('link-code');
+  const errEl=document.getElementById('code-error');
+  const spinner=document.getElementById('code-spinner');
+  errEl.style.display='none';
+  const code=inp.value.trim().toUpperCase();
+  if(!code||code.length<5){showCodeError('Entre un code valide');return}
+  spinner.style.display='inline-block';
   try{
-    const r=await fetch(API_BASE+path,{...opts,headers});
-    if(r.status===401){clearToken();showLoginGate();return null}
-    return await r.json();
-  }catch(e){console.error('[API]',e);return null}
-}
-
-// ═══ AUTH ═══
-async function startLogin(){
-  const data=await apiFetch('/api/auth/discord');
-  if(data&&data.url)window.location.href=data.url;
-}
-
-async function handleOAuthCallback(){
-  const params=new URLSearchParams(window.location.search);
-  const code=params.get('code');
-  if(!code)return false;
-  // Clean URL
-  window.history.replaceState({},'',window.location.pathname);
-  const data=await apiFetch('/api/auth/callback',{method:'POST',body:JSON.stringify({code})});
-  if(data&&data.token){
-    setToken(data.token);
-    return true;
+    const snap=await db.collection('gacha_link_codes').doc(code).get();
+    if(!snap.exists){showCodeError('Code invalide ou déjà utilisé');spinner.style.display='none';return}
+    const data=snap.data();
+    // Check expiry
+    if(data.expires_at&&new Date(data.expires_at)<new Date()){
+      showCodeError('Code expiré — utilise /link pour en générer un nouveau');
+      spinner.style.display='none';
+      db.collection('gacha_link_codes').doc(code).delete();
+      return;
+    }
+    // Save session
+    setSession({id:data.discord_id,username:data.username,avatar:data.avatar_url});
+    // Delete used code
+    db.collection('gacha_link_codes').doc(code).delete();
+    spinner.style.display='none';
+    // Load everything
+    await loadAndShow();
+  }catch(e){
+    console.error('[AUTH]',e);
+    showCodeError('Erreur de connexion — réessaye');
+    spinner.style.display='none';
   }
-  return false;
+}
+
+function showCodeError(msg){
+  const el=document.getElementById('code-error');
+  el.textContent=msg;el.style.display='block';
 }
 
 function logout(){
-  clearToken();U=null;SB=null;BANNERS=[];
+  clearSession();U=null;SB=null;BANNERS=[];
   showLoginGate();
 }
 
-// ═══ DATA LOADING ═══
+// ═══ DATA LOADING (Firestore) ═══
 async function loadUser(){
-  const data=await apiFetch('/api/user');
-  if(!data||data.error)return null;
-  U=data;return data;
+  const s=getSession();
+  if(!s||!s.id)return null;
+  try{
+    const snap=await db.collection('gacha_players').doc(s.id).get();
+    if(!snap.exists)return null;
+    const d=snap.data();
+    U={
+      id:s.id,
+      username:d.username||s.username||'—',
+      avatar:d.avatar_url||s.avatar||'',
+      navarites:d.navarites||0,
+      booster:d.booster||false,
+      pity:d.pity||{},
+      streak:d.streak||{},
+    };
+    return U;
+  }catch(e){console.error('[LOAD_USER]',e);return null}
 }
 
 async function loadBanners(){
-  const data=await apiFetch('/api/banners');
-  if(!data||data.error)return;
-  BANNERS=data.banners||[];
-  renderBanners(BANNERS);
-  // Update rotation info
-  const rot=data.rotation||{};
-  const ri=document.getElementById('rot-info');
-  if(ri){
-    if(rot.manual_override)ri.textContent='Rotation manuelle active';
-    else ri.textContent=`Prochaine rotation dans ${rot.days_until_next||'?'} jour(s)`;
-  }
+  try{
+    const snap=await db.collection('gacha_config').doc('banners').get();
+    if(!snap.exists)return;
+    const d=snap.data();
+    BANNERS=d.banners||[];
+    renderBanners(BANNERS);
+    const rot=d.rotation||{};
+    const ri=document.getElementById('rot-info');
+    if(ri){
+      if(rot.manual_override)ri.textContent='Rotation manuelle active';
+      else ri.textContent='Prochaine rotation dans '+(rot.days_until_next||'?')+' jour(s)';
+    }
+  }catch(e){console.error('[LOAD_BANNERS]',e)}
 }
 
 // ═══ UI STATE ═══
@@ -665,13 +708,11 @@ function showMainUI(){
   document.getElementById('u-av').src=U.avatar||'';
   document.getElementById('u-name').textContent=U.username||'—';
   document.getElementById('u-id').textContent='ID: '+(U.id||'—');
-  // Pity
   const p=U.pity||{};
   document.getElementById('psr').textContent=(p.spent_epic||0)+'/'+(p.threshold_epic||30);
   document.getElementById('pleg').textContent=(p.spent_leg||0)+'/'+(p.threshold_leg||150);
   document.getElementById('psr-b').style.width=Math.min(100,(p.spent_epic||0)/(p.threshold_epic||30)*100)+'%';
   document.getElementById('pleg-b').style.width=Math.min(100,(p.spent_leg||0)/(p.threshold_leg||150)*100)+'%';
-  // Streak
   const s=U.streak||{};
   document.getElementById('pstr').textContent=(s.days_in_cycle||0)+'/3';
   document.getElementById('pstr-b').style.width=((s.days_in_cycle||0)/3*100)+'%';
@@ -722,18 +763,14 @@ function flipCard(inner){
   else{inner.classList.add('facedown');inner.classList.add('flipping-to-back')}
 }
 
-// ═══ RENDER BANNERS (from API data) ═══
+// ═══ RENDER BANNERS ═══
 function renderBanners(banners){
   const g=document.getElementById('bg');g.innerHTML='';
   for(const b of banners){
     const c=bannerAccent(b.id,b.name);
     const live=b.status==='live';
     const bgStyle=b.image?`background-image:url('${b.image}');background-size:cover;background-position:center`:`background:${DEFAULT_BG[b.id]||'linear-gradient(135deg,#0a1628,#0d2847)'}`;
-
-    // Rate chips
     const chips=Object.entries(b.rarities||{}).map(([r,d])=>`<span class="rate-chip ${RC_CHIP[r]||'rc-c'}">${r} ${d.pct}%</span>`).join('');
-
-    // Full loot table (ALL items for ALL rarities)
     let loot='';
     for(const[r,d]of Object.entries(b.rarities||{})){
       const items=(d.items||[]).map(it=>{
@@ -742,13 +779,10 @@ function renderBanners(banners){
       }).join(' · ');
       loot+=`<div class="loot-section"><div class="loot-rlabel ${LR_CHIP[r]||'lr-c'}">${r.toUpperCase()} — ${d.pct}%</div><div class="loot-items">${items||'—'}</div></div>`;
     }
-
-    // Featured items
     let featHtml='';
     if(b.featured&&b.featured.length){
       featHtml=`<div style="margin-top:8px;font-family:var(--font-m);font-size:.45rem;color:var(--gold);letter-spacing:.1em">⭐ FEATURED: ${b.featured.join(', ')} (×2 drop)</div>`;
     }
-
     g.insertAdjacentHTML('beforeend',`
     <div class="banner-flip" data-id="${b.id}" ${live?'':'style="opacity:.35;pointer-events:none"'}>
       <div class="banner-flip-inner">
@@ -786,60 +820,98 @@ function selectBanner(id){
   document.getElementById('ps').scrollIntoView({behavior:'smooth',block:'center'});
 }
 
-// ═══ PULL (real API) ═══
+// ═══ PULL (via Firestore — bot processes server-side) ═══
+let _pullBusy=false;
 async function doPull(count){
-  if(!SB||!U||!getToken())return;
+  if(!SB||!U||_pullBusy)return;
   if((U.navarites||0)<count)return;
-  // Disable buttons during pull
+  _pullBusy=true;
+
+  // Disable buttons
   document.getElementById('b1').disabled=true;
   document.getElementById('b5').disabled=true;
   document.getElementById('b10').disabled=true;
 
-  // Call API
-  const data=await apiFetch('/api/pull',{method:'POST',body:JSON.stringify({banner_id:SB,count})});
-  if(!data||!data.success){
-    alert(data?.error||'Erreur lors du pull');
-    updNV();return;
+  // Write pull request to Firestore
+  let pullRef;
+  try{
+    pullRef=await db.collection('gacha_pulls').add({
+      user_id:U.id,
+      banner_id:SB,
+      count:count,
+      status:'pending',
+      created_at:new Date().toISOString(),
+    });
+  }catch(e){
+    console.error('[PULL]',e);
+    alert('Erreur réseau — réessaye');
+    _pullBusy=false;updNV();return;
   }
 
-  // Update local navarites
-  U.navarites=data.navarites;
+  // Start animation + wait for bot result in parallel
+  const resultPromise=new Promise((resolve,reject)=>{
+    let timeout=setTimeout(()=>{unsub();reject(new Error('Timeout — le bot n\'a pas répondu'))},30000);
+    const unsub=db.collection('gacha_pulls').doc(pullRef.id).onSnapshot(snap=>{
+      const d=snap.data();
+      if(!d)return;
+      if(d.status==='completed'){
+        clearTimeout(timeout);unsub();resolve(d);
+      }else if(d.status==='error'){
+        clearTimeout(timeout);unsub();reject(new Error(d.error||'Erreur du bot'));
+      }
+    });
+  });
 
-  // Format results for showPull
-  const res=data.results.map(r=>({name:r.name,icon:r.icon||'📦',rarity:r.rarity,qty:r.qty||1}));
-  await showPull(res,count);
+  try{
+    // Run animation and wait for result
+    const [result]=await Promise.all([
+      resultPromise,
+      runPullAnimation(count),
+    ]);
 
-  // Reload user data (fresh pity etc)
-  await loadUser();
-  showMainUI();
+    // Update local state
+    U.navarites=result.navarites;
+    const res=result.results.map(r=>({name:r.name,icon:r.icon||'📦',rarity:r.rarity,qty:r.qty||1}));
+    await showPullResults(res,count);
+
+    // Reload fresh user data
+    await loadUser();
+    showMainUI();
+  }catch(e){
+    console.error('[PULL]',e);
+    dismiss();
+    alert(e.message||'Erreur lors du pull');
+    await loadUser();
+    showMainUI();
+  }finally{
+    _pullBusy=false;
+    // Clean up the pull document
+    try{pullRef.delete()}catch(e){}
+  }
 }
 
-// ═══ SHOW PULL ANIMATION ═══
-async function showPull(res,count){
-  const ov=document.getElementById('po'),st=document.getElementById('pst'),ra=document.getElementById('ra'),bar=document.getElementById('bbar'),bui=document.querySelector('.blob-ui');
+// ═══ PULL ANIMATION (separated from result display) ═══
+async function runPullAnimation(count){
+  const ov=document.getElementById('po'),st=document.getElementById('pst'),bar=document.getElementById('bbar'),bui=document.querySelector('.blob-ui');
+  const ra=document.getElementById('ra');
   ra.innerHTML='';ra.classList.remove('active');bui.style.display='flex';
-  let hi=0;res.forEach(r=>{const i=RARITY_ORDER.indexOf(r.rarity);if(i>hi)hi=i});
-  const tr=RARITY_ORDER[hi],isLeg=['Legendary','Mythic','Unique','Artifact'].includes(tr);
 
   bReset();bActive=true;
   if(!bClock.running)bClock.start();
   animBlob();ov.classList.add('active');
 
-  // Phase 1: Synchronizing (3s)
+  // Phase 1: Synchronizing
   st.textContent='SYNCHRONIZING NEXUS';bar.style.width='0%';
   await sleep(200);bar.style.width='25%';
   await sleep(2800);
   bCompact(.55,.28);
-  const LEG_TIERS=['Epic','Legendary','Mythic','Unique','Artifact'];
-  const legItems=res.filter(r=>LEG_TIERS.includes(r.rarity));
-  for(const li of legItems){bAddOrbital(RCOL[li.rarity]||'#ffd60a')}
 
-  // Phase 2: Channeling (3s)
+  // Phase 2: Channeling
   st.textContent='CHANNELING ENERGY';bar.style.width='50%';
   await sleep(3000);
   bCompact(.4,.18);
 
-  // Phase 3: Materializing (5s)
+  // Phase 3: Materializing
   st.textContent='MATERIALIZING';bar.style.width='75%';
   bStartChannel();
   await sleep(2000);
@@ -848,6 +920,19 @@ async function showPull(res,count){
   bar.style.width='95%';
   await sleep(1000);
   bar.style.width='100%';
+}
+
+async function showPullResults(res,count){
+  const ov=document.getElementById('po'),ra=document.getElementById('ra'),bui=document.querySelector('.blob-ui');
+
+  // Determine highest rarity for effects
+  let hi=0;res.forEach(r=>{const i=RARITY_ORDER.indexOf(r.rarity);if(i>hi)hi=i});
+  const tr=RARITY_ORDER[hi],isLeg=['Legendary','Mythic','Unique','Artifact'].includes(tr);
+
+  // Add orbitals for high-rarity items
+  const LEG_TIERS=['Epic','Legendary','Mythic','Unique','Artifact'];
+  const legItems=res.filter(r=>LEG_TIERS.includes(r.rarity));
+  for(const li of legItems){bAddOrbital(RCOL[li.rarity]||'#ffd60a')}
 
   // Explosion
   bExplode();
@@ -858,7 +943,7 @@ async function showPull(res,count){
   if(count===1){
     const it=res[0],css=RCSS[it.rarity]||'r-c';
     ra.innerHTML=`<div class="result-card ${css}"><div class="res-rar" style="color:${RCOL[it.rarity]||'#8a8fa8'}">${it.rarity.toUpperCase()}</div><div class="res-icon">${it.icon}</div><div class="res-name">${it.name}${it.qty>1?' ×'+it.qty:''}</div></div><button class="result-dismiss" onclick="dismiss()">CONTINUER</button>`;
-  } else {
+  }else{
     let h='<div class="multi-results">';
     res.forEach((it,i)=>{const css=RCSS[it.rarity]||'r-c';h+=`<div class="mini-res ${css}" style="animation-delay:${i*.08}s"><div class="mr-icon">${it.icon}</div><div class="mr-name">${it.name}${it.qty>1?' ×'+it.qty:''}</div><div class="mr-rar">${it.rarity.toUpperCase()}</div></div>`});
     h+='</div>';
@@ -868,24 +953,29 @@ async function showPull(res,count){
     ra.innerHTML=h;
   }
 }
+
 function dismiss(){document.getElementById('po').classList.remove('active');bActive=false;bReset()}
 function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
 
 // ═══ INIT ═══
-(async function init(){
-  // Check for OAuth callback
-  const wasCallback=await handleOAuthCallback();
-
-  // Check if already logged in
-  if(getToken()||wasCallback){
-    const user=await loadUser();
-    if(user){
-      showMainUI();
-      await loadBanners();
-      return;
-    }
+async function loadAndShow(){
+  const user=await loadUser();
+  if(user){
+    showMainUI();
+    await loadBanners();
+  }else{
+    showLoginGate();
   }
-  showLoginGate();
+}
+
+(async function init(){
+  // Check for existing session
+  const s=getSession();
+  if(s&&s.id){
+    await loadAndShow();
+  }else{
+    showLoginGate();
+  }
 })();
 
 // Scroll line
