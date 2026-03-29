@@ -831,11 +831,13 @@ async function loadParty(){
 }
 
 async function loadTitles(){
-  if(!UID){document.getElementById('titles-grid').innerHTML='<div class="empty">Non connecté</div>';return;}
+  const el=document.getElementById('titles-grid');if(!el)return;
+  if(!UID){el.innerHTML='<div class="empty">Non connecté — utilise /link</div>';return;}
+  el.innerHTML='<div class="empty">Chargement...</div>';
   try{
     const snap=await db.collection(C.TITLES).doc(UID).get();
     renderTitles(snap.exists?snap.data():{});
-  }catch(e){document.getElementById('titles-grid').innerHTML='<div class="empty">Erreur</div>'}
+  }catch(e){console.error('[TITLES]',e);el.innerHTML='<div class="empty">Erreur: '+e.message+'</div>'}
 }
 
 async function loadCompanions(){
@@ -1319,11 +1321,12 @@ function renderShop(shop){
 
 // ── RENDER PARAMETRES ──
 function renderSettings(){
-  if(!PLAYER)return;
-  const s=getSess();
-  document.getElementById('settings-user-info').innerHTML=`ID Discord : <span style="color:var(--blue)">${s.id||'—'}</span><br>Username : <span style="color:var(--text)">${s.username||'—'}</span>`;
+  const s=getSess()||{};
+  const infoEl=document.getElementById('settings-user-info');
+  const themeEl=document.getElementById('theme-current');
+  if(infoEl)infoEl.innerHTML=`ID Discord : <span style="color:var(--blue)">${s.id||'—'}</span><br>Username : <span style="color:var(--text)">${s.username||'—'}</span>`;
   const theme=(PLAYER&&PLAYER.display_theme)||'purple';
-  document.getElementById('theme-current').textContent=theme;
+  if(themeEl)themeEl.textContent=theme;
   document.querySelectorAll('.theme-opt').forEach(el=>el.classList.toggle('selected',el.dataset.theme===theme));
 }
 
