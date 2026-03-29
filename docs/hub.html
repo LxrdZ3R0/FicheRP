@@ -559,8 +559,35 @@ body{background:var(--bg)!important}
       <div class="sh" style="margin-bottom:14px"><span class="sh-num">—</span><span class="sh-title">Points de stat disponibles</span><div class="sh-line"></div></div>
       <div id="prog-sp-content"><div class="empty">Chargement...</div></div>
     </div></div>
-  </div>
-
+    <!-- ALLOCATION STATS -->
+  <div id="alloc-section" style="margin-top:20px">
+    <div class="card"><div class="card-body">
+      <div class="sh" style="margin-bottom:14px"><span class="sh-num">—</span><span class="sh-title">Allocation des stats</span><div class="sh-line"></div></div>
+      <div class="alloc-layout">
+        <div>
+          <div class="alloc-mult-row">
+            <button class="alloc-mult-btn active" onclick="setAllocMult(1)" id="amult-1">×1</button>
+            <button class="alloc-mult-btn" onclick="setAllocMult(5)" id="amult-5">×5</button>
+            <button class="alloc-mult-btn" onclick="setAllocMult(10)" id="amult-10">×10</button>
+            <button class="alloc-mult-btn" onclick="setAllocMult(50)" id="amult-50">×50</button>
+            <button class="alloc-mult-btn" onclick="setAllocMult(100)" id="amult-100">×100</button>
+          </div>
+          <div id="alloc-stats-list"><div class="empty">Chargement...</div></div>
+        </div>
+        <div>
+          <div class="card" style="text-align:center;padding:20px 14px;margin-bottom:16px">
+            <div class="alloc-pts-left" id="alloc-pts-left">0</div>
+            <div class="alloc-pts-label">POINTS DISPONIBLES</div>
+          </div>
+          <div class="card" id="alloc-preview-card" style="display:none"><div class="card-body">
+            <div class="widget-title">En attente</div>
+            <div id="alloc-preview"></div>
+          </div></div>
+          <button class="alloc-confirm-btn" id="alloc-confirm-btn" disabled onclick="confirmAlloc()">Confirmer l'allocation</button>
+          <button class="alloc-reset-btn" onclick="resetAlloc()">Tout remettre à zéro</button>
+        </div>
+      </div>
+    </div></div>
   <!-- TITRES -->
   <div class="tab-panel" id="panel-titres">
     <div class="sh"><span class="sh-num">07</span><span class="sh-title">Titres</span><div class="sh-line"></div></div>
@@ -575,10 +602,38 @@ body{background:var(--bg)!important}
     <div id="comp-content"><div class="empty">Chargement...</div></div>
   </div>
 
-  <!-- SHOP -->
+  <!-- MON SHOP -->
   <div class="tab-panel" id="panel-shop">
     <div class="sh"><span class="sh-num">09</span><span class="sh-title">Ma Boutique</span><div class="sh-line"></div></div>
     <div id="shop-content"><div class="empty">Chargement...</div></div>
+  </div>
+
+  <!-- SHOPS DES JOUEURS -->
+  <div class="tab-panel" id="panel-shops">
+    <div class="sh"><span class="sh-num">09</span><span class="sh-title">Shops des joueurs</span><div class="sh-line"></div></div>
+    <div class="shops-layout">
+      <div class="card"><div class="card-body">
+        <div class="widget-title" style="margin-bottom:12px">Boutiques ouvertes</div>
+        <div id="shops-list"><div class="empty">Chargement...</div></div>
+      </div></div>
+      <div class="card"><div class="card-body" id="shop-detail">
+        <div class="empty">Sélectionne une boutique</div>
+      </div></div>
+    </div>
+  </div>
+
+  <!-- UNIVERSAL SHOP -->
+  <div class="tab-panel" id="panel-ushop">
+    <div class="sh"><span class="sh-num">10</span><span class="sh-title">Universal Shop</span><div class="sh-line"></div></div>
+    <div class="ushop-balance" id="ushop-balance"></div>
+    <div class="ushop-cats">
+      <button class="ushop-cat active" onclick="showUshopCat('all')" id="ucatbtn-all">Tout</button>
+      <button class="ushop-cat" onclick="showUshopCat('equipment')" id="ucatbtn-equipment">Équipement</button>
+      <button class="ushop-cat" onclick="showUshopCat('consumable')" id="ucatbtn-consumable">Consommables</button>
+      <button class="ushop-cat" onclick="showUshopCat('food')" id="ucatbtn-food">Nourriture</button>
+      <button class="ushop-cat" onclick="showUshopCat('other')" id="ucatbtn-other">Autre</button>
+    </div>
+    <div class="ushop-grid" id="ushop-grid"><div class="empty">Chargement...</div></div>
   </div>
 
   <!-- PARAMETRES -->
@@ -1295,6 +1350,296 @@ function showToast(msg,type='success',dur=3500){
   clearTimeout(t._t);t._t=setTimeout(()=>{t.className='toast'},dur);
 }
 window.addEventListener('scroll',()=>{document.getElementById('scroll-line').style.width=(window.scrollY/(document.body.scrollHeight-window.innerHeight)*100)+'%'});
+
+// ══════════════════════════════════════════════
+// ALLOCATION DES STATS
+// ══════════════════════════════════════════════
+const ALLOC_STATS=[
+  {id:'strength',label:'Force',icon:'⚔️'},
+  {id:'agility',label:'Agilité',icon:'💨'},
+  {id:'speed',label:'Vitesse',icon:'🏃'},
+  {id:'intelligence',label:'Intelligence',icon:'🧠'},
+  {id:'mana',label:'Mana',icon:'✨'},
+  {id:'resistance',label:'Résistance',icon:'🛡️'},
+  {id:'charisma',label:'Charisme',icon:'👑'},
+];
+let ALLOC_PENDING={strength:0,agility:0,speed:0,intelligence:0,mana:0,resistance:0,charisma:0};
+let ALLOC_MULT=1;
+let ALLOC_AVAIL=0;
+
+function initAlloc(){
+  if(!CHAR)return;
+  ALLOC_AVAIL=parseInt(CHAR.available_stat_points||CHAR.unallocated_stat_points||0);
+  ALLOC_PENDING={strength:0,agility:0,speed:0,intelligence:0,mana:0,resistance:0,charisma:0};
+  renderAllocStats();
+}
+
+function renderAllocStats(){
+  const stats=CHAR?CHAR.stats||{}:{};
+  const aura=CHAR&&CHAR.aura_enabled;
+  const allocated=Object.values(ALLOC_PENDING).reduce((a,b)=>a+b,0);
+  const left=ALLOC_AVAIL-allocated;
+  const ptsEl=document.getElementById('alloc-pts-left');
+  const confirmEl=document.getElementById('alloc-confirm-btn');
+  if(ptsEl)ptsEl.textContent=left;
+  if(confirmEl)confirmEl.disabled=allocated===0||left<0;
+  const preview=document.getElementById('alloc-preview-card');
+  const previewEl=document.getElementById('alloc-preview');
+  if(allocated>0&&preview&&previewEl){
+    preview.style.display='block';
+    previewEl.innerHTML=ALLOC_STATS.filter(s=>ALLOC_PENDING[s.id]>0)
+      .map(s=>`<div style="display:flex;justify-content:space-between;padding:4px 0;font-family:var(--font-m);font-size:.5rem"><span style="color:var(--text2)">${s.icon} ${s.label}</span><span style="color:var(--green)">+${ALLOC_PENDING[s.id]}</span></div>`).join('');
+  } else if(preview){preview.style.display='none';}
+  const auraStats=aura?[...ALLOC_STATS,{id:'aura',label:'Aura',icon:'🌟'}]:ALLOC_STATS;
+  const listEl=document.getElementById('alloc-stats-list');
+  if(!listEl)return;
+  listEl.innerHTML=auraStats.map(s=>{
+    const cur=parseInt(stats[s.id]||0);
+    const pend=ALLOC_PENDING[s.id]||0;
+    const canAdd=left>=ALLOC_MULT;
+    const canSub=pend>0;
+    return`<div class="alloc-stat-row">
+      <span class="alloc-stat-icon">${s.icon}</span>
+      <span class="alloc-stat-name">${s.label}</span>
+      <span class="alloc-stat-val">${cur}</span>
+      <span class="alloc-stat-pending" style="color:${pend>0?'var(--green)':'var(--text3)'}">${pend>0?'+'+pend:''}</span>
+      <div class="alloc-btns">
+        <button class="alloc-btn minus" onclick="addAllocStat('${s.id}',-1)" ${canSub?'':'disabled'}>−</button>
+        <button class="alloc-btn" onclick="addAllocStat('${s.id}',1)" ${canAdd?'':'disabled'}>+</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function setAllocMult(m){
+  ALLOC_MULT=m;
+  document.querySelectorAll('.alloc-mult-btn').forEach(b=>b.classList.toggle('active',b.id==='amult-'+m));
+  renderAllocStats();
+}
+
+function addAllocStat(stat,dir){
+  const allocated=Object.values(ALLOC_PENDING).reduce((a,b)=>a+b,0);
+  const left=ALLOC_AVAIL-allocated;
+  if(dir>0){const add=Math.min(ALLOC_MULT,left);if(add<=0)return;ALLOC_PENDING[stat]=(ALLOC_PENDING[stat]||0)+add;}
+  else{const sub=Math.min(ALLOC_MULT,ALLOC_PENDING[stat]||0);if(sub<=0)return;ALLOC_PENDING[stat]-=sub;}
+  renderAllocStats();
+}
+
+function resetAlloc(){Object.keys(ALLOC_PENDING).forEach(k=>ALLOC_PENDING[k]=0);renderAllocStats();}
+
+async function confirmAlloc(){
+  if(!CHAR_ID||!UID)return;
+  const allocated=Object.values(ALLOC_PENDING).reduce((a,b)=>a+b,0);
+  if(allocated===0)return;
+  const btn=document.getElementById('alloc-confirm-btn');
+  btn.disabled=true;btn.textContent='Sauvegarde...';
+  try{
+    const stats=Object.assign({},CHAR.stats||{});
+    Object.entries(ALLOC_PENDING).forEach(([s,v])=>{if(v>0)stats[s]=(parseInt(stats[s]||0)+v);});
+    const newAvail=ALLOC_AVAIL-allocated;
+    await db.collection(C.CHARS).doc(CHAR_ID).set({stats,available_stat_points:newAvail,unallocated_stat_points:newAvail},{merge:true});
+    CHAR.stats=stats;CHAR.available_stat_points=newAvail;
+    ALLOC_AVAIL=newAvail;Object.keys(ALLOC_PENDING).forEach(k=>ALLOC_PENDING[k]=0);
+    btn.textContent='✓ Appliqué';btn.style.background='var(--green)';
+    setTimeout(()=>{btn.style.background='';btn.textContent="Confirmer l\'allocation";btn.disabled=false;},2000);
+    renderAllocStats();renderFullChar();
+    showEquipToast('✓ Stats allouées !');
+  }catch(err){
+    console.error('[ALLOC]',err);btn.disabled=false;btn.textContent="Confirmer l\'allocation";
+    showEquipToast('❌ Erreur',true);
+  }
+}
+
+// ══════════════════════════════════════════════
+// SHOPS DES JOUEURS
+// ══════════════════════════════════════════════
+let ALL_SHOPS_DATA=[];
+let ACTIVE_SHOP_KEY=null;
+
+async function loadShops(){
+  const listEl=document.getElementById('shops-list');
+  if(!listEl)return;
+  try{
+    const snap=await db.collection(C.SHOPS).get();
+    ALL_SHOPS_DATA=[];
+    snap.forEach(doc=>{const d=doc.data();if(d.open&&Object.keys(d.items||{}).length>0)ALL_SHOPS_DATA.push({key:doc.id,...d});});
+    renderShopsList();
+  }catch(err){console.error('[SHOPS]',err);listEl.innerHTML='<div class="empty">Erreur de chargement</div>';}
+}
+
+function renderShopsList(){
+  const listEl=document.getElementById('shops-list');if(!listEl)return;
+  if(!ALL_SHOPS_DATA.length){listEl.innerHTML='<div class="empty">Aucun shop ouvert</div>';return;}
+  listEl.innerHTML=ALL_SHOPS_DATA.map(s=>`
+    <div class="shop-list-item${ACTIVE_SHOP_KEY===s.key?' active':''}" onclick="selectShop('${s.key}')">
+      <div class="shop-list-dot open"></div>
+      <div><div class="shop-list-name">${e(s.name||s.key)}</div><div class="shop-list-owner">${e(s.tagline||'')}</div></div>
+    </div>`).join('');
+}
+
+function selectShop(key){
+  ACTIVE_SHOP_KEY=key;renderShopsList();
+  const shop=ALL_SHOPS_DATA.find(s=>s.key===key);
+  if(shop)renderShopDetail(shop);
+}
+
+function renderShopDetail(shop){
+  const det=document.getElementById('shop-detail');if(!det)return;
+  const entries=Object.entries(shop.items||{});
+  if(!entries.length){det.innerHTML='<div class="empty">Ce shop est vide</div>';return;}
+  det.innerHTML=`
+    <div class="shop-detail-header">
+      <div class="shop-detail-name">${e(shop.name||'Shop')}</div>
+      <div class="shop-detail-tagline">${e(shop.tagline||'')}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px">
+      ${entries.map(([item_id,si])=>{
+        const it=ALL_ITEMS_DATA[item_id]||{};
+        const price=si.price||{};
+        const effects=it.stat_effects||it.stats||{};
+        const effStr=Object.entries(effects).slice(0,2).map(([s,v])=>`+${v} ${STAT_ICONS_INV[s]||s}`).join(' ');
+        return`<div class="shop-item-card">
+          <div class="shop-item-top">
+            <span class="shop-item-icon">${it.emoji||'📦'}</span>
+            <div class="shop-item-info">
+              <div class="shop-item-name">${e(it.name||item_id)}</div>
+              ${effStr?`<div class="shop-item-effects">${effStr}</div>`:''}
+              <div class="shop-item-qty">${si.qty===-1||si.qty===undefined?'∞':'×'+si.qty} en stock</div>
+            </div>
+          </div>
+          <div class="shop-item-price">${formatShopPrice(price)}</div>
+          <button class="shop-buy-btn" onclick="buyFromPlayerShop('${shop.key}','${item_id}')">Acheter</button>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+async function buyFromPlayerShop(shopKey,itemId){
+  if(!UID||!CHAR_ID){showEquipToast('❌ Connecte-toi',true);return;}
+  const shop=ALL_SHOPS_DATA.find(s=>s.key===shopKey);if(!shop)return;
+  const si=shop.items[itemId];const it=ALL_ITEMS_DATA[itemId]||{};
+  const price=si.price||{};const charKey=`${UID}_${CHAR_ID}`;
+  try{
+    const[econSnap,invSnap]=await Promise.all([db.collection(C.ECONOMY).doc(charKey).get(),db.collection(C.INV).doc(charKey).get()]);
+    const personal=Object.assign({},(econSnap.exists?econSnap.data().personal:null)||{});
+    for(const[cur,amt] of Object.entries(price)){if((personal[cur]||0)<amt){showEquipToast(`❌ Pas assez de ${formatCurLabel(cur)}`,true);return;}}
+    for(const[cur,amt] of Object.entries(price)){personal[cur]=(personal[cur]||0)-amt;}
+    const invItems=Object.assign({},(invSnap.exists?invSnap.data().items:null)||{});
+    invItems[itemId]=(invItems[itemId]||0)+1;
+    const newShopItems=Object.assign({},shop.items);
+    if(si.qty!==-1&&si.qty!==undefined){newShopItems[itemId]={...si,qty:si.qty-1};if(newShopItems[itemId].qty<=0)delete newShopItems[itemId];}
+    const sellerSnap=await db.collection(C.ECONOMY).doc(shopKey).get();
+    const sellerPersonal=Object.assign({},(sellerSnap.exists?sellerSnap.data().personal:null)||{});
+    for(const[cur,amt] of Object.entries(price)){sellerPersonal[cur]=(sellerPersonal[cur]||0)+amt;}
+    await Promise.all([
+      db.collection(C.ECONOMY).doc(charKey).set({personal},{merge:true}),
+      db.collection(C.INV).doc(charKey).set({items:invItems},{merge:true}),
+      db.collection(C.SHOPS).doc(shopKey).set({items:newShopItems},{merge:true}),
+      db.collection(C.ECONOMY).doc(shopKey).set({personal:sellerPersonal},{merge:true}),
+    ]);
+    shop.items=newShopItems;
+    if(!newShopItems||!Object.keys(newShopItems).length)ALL_SHOPS_DATA=ALL_SHOPS_DATA.filter(s=>s.key!==shopKey);
+    renderShopsList();selectShop(shopKey);
+    showEquipToast(`✓ ${it.name||itemId} acheté !`);
+  }catch(err){console.error('[BUY_SHOP]',err);showEquipToast('❌ Erreur achat',true);}
+}
+
+function formatShopPrice(price){
+  if(!price||!Object.keys(price).length)return'Gratuit';
+  return Object.entries(price).map(([c,a])=>`${a} ${formatCurLabel(c)}`).join(' + ');
+}
+function formatCurLabel(c){const s=c.replace('_kanite','');return s.charAt(0).toUpperCase()+s.slice(1)+' K';}
+
+// ══════════════════════════════════════════════
+// UNIVERSAL SHOP
+// ══════════════════════════════════════════════
+let USHOP_CAT='all';
+let USHOP_ITEMS={};
+
+async function loadUshop(){
+  if(Object.keys(USHOP_ITEMS).length)return;
+  const gridEl=document.getElementById('ushop-grid');if(!gridEl)return;
+  try{
+    const snap=await db.collection(C.CFG).doc('items').get();
+    if(!snap.exists){gridEl.innerHTML='<div class="empty">Shop indisponible</div>';return;}
+    const d=snap.data();
+    USHOP_ITEMS={};
+    for(const sec of['items','equipment','food_items','consumable_items']){
+      if(d[sec]&&typeof d[sec]==='object'){
+        Object.entries(d[sec]).forEach(([id,it])=>{if(it&&it.price)USHOP_ITEMS[id]={...it,_section:sec};});
+      }
+    }
+    renderUshop();renderUshopBalance();
+  }catch(err){console.error('[USHOP]',err);gridEl.innerHTML='<div class="empty">Erreur chargement</div>';}
+}
+
+async function renderUshopBalance(){
+  if(!UID||!CHAR_ID)return;
+  const balEl=document.getElementById('ushop-balance');if(!balEl)return;
+  try{
+    const snap=await db.collection(C.ECONOMY).doc(`${UID}_${CHAR_ID}`).get();
+    const personal=snap.exists?(snap.data().personal||{}):{};
+    const currencies=['bronze_kanite','silver_kanite','gold_kanite','platinum_kanite'];
+    balEl.innerHTML=currencies.filter(c=>(personal[c]||0)>0)
+      .map(c=>`<div class="ushop-bal-chip">${personal[c].toLocaleString()} ${formatCurLabel(c)}</div>`).join('')
+      ||'<div style="font-family:var(--font-m);font-size:.5rem;color:var(--text3)">Solde vide</div>';
+  }catch(err){}
+}
+
+function showUshopCat(cat){
+  USHOP_CAT=cat;
+  document.querySelectorAll('.ushop-cat').forEach(b=>b.classList.toggle('active',b.id==='ucatbtn-'+cat));
+  renderUshop();
+}
+
+function renderUshop(){
+  const gridEl=document.getElementById('ushop-grid');if(!gridEl)return;
+  const CAT_SECTIONS={equipment:['equipment'],consumable:['consumable_items'],food:['food_items'],other:['items']};
+  const allowed=USHOP_CAT==='all'?null:CAT_SECTIONS[USHOP_CAT]||null;
+  const entries=Object.entries(USHOP_ITEMS).filter(([,it])=>!allowed||allowed.includes(it._section));
+  if(!entries.length){gridEl.innerHTML='<div class="empty">Aucun item</div>';return;}
+  gridEl.innerHTML=entries.map(([id,it])=>{
+    const rawPrice=it.price||{};
+    let priceStr='—';
+    if(rawPrice.amount&&rawPrice.currency){priceStr=`${rawPrice.amount} ${formatCurLabel(rawPrice.currency)}`;}
+    else if(typeof rawPrice==='object'){priceStr=Object.entries(rawPrice).filter(([k])=>!['currency','amount','secondary_currency','secondary_amount'].includes(k)).map(([c,a])=>`${a} ${formatCurLabel(c)}`).join(' + ')||'—';}
+    const rarity=(it.rarity||'common').toLowerCase();
+    const rc=RARITY_COLORS[rarity]||'#6b7280';
+    const effects=it.stat_effects||it.stats||{};
+    const effStr=Object.entries(effects).slice(0,3).map(([s,v])=>`+${v} ${STAT_ICONS_INV[s]||s}`).join(' ');
+    return`<div class="ushop-card rarity-${rarity}">
+      <span style="font-size:1.8rem;display:block;margin-bottom:6px">${it.emoji||'📦'}</span>
+      <div style="font-family:var(--font-b);font-weight:700;font-size:.82rem;color:${rc};margin-bottom:4px">${e(it.name||id)}</div>
+      ${it.slot?`<div style="font-family:var(--font-m);font-size:.42rem;letter-spacing:.08em;color:var(--text3)">${SLOT_LIMITS[(it.slot||'').toLowerCase()]?.label||it.slot}</div>`:''}
+      ${effStr?`<div style="font-family:var(--font-m);font-size:.42rem;color:var(--green);margin:4px 0">${effStr}</div>`:''}
+      <div style="font-family:var(--font-h);font-weight:700;font-size:.9rem;color:var(--gold);margin:8px 0">${priceStr}</div>
+      <button class="shop-buy-btn" onclick="buyFromUshop('${id}')">Acheter</button>
+    </div>`;
+  }).join('');
+}
+
+async function buyFromUshop(itemId){
+  if(!UID||!CHAR_ID){showEquipToast('❌ Connecte-toi',true);return;}
+  const it=USHOP_ITEMS[itemId];if(!it)return;
+  const rawPrice=it.price||{};
+  let price={};
+  if(rawPrice.amount&&rawPrice.currency){price[rawPrice.currency]=rawPrice.amount;}
+  else{Object.entries(rawPrice).forEach(([k,v])=>{if(!['currency','amount','secondary_currency','secondary_amount'].includes(k))price[k]=v;});}
+  const charKey=`${UID}_${CHAR_ID}`;
+  try{
+    const[econSnap,invSnap]=await Promise.all([db.collection(C.ECONOMY).doc(charKey).get(),db.collection(C.INV).doc(charKey).get()]);
+    const personal=Object.assign({},(econSnap.exists?econSnap.data().personal:null)||{});
+    for(const[cur,amt] of Object.entries(price)){if((personal[cur]||0)<amt){showEquipToast(`❌ Pas assez de ${formatCurLabel(cur)}`,true);return;}}
+    for(const[cur,amt] of Object.entries(price)){personal[cur]=(personal[cur]||0)-amt;}
+    const invItems=Object.assign({},(invSnap.exists?invSnap.data().items:null)||{});
+    invItems[itemId]=(invItems[itemId]||0)+1;
+    await Promise.all([
+      db.collection(C.ECONOMY).doc(charKey).set({personal},{merge:true}),
+      db.collection(C.INV).doc(charKey).set({items:invItems},{merge:true}),
+    ]);
+    renderUshopBalance();showEquipToast(`✓ ${it.name||itemId} acheté !`);
+  }catch(err){console.error('[USHOP_BUY]',err);showEquipToast('❌ Erreur achat',true);}
+}
 
 document.addEventListener('DOMContentLoaded', init);
 </script>
