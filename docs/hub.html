@@ -589,6 +589,8 @@ body{background:var(--bg)!important}
         </div>
       </div>
     </div></div>
+  </div>
+  </div>
   <!-- TITRES -->
   <div class="tab-panel" id="panel-titres">
     <div class="sh"><span class="sh-num">07</span><span class="sh-title">Titres</span><div class="sh-line"></div></div>
@@ -1272,11 +1274,24 @@ function renderProgression(){
 }
 
 // ── RENDER TITRES ──
-function renderTitles(d){
+function renderTitles(d, defs){
   const titles=d.titles||{},entries=Object.entries(titles);
-  document.getElementById('titles-grid').innerHTML=entries.length
-    ?entries.map(([id,t])=>`<div class="title-card"><div class="title-name">${e(t.name||id)}</div><div class="title-tier" style="color:${tCol(t.tier||0)}">${tLbl(t.tier||0)}</div></div>`).join('')
-    :'<div class="empty">Aucun titre obtenu</div>';
+  const el=document.getElementById('titles-grid');
+  if(!el)return;
+  if(!entries.length){el.innerHTML='<div class="empty">Aucun titre obtenu</div>';return;}
+  el.innerHTML=entries.map(([id,t])=>{
+    const tier=t.current_tier||t.tier||0;
+    const def=defs&&defs[id];
+    // Chercher le nom dans la définition du tier actuel ou du set
+    const tierDef=def&&def.tiers&&def.tiers[tier];
+    const name=(tierDef&&tierDef.name)||(def&&def.name)||id.replace(/_/g,' ');
+    const desc=(tierDef&&tierDef.description)||(def&&def.description)||'';
+    return`<div class="title-card">
+      <div class="title-name">${e(name)}</div>
+      ${desc?`<div class="title-desc">${e(desc)}</div>`:''}
+      <div class="title-tier" style="color:${tCol(tier)}">Tier ${tier} — ${tLbl(tier)}</div>
+    </div>`;
+  }).join('');
 }
 function tCol(t){return['#6b7280','#60a5fa','#a78bfa','#fbbf24','#ef4444'][Math.min(t,4)]}
 function tLbl(t){return['Commun','Peu Commun','Rare','Épique','Légendaire'][Math.min(t,4)]||'?'}
