@@ -368,7 +368,7 @@ body{background:var(--bg)!important}
     <div class="code-label">Code de liaison</div>
     <input type="text" id="link-code" class="code-input" placeholder="XXXX" maxlength="12" autocomplete="off" spellcheck="false">
     <div class="code-error" id="code-error"></div>
-    <button class="code-btn" id="code-btn" onclick="verifyCode()">CONNEXION AU NEXUS</button>
+    <button class="code-btn" id="code-btn" id="verify-btn">CONNEXION AU NEXUS</button>
   </div>
   <div class="gate-note">Code à usage unique · valable 10 minutes<br>Utilise <span style="color:var(--blue)">/link</span> pour en générer un nouveau</div>
 </div>
@@ -666,7 +666,8 @@ async function verifyCode(){
   function showErr(m){err.textContent=m;err.style.display='block'}
   function done(){btn.disabled=false;btn.textContent='CONNEXION AU NEXUS'}
 }
-document.getElementById('link-code').addEventListener('keydown',e=>{if(e.key==='Enter')verifyCode()});
+document.getElementById('link-code').addEventListener('keydown',e=>{if(e.key==='Enter')verifyCode();});
+document.getElementById('verify-btn').addEventListener('click',verifyCode);
 
 function logout(){
   clearSess();
