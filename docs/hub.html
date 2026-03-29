@@ -831,6 +831,7 @@ async function loadParty(){
 }
 
 async function loadTitles(){
+  if(!UID){document.getElementById('titles-grid').innerHTML='<div class="empty">Non connecté</div>';return;}
   try{
     const snap=await db.collection(C.TITLES).doc(UID).get();
     renderTitles(snap.exists?snap.data():{});
@@ -1318,9 +1319,10 @@ function renderShop(shop){
 
 // ── RENDER PARAMETRES ──
 function renderSettings(){
+  if(!PLAYER)return;
   const s=getSess();
   document.getElementById('settings-user-info').innerHTML=`ID Discord : <span style="color:var(--blue)">${s.id||'—'}</span><br>Username : <span style="color:var(--text)">${s.username||'—'}</span>`;
-  const theme=PLAYER.display_theme||'purple';
+  const theme=(PLAYER&&PLAYER.display_theme)||'purple';
   document.getElementById('theme-current').textContent=theme;
   document.querySelectorAll('.theme-opt').forEach(el=>el.classList.toggle('selected',el.dataset.theme===theme));
 }
@@ -1339,7 +1341,6 @@ const LAZY={
   party:loadParty,
   titres:loadTitles,
   compagnons:loadCompanions,
-  shop:loadShop,
   monshop:loadMonShop,
   shops:loadShops,
   ushop:loadUshop,
@@ -1349,8 +1350,10 @@ const LAZY={
 function showTab(id){
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('panel-'+id).classList.add('active');
-  document.getElementById('tab-'+id).classList.add('active');
+  const panel=document.getElementById('panel-'+id);
+  const btn=document.getElementById('tab-'+id);
+  if(panel)panel.classList.add('active');
+  if(btn)btn.classList.add('active');
   if(LAZY[id])LAZY[id]();
 }
 
