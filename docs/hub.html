@@ -1354,13 +1354,22 @@ const LAZY={
   parametres:renderSettings,
 };
 function showTab(id){
+  console.log('[TAB] showTab:', id, '| LAZY fn:', typeof LAZY[id], '| UID:', UID);
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   const panel=document.getElementById('panel-'+id);
   const btn=document.getElementById('tab-'+id);
-  if(panel)panel.classList.add('active');
+  if(!panel){console.error('[TAB] panel-'+id+' introuvable !');return;}
+  panel.classList.add('active');
   if(btn)btn.classList.add('active');
-  if(LAZY[id])LAZY[id]();
+  if(LAZY[id]){
+    try{
+      const result=LAZY[id]();
+      if(result&&result.catch)result.catch(err=>console.error('[TAB] '+id+' error:',err));
+    }catch(err){console.error('[TAB] '+id+' sync error:',err);}
+  }else{
+    console.log('[TAB] Pas de LAZY pour:', id);
+  }
 }
 
 // ── UTILS ──
