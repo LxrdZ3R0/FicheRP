@@ -871,7 +871,7 @@ function renderDashChar(){
         <span class="badge badge-class">${e(c.class||'—')}</span>
       </div>
       <div class="char-lvl-row"><span class="char-lvl-label">Niveau</span><span class="char-lvl-val">${lvl}</span></div>
-      <div class="xp-labels"><span>XP</span><span>${xp.toLocaleString()} / ${nxp.toLocaleString()}</span></div>
+      <div class="xp-labels"><span>XP</span><span>${cxpDash.toLocaleString()} / ${nxpDash.toLocaleString()}</span></div>
       <div class="xp-bar"><div class="xp-fill" style="width:${pct}%"></div></div>
     </div>`;
   document.getElementById('dash-stats-grid').innerHTML=SK.map(k=>`<div class="stat-row"><span class="stat-icon">${SI[k]}</span><span class="stat-name">${SL[k]}</span><span class="stat-val">${stats[k]||0}</span></div>`).join('');
@@ -1344,6 +1344,7 @@ const LAZY={
   shops:loadShops,
   ushop:loadUshop,
   progression:()=>{initAlloc();},
+  parametres:renderSettings,
 };
 function showTab(id){
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
