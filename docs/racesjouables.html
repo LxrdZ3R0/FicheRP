@@ -126,12 +126,12 @@ body::before{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;
 <script src="js/utils.js"></script>
 <script type="module">
 import{initializeApp,getApps}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import{getFirestore,collection,doc,setDoc,getDocs,getDoc}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import{getFirestore,collection,doc,setDoc,getDocs,getDoc,onSnapshot}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import{getAuth,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 const firebaseConfig={apiKey:"AIzaSyAru7qZX8Gu_b8Y3oNDV-a5PmkrrkRjkcs",authDomain:"jaharta-rp.firebaseapp.com",projectId:"jaharta-rp",storageBucket:"jaharta-rp.firebasestorage.app",messagingSenderId:"217075417489",appId:"1:217075417489:web:4d1e2df422a5cd42411a30"};
 const app=getApps().length?getApps()[0]:initializeApp(firebaseConfig);
 const db=getFirestore(app);const auth=getAuth(app);
-window._db=db;window._collection=collection;window._doc=doc;window._setDoc=setDoc;window._getDocs=getDocs;
+window._db=db;window._collection=collection;window._doc=doc;window._setDoc=setDoc;window._getDocs=getDocs;window._onSnapshot=onSnapshot;
 onAuthStateChanged(auth,async user=>{
   let canEditRaces=false;
   if(user){
@@ -162,7 +162,6 @@ document.addEventListener('DOMContentLoaded',function(){
     <a href="pnj.html">PNJ</a>
     <a href="portail.html">Portail</a>
     <a href="racesjouables.html" class="active">Races</a>
-    <a href="gacha.html">Gacha</a>
     <a href="admin.html" class="nav-admin-link">Admin</a>
     <a href="admin.html" class="admin-badge" id="admin-badge">ADMIN</a>
   </div>
@@ -264,12 +263,16 @@ window.addEventListener('scroll',function(){var h=document.documentElement.scrol
   window.updateRaceAdmin = function(v) { isAdmin = v; };
 
   function loadRacesData() {
-    if (!db || !window._getDocs) return;
+    if (!db || !window._onSnapshot || !window._collection) return;
     try {
-      window._getDocs(window._collection(db,'races_data')).then(function(snap) {
-        snap.forEach(function(d) { racesData[d.id] = d.data(); });
-      }).catch(function(){});
-    } catch(e) {}
+      window._onSnapshot(
+        window._collection(db,'races_data'),
+        function(snap) {
+          snap.forEach(function(d) { racesData[d.id] = d.data(); });
+        },
+        function(e) { console.warn('[races] Firestore read error:', e.code || e.message); }
+      );
+    } catch(e) { console.warn('[races] loadRacesData error:', e.message); }
   }
 
   function saveRaceData(name, data) {
@@ -304,7 +307,7 @@ window.addEventListener('scroll',function(){var h=document.documentElement.scrol
     });
     overlay.addEventListener('click', function(e) { if (e.target === overlay) closePopup(); });
     overlay.querySelector('.rp-x').addEventListener('click', closePopup);
-    var saveBtn = overlay.querySelector('.rp-save');
+    var saveBtn = overlay.querySelector('.rp4-save');
     if (saveBtn) saveBtn.addEventListener('click', function() { doSave(raceName, overlay, saveBtn); });
     // Boot animations after DOM paint
     setTimeout(function() { bootCanvases(data, accent); bootDots(); }, 60);
@@ -366,7 +369,7 @@ window.addEventListener('scroll',function(){var h=document.documentElement.scrol
 
     /* Admin */
     var adminHTML = '';
-    if (isAdmin) {
+    if (isAdmin || window._isAdmin) {
       adminHTML = '<div class="rp4-admin">'
         +'<div class="rp4-admin-t">&#9656; MODE ADMIN</div>'
         +'<div class="rp4-admin-g">'
@@ -651,24 +654,35 @@ window.addEventListener('scroll',function(){var h=document.documentElement.scrol
   /* ── Save ── */
   function doSave(name, overlay, btn) {
     btn.disabled=true; btn.textContent='Sauvegarde...';
+    var get=function(id){ return overlay.querySelector('#'+id)||document.getElementById(id); };
     var data={
-      name:(document.getElementById('rp-ed-name')&&document.getElementById('rp-ed-name').value||name).trim(),
-      plural:(document.getElementById('rp-ed-plural')&&document.getElementById('rp-ed-plural').value||'').trim(),
-      category:(document.getElementById('rp-ed-category')&&document.getElementById('rp-ed-category').value||'').trim(),
-      longevity:(document.getElementById('rp-ed-longevity')&&document.getElementById('rp-ed-longevity').value||'').trim(),
-      affinity:(document.getElementById('rp-ed-affinity')&&document.getElementById('rp-ed-affinity').value||'').trim(),
-      access:(document.getElementById('rp-ed-access')&&document.getElementById('rp-ed-access').value)||'Ouverte',
-      description:(document.getElementById('rp-ed-desc')&&document.getElementById('rp-ed-desc').value||'').trim(),
-      imageUrl:(document.getElementById('rp-ed-image')&&document.getElementById('rp-ed-image').value||'').trim()
+      name:  (get('rp-ed-name')  &&get('rp-ed-name').value  ||name).trim(),
+      plural:(get('rp-ed-plural')&&get('rp-ed-plural').value ||'').trim(),
+      category:(get('rp-ed-category')&&get('rp-ed-category').value||'').trim(),
+      longevity:(get('rp-ed-longevity')&&get('rp-ed-longevity').value||'').trim(),
+      affinity:(get('rp-ed-affinity')&&get('rp-ed-affinity').value||'').trim(),
+      access:(get('rp-ed-access')&&get('rp-ed-access').value)||'Ouverte',
+      description:(get('rp-ed-desc')&&get('rp-ed-desc').value||'').trim(),
+      imageUrl:(get('rp-ed-image')&&get('rp-ed-image').value||'').trim()
     };
-    try{data.baseStats=JSON.parse(document.getElementById('rp-ed-stats').value||'{}');}catch(e){data.baseStats={};}
-    try{data.basePowers=JSON.parse(document.getElementById('rp-ed-powers').value||'[]');}catch(e){data.basePowers=[];}
-    saveRaceData(name,data).then(function(){
+    try{ data.baseStats=JSON.parse((get('rp-ed-stats')&&get('rp-ed-stats').value)||'{}'); }catch(e){ data.baseStats={}; }
+    try{ data.basePowers=JSON.parse((get('rp-ed-powers')&&get('rp-ed-powers').value)||'[]'); }catch(e){ data.basePowers=[]; }
+    if (!db || !window._setDoc) {
+      db = window._db;
+    }
+    if (!db || !window._setDoc) {
+      console.error('[doSave] Firebase non initialisé — db:',db,'_setDoc:',window._setDoc);
+      btn.textContent='Erreur Firebase'; btn.style.color='#FF4757'; btn.disabled=false;
+      setTimeout(function(){btn.textContent='Sauvegarder';btn.style.color='';},3000);
+      return;
+    }
+    window._setDoc(window._doc(db,'races_data',name), data, {merge:true}).then(function(){
       racesData[name]=data; btn.textContent='\u2713 OK'; btn.style.color='#44ff88';
       setTimeout(function(){btn.disabled=false;btn.textContent='Sauvegarder';btn.style.color='';},2000);
-    }).catch(function(){
-      btn.textContent='Erreur'; btn.style.color='#FF4757'; btn.disabled=false;
-      setTimeout(function(){btn.textContent='Sauvegarder';btn.style.color='';},3000);
+    }).catch(function(e){
+      console.error('[doSave] Firestore error:',e);
+      btn.textContent='Erreur: '+(e.code||e.message); btn.style.color='#FF4757'; btn.disabled=false;
+      setTimeout(function(){btn.textContent='Sauvegarder';btn.style.color='';},4000);
     });
   }
 
