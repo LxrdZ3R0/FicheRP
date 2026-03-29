@@ -214,6 +214,144 @@ body{background:var(--bg)!important}
 .toast.error{border-color:rgba(255,71,87,0.3);color:var(--red)}
 .toast.info{border-color:rgba(77,163,255,0.3);color:var(--blue)}
 @media(max-width:840px){.nav-links{display:none}.tab-btn .tab-text{display:none}.tab-btn{padding:14px 12px}}
+
+/* ─── INVENTAIRE AVANCÉ ─── */
+.inv-layout{display:grid;grid-template-columns:280px 1fr;gap:20px;align-items:start}
+@media(max-width:900px){.inv-layout{grid-template-columns:1fr}}
+
+/* Slots d'équipement */
+.slots-panel{display:flex;flex-direction:column;gap:8px}
+.slot-group{background:rgba(12,18,40,0.6);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.slot-group-title{font-family:var(--font-m);font-size:.48rem;letter-spacing:.15em;color:var(--text3);padding:8px 14px;background:rgba(77,163,255,0.04);border-bottom:1px solid var(--border);text-transform:uppercase}
+.slot-item{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid rgba(77,163,255,0.05);cursor:pointer;transition:background .2s}
+.slot-item:last-child{border-bottom:none}
+.slot-item:hover{background:rgba(77,163,255,0.05)}
+.slot-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.slot-dot.filled{background:var(--blue);box-shadow:0 0 6px var(--blue)}
+.slot-dot.empty{background:rgba(77,163,255,0.15);border:1px solid rgba(77,163,255,0.2)}
+.slot-label{font-family:var(--font-m);font-size:.46rem;letter-spacing:.08em;color:var(--text3);flex:1}
+.slot-count{font-family:var(--font-h);font-size:.55rem;font-weight:700;color:var(--text)}
+.slot-count.full{color:var(--gold)}
+
+/* Grille d'items */
+.inv-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:16px}
+.inv-tab{font-family:var(--font-b);font-size:.65rem;font-weight:600;letter-spacing:.06em;color:var(--text3);background:none;border:none;border-bottom:2px solid transparent;padding:10px 16px;cursor:pointer;transition:all .2s}
+.inv-tab.active{color:var(--blue);border-bottom-color:var(--blue)}
+
+.item-card{position:relative;background:rgba(12,18,40,0.6);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;cursor:pointer;transition:all .2s}
+.item-card:hover{border-color:rgba(77,163,255,0.3);background:rgba(12,18,40,0.9)}
+.item-card.equipped{border-color:rgba(68,255,136,0.35);background:rgba(68,255,136,0.04)}
+.item-card.equippable:hover{border-color:rgba(77,163,255,0.5)}
+.item-equip-badge{position:absolute;top:6px;right:6px;font-family:var(--font-m);font-size:.38rem;letter-spacing:.06em;padding:2px 6px;border-radius:3px}
+.item-equip-badge.on{background:rgba(68,255,136,0.15);color:var(--green);border:1px solid rgba(68,255,136,0.3)}
+.item-equip-badge.off{background:rgba(77,163,255,0.1);color:var(--blue);border:1px solid rgba(77,163,255,0.2)}
+.item-icon-big{font-size:1.8rem;margin-bottom:6px;display:block}
+.item-name-sm{font-family:var(--font-b);font-weight:600;font-size:.72rem;color:var(--text);margin-bottom:2px}
+.item-slot-tag{font-family:var(--font-m);font-size:.4rem;letter-spacing:.1em;color:var(--text3);margin-bottom:4px}
+.item-qty{font-family:var(--font-m);font-size:.46rem;letter-spacing:.08em;color:var(--text3)}
+.item-effects{font-family:var(--font-m);font-size:.42rem;letter-spacing:.06em;color:var(--green);margin-top:4px}
+
+/* Rarity colors */
+.rarity-common{border-top:2px solid #6b7280}
+.rarity-uncommon{border-top:2px solid #60a5fa}
+.rarity-rare{border-top:2px solid #a78bfa}
+.rarity-epic{border-top:2px solid #8B5CF6}
+.rarity-legendary{border-top:2px solid #fbbf24}
+.rarity-mythic{border-top:2px solid #f97316}
+.rarity-unique{border-top:2px solid var(--gold)}
+.rarity-artifact{border-top:2px solid #ef4444}
+.rarity-mastercraft{border-top:2px solid #ff006e}
+.rarity-signature{border-top:2px solid var(--gold)}
+
+/* Sets */
+.sets-section{margin-top:20px}
+.set-card{padding:14px;background:rgba(12,18,40,0.6);border:1px solid var(--border);border-radius:10px;margin-bottom:10px}
+.set-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.set-name{font-family:var(--font-b);font-weight:700;font-size:.88rem;color:var(--text)}
+.set-count{font-family:var(--font-m);font-size:.48rem;letter-spacing:.1em}
+.set-thresholds{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.set-thresh{font-family:var(--font-m);font-size:.42rem;letter-spacing:.08em;padding:2px 8px;border-radius:3px;border:1px solid}
+.set-thresh.active{border-color:rgba(68,255,136,0.4);color:var(--green);background:rgba(68,255,136,0.08)}
+.set-thresh.inactive{border-color:rgba(255,255,255,0.06);color:var(--text3)}
+.set-bonus{font-family:var(--font-m);font-size:.44rem;letter-spacing:.06em;color:var(--text2);line-height:1.8}
+.set-items{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+.set-piece{font-family:var(--font-m);font-size:.4rem;letter-spacing:.06em;padding:2px 7px;border-radius:3px}
+.set-piece.have{background:rgba(68,255,136,0.1);color:var(--green);border:1px solid rgba(68,255,136,0.2)}
+.set-piece.missing{background:rgba(255,255,255,0.03);color:var(--text3);border:1px solid rgba(255,255,255,0.06)}
+
+/* Bonus total équipement */
+.equip-bonus-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
+@media(max-width:600px){.equip-bonus-grid{grid-template-columns:repeat(2,1fr)}}
+.equip-bonus-block{background:rgba(68,255,136,0.04);border:1px solid rgba(68,255,136,0.12);border-radius:8px;padding:10px;text-align:center}
+.equip-bonus-val{font-family:var(--font-h);font-weight:800;font-size:1.1rem;color:var(--green)}
+.equip-bonus-name{font-family:var(--font-m);font-size:.4rem;letter-spacing:.12em;color:var(--text3);margin-top:2px}
+
+/* Toast équipement */
+.equip-toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%) translateY(10px);background:rgba(12,18,40,0.95);border:1px solid rgba(68,255,136,0.3);border-radius:8px;padding:10px 20px;font-family:var(--font-m);font-size:.52rem;letter-spacing:.06em;color:var(--green);opacity:0;pointer-events:none;transition:all .3s;z-index:9999;white-space:nowrap}
+.equip-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.equip-toast.error{border-color:rgba(255,71,87,0.3);color:var(--red)}
+
+/* ─── ALLOCATION STATS ─── */
+.alloc-layout{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+@media(max-width:800px){.alloc-layout{grid-template-columns:1fr}}
+.alloc-stat-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(77,163,255,0.07)}
+.alloc-stat-row:last-child{border-bottom:none}
+.alloc-stat-icon{font-size:1.2rem;width:28px;text-align:center;flex-shrink:0}
+.alloc-stat-name{font-family:var(--font-m);font-size:.5rem;letter-spacing:.1em;color:var(--text3);flex:1;text-transform:uppercase}
+.alloc-stat-val{font-family:var(--font-h);font-weight:800;font-size:1rem;color:var(--text);min-width:50px;text-align:right}
+.alloc-stat-pending{font-family:var(--font-m);font-size:.5rem;color:var(--green);min-width:36px;text-align:center}
+.alloc-btns{display:flex;gap:6px;align-items:center}
+.alloc-btn{font-family:var(--font-h);font-weight:700;font-size:.75rem;width:30px;height:30px;border:1px solid rgba(77,163,255,0.2);background:rgba(77,163,255,0.06);color:var(--blue);border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.alloc-btn:hover{background:rgba(77,163,255,0.15);border-color:rgba(77,163,255,0.4)}
+.alloc-btn.minus{color:var(--red);border-color:rgba(255,71,87,0.2);background:rgba(255,71,87,0.06)}
+.alloc-btn.minus:hover{background:rgba(255,71,87,0.15)}
+.alloc-mult-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.alloc-mult-btn{font-family:var(--font-b);font-weight:700;font-size:.65rem;padding:6px 14px;border-radius:6px;border:1px solid rgba(77,163,255,0.2);background:rgba(77,163,255,0.06);color:var(--text2);cursor:pointer;transition:all .2s}
+.alloc-mult-btn.active,.alloc-mult-btn:hover{background:rgba(77,163,255,0.15);border-color:var(--blue);color:var(--blue)}
+.alloc-pts-left{font-family:var(--font-h);font-weight:800;font-size:2rem;color:var(--blue)}
+.alloc-pts-label{font-family:var(--font-m);font-size:.45rem;letter-spacing:.12em;color:var(--text3);margin-top:2px}
+.alloc-confirm-btn{width:100%;padding:14px;font-family:var(--font-b);font-weight:700;font-size:.82rem;letter-spacing:.1em;border:none;border-radius:10px;background:linear-gradient(135deg,#4DA3FF,#8B5CF6);color:#020713;cursor:pointer;transition:all .3s;margin-top:16px}
+.alloc-confirm-btn:disabled{opacity:.35;cursor:not-allowed}
+.alloc-confirm-btn:hover:not(:disabled){box-shadow:0 0 20px rgba(77,163,255,.4);transform:translateY(-1px)}
+.alloc-reset-btn{width:100%;padding:10px;font-family:var(--font-b);font-weight:600;font-size:.72rem;letter-spacing:.08em;border:1px solid rgba(255,71,87,0.2);border-radius:8px;background:transparent;color:var(--red);cursor:pointer;transition:all .2s;margin-top:8px}
+.alloc-reset-btn:hover{background:rgba(255,71,87,0.08)}
+
+/* ─── SHOPS JOUEURS ─── */
+.shops-layout{display:grid;grid-template-columns:260px 1fr;gap:20px;align-items:start}
+@media(max-width:900px){.shops-layout{grid-template-columns:1fr}}
+.shop-list-item{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:10px;cursor:pointer;transition:background .2s;border:1px solid transparent}
+.shop-list-item:hover{background:rgba(77,163,255,0.05);border-color:rgba(77,163,255,0.1)}
+.shop-list-item.active{background:rgba(77,163,255,0.08);border-color:rgba(77,163,255,0.2)}
+.shop-list-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.shop-list-dot.open{background:var(--green);box-shadow:0 0 6px var(--green)}
+.shop-list-dot.closed{background:rgba(255,71,87,0.5)}
+.shop-list-name{font-family:var(--font-b);font-weight:700;font-size:.8rem;color:var(--text);flex:1}
+.shop-list-owner{font-family:var(--font-m);font-size:.42rem;letter-spacing:.06em;color:var(--text3)}
+.shop-detail-header{margin-bottom:20px}
+.shop-detail-name{font-family:var(--font-h);font-weight:800;font-size:1.4rem;color:var(--text);margin-bottom:4px}
+.shop-detail-tagline{font-family:var(--font-m);font-size:.55rem;letter-spacing:.08em;color:var(--text3);margin-bottom:12px}
+.shop-item-card{background:rgba(12,18,40,0.6);border:1px solid var(--border);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:8px;transition:all .2s}
+.shop-item-card:hover{border-color:rgba(77,163,255,0.25);background:rgba(12,18,40,.9)}
+.shop-item-top{display:flex;align-items:center;gap:10px}
+.shop-item-icon{font-size:1.6rem}
+.shop-item-info{flex:1}
+.shop-item-name{font-family:var(--font-b);font-weight:700;font-size:.85rem;color:var(--text)}
+.shop-item-effects{font-family:var(--font-m);font-size:.42rem;color:var(--green)}
+.shop-item-qty{font-family:var(--font-m);font-size:.42rem;letter-spacing:.06em;color:var(--text3)}
+.shop-item-price{font-family:var(--font-h);font-weight:700;font-size:.9rem;color:var(--gold)}
+.shop-buy-btn{width:100%;padding:9px;font-family:var(--font-b);font-weight:700;font-size:.7rem;letter-spacing:.08em;border:none;border-radius:7px;background:linear-gradient(135deg,#4DA3FF,#8B5CF6);color:#020713;cursor:pointer;transition:all .2s}
+.shop-buy-btn:hover{opacity:.85;transform:translateY(-1px)}
+.shop-buy-btn:disabled{opacity:.3;cursor:not-allowed}
+
+/* ─── UNIVERSAL SHOP ─── */
+.ushop-cats{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:16px;flex-wrap:wrap}
+.ushop-cat{font-family:var(--font-b);font-size:.65rem;font-weight:600;letter-spacing:.06em;color:var(--text3);background:none;border:none;border-bottom:2px solid transparent;padding:10px 14px;cursor:pointer;transition:all .2s}
+.ushop-cat.active{color:var(--blue);border-bottom-color:var(--blue)}
+.ushop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+.ushop-card{background:rgba(12,18,40,0.6);border:1px solid var(--border);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:8px;transition:all .2s}
+.ushop-card:hover{border-color:rgba(77,163,255,0.25)}
+.ushop-balance{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.ushop-bal-chip{font-family:var(--font-m);font-size:.48rem;letter-spacing:.08em;padding:5px 12px;border-radius:20px;background:rgba(255,214,10,0.08);border:1px solid rgba(255,214,10,0.2);color:var(--gold)}
 </style>
 </head>
 <body>
@@ -267,7 +405,8 @@ body{background:var(--bg)!important}
     <button class="tab-btn" onclick="showTab('progression')" id="tab-progression">📈 <span class="tab-text">Progression</span></button>
     <button class="tab-btn" onclick="showTab('titres')" id="tab-titres">🏷️ <span class="tab-text">Titres</span></button>
     <button class="tab-btn" onclick="showTab('compagnons')" id="tab-compagnons">🐾 <span class="tab-text">Compagnons</span></button>
-    <button class="tab-btn" onclick="showTab('shop')" id="tab-shop">🏪 <span class="tab-text">Shop</span></button>
+    <button class="tab-btn" onclick="showTab('shops')" id="tab-shops">🏪 <span class="tab-text">Shops</span></button>
+    <button class="tab-btn" onclick="showTab('ushop')" id="tab-ushop">🛒 <span class="tab-text">Universal Shop</span></button>
     <button class="tab-btn" onclick="showTab('parametres')" id="tab-parametres">⚙️ <span class="tab-text">Paramètres</span></button>
   </div>
 
@@ -342,14 +481,38 @@ body{background:var(--bg)!important}
   <!-- INVENTAIRE -->
   <div class="tab-panel" id="panel-inventaire">
     <div class="sh"><span class="sh-num">03</span><span class="sh-title">Inventaire</span><div class="sh-line"></div></div>
-    <div class="card" style="margin-bottom:20px"><div class="card-body">
-      <div class="sh" style="margin-bottom:14px"><span class="sh-num">—</span><span class="sh-title">Équipements actifs</span><div class="sh-line"></div></div>
-      <div class="equipped-grid" id="equipped-grid"><div class="empty">Chargement...</div></div>
-    </div></div>
-    <div class="card"><div class="card-body">
-      <div class="sh" style="margin-bottom:14px"><span class="sh-num">—</span><span class="sh-title">Items</span><div class="sh-line"></div></div>
-      <div class="inv-grid" id="inv-grid"><div class="empty">Chargement...</div></div>
-    </div></div>
+    <div class="inv-layout">
+      <!-- Panneau gauche : slots -->
+      <div>
+        <div class="card" style="margin-bottom:14px"><div class="card-body">
+          <div class="widget-title">Slots d'équipement</div>
+          <div id="slots-panel"><div class="empty">Chargement...</div></div>
+        </div></div>
+        <!-- Bonus totaux équipement -->
+        <div class="card"><div class="card-body">
+          <div class="widget-title">Bonus équipement total</div>
+          <div class="equip-bonus-grid" id="equip-bonus-grid"><div class="sk" style="height:50px;border-radius:8px;grid-column:1/-1"></div></div>
+        </div></div>
+      </div>
+      <!-- Panneau droit : items + sets -->
+      <div>
+        <div class="card" style="margin-bottom:16px"><div class="card-body">
+          <div class="inv-tabs">
+            <button class="inv-tab active" onclick="showInvTab('all')" id="invtab-all">Tout</button>
+            <button class="inv-tab" onclick="showInvTab('equipped')" id="invtab-equipped">Équipé</button>
+            <button class="inv-tab" onclick="showInvTab('equipment')" id="invtab-equipment">Équipement</button>
+            <button class="inv-tab" onclick="showInvTab('consumable')" id="invtab-consumable">Consommables</button>
+            <button class="inv-tab" onclick="showInvTab('other')" id="invtab-other">Autre</button>
+          </div>
+          <div class="inv-grid" id="inv-grid"><div class="empty">Chargement...</div></div>
+        </div></div>
+        <!-- Sets actifs -->
+        <div class="card"><div class="card-body">
+          <div class="sh" style="margin-bottom:14px"><span class="sh-num">—</span><span class="sh-title">Sets actifs</span><div class="sh-line"></div></div>
+          <div id="sets-grid"><div class="empty">Aucun set actif</div></div>
+        </div></div>
+      </div>
+    </div>
   </div>
 
   <!-- GACHA -->
@@ -514,7 +677,7 @@ function logout(){
 }
 
 // ── STATE ──
-let CHAR=null,PLAYER=null,PITY=null,INV_DATA=null,CHAR_ID=null,UID=null;
+let CHAR=null,PLAYER=null,PITY=null,INV_DATA=null,CHAR_ID=null,UID=null,ALL_ITEMS_DATA={};
 
 // ── INIT ──
 async function init(){const s=getSess();if(s&&s.id)await loadHub()}
@@ -539,7 +702,7 @@ async function loadCharacter(){
     const cSnap=await db.collection(C.CHARS).doc(CHAR_ID).get();
     if(!cSnap.exists){renderNoChar();return}
     CHAR={_id:CHAR_ID,...cSnap.data()};
-    renderDashChar();renderFullChar();renderProgression();
+    renderDashChar();renderFullChar();renderProgression();initAlloc();
   }catch(e){console.error('[CHAR]',e);renderNoChar()}
 }
 
@@ -557,11 +720,14 @@ async function loadInventory(){
   if(!CHAR_ID){document.getElementById('inv-grid').innerHTML='<div class="empty">Aucun personnage actif</div>';return}
   try{
     const key=`${UID}_${CHAR_ID}`;
-    const[invSnap,cfgSnap]=await Promise.all([db.collection(C.INV).doc(key).get(),db.collection(C.CFG).doc('items').get()]);
+    const[invSnap,cfgSnap]=await Promise.all([
+      db.collection(C.INV).doc(key).get(),
+      db.collection(C.CFG).doc('items').get()
+    ]);
     INV_DATA=invSnap.exists?invSnap.data():{items:{},equipped_assets:[]};
     const cfg=cfgSnap.exists?cfgSnap.data():{};
-    const all={...cfg.items||{},...cfg.equipment||{}};
-    renderInventory(INV_DATA,all);
+    ALL_ITEMS_DATA={...cfg.items||{},...cfg.equipment||{},...cfg.food_items||{},...cfg.consumable_items||{}};
+    renderInventory();
   }catch(e){console.error('[INV]',e);document.getElementById('inv-grid').innerHTML='<div class="empty">Erreur de chargement</div>'}
 }
 
@@ -681,17 +847,711 @@ function renderFullChar(){
     :'<div class="empty">Aucun pouvoir</div>';
 }
 
-// ── RENDER INVENTAIRE ──
-function renderInventory(inv,all){
-  const items=inv.items||{},equipped=inv.equipped_assets||[];
-  const eg=document.getElementById('equipped-grid');
-  eg.innerHTML=equipped.length
-    ?equipped.map(id=>{const it=all[id]||{};return`<div class="equipped-slot"><div class="slot-name">${e(it.slot||id)}</div><div class="slot-item">${e(it.name||id)}</div></div>`}).join('')
-    :'<div class="empty">Aucun équipement actif</div>';
-  const entries=Object.entries(items).filter(([,q])=>q>0);
-  document.getElementById('inv-grid').innerHTML=entries.length
-    ?entries.map(([id,qty])=>{const it=all[id]||{},isEq=equipped.includes(id);return`<div class="item-card">${isEq?'<div class="item-equipped"></div>':''}<span class="item-icon">${it.emoji||'📦'}</span><div class="item-name">${e(it.name||id)}</div><div class="item-qty">×${qty}</div></div>`}).join('')
-    :'<div class="empty">Inventaire vide</div>';
+// ── CONSTANTES SETS & SLOTS ──
+const ITEM_SETS={
+    # ── COMMON ────────────────────────────────────────────────────────────
+    "survie_de_rue": {
+        "name": "Survie de Rue",
+        "rarity": "common",
+        "items": ["casque_chantier_renforce", "plastron_gardien_nuit", "chaussures_securite_lourdes"],
+        "bonuses": {
+            3: {"stats": {"resistance": 3, "strength": 2}},
+        },
+    },
+    "coursier_du_nexus": {
+        "name": "Coursier du Nexus",
+        "rarity": "common",
+        "items": ["visiere_messager", "sac_coursier_bandouliere", "baskets_skyyart"],
+        "bonuses": {
+            3: {"stats": {"speed": 3, "agility": 2}},
+        },
+    },
+    "arnaqueur": {
+        "name": "Arnaqueur",
+        "rarity": "common",
+        "items": ["lunettes_soleil_marque", "chevaliere_famille", "chaine_argent_terni"],
+        "bonuses": {
+            3: {"stats": {"charisma": 3, "mana": 1}},
+        },
+    },
+
+    # ── UNCOMMON ──────────────────────────────────────────────────────────
+    "milicien": {
+        "name": "Milicien",
+        "rarity": "uncommon",
+        "items": ["veste_kevlar_tactique", "brassard_protection_milice", "matraque_electrique_milice"],
+        "bonuses": {
+            3: {"stats": {"resistance": 5, "strength": 3}},
+        },
+    },
+    "hackeur": {
+        "name": "Hackeur",
+        "rarity": "uncommon",
+        "items": ["gants_hackeur_poche", "smart_watch_nexus_v2", "analyseur_faiblesse_v1"],
+        "bonuses": {
+            3: {"stats": {"intelligence": 5, "mana": 3}},
+        },
+    },
+
+    # ── UNCOMMON SINGLE-STAT ─────────────────────────────────────────────
+    "pulse_blanc": {
+        "name": "Pulse Blanc",
+        "rarity": "uncommon",
+        "items": ["pulse_blanc_bandeau", "pulse_blanc_combinaison", "pulse_blanc_gants", "pulse_blanc_jambieres", "pulse_blanc_bottes", "pulse_blanc_reacteur"],
+        "bonuses": {
+            2: {"stats": {"speed": 3}},
+            4: {"stats": {"speed": 8}},
+            6: {"stats": {"speed": 15}},
+        },
+    },
+    "flux_indigo": {
+        "name": "Flux Indigo",
+        "rarity": "uncommon",
+        "items": ["flux_indigo_couronne", "flux_indigo_robe", "flux_indigo_bracelet", "flux_indigo_pendentif", "flux_indigo_bague", "flux_indigo_orbe"],
+        "bonuses": {
+            2: {"stats": {"mana": 3}},
+            4: {"stats": {"mana": 8}},
+            6: {"stats": {"mana": 15}},
+        },
+    },
+    "neon_dore": {
+        "name": "Néon Doré",
+        "rarity": "uncommon",
+        "items": ["neon_dore_masque", "neon_dore_veste", "neon_dore_bagues", "neon_dore_collier", "neon_dore_boucles", "neon_dore_cape"],
+        "bonuses": {
+            2: {"stats": {"charisma": 3}},
+            4: {"stats": {"charisma": 8}},
+            6: {"stats": {"charisma": 15}},
+        },
+    },
+
+    # ── UNCOMMON DUO-STAT ────────────────────────────────────────────────
+    "prestige_digital": {
+        "name": "Prestige Digital",
+        "rarity": "uncommon",
+        "items": ["prestige_digital_masque", "prestige_digital_costume", "prestige_digital_bagues", "prestige_digital_collier", "prestige_digital_bracelet", "prestige_digital_boucles"],
+        "bonuses": {
+            2: {"stats": {"charisma": 3, "mana": 2}},
+            4: {"stats": {"charisma": 7, "mana": 5}},
+            6: {"stats": {"charisma": 12, "mana": 10}},
+        },
+    },
+
+    # ── RARE SINGLE-STAT ─────────────────────────────────────────────────
+    "circuit_rouge": {
+        "name": "Circuit Rouge",
+        "rarity": "rare",
+        "items": ["circuit_rouge_casque", "circuit_rouge_plastron", "circuit_rouge_gantelets", "circuit_rouge_jambieres", "circuit_rouge_bottes", "circuit_rouge_marteau"],
+        "bonuses": {
+            2: {"stats": {"strength": 5}},
+            4: {"stats": {"strength": 12}},
+            6: {"stats": {"strength": 22}},
+        },
+    },
+    "filament_cyan": {
+        "name": "Filament Cyan",
+        "rarity": "rare",
+        "items": ["filament_cyan_capuche", "filament_cyan_veste", "filament_cyan_gants", "filament_cyan_brassards", "filament_cyan_bottes", "filament_cyan_dagues"],
+        "bonuses": {
+            2: {"stats": {"agility": 5}},
+            4: {"stats": {"agility": 12}},
+            6: {"stats": {"agility": 22}},
+        },
+    },
+    "reseau_violet": {
+        "name": "Réseau Violet",
+        "rarity": "rare",
+        "items": ["reseau_violet_diademe", "reseau_violet_manteau", "reseau_violet_interface", "reseau_violet_monocle", "reseau_violet_anneau", "reseau_violet_codex"],
+        "bonuses": {
+            2: {"stats": {"intelligence": 5}},
+            4: {"stats": {"intelligence": 12}},
+            6: {"stats": {"intelligence": 22}},
+        },
+    },
+    "bunker_gris": {
+        "name": "Bunker Gris",
+        "rarity": "rare",
+        "items": ["bunker_gris_heaume", "bunker_gris_cuirasse", "bunker_gris_gantelets", "bunker_gris_jambieres", "bunker_gris_bottes", "bunker_gris_bouclier"],
+        "bonuses": {
+            2: {"stats": {"resistance": 5}},
+            4: {"stats": {"resistance": 12}},
+            6: {"stats": {"resistance": 22}},
+        },
+    },
+
+    # ── RARE DUO-STAT ────────────────────────────────────────────────────
+    "spectre_veloce": {
+        "name": "Spectre Véloce",
+        "rarity": "rare",
+        "items": ["spectre_veloce_capuche", "spectre_veloce_combinaison", "spectre_veloce_gants", "spectre_veloce_bottes", "spectre_veloce_cape", "spectre_veloce_lames"],
+        "bonuses": {
+            2: {"stats": {"agility": 4, "speed": 4}},
+            4: {"stats": {"agility": 10, "speed": 10}},
+            6: {"stats": {"agility": 18, "speed": 18}},
+        },
+    },
+    "rempart_spectral": {
+        "name": "Rempart Spectral",
+        "rarity": "rare",
+        "items": ["rempart_spectral_heaume", "rempart_spectral_armure", "rempart_spectral_bracelet", "rempart_spectral_amulette", "rempart_spectral_bague", "rempart_spectral_bouclier"],
+        "bonuses": {
+            2: {"stats": {"mana": 4, "resistance": 4}},
+            4: {"stats": {"mana": 10, "resistance": 10}},
+            6: {"stats": {"mana": 18, "resistance": 18}},
+        },
+    },
+
+    # ── RARE TRIO-STAT ───────────────────────────────────────────────────
+    "sentinelle_hybride": {
+        "name": "Sentinelle Hybride",
+        "rarity": "rare",
+        "items": ["sentinelle_hybride_casque", "sentinelle_hybride_armure", "sentinelle_hybride_brassards", "sentinelle_hybride_bottes", "sentinelle_hybride_cape", "sentinelle_hybride_bracelet", "sentinelle_hybride_lames"],
+        "bonuses": {
+            2: {"stats": {"resistance": 3, "speed": 3, "agility": 3}},
+            4: {"stats": {"resistance": 8, "speed": 8, "agility": 8}},
+            7: {"stats": {"resistance": 15, "speed": 15, "agility": 15}},
+        },
+    },
+
+    # ── RARE ALL-STATS ───────────────────────────────────────────────────
+    "harmonie_primaire": {
+        "name": "Harmonie Primaire",
+        "rarity": "rare",
+        "items": ["harmonie_casque", "harmonie_plastron", "harmonie_gants", "harmonie_bottes", "harmonie_cape", "harmonie_collier", "harmonie_anneau", "harmonie_noyau"],
+        "bonuses": {
+            2: {"stats_all": 2},
+            4: {"stats_all": 5},
+            6: {"stats_all": 10},
+            8: {"stats_all": 18},
+        },
+    },
+
+    # ── EPIC DUO-STAT ────────────────────────────────────────────────────
+    "chrome_sauvage": {
+        "name": "Chrome Sauvage",
+        "rarity": "epic",
+        "items": ["chrome_sauvage_casque", "chrome_sauvage_armure", "chrome_sauvage_brassards", "chrome_sauvage_gants", "chrome_sauvage_bottes", "chrome_sauvage_hache", "chrome_sauvage_griffes"],
+        "bonuses": {
+            2: {"stats": {"strength": 8, "agility": 8}},
+            4: {"stats": {"strength": 18, "agility": 18}},
+            7: {"stats": {"strength": 30, "agility": 30}},
+        },
+    },
+    "bastion_blinde": {
+        "name": "Bastion Blindé",
+        "rarity": "epic",
+        "items": ["bastion_blinde_heaume", "bastion_blinde_cuirasse", "bastion_blinde_epaulieres", "bastion_blinde_gantelets", "bastion_blinde_jambieres", "bastion_blinde_bottes"],
+        "bonuses": {
+            2: {"stats": {"strength": 8, "resistance": 8}},
+            4: {"stats": {"strength": 18, "resistance": 18}},
+            6: {"stats": {"strength": 30, "resistance": 30}},
+        },
+    },
+    "synapse_arcane": {
+        "name": "Synapse Arcane",
+        "rarity": "epic",
+        "items": ["synapse_arcane_diademe", "synapse_arcane_manteau", "synapse_arcane_gants", "synapse_arcane_bracelet", "synapse_arcane_anneau", "synapse_arcane_sceptre"],
+        "bonuses": {
+            2: {"stats": {"intelligence": 8, "mana": 8}},
+            4: {"stats": {"intelligence": 18, "mana": 18}},
+            6: {"stats": {"intelligence": 30, "mana": 30}},
+        },
+    },
+
+    # ── EPIC TRIO-STAT ───────────────────────────────────────────────────
+    "predateur_mecanique": {
+        "name": "Prédateur Mécanique",
+        "rarity": "epic",
+        "items": ["predateur_meca_casque", "predateur_meca_armure", "predateur_meca_brassards", "predateur_meca_gants", "predateur_meca_bottes", "predateur_meca_cape", "predateur_meca_lames"],
+        "bonuses": {
+            2: {"stats": {"strength": 5, "agility": 5, "speed": 5}},
+            4: {"stats": {"strength": 12, "agility": 12, "speed": 12}},
+            7: {"stats": {"strength": 22, "agility": 22, "speed": 22}},
+        },
+    },
+    "conscience_nexus": {
+        "name": "Conscience du Nexus",
+        "rarity": "epic",
+        "items": ["conscience_nexus_diademe", "conscience_nexus_robe", "conscience_nexus_gants", "conscience_nexus_bracelet", "conscience_nexus_collier", "conscience_nexus_anneau", "conscience_nexus_livre"],
+        "bonuses": {
+            2: {"stats": {"intelligence": 5, "mana": 5, "charisma": 5}},
+            4: {"stats": {"intelligence": 12, "mana": 12, "charisma": 12}},
+            7: {"stats": {"intelligence": 22, "mana": 22, "charisma": 22}},
+        },
+    },
+
+    # ── EPIC ALL-STATS ───────────────────────────────────────────────────
+    "protocole_genesis": {
+        "name": "Protocole Genesis",
+        "rarity": "epic",
+        "items": ["genesis_couronne", "genesis_armure", "genesis_gants", "genesis_bracelet", "genesis_jambieres", "genesis_bottes", "genesis_collier", "genesis_noyau"],
+        "bonuses": {
+            2: {"stats_all": 3},
+            4: {"stats_all": 8},
+            6: {"stats_all": 15},
+            8: {"stats_all": 25},
+        },
+    },
+
+    # ── RARE ──────────────────────────────────────────────────────────────
+    "predateur_urbain": {
+        "name": "Prédateur Urbain",
+        "rarity": "rare",
+        "items": ["casque_combat_spectre", "combinaison_furtive_ombre", "souliers_semelles_silence"],
+        "bonuses": {
+            3: {"stats": {"agility": 10, "speed": 5}},
+        },
+    },
+    "centurion_nexus": {
+        "name": "Centurion du Nexus",
+        "rarity": "rare",
+        "items": ["armure_plaques_cinetiques", "jambieres_centurion_nexus", "generateur_bouclier_force"],
+        "bonuses": {
+            3: {"stats": {"resistance": 10, "strength": 5}},
+        },
+    },
+
+    # ── EPIC ──────────────────────────────────────────────────────────────
+    "executeur": {
+        "name": "Exécuteur",
+        "rarity": "epic",
+        "items": ["casque_executeur_nexus", "dagues_jumelles_assassin", "cape_dephasage"],
+        "bonuses": {
+            3: {"stats": {"agility": 15, "intelligence": 10}},
+        },
+    },
+    "titan": {
+        "name": "Titan",
+        "rarity": "epic",
+        "items": ["poings_atlas", "exosquelette_jambes_titan", "fendoir_gravite"],
+        "bonuses": {
+            3: {"stats": {"strength": 15, "resistance": 10}},
+        },
+    },
+
+    # ── LEGENDARY ─────────────────────────────────────────────────────────
+    "velvet_court": {
+        "name": "Velvet Court",
+        "rarity": "legendary",
+        "items": ["velvet_courts_diadem", "velvet_courts_pendant", "velvet_courts_signet"],
+        "bonuses": {
+            2: {"stats": {"charisma": 30}},
+            3: {"stats": {"charisma": 80}, "buff_mult": {"charisma": 1.5}},
+        },
+    },
+    "phantom_edge": {
+        "name": "Phantom Edge",
+        "rarity": "legendary",
+        "items": ["phantom_edges_cowl", "phantom_edges_bracers", "phantom_edges_stiletto"],
+        "bonuses": {
+            2: {"stats": {"agility": 30}},
+            3: {"stats": {"agility": 80}, "buff_mult": {"agility": 1.5}},
+        },
+    },
+    "roi_loup": {
+        "name": "Roi-Loup",
+        "rarity": "legendary",
+        "items": ["collier_roi_loup_blanc", "crocs_basilic_ombre", "anneau_chronos"],
+        "bonuses": {
+            3: {"stats": {"strength": 25, "agility": 25}},
+        },
+    },
+    "monarque": {
+        "name": "Monarque",
+        "rarity": "legendary",
+        "items": ["couronne_monarque_dechu", "manteau_souverain_ombres", "masque_divinite_mecanique"],
+        "bonuses": {
+            3: {"stats": {"mana": 25, "charisma": 25}},
+        },
+    },
+
+    # ── MYTHIC ────────────────────────────────────────────────────────────
+    "iron_vanguard": {
+        "name": "Iron Vanguard",
+        "rarity": "mythic",
+        "items": [
+            "iron_vanguards_helm", "iron_vanguards_fists", "iron_vanguards_warhammer",
+            "iron_vanguards_chestplate", "iron_vanguards_greaves", "iron_vanguards_chains",
+        ],
+        "bonuses": {
+            2: {"stats": {"strength": 50}},
+            4: {"stats": {"strength": 120}, "buff_mult": {"strength": 1.5}},
+            6: {"stats": {"strength": 200, "resistance": 50}, "buff_mult": {"strength": 2.0}},
+        },
+    },
+    "nexus_core": {
+        "name": "Nexus",
+        "rarity": "mythic",
+        "items": ["original_fragment_core_nexus", "fragment_of_reality", "ia_conscience_gaia"],
+        "bonuses": {
+            2: {"stats": {"mana": 50}},
+            3: {"stats_all": 25},
+        },
+    },
+
+    # ── UNIQUE ────────────────────────────────────────────────────────────
+    "principle": {
+        "name": "The Principle",
+        "rarity": "unique",
+        "items": [
+            "wings_principle_speed", "dagger_principle_reality",
+            "mask_principle_attraction", "book_principle_savant",
+        ],
+        "bonuses": {
+            2: {"stats_all": 30},
+            4: {"stats_all": 80, "buff_mult_all": 1.25},
+        },
+    },
+    "time_paradox": {
+        "name": "Time Paradox",
+        "rarity": "unique",
+        "items": ["time_paradox_ring", "time_paradox_watch"],
+        "bonuses": {
+            2: {"stats": {"speed": 40, "agility": 40}},
+        },
+    },
+
+    # ── ARTIFACT ──────────────────────────────────────────────────────────
+    "hero_of_the_era": {
+        "name": "Hero of the Era",
+        "rarity": "artifact",
+        "items": [
+            "hero_eras_crown", "hero_eras_mantle", "hero_eras_gauntlets",
+            "hero_eras_greaves", "hero_eras_blade", "hero_eras_cloak",
+            "hero_eras_ring", "hero_eras_bracers", "hero_eras_pendant",
+        ],
+        "bonuses": {
+            2: {"stats_all": 30},
+            4: {"stats_all": 75},
+            6: {"stats_all": 150, "buff_mult_all": 1.25},
+            9: {"stats_all": 300, "buff_mult_all": 1.5, "nerf_reduction": 0.25},
+        },
+    },
+    "destiny": {
+        "name": "Destiny",
+        "rarity": "artifact",
+        "items": ["destinys_gauntelet", "destinys_chains", "destinys_cuffs"],
+        "bonuses": {
+            2: {"stats_all": 50},
+            3: {"stats_all": 150},
+        },
+    },
+    "origin": {
+        "name": "Origin",
+        "rarity": "artifact",
+        "items": ["origins_chestplate", "origins_ring"],
+        "bonuses": {
+            2: {"stats": {"mana": 100, "intelligence": 50}},
+        },
+    },
+    "old_chaos": {
+        "name": "Old Chaos",
+        "rarity": "artifact",
+        "items": ["old_chaos_mask", "old_chaos_ring"],
+        "bonuses": {
+            2: {"stats": {"strength": 100, "mana": 50}},
+        },
+    },
+    "equalizer_set": {
+        "name": "Equalizer",
+        "rarity": "artifact",
+        "items": ["equalizer", "fragment_of_reality", "birth_of_the_imaginary"],
+        "bonuses": {
+            2: {"special": "equalize_to_highest"},
+            3: {"special": "equalize_to_highest_plus_10pct"},
+        },
+    },
+
+    # ── MASTERCRAFT ───────────────────────────────────────────────────────
+    "baldun": {
+        "name": "Baldun",
+        "rarity": "mastercraft",
+        "items": [
+            "balduns_crown", "balduns_chestplate", "balduns_ring", "balduns_chivalery",
+            "balduns_gauntelet", "balduns_chains", "balduns_cape", "balduns_executionner",
+            "balduns_claws", "balduns_bracelet", "balduns_god_shoes", "great_balduns_core",
+        ],
+        "bonuses": {
+            4: {"stats_all": 500},
+            12: {"stats_all": 2000},
+        },
+    },
+};
+
+const SLOT_LIMITS={
+  tete:{label:'Tête',max:3},torse:{label:'Torse',max:1},bras:{label:'Bras',max:4},
+  mains:{label:'Mains',max:3},doigts:{label:'Doigts',max:10},poignets:{label:'Poignets',max:2},
+  jambes:{label:'Jambes',max:3},pieds:{label:'Pieds',max:2},dos:{label:'Dos',max:1},
+  cou:{label:'Cou',max:2},armes_h:{label:'Armes H',max:1},armes_l:{label:'Armes L',max:2},
+  oreilles:{label:'Oreilles',max:2},visage:{label:'Visage',max:1},special:{label:'Spécial',max:2}
+};
+
+const RARITY_COLORS={
+  common:'#6b7280',uncommon:'#60a5fa',rare:'#a78bfa',epic:'#8B5CF6',
+  legendary:'#fbbf24',mythic:'#f97316',unique:'#ffd60a',
+  artifact:'#ef4444',mastercraft:'#ff006e',signature:'#ffd60a'
+};
+
+const STAT_ICONS_INV={strength:'⚔️',agility:'💨',speed:'🏃',intelligence:'🧠',mana:'✨',resistance:'🛡️',charisma:'👑',aura:'🌟'};
+let INV_TAB='all';
+let ALL_ITEMS_DATA={};
+
+function showInvTab(tab){
+  INV_TAB=tab;
+  document.querySelectorAll('.inv-tab').forEach(b=>b.classList.toggle('active',b.id==='invtab-'+tab));
+  renderItemsGrid();
+}
+
+// ── RENDER INVENTAIRE COMPLET ──
+function renderInventory(){
+  if(!INV_DATA)return;
+  renderSlotsPanel();
+  renderItemsGrid();
+  renderEquipBonuses();
+  renderSets();
+}
+
+function renderSlotsPanel(){
+  const equipped=INV_DATA.equipped_assets||[];
+  const bySlot={};
+  equipped.forEach(id=>{
+    const it=ALL_ITEMS_DATA[id]||{};
+    const slot=it.slot||'other';
+    bySlot[slot]=(bySlot[slot]||[]);
+    bySlot[slot].push({id,it});
+  });
+
+  let html='';
+  const slotOrder=['tete','visage','cou','oreilles','torse','dos','bras','mains','poignets','doigts','jambes','pieds','armes_h','armes_l','special'];
+  slotOrder.forEach(slotId=>{
+    const def=SLOT_LIMITS[slotId];if(!def)return;
+    const items=bySlot[slotId]||[];
+    const isFull=items.length>=def.max;
+    html+=`<div class="slot-group">
+      <div class="slot-group-title">${def.label} (${items.length}/${def.max})</div>
+      ${items.map(({id,it})=>`
+        <div class="slot-item" onclick="toggleEquip('${id}')" title="Déséquiper">
+          <div class="slot-dot filled"></div>
+          <span class="slot-label">${e(it.name||id)}</span>
+          ${it.stat_effects?`<span style="font-family:var(--font-m);font-size:.38rem;color:var(--green)">${formatEffects(it.stat_effects)}</span>`:''}
+        </div>`).join('')}
+      ${items.length===0?`<div class="slot-item" style="opacity:.35"><div class="slot-dot empty"></div><span class="slot-label">Vide</span></div>`:''}
+    </div>`;
+  });
+  document.getElementById('slots-panel').innerHTML=html||'<div class="empty">Aucun équipement</div>';
+}
+
+function renderItemsGrid(){
+  const items=INV_DATA.items||{};
+  const equipped=new Set(INV_DATA.equipped_assets||[]);
+  let entries=Object.entries(items);
+
+  if(INV_TAB==='equipped'){
+    entries=Array.from(equipped).map(id=>[id,0]).filter(([id])=>!(items[id]>0));
+    // Ajouter les équipés (qty=0 dans items car déduits)
+    const inv2=INV_DATA.items||{};
+    const equippedAll=Array.from(equipped).map(id=>[id,0]);
+    entries=equippedAll;
+  } else if(INV_TAB==='equipment'){
+    entries=entries.filter(([id])=>{const it=ALL_ITEMS_DATA[id]||{};return it.slot;});
+  } else if(INV_TAB==='consumable'){
+    entries=entries.filter(([id])=>{const it=ALL_ITEMS_DATA[id]||{};return ['consumable','food','usable'].includes(it.type);});
+  } else if(INV_TAB==='other'){
+    entries=entries.filter(([id])=>{const it=ALL_ITEMS_DATA[id]||{};return !it.slot&&!['consumable','food','usable'].includes(it.type);});
+  }
+
+  if(INV_TAB==='equipped'){entries=Array.from(equipped).map(id=>[id,0]);}
+
+  if(!entries.length){document.getElementById('inv-grid').innerHTML='<div class="empty">Aucun item</div>';return;}
+
+  document.getElementById('inv-grid').innerHTML=entries.map(([id,qty])=>{
+    const it=ALL_ITEMS_DATA[id]||{};
+    const isEq=equipped.has(id);
+    const hasSlot=!!it.slot;
+    const rarity=(it.rarity||'common').toLowerCase();
+    const rc=RARITY_COLORS[rarity]||'#6b7280';
+    const effects=it.stat_effects||it.stats||{};
+    const effStr=Object.entries(effects).slice(0,3).map(([s,v])=>`+${v} ${STAT_ICONS_INV[s]||s}`).join(' ');
+    return`<div class="item-card rarity-${rarity}${isEq?' equipped':''}" onclick="${hasSlot?`toggleEquip('${id}')`:''}" style="${hasSlot?'cursor:pointer':''}">
+      ${isEq?'<div class="item-equip-badge on">ÉQUIPÉ</div>':hasSlot?'<div class="item-equip-badge off">ÉQUIPER</div>':''}
+      <span class="item-icon-big">${it.emoji||'📦'}</span>
+      <div class="item-name-sm" style="color:${rc}">${e(it.name||id)}</div>
+      ${it.slot?`<div class="item-slot-tag">${SLOT_LIMITS[it.slot]?.label||it.slot}</div>`:''}
+      ${effStr?`<div class="item-effects">${effStr}</div>`:''}
+      ${qty>0?`<div class="item-qty">×${qty}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function renderEquipBonuses(){
+  const equipped=INV_DATA.equipped_assets||[];
+  const totals={};
+  const ALL_STAT_KEYS=['strength','agility','speed','intelligence','mana','resistance','charisma'];
+
+  // Bonus directs items
+  equipped.forEach(id=>{
+    const it=ALL_ITEMS_DATA[id]||{};
+    const effects=it.stat_effects||it.stats||{};
+    Object.entries(effects).forEach(([s,v])=>{
+      try{totals[s]=(totals[s]||0)+parseInt(String(v).replace('+',''));}catch(e){}
+    });
+  });
+
+  // Bonus sets
+  const eqSet=new Set(equipped);
+  Object.entries(ITEM_SETS).forEach(([,setDef])=>{
+    const count=setDef.items.filter(i=>eqSet.has(i)).length;
+    if(count<2)return;
+    const thresholds=Object.keys(setDef.bonuses).map(Number).sort((a,b)=>b-a);
+    for(const t of thresholds){
+      if(count>=t){
+        const bonus=setDef.bonuses[t];
+        if(bonus.stats)Object.entries(bonus.stats).forEach(([s,v])=>{totals[s]=(totals[s]||0)+v;});
+        if(bonus.stats_all)ALL_STAT_KEYS.forEach(s=>{totals[s]=(totals[s]||0)+bonus.stats_all;});
+        break;
+      }
+    }
+  });
+
+  const entries=Object.entries(totals).filter(([,v])=>v>0);
+  if(!entries.length){
+    document.getElementById('equip-bonus-grid').innerHTML='<div class="empty" style="grid-column:1/-1">Aucun bonus</div>';
+    return;
+  }
+  document.getElementById('equip-bonus-grid').innerHTML=entries.map(([s,v])=>`
+    <div class="equip-bonus-block">
+      <div class="equip-bonus-val">+${v}</div>
+      <div class="equip-bonus-name">${STAT_ICONS_INV[s]||''} ${SL[s]||s}</div>
+    </div>`).join('');
+}
+
+function renderSets(){
+  const equipped=new Set(INV_DATA.equipped_assets||[]);
+  const activeSets=[];
+
+  Object.entries(ITEM_SETS).forEach(([setId,setDef])=>{
+    const count=setDef.items.filter(i=>equipped.has(i)).length;
+    if(count<1)return; // Afficher même avec 1 pièce si le joueur l'a
+    const thresholds=Object.keys(setDef.bonuses).map(Number).sort((a,b)=>a-b);
+    const activeThresh=thresholds.filter(t=>count>=t);
+    if(count>0){
+      activeSets.push({setId,setDef,count,thresholds,activeThresh});
+    }
+  });
+
+  // Trier : sets actifs (≥2 pièces) en premier
+  activeSets.sort((a,b)=>{
+    const aActive=a.count>=2?1:0,bActive=b.count>=2?1:0;
+    return bActive-aActive||(b.count-a.count);
+  });
+
+  if(!activeSets.length){
+    document.getElementById('sets-grid').innerHTML='<div class="empty">Aucune pièce de set dans l'inventaire</div>';
+    return;
+  }
+
+  const rc={common:'#6b7280',uncommon:'#60a5fa',rare:'#a78bfa',epic:'#8B5CF6',legendary:'#fbbf24',mythic:'#f97316',unique:'#ffd60a',artifact:'#ef4444',mastercraft:'#ff006e'};
+
+  document.getElementById('sets-grid').innerHTML=activeSets.map(({setId,setDef,count,thresholds,activeThresh})=>{
+    const color=rc[setDef.rarity]||'#6b7280';
+    const isActive=count>=2;
+
+    const threshHtml=thresholds.map(t=>`
+      <span class="set-thresh ${activeThresh.includes(t)?'active':'inactive'}">${t}pc</span>`).join('');
+
+    const bonusHtml=activeThresh.map(t=>{
+      const b=setDef.bonuses[t];
+      const parts=[];
+      if(b.stats)Object.entries(b.stats).forEach(([s,v])=>parts.push(`+${v} ${STAT_ICONS_INV[s]||s}`));
+      if(b.stats_all)parts.push(`+${b.stats_all} tous stats`);
+      if(b.buff_mult)Object.entries(b.buff_mult).forEach(([s,m])=>parts.push(`buffs ${s} ×${m}`));
+      if(b.buff_mult_all)parts.push(`buffs ×${b.buff_mult_all}`);
+      if(b.nerf_reduction)parts.push(`-${Math.round(b.nerf_reduction*100)}% nerfs`);
+      if(b.special)parts.push(`✦ Effet spécial`);
+      return parts.length?`<div style="color:var(--green);font-size:.42rem">${t}pc : ${parts.join(' · ')}</div>`:'';
+    }).join('');
+
+    const piecesHtml=setDef.items.map(id=>{
+      const have=equipped.has(id)||!!(INV_DATA.items||{})[id];
+      const it=ALL_ITEMS_DATA[id]||{};
+      return`<span class="set-piece ${have?'have':'missing'}">${e(it.name||id.replace(/_/g,' '))}</span>`;
+    }).join('');
+
+    return`<div class="set-card" style="border-left:3px solid ${color}${isActive?'':';opacity:.65'}">
+      <div class="set-header">
+        <span class="set-name" style="color:${color}">${e(setDef.name)}</span>
+        <span class="set-count" style="color:${isActive?'var(--green)':'var(--text3)'}">${count}/${setDef.items.length}</span>
+      </div>
+      <div class="set-thresholds">${threshHtml}</div>
+      <div class="set-bonus">${bonusHtml||'<span style="color:var(--text3)">Pas encore actif</span>'}</div>
+      <div class="set-items">${piecesHtml}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── EQUIP / UNEQUIP via Firestore ──
+async function toggleEquip(itemId){
+  if(!UID||!CHAR_ID)return;
+  const equipped=INV_DATA.equipped_assets||[];
+  const items=INV_DATA.items||{};
+  const it=ALL_ITEMS_DATA[itemId]||{};
+  const isEq=equipped.includes(itemId);
+  const key=`${UID}_${CHAR_ID}`;
+
+  try{
+    let newEquipped=[...equipped];
+    let newItems={...items};
+
+    if(isEq){
+      // Déséquiper
+      newEquipped=newEquipped.filter(id=>id!==itemId);
+      newItems[itemId]=(newItems[itemId]||0)+1;
+      await db.collection(C.INV).doc(key).set({equipped_assets:newEquipped,items:newItems},{merge:true});
+      INV_DATA.equipped_assets=newEquipped;
+      INV_DATA.items=newItems;
+      showEquipToast(`✓ ${it.name||itemId} déséquipé`);
+    } else {
+      // Équiper — vérifier les limites de slot
+      const slot=it.slot;
+      if(slot){
+        const def=SLOT_LIMITS[slot];
+        if(def){
+          const inSlot=equipped.filter(id=>(ALL_ITEMS_DATA[id]||{}).slot===slot).length;
+          if(inSlot>=def.max){
+            showEquipToast(`❌ Slot ${def.label} plein (${inSlot}/${def.max})`,true);
+            return;
+          }
+        }
+      }
+      if(!items[itemId]&&!equipped.includes(itemId)){showEquipToast('❌ Item introuvable',true);return;}
+      newEquipped=[...newEquipped,itemId];
+      if(newItems[itemId]>0){
+        newItems[itemId]-=1;
+        if(newItems[itemId]<=0)delete newItems[itemId];
+      }
+      await db.collection(C.INV).doc(key).set({equipped_assets:newEquipped,items:newItems},{merge:true});
+      INV_DATA.equipped_assets=newEquipped;
+      INV_DATA.items=newItems;
+      showEquipToast(`✓ ${it.name||itemId} équipé`);
+    }
+    renderInventory();
+  }catch(err){
+    console.error('[EQUIP]',err);
+    showEquipToast('❌ Erreur — réessaye',true);
+  }
+}
+
+function formatEffects(effects){
+  if(!effects)return'';
+  return Object.entries(effects).slice(0,2).map(([s,v])=>`+${v}${STAT_ICONS_INV[s]||s}`).join(' ');
+}
+
+function showEquipToast(msg,isError=false){
+  let t=document.getElementById('equip-toast');
+  if(!t){t=document.createElement('div');t.id='equip-toast';t.className='equip-toast';document.body.appendChild(t);}
+  t.textContent=msg;
+  t.className='equip-toast show'+(isError?' error':'');
+  clearTimeout(t._t);t._t=setTimeout(()=>{t.className='equip-toast';},2500);
 }
 
 // ── RENDER GACHA ──
