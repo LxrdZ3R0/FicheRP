@@ -163,8 +163,10 @@ body{background:var(--bg)!important}
 /* Results */
 .result-area{display:none;flex-direction:column;align-items:center;text-align:center;padding:2rem;max-height:90vh;overflow-y:auto;position:relative;z-index:10}
 .result-area.active{display:flex}
-.result-card{position:relative;background:rgba(8,12,30,0.8);border:1px solid;border-radius:12px;padding:2rem 2.5rem;min-width:260px;max-width:380px;animation:rIn .6s cubic-bezier(.16,1,.3,1);overflow:hidden}
-@keyframes rIn{from{opacity:0;transform:scale(.7) translateY(30px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.result-card{position:relative;background:rgba(8,12,30,0.8);border:1px solid;border-radius:12px;padding:2rem 2.5rem;min-width:260px;max-width:380px;animation:rIn .8s cubic-bezier(.16,1,.3,1);overflow:hidden}
+@keyframes rIn{0%{opacity:0;transform:scale(.4) rotateY(120deg)}35%{opacity:1;transform:scale(1.08) rotateY(-10deg)}65%{transform:scale(.96) rotateY(4deg)}100%{opacity:1;transform:scale(1) rotateY(0deg)}}
+.result-card::after{content:'';position:absolute;inset:-2px;border-radius:inherit;opacity:0;animation:rGlow 1.5s ease-out .2s;pointer-events:none;z-index:-1}
+@keyframes rGlow{0%{opacity:.6;box-shadow:0 0 60px currentColor,inset 0 0 30px currentColor}100%{opacity:0}}
 .result-card::before{content:'';position:absolute;inset:0;border-radius:inherit;opacity:.08}
 .result-card.r-c{border-color:rgba(138,143,168,0.3)}.result-card.r-c::before{background:radial-gradient(circle at top,#8a8fa8,transparent 60%)}
 .result-card.r-u{border-color:rgba(68,255,136,0.3)}.result-card.r-u::before{background:radial-gradient(circle at top,#44ff88,transparent 60%)}
@@ -178,8 +180,23 @@ body{background:var(--bg)!important}
 .res-icon{font-size:2.5rem;margin-bottom:.8rem}
 .res-name{font-family:var(--font-b);font-weight:700;font-size:1.2rem;color:#fff}
 .multi-results{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;max-width:720px;width:100%;margin-bottom:1.5rem}
-.mini-res{background:rgba(8,12,30,0.8);border:1px solid rgba(255,255,255,0.04);border-radius:8px;padding:.7rem;text-align:center;animation:mIn .4s cubic-bezier(.16,1,.3,1) both}
-@keyframes mIn{from{opacity:0;transform:scale(.5)}to{opacity:1;transform:scale(1)}}
+.mini-res{background:rgba(8,12,30,0.8);border:1px solid rgba(255,255,255,0.04);border-radius:8px;padding:.7rem;text-align:center;opacity:0;transform:scale(.3) rotateY(90deg);transition:none}
+.mini-res.revealed{animation:mReveal .6s cubic-bezier(.16,1,.3,1) forwards}
+.mini-res.revealed::after{content:'';position:absolute;inset:0;border-radius:inherit;opacity:0;animation:mFlash .5s ease-out .1s forwards;pointer-events:none}
+.mini-res{position:relative;overflow:hidden}
+@keyframes mReveal{0%{opacity:0;transform:scale(.3) rotateY(90deg)}40%{opacity:1;transform:scale(1.15) rotateY(-8deg)}70%{transform:scale(.95) rotateY(3deg)}100%{opacity:1;transform:scale(1) rotateY(0deg)}}
+@keyframes mFlash{0%{opacity:.4;background:currentColor}100%{opacity:0;background:transparent}}
+/* Rarity-specific glow pulse on reveal */
+.mini-res.r-l.revealed{animation:mReveal .6s cubic-bezier(.16,1,.3,1) forwards,mGlowGold 1.2s ease-out .2s}
+.mini-res.r-m.revealed{animation:mReveal .6s cubic-bezier(.16,1,.3,1) forwards,mGlowOrange 1.2s ease-out .2s}
+.mini-res.r-q.revealed{animation:mReveal .6s cubic-bezier(.16,1,.3,1) forwards,mGlowCyan 1.2s ease-out .2s}
+.mini-res.r-a.revealed{animation:mReveal .6s cubic-bezier(.16,1,.3,1) forwards,mGlowMag 1.2s ease-out .2s}
+.mini-res.r-e.revealed{animation:mReveal .6s cubic-bezier(.16,1,.3,1) forwards,mGlowViolet 1.2s ease-out .2s}
+@keyframes mGlowGold{0%{box-shadow:0 0 30px rgba(255,214,10,0.5)}100%{box-shadow:0 0 12px rgba(255,214,10,0.04)}}
+@keyframes mGlowOrange{0%{box-shadow:0 0 30px rgba(255,136,0,0.5)}100%{box-shadow:0 0 12px rgba(255,136,0,0.04)}}
+@keyframes mGlowCyan{0%{box-shadow:0 0 30px rgba(0,255,204,0.5)}100%{box-shadow:0 0 12px rgba(0,255,204,0.04)}}
+@keyframes mGlowMag{0%{box-shadow:0 0 30px rgba(255,0,110,0.5)}100%{box-shadow:0 0 12px rgba(255,0,110,0.04)}}
+@keyframes mGlowViolet{0%{box-shadow:0 0 30px rgba(139,92,246,0.5)}100%{box-shadow:0 0 12px rgba(139,92,246,0.04)}}
 .mini-res .mr-icon{font-size:1.2rem;margin-bottom:.3rem}
 .mini-res .mr-name{font-family:var(--font-b);font-weight:600;font-size:.6rem;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:.2rem}
 .mini-res .mr-rar{font-family:var(--font-m);font-size:.34rem;letter-spacing:.1em}
@@ -195,6 +212,7 @@ body{background:var(--bg)!important}
 .result-dismiss:hover{color:#fff;border-color:rgba(255,255,255,0.15);background:rgba(255,255,255,0.03)}
 .leg-flash{position:fixed;inset:0;z-index:5001;pointer-events:none;animation:lf .8s ease-out forwards}
 @keyframes lf{0%{opacity:1;transform:scale(.5)}50%{opacity:.7;transform:scale(2)}100%{opacity:0;transform:scale(3)}}
+@keyframes screenShake{0%{transform:translate(0)}15%{transform:translate(-4px,2px)}30%{transform:translate(3px,-3px)}45%{transform:translate(-2px,1px)}60%{transform:translate(2px,-1px)}75%{transform:translate(-1px,1px)}100%{transform:translate(0)}}
 
 /* Footer (same as fiches) */
 .footer{border-top:1px solid rgba(255,255,255,0.04);padding:3rem clamp(1.5rem,4vw,3rem);display:flex;align-items:center;justify-content:space-between;gap:2rem;flex-wrap:wrap}
@@ -481,7 +499,7 @@ function bAddOrbital(hexColor){
   orbGroup.add(orbSolid);orbGroup.add(orbWire);
   // Start far off-screen then approach
   const spawnDir=new THREE.Vector3((Math.random()-.5)*2,(Math.random()-.5)*2,(Math.random()-.5)*2).normalize();
-  const spawnDist=4+Math.random()*2; // well outside camera view
+  const spawnDist=2+Math.random()*1; // closer spawn for faster visibility
   orbGroup.position.copy(spawnDir.multiplyScalar(spawnDist));
   bScene.add(orbGroup);
   // Particle trail
@@ -528,10 +546,12 @@ function bUpdateOrbitals(dt){
     }
     // ── Approach from outside: lerp toward orbit ──
     if(o.approaching){
-      o.approachT=Math.min(1,o.approachT+dt*.8); // ~1.2s to arrive
+      o.approachT=Math.min(1,o.approachT+dt*1.5); // ~0.7s to arrive (faster)
       const targetPos=new THREE.Vector3(Math.cos(o.angle)*o.radius,0,Math.sin(o.angle)*o.radius);
       targetPos.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0),o.axis));
-      o.orbGroup.position.lerp(targetPos,o.approachT*.15);
+      // Ease-out cubic for smooth deceleration
+      const ease=1-Math.pow(1-o.approachT,3);
+      o.orbGroup.position.lerp(targetPos,ease*.25);
       if(o.approachT>=1)o.approaching=false;
       o.orbGroup.rotation.x+=dt*3;o.orbGroup.rotation.z+=dt*2;
       o.histQ.push({x:o.orbGroup.position.x,y:o.orbGroup.position.y,z:o.orbGroup.position.z});
@@ -929,10 +949,26 @@ async function showPullResults(res,count){
   let hi=0;res.forEach(r=>{const i=RARITY_ORDER.indexOf(r.rarity);if(i>hi)hi=i});
   const tr=RARITY_ORDER[hi],isLeg=['Legendary','Mythic','Unique','Artifact'].includes(tr);
 
-  // Add orbitals for high-rarity items
+  // Add orbitals for high-rarity items — they need time to approach & orbit
   const LEG_TIERS=['Epic','Legendary','Mythic','Unique','Artifact'];
   const legItems=res.filter(r=>LEG_TIERS.includes(r.rarity));
+  const hasOrbitals=legItems.length>0;
   for(const li of legItems){bAddOrbital(RCOL[li.rarity]||'#ffd60a')}
+
+  // Let orbitals approach and orbit visibly before exploding
+  if(hasOrbitals){
+    // Change blob color to match highest rarity during orbital phase
+    const hiCol=new THREE.Color(RCOL[tr]||'#ffd60a');
+    bSetCol(hiCol,C_MAG);
+    bCompact(.35,.22);
+    // Update status text for dramatic effect
+    const st=document.getElementById('pst');
+    st.textContent=isLeg?'⚡ RARE ENERGY DETECTED ⚡':'CRYSTALLIZING';
+    st.style.color=RCOL[tr]||'var(--blue)';
+    // Wait for orbitals to arrive (~1s) + orbit visibly (~2s)
+    await sleep(3000);
+    st.style.color='';
+  }
 
   // Explosion
   bExplode();
@@ -942,15 +978,40 @@ async function showPullResults(res,count){
   bui.style.display='none';ra.classList.add('active');
   if(count===1){
     const it=res[0],css=RCSS[it.rarity]||'r-c';
-    ra.innerHTML=`<div class="result-card ${css}"><div class="res-rar" style="color:${RCOL[it.rarity]||'#8a8fa8'}">${it.rarity.toUpperCase()}</div><div class="res-icon">${it.icon}</div><div class="res-name">${it.name}${it.qty>1?' ×'+it.qty:''}</div></div><button class="result-dismiss" onclick="dismiss()">CONTINUER</button>`;
+    ra.innerHTML=`<div class="result-card ${css}" style="color:${RCOL[it.rarity]||'#8a8fa8'}"><div class="res-rar" style="color:${RCOL[it.rarity]||'#8a8fa8'}">${it.rarity.toUpperCase()}</div><div class="res-icon">${it.icon}</div><div class="res-name">${it.name}${it.qty>1?' ×'+it.qty:''}</div></div><button class="result-dismiss" onclick="dismiss()">CONTINUER</button>`;
   }else{
+    // Build cards hidden, then reveal sequentially
     let h='<div class="multi-results">';
-    res.forEach((it,i)=>{const css=RCSS[it.rarity]||'r-c';h+=`<div class="mini-res ${css}" style="animation-delay:${i*.08}s"><div class="mr-icon">${it.icon}</div><div class="mr-name">${it.name}${it.qty>1?' ×'+it.qty:''}</div><div class="mr-rar">${it.rarity.toUpperCase()}</div></div>`});
+    res.forEach((it,i)=>{const css=RCSS[it.rarity]||'r-c';h+=`<div class="mini-res ${css}" data-reveal="${i}" style="color:${RCOL[it.rarity]||'#8a8fa8'}"><div class="mr-icon">${it.icon}</div><div class="mr-name">${it.name}${it.qty>1?' ×'+it.qty:''}</div><div class="mr-rar">${it.rarity.toUpperCase()}</div></div>`});
     h+='</div>';
     const cn={};res.forEach(r=>{cn[r.rarity]=(cn[r.rarity]||0)+1});
-    let sm='';for(const[r,c]of Object.entries(cn).sort((a,b)=>RARITY_ORDER.indexOf(b[0])-RARITY_ORDER.indexOf(a[0])))sm+=`<span style="color:${RCOL[r]||'#8a8fa8'};margin-right:12px;font-family:var(--font-m);font-size:.45rem;letter-spacing:.08em">${r}: ×${c}</span>`;
-    h+=`<div style="margin-bottom:.5rem">${sm}</div><button class="result-dismiss" onclick="dismiss()">CONTINUER</button>`;
+    let sm='<div class="pull-summary" style="opacity:0;transition:opacity .5s">';for(const[r,c]of Object.entries(cn).sort((a,b)=>RARITY_ORDER.indexOf(b[0])-RARITY_ORDER.indexOf(a[0])))sm+=`<span style="color:${RCOL[r]||'#8a8fa8'};margin-right:12px;font-family:var(--font-m);font-size:.45rem;letter-spacing:.08em">${r}: ×${c}</span>`;
+    h+=`${sm}</div><button class="result-dismiss" onclick="dismiss()" style="opacity:0;transition:opacity .5s .2s">CONTINUER</button>`;
     ra.innerHTML=h;
+
+    // Sequential reveal with increasing speed
+    const cards=ra.querySelectorAll('.mini-res');
+    const HIGH_RARITY=['Epic','Legendary','Mythic','Unique','Artifact'];
+    for(let i=0;i<cards.length;i++){
+      const card=cards[i];
+      const rarity=res[i].rarity;
+      const isHigh=HIGH_RARITY.includes(rarity);
+      // Longer pause before high-rarity cards for dramatic effect
+      const delay=isHigh?350:150;
+      await sleep(delay);
+      card.classList.add('revealed');
+      // Screen shake for legendary+
+      if(['Legendary','Mythic','Unique','Artifact'].includes(rarity)){
+        ov.style.animation='none';void ov.offsetWidth;
+        ov.style.animation='screenShake .3s ease-out';
+      }
+    }
+    // Show summary + button after all cards revealed
+    await sleep(300);
+    const summary=ra.querySelector('.pull-summary');
+    const btn=ra.querySelector('.result-dismiss');
+    if(summary)summary.style.opacity='1';
+    if(btn)btn.style.opacity='1';
   }
 }
 
