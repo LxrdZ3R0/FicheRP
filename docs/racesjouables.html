@@ -131,34 +131,42 @@ import{getAuth,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/10.12.
 const firebaseConfig={apiKey:"AIzaSyAru7qZX8Gu_b8Y3oNDV-a5PmkrrkRjkcs",authDomain:"jaharta-rp.firebaseapp.com",projectId:"jaharta-rp",storageBucket:"jaharta-rp.firebasestorage.app",messagingSenderId:"217075417489",appId:"1:217075417489:web:4d1e2df422a5cd42411a30"};
 const app=getApps().length?getApps()[0]:initializeApp(firebaseConfig);
 const db=getFirestore(app);const auth=getAuth(app);
+
+// Exposer Firebase AVANT tout appel à initRacePopups
 window._db=db;window._collection=collection;window._doc=doc;window._setDoc=setDoc;window._getDocs=getDocs;window._getDoc=getDoc;
 
-// Vérification admin — on écoute onAuthStateChanged ET l'event jaharta:auth de auth-badge.js
+// Initialiser les popups dès que Firebase est prêt (sans attendre l'auth)
+// Les données de races sont publiques — pas besoin d'être connecté pour les lire.
+if(typeof window.initRacePopups==='function'){
+  window.initRacePopups(db, false);
+} else {
+  // Le script race-popup n'est pas encore chargé — on attend le DOM
+  document.addEventListener('DOMContentLoaded', function(){
+    if(typeof window.initRacePopups==='function') window.initRacePopups(db, false);
+  });
+}
+
+// Vérification admin — séparée du chargement des données
 async function checkAdmin(user){
   let canEdit=false;
   if(user){
     try{
       const snap=await getDoc(doc(db,'admins',user.uid));
-      if(snap.exists()&&snap.data().role==='admin')canEdit=true;
+      // Accepter role 'admin' ET 'modo' pour l'édition des races
+      const role=snap.exists()&&snap.data().role;
+      if(role==='admin'||role==='modo') canEdit=true;
     }catch(e){console.warn('[race-auth]',e.message);}
   }
   window._isAdmin=canEdit;
-  if(typeof window.updateRaceAdmin==='function')window.updateRaceAdmin(canEdit);
-  if(typeof window.initRacePopups==='function')window.initRacePopups(db,canEdit);
+  // Mettre à jour l'UI du popup si ouvert, et passer db+canEdit pour rebind
+  if(typeof window.updateRaceAdmin==='function') window.updateRaceAdmin(canEdit, db);
 }
 
-onAuthStateChanged(auth,checkAdmin);
+onAuthStateChanged(auth, checkAdmin);
 
-// Écouter l'event dispatché par auth-badge.js comme fallback
+// Fallback : event dispatché par auth-badge.js
 document.addEventListener('jaharta:auth',function(e){
-  if(e.detail&&e.detail.user)checkAdmin(e.detail.user);
-});
-
-// Fallback DOMContentLoaded — si l'auth est déjà connue
-document.addEventListener('DOMContentLoaded',function(){
-  if(typeof window.initRacePopups==='function'&&window._db){
-    window.initRacePopups(window._db,!!window._isAdmin);
-  }
+  if(e.detail&&e.detail.user) checkAdmin(e.detail.user);
 });
 </script>
 </head>
@@ -272,11 +280,20 @@ window.addEventListener('scroll',function(){var h=document.documentElement.scrol
   var _rafDots = null;
 
   window.initRacePopups = function(_db, _isAdmin) {
-    db = _db; isAdmin = _isAdmin;
-    if (!initialized) { loadRacesData(); bindRaceCards(); initialized = true; }
+    // Accepter une mise à jour de db même si déjà initialisé
+    if (_db) db = _db;
+    isAdmin = !!_isAdmin;
+    if (!initialized) {
+      bindRaceCards();
+      initialized = true;
+    }
+    // Toujours (re)charger les données si on a un db — même après init
+    if (db) loadRacesData();
   };
-  window.updateRaceAdmin = function(v) {
-    isAdmin = v;
+
+  window.updateRaceAdmin = function(v, _db) {
+    isAdmin = !!v;
+    if (_db) db = _db;
     // Afficher/cacher le bloc admin si un popup est déjà ouvert
     var block = document.getElementById('rp4-admin-block');
     if (block) block.style.display = v ? '' : 'none';
@@ -296,30 +313,43 @@ window.addEventListener('scroll',function(){var h=document.documentElement.scrol
   };
 
   function loadRacesData() {
-    if (!db || !window._doc) return;
-    try {
-      // Lire depuis config/races_data (même doc que le bot)
-      window._getDoc(window._doc(db,'config','races_data')).then(function(snap) {
-        if (snap.exists()) {
-          var d = snap.data();
-          // Le document est {raceName: {data}, ...}
-          Object.keys(d).forEach(function(raceName) {
-            if (typeof d[raceName] === 'object' && d[raceName] !== null) {
-              racesData[raceName] = d[raceName];
-            }
-          });
-        }
-      }).catch(function(e){ console.warn('[races] load error', e); });
-    } catch(e) {}
+    if (!db || !window._doc || !window._getDoc) {
+      console.warn('[races] Firebase non prêt, chargement différé.');
+      return;
+    }
+    // Source principale : config/races_data (doc unique contenant toutes les races)
+    window._getDoc(window._doc(db,'config','races_data')).then(function(snap) {
+      if (snap.exists()) {
+        var d = snap.data();
+        Object.keys(d).forEach(function(raceName) {
+          if (typeof d[raceName] === 'object' && d[raceName] !== null) {
+            racesData[raceName] = d[raceName];
+          }
+        });
+        console.log('[races] Données chargées depuis config/races_data :', Object.keys(racesData).length, 'races');
+      } else {
+        console.warn('[races] config/races_data introuvable — vérifier Firestore.');
+      }
+    }).catch(function(e) {
+      console.error('[races] Erreur chargement config/races_data :', e.code, e.message);
+    });
   }
 
   function saveRaceData(name, data) {
-    if (!db || !window._setDoc) return Promise.reject(new Error('No Firebase'));
-    // Écrit dans config/races_data (même collection que le bot)
-    // On merge uniquement la clé de cette race dans le document global
+    if (!db) return Promise.reject(new Error('Firebase non initialisé'));
+    if (!window._setDoc || !window._doc) return Promise.reject(new Error('_setDoc non disponible'));
     var update = {};
     update[name] = data;
-    return window._setDoc(window._doc(db,'config','races_data'), update, {merge:true});
+    return window._setDoc(
+      window._doc(db, 'config', 'races_data'),
+      update,
+      { merge: true }
+    ).then(function() {
+      console.log('[races] Sauvegarde OK pour :', name);
+    }).catch(function(e) {
+      console.error('[races] Erreur sauvegarde :', e.code, e.message);
+      return Promise.reject(e);
+    });
   }
 
   function bindRaceCards() {
@@ -697,6 +727,12 @@ window.addEventListener('scroll',function(){var h=document.documentElement.scrol
 
   /* ── Save ── */
   function doSave(name, overlay, btn) {
+    if (!db) {
+      console.error('[races] doSave : Firebase non disponible');
+      btn.textContent = 'Erreur DB'; btn.style.color = '#FF4757';
+      setTimeout(function(){btn.textContent='Sauvegarder';btn.style.color='';}, 3000);
+      return;
+    }
     btn.disabled=true; btn.textContent='Sauvegarde...';
     var data={
       name:(document.getElementById('rp-ed-name')&&document.getElementById('rp-ed-name').value||name).trim(),
@@ -708,14 +744,20 @@ window.addEventListener('scroll',function(){var h=document.documentElement.scrol
       description:(document.getElementById('rp-ed-desc')&&document.getElementById('rp-ed-desc').value||'').trim(),
       imageUrl:(document.getElementById('rp-ed-image')&&document.getElementById('rp-ed-image').value||'').trim()
     };
-    try{data.baseStats=JSON.parse(document.getElementById('rp-ed-stats').value||'{}');}catch(e){data.baseStats={};}
-    try{data.basePowers=JSON.parse(document.getElementById('rp-ed-powers').value||'[]');}catch(e){data.basePowers=[];}
-    saveRaceData(name,data).then(function(){
-      racesData[name]=data; btn.textContent='\u2713 OK'; btn.style.color='#44ff88';
-      setTimeout(function(){btn.disabled=false;btn.textContent='Sauvegarder';btn.style.color='';},2000);
-    }).catch(function(){
-      btn.textContent='Erreur'; btn.style.color='#FF4757'; btn.disabled=false;
-      setTimeout(function(){btn.textContent='Sauvegarder';btn.style.color='';},3000);
+    try{data.baseStats=JSON.parse(document.getElementById('rp-ed-stats').value||'{}');}catch(e){
+      console.warn('[races] JSON baseStats invalide, réinitialisation à {}'); data.baseStats={};
+    }
+    try{data.basePowers=JSON.parse(document.getElementById('rp-ed-powers').value||'[]');}catch(e){
+      console.warn('[races] JSON basePowers invalide, réinitialisation à []'); data.basePowers=[];
+    }
+    saveRaceData(name, data).then(function(){
+      racesData[name] = data; // Mettre à jour le cache local immédiatement
+      btn.textContent='\u2713 Sauvegardé'; btn.style.color='#44ff88';
+      setTimeout(function(){btn.disabled=false;btn.textContent='Sauvegarder';btn.style.color='';}, 2000);
+    }).catch(function(e){
+      btn.textContent='Erreur: '+(e.code||e.message||'inconnue');
+      btn.style.color='#FF4757'; btn.disabled=false;
+      setTimeout(function(){btn.textContent='Sauvegarder';btn.style.color='';}, 4000);
     });
   }
 
@@ -861,7 +903,9 @@ window.addEventListener('scroll',function(){var h=document.documentElement.scrol
 </script>
 <script>
 
-(function(){if(typeof window.initRacePopups==='function')window.initRacePopups(null,false);})();
+// Ne pas appeler initRacePopups ici — c'est maintenant géré directement
+// dans le module Firebase ci-dessus, dès que db est disponible.
+// (function(){if(typeof window.initRacePopups==='function')window.initRacePopups(null,false);})();
 
 </script>
 
