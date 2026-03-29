@@ -48,20 +48,20 @@ body::before{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;
 .footer-links{display:flex;gap:18px}.footer-links a{font-size:.68rem;color:var(--text2);text-decoration:none;transition:color .2s}.footer-links a:hover{color:#fff}
 .footer-copy{font-family:var(--font-m);font-size:.45rem;color:var(--text3);letter-spacing:.15em}
 /* Races */
-.race-group{margin-bottom:56px;opacity:0;transform:translateY(30px)}.race-group.visible{opacity:1;transform:translateY(0);transition:all .6s cubic-bezier(0.16,1,0.3,1)}
+.race-group{margin-bottom:56px;opacity:0;transform:translateY(30px);will-change:opacity,transform}.race-group.visible{opacity:1;transform:translateY(0);transition:opacity .6s cubic-bezier(0.16,1,0.3,1),transform .6s cubic-bezier(0.16,1,0.3,1)}
 .group-header{display:flex;align-items:center;gap:14px;margin-bottom:22px;padding-bottom:14px;position:relative}.group-header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,var(--gc,var(--blue)),transparent 60%);opacity:0.3}
-.group-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;box-shadow:0 0 10px var(--gc),0 0 20px var(--gc);animation:dotP 3s ease-in-out infinite}@keyframes dotP{0%,100%{box-shadow:0 0 8px var(--gc),0 0 16px transparent}50%{box-shadow:0 0 14px var(--gc),0 0 28px var(--gc)}}
+.group-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;box-shadow:0 0 10px var(--gc),0 0 20px var(--gc);animation:dotP 3s ease-in-out infinite;will-change:box-shadow}@keyframes dotP{0%,100%{box-shadow:0 0 8px var(--gc),0 0 16px transparent}50%{box-shadow:0 0 14px var(--gc),0 0 28px var(--gc)}}
 .group-title{font-family:var(--font-h);font-weight:800;font-size:.9rem;letter-spacing:.2em;text-transform:uppercase}
 .group-count{font-family:var(--font-m);font-size:.45rem;letter-spacing:.12em;color:var(--text2);margin-left:auto;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);padding:4px 14px;border-radius:20px}
 .race-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
-.race-card{background:rgba(8,12,30,0.20);border:1px solid rgba(255,255,255,0.04);padding:18px 16px 14px;position:relative;overflow:hidden;border-radius:10px;cursor:pointer;backdrop-filter:blur(4px);transition:all .4s cubic-bezier(0.16,1,0.3,1)}
-.race-card::before{content:'';position:absolute;left:0;top:10px;bottom:10px;width:2px;background:linear-gradient(180deg,var(--rc,var(--blue)),transparent);opacity:0.4;transition:opacity .4s;border-radius:2px}
-.race-card::after{content:'◈';position:absolute;top:10px;right:12px;font-size:.8rem;color:var(--rc,var(--blue));opacity:0.06;transition:all .4s}
-.race-card:hover{border-color:color-mix(in srgb,var(--rc,var(--blue)) 35%,transparent);background:rgba(8,12,30,0.35);transform:translateY(-4px);box-shadow:0 0 20px color-mix(in srgb,var(--rc,var(--blue)) 12%,transparent),0 12px 32px rgba(0,0,0,0.4)}
-.race-card:hover::before{opacity:1}.race-card:hover::after{opacity:0.3;transform:scale(1.2) rotate(15deg)}
-.race-name{font-family:var(--font-h);font-weight:700;font-size:.72rem;letter-spacing:.12em;color:#fff;display:block;margin-bottom:4px;transition:text-shadow .4s}
+.race-card{background:rgba(8,12,30,0.55);border:1px solid rgba(255,255,255,0.04);padding:18px 16px 14px;position:relative;overflow:hidden;border-radius:10px;cursor:pointer;transition:border-color .25s ease,background .25s ease,transform .25s cubic-bezier(0.16,1,0.3,1),box-shadow .25s ease;will-change:transform}
+.race-card::before{content:'';position:absolute;left:0;top:10px;bottom:10px;width:2px;background:linear-gradient(180deg,var(--rc,var(--blue)),transparent);opacity:0.4;transition:opacity .25s;border-radius:2px}
+.race-card::after{content:'◈';position:absolute;top:10px;right:12px;font-size:.8rem;color:var(--rc,var(--blue));opacity:0.06;transition:opacity .25s,transform .25s}
+.race-card:hover{border-color:color-mix(in srgb,var(--rc,var(--blue)) 35%,transparent);background:rgba(8,12,30,0.75);transform:translateY(-3px);box-shadow:0 0 18px color-mix(in srgb,var(--rc,var(--blue)) 10%,transparent),0 8px 24px rgba(0,0,0,0.35)}
+.race-card:hover::before{opacity:1}.race-card:hover::after{opacity:0.3;transform:scale(1.1) rotate(12deg)}
+.race-name{font-family:var(--font-h);font-weight:700;font-size:.72rem;letter-spacing:.12em;color:#fff;display:block;margin-bottom:4px;transition:text-shadow .25s}
 .race-card:hover .race-name{text-shadow:0 0 10px color-mix(in srgb,var(--rc,var(--blue)) 50%,transparent)}
-.race-id{font-family:var(--font-m);font-size:.45rem;color:var(--rc,var(--blue));opacity:0.35;letter-spacing:.08em;transition:opacity .3s}.race-card:hover .race-id{opacity:0.65}
+.race-id{font-family:var(--font-m);font-size:.45rem;color:var(--rc,var(--blue));opacity:0.35;letter-spacing:.08em;transition:opacity .25s}.race-card:hover .race-id{opacity:0.65}
 @media(max-width:880px){.nav-links{display:none}.hero-sub{min-height:35vh;padding:100px 1.5rem 40px}.page-wrap{padding:32px 1rem}.race-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}.footer{flex-direction:column;text-align:center}}
 
 /* ORIGINAL */
@@ -103,23 +103,40 @@ body::before{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;
 .footer-links{display:flex;gap:18px}.footer-links a{font-size:.68rem;color:var(--text2);text-decoration:none;transition:color .2s}.footer-links a:hover{color:#fff}
 .footer-copy{font-family:var(--font-m);font-size:.45rem;color:var(--text3);letter-spacing:.15em}
 /* Races */
-.race-group{margin-bottom:56px;opacity:0;transform:translateY(30px)}.race-group.visible{opacity:1;transform:translateY(0);transition:all .6s cubic-bezier(0.16,1,0.3,1)}
+.race-group{margin-bottom:56px;opacity:0;transform:translateY(30px);will-change:opacity,transform}.race-group.visible{opacity:1;transform:translateY(0);transition:opacity .6s cubic-bezier(0.16,1,0.3,1),transform .6s cubic-bezier(0.16,1,0.3,1)}
 .group-header{display:flex;align-items:center;gap:14px;margin-bottom:22px;padding-bottom:14px;position:relative}.group-header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,var(--gc,var(--blue)),transparent 60%);opacity:0.3}
-.group-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;box-shadow:0 0 10px var(--gc),0 0 20px var(--gc);animation:dotP 3s ease-in-out infinite}@keyframes dotP{0%,100%{box-shadow:0 0 8px var(--gc),0 0 16px transparent}50%{box-shadow:0 0 14px var(--gc),0 0 28px var(--gc)}}
+.group-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;box-shadow:0 0 10px var(--gc),0 0 20px var(--gc);animation:dotP 3s ease-in-out infinite;will-change:box-shadow}@keyframes dotP{0%,100%{box-shadow:0 0 8px var(--gc),0 0 16px transparent}50%{box-shadow:0 0 14px var(--gc),0 0 28px var(--gc)}}
 .group-title{font-family:var(--font-h);font-weight:800;font-size:.9rem;letter-spacing:.2em;text-transform:uppercase}
 .group-count{font-family:var(--font-m);font-size:.45rem;letter-spacing:.12em;color:var(--text2);margin-left:auto;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);padding:4px 14px;border-radius:20px}
 .race-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
-.race-card{background:rgba(8,12,30,0.20);border:1px solid rgba(255,255,255,0.04);padding:18px 16px 14px;position:relative;overflow:hidden;border-radius:10px;cursor:pointer;backdrop-filter:blur(4px);transition:all .4s cubic-bezier(0.16,1,0.3,1)}
-.race-card::before{content:'';position:absolute;left:0;top:10px;bottom:10px;width:2px;background:linear-gradient(180deg,var(--rc,var(--blue)),transparent);opacity:0.4;transition:opacity .4s;border-radius:2px}
-.race-card::after{content:'◈';position:absolute;top:10px;right:12px;font-size:.8rem;color:var(--rc,var(--blue));opacity:0.06;transition:all .4s}
-.race-card:hover{border-color:color-mix(in srgb,var(--rc,var(--blue)) 35%,transparent);background:rgba(8,12,30,0.35);transform:translateY(-4px);box-shadow:0 0 20px color-mix(in srgb,var(--rc,var(--blue)) 12%,transparent),0 12px 32px rgba(0,0,0,0.4)}
-.race-card:hover::before{opacity:1}.race-card:hover::after{opacity:0.3;transform:scale(1.2) rotate(15deg)}
-.race-name{font-family:var(--font-h);font-weight:700;font-size:.72rem;letter-spacing:.12em;color:#fff;display:block;margin-bottom:4px;transition:text-shadow .4s}
+.race-card{background:rgba(8,12,30,0.55);border:1px solid rgba(255,255,255,0.04);padding:18px 16px 14px;position:relative;overflow:hidden;border-radius:10px;cursor:pointer;transition:border-color .25s ease,background .25s ease,transform .25s cubic-bezier(0.16,1,0.3,1),box-shadow .25s ease;will-change:transform}
+.race-card::before{content:'';position:absolute;left:0;top:10px;bottom:10px;width:2px;background:linear-gradient(180deg,var(--rc,var(--blue)),transparent);opacity:0.4;transition:opacity .25s;border-radius:2px}
+.race-card::after{content:'◈';position:absolute;top:10px;right:12px;font-size:.8rem;color:var(--rc,var(--blue));opacity:0.06;transition:opacity .25s,transform .25s}
+.race-card:hover{border-color:color-mix(in srgb,var(--rc,var(--blue)) 35%,transparent);background:rgba(8,12,30,0.75);transform:translateY(-3px);box-shadow:0 0 18px color-mix(in srgb,var(--rc,var(--blue)) 10%,transparent),0 8px 24px rgba(0,0,0,0.35)}
+.race-card:hover::before{opacity:1}.race-card:hover::after{opacity:0.3;transform:scale(1.1) rotate(12deg)}
+.race-name{font-family:var(--font-h);font-weight:700;font-size:.72rem;letter-spacing:.12em;color:#fff;display:block;margin-bottom:4px;transition:text-shadow .25s}
 .race-card:hover .race-name{text-shadow:0 0 10px color-mix(in srgb,var(--rc,var(--blue)) 50%,transparent)}
-.race-id{font-family:var(--font-m);font-size:.45rem;color:var(--rc,var(--blue));opacity:0.35;letter-spacing:.08em;transition:opacity .3s}.race-card:hover .race-id{opacity:0.65}
+.race-id{font-family:var(--font-m);font-size:.45rem;color:var(--rc,var(--blue));opacity:0.35;letter-spacing:.08em;transition:opacity .25s}.race-card:hover .race-id{opacity:0.65}
 @media(max-width:880px){.nav-links{display:none}.hero-sub{min-height:35vh;padding:100px 1.5rem 40px}.page-wrap{padding:32px 1rem}.race-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}.footer{flex-direction:column;text-align:center}}
 
 
+
+/* Scroll fluide global */
+html{scroll-behavior:smooth}
+
+/* Barre filtre groupe */
+.group-filter-bar{position:sticky;top:72px;z-index:900;padding:10px clamp(1.5rem,4vw,3rem);background:rgba(2,7,19,0.9);backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,0.04);display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.gfb-label{font-family:var(--font-m);font-size:.45rem;letter-spacing:.2em;color:var(--text3);text-transform:uppercase;margin-right:4px;white-space:nowrap}
+.gfb-btn{font-family:var(--font-b);font-size:.65rem;font-weight:500;letter-spacing:.06em;color:var(--text2);background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:5px;padding:5px 13px;cursor:pointer;transition:color .2s,background .2s,border-color .2s;text-decoration:none;white-space:nowrap}
+.gfb-btn:hover{color:#fff;background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.14)}
+.gfb-btn.active{border-color:var(--btn-c,var(--blue));color:var(--btn-c,var(--blue));background:color-mix(in srgb,var(--btn-c,var(--blue)) 8%,transparent)}
+
+/* Bouton retour en haut */
+.back-to-top{position:fixed;bottom:28px;right:28px;z-index:2000;width:38px;height:38px;border-radius:8px;background:rgba(2,7,19,0.85);border:1px solid rgba(77,163,255,0.2);color:rgba(77,163,255,0.7);font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s,border-color .2s,color .2s;transform:translateY(8px);backdrop-filter:blur(8px)}
+.back-to-top.visible{opacity:1;pointer-events:all;transform:translateY(0)}
+.back-to-top:hover{border-color:rgba(77,163,255,0.5);color:#4DA3FF}
+
+@media(max-width:880px){.group-filter-bar{top:0;padding:8px 1rem;gap:4px}.gfb-label{display:none}.gfb-btn{font-size:.58rem;padding:4px 9px}}
 </style>
 <script src="js/debug.js"></script>
 <script src="js/constants.js"></script>
@@ -192,8 +209,24 @@ document.addEventListener('jaharta:auth',function(e){
 </nav>
 <div class="nav-backdrop" id="nav-backdrop"></div>
 <section class="hero-sub"><div class="hero-sub-overlay"></div><div class="hero-sub-content"><p class="hero-sub-tag">Encyclop&eacute;die &middot; Races Jouables</p><div class="glitch-wrap"><h1 class="glitch-title" data-text="RACES JOUABLES">RACES JOUABLES</h1></div><p class="hero-sub-desc">Les 42 esp&egrave;ces disponibles dans l'univers de Jaharta</p><div class="hero-stats"><div class="hero-stat"><span class="hero-stat-num" id="count-races">0</span><span class="hero-stat-lbl">Races</span></div><div class="hero-stat"><span class="hero-stat-num">7</span><span class="hero-stat-lbl">Groupes</span></div></div></div></section>
+
+<!-- Barre de navigation rapide par groupe -->
+<nav class="group-filter-bar" id="group-filter-bar">
+  <span class="gfb-label">Groupe :</span>
+  <a class="gfb-btn" href="#group-humanoids" style="--btn-c:#4DA3FF">Humanoids</a>
+  <a class="gfb-btn" href="#group-zooids" style="--btn-c:#44ff88">Zooids</a>
+  <a class="gfb-btn" href="#group-mythzooids" style="--btn-c:#8B5CF6">Mythical Zooids</a>
+  <a class="gfb-btn" href="#group-demons" style="--btn-c:#FF4757">Demons</a>
+  <a class="gfb-btn" href="#group-artificial" style="--btn-c:#ffd60a">Artificial</a>
+  <a class="gfb-btn" href="#group-semiliquid" style="--btn-c:#00e5cc">Semi-Liquid</a>
+  <a class="gfb-btn" href="#group-undead" style="--btn-c:#9a8cff">Undead</a>
+</nav>
+
+<!-- Bouton retour en haut -->
+<button class="back-to-top" id="back-to-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Retour en haut">&#8679;</button>
+
 <div class="page-wrap">
-  <div class="race-group rv" style="--gc:#4DA3FF"><div class="group-header"><div class="group-dot" style="background:#4DA3FF"></div><span class="group-title" style="color:#4DA3FF">Humanoids</span><span class="group-count">6 races</span></div><div class="race-grid">
+  <div class="race-group rv" id="group-humanoids" style="--gc:#4DA3FF"><div class="group-header"><div class="group-dot" style="background:#4DA3FF"></div><span class="group-title" style="color:#4DA3FF">Humanoids</span><span class="group-count">6 races</span></div><div class="race-grid">
     <div class="race-card" style="--rc:#4DA3FF"><span class="race-name">Human</span><span class="race-id">#01</span></div>
     <div class="race-card" style="--rc:#4DA3FF"><span class="race-name">Elf</span><span class="race-id">#02</span></div>
     <div class="race-card" style="--rc:#4DA3FF"><span class="race-name">Vampire</span><span class="race-id">#03</span></div>
@@ -201,7 +234,7 @@ document.addEventListener('jaharta:auth',function(e){
     <div class="race-card" style="--rc:#4DA3FF"><span class="race-name">Orc</span><span class="race-id">#05</span></div>
     <div class="race-card" style="--rc:#4DA3FF"><span class="race-name">Oni</span><span class="race-id">#06</span></div>
   </div></div>
-  <div class="race-group rv" style="--gc:#44ff88"><div class="group-header"><div class="group-dot" style="background:#44ff88"></div><span class="group-title" style="color:#44ff88">Zooids</span><span class="group-count">13 races</span></div><div class="race-grid">
+  <div class="race-group rv" id="group-zooids" style="--gc:#44ff88"><div class="group-header"><div class="group-dot" style="background:#44ff88"></div><span class="group-title" style="color:#44ff88">Zooids</span><span class="group-count">13 races</span></div><div class="race-grid">
     <div class="race-card" style="--rc:#44ff88"><span class="race-name">Neko</span><span class="race-id">#10</span></div>
     <div class="race-card" style="--rc:#44ff88"><span class="race-name">Doggo</span><span class="race-id">#11</span></div>
     <div class="race-card" style="--rc:#44ff88"><span class="race-name">Bunny</span><span class="race-id">#12</span></div>
@@ -216,7 +249,7 @@ document.addEventListener('jaharta:auth',function(e){
     <div class="race-card" style="--rc:#44ff88"><span class="race-name">Siren</span><span class="race-id">#21</span></div>
     <div class="race-card" style="--rc:#44ff88"><span class="race-name">Moth</span><span class="race-id">#22</span></div>
   </div></div>
-  <div class="race-group rv" style="--gc:#8B5CF6"><div class="group-header"><div class="group-dot" style="background:#8B5CF6"></div><span class="group-title" style="color:#8B5CF6">Mythical Zooids</span><span class="group-count">11 races</span></div><div class="race-grid">
+  <div class="race-group rv" id="group-mythzooids" style="--gc:#8B5CF6"><div class="group-header"><div class="group-dot" style="background:#8B5CF6"></div><span class="group-title" style="color:#8B5CF6">Mythical Zooids</span><span class="group-count">11 races</span></div><div class="race-grid">
     <div class="race-card" style="--rc:#8B5CF6"><span class="race-name">Qilin</span><span class="race-id">#23</span></div>
     <div class="race-card" style="--rc:#8B5CF6"><span class="race-name">Dragon</span><span class="race-id">#24</span></div>
     <div class="race-card" style="--rc:#8B5CF6"><span class="race-name">Minotaur</span><span class="race-id">#25</span></div>
@@ -229,20 +262,20 @@ document.addEventListener('jaharta:auth',function(e){
     <div class="race-card" style="--rc:#8B5CF6"><span class="race-name">Salamander</span><span class="race-id">#32</span></div>
     <div class="race-card" style="--rc:#8B5CF6"><span class="race-name">Hakutaku</span><span class="race-id">#33</span></div>
   </div></div>
-  <div class="race-group rv" style="--gc:#FF4757"><div class="group-header"><div class="group-dot" style="background:#FF4757"></div><span class="group-title" style="color:#FF4757">Demons</span><span class="group-count">3 races</span></div><div class="race-grid">
+  <div class="race-group rv" id="group-demons" style="--gc:#FF4757"><div class="group-header"><div class="group-dot" style="background:#FF4757"></div><span class="group-title" style="color:#FF4757">Demons</span><span class="group-count">3 races</span></div><div class="race-grid">
     <div class="race-card" style="--rc:#FF4757"><span class="race-name">Tiefling</span><span class="race-id">#34</span></div>
     <div class="race-card" style="--rc:#FF4757"><span class="race-name">Succubus</span><span class="race-id">#35</span></div>
     <div class="race-card" style="--rc:#FF4757"><span class="race-name">Devil</span><span class="race-id">#36</span></div>
   </div></div>
-  <div class="race-group rv" style="--gc:#ffd60a"><div class="group-header"><div class="group-dot" style="background:#ffd60a"></div><span class="group-title" style="color:#ffd60a">Artificial</span><span class="group-count">2 races</span></div><div class="race-grid">
+  <div class="race-group rv" id="group-artificial" style="--gc:#ffd60a"><div class="group-header"><div class="group-dot" style="background:#ffd60a"></div><span class="group-title" style="color:#ffd60a">Artificial</span><span class="group-count">2 races</span></div><div class="race-grid">
     <div class="race-card" style="--rc:#ffd60a"><span class="race-name">Android</span><span class="race-id">#37</span></div>
     <div class="race-card" style="--rc:#ffd60a"><span class="race-name">Shuma</span><span class="race-id">#38</span></div>
   </div></div>
-  <div class="race-group rv" style="--gc:#00e5cc"><div class="group-header"><div class="group-dot" style="background:#00e5cc"></div><span class="group-title" style="color:#00e5cc">Semi-Liquid</span><span class="group-count">2 races</span></div><div class="race-grid">
+  <div class="race-group rv" id="group-semiliquid" style="--gc:#00e5cc"><div class="group-header"><div class="group-dot" style="background:#00e5cc"></div><span class="group-title" style="color:#00e5cc">Semi-Liquid</span><span class="group-count">2 races</span></div><div class="race-grid">
     <div class="race-card" style="--rc:#00e5cc"><span class="race-name">Slime</span><span class="race-id">#39</span></div>
     <div class="race-card" style="--rc:#00e5cc"><span class="race-name">Nureonago</span><span class="race-id">#40</span></div>
   </div></div>
-  <div class="race-group rv" style="--gc:#9a8cff"><div class="group-header"><div class="group-dot" style="background:#9a8cff"></div><span class="group-title" style="color:#9a8cff">Undead</span><span class="group-count">2 races</span></div><div class="race-grid">
+  <div class="race-group rv" id="group-undead" style="--gc:#9a8cff"><div class="group-header"><div class="group-dot" style="background:#9a8cff"></div><span class="group-title" style="color:#9a8cff">Undead</span><span class="group-count">2 races</span></div><div class="race-grid">
     <div class="race-card" style="--rc:#9a8cff"><span class="race-name">Jiangshi</span><span class="race-id">#41</span></div>
     <div class="race-card" style="--rc:#9a8cff"><span class="race-name">Joker</span><span class="race-id">#42</span></div>
   </div></div>
@@ -253,7 +286,35 @@ document.addEventListener('jaharta:auth',function(e){
 
 document.querySelectorAll('.rv').forEach(function(g,i){setTimeout(function(){g.classList.add('visible');},300+i*120);});
 (function(){var el=document.getElementById('count-races');var t=42,d=1800,s=null;function step(ts){if(!s)s=ts;var p=Math.min((ts-s)/d,1);el.textContent=Math.floor((1-Math.pow(1-p,3))*t);if(p<1)requestAnimationFrame(step);else el.textContent=t;}requestAnimationFrame(step);})();
-window.addEventListener('scroll',function(){var h=document.documentElement.scrollHeight-window.innerHeight;document.getElementById('scroll-line').style.width=h>0?(window.scrollY/h*100)+'%':'0%';},{passive:true});
+
+// Scroll : barre de progression + retour en haut + filtre actif
+(function(){
+  var btt = document.getElementById('back-to-top');
+  var filterBtns = document.querySelectorAll('.gfb-btn');
+  var groups = Array.from(document.querySelectorAll('.race-group[id]'));
+
+  window.addEventListener('scroll', function(){
+    var sy = window.scrollY;
+    var h = document.documentElement.scrollHeight - window.innerHeight;
+
+    // Barre de progression
+    document.getElementById('scroll-line').style.width = h > 0 ? (sy/h*100)+'%' : '0%';
+
+    // Bouton retour en haut : visible après 400px
+    if (btt) btt.classList.toggle('visible', sy > 400);
+
+    // Highlight du bouton de groupe visible à l'écran
+    var current = '';
+    var offset = 140; // hauteur nav + filtre bar
+    groups.forEach(function(g){
+      if (g.getBoundingClientRect().top <= offset) current = g.id;
+    });
+    filterBtns.forEach(function(btn){
+      var href = btn.getAttribute('href').replace('#','');
+      btn.classList.toggle('active', href === current);
+    });
+  }, {passive:true});
+})();
 
 </script>
 <script src="js/kanji-blob.js"></script>
