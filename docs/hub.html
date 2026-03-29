@@ -959,11 +959,44 @@ function renderFullChar(){
       <div><div class="csb-val">${(c.xp||0).toLocaleString()}</div><div class="csb-label">XP</div></div>
       ${c.available_stat_points?`<div><div class="csb-val" style="color:var(--gold)">${c.available_stat_points}</div><div class="csb-label">STAT PTS</div></div>`:''}
     </div>`;
-  // Stats
-  const sp=c.available_stat_points;
+  // Calcul bonus cumulés
+  const bonuses={};
+  const eqList=(INV_DATA&&INV_DATA.equipped_assets)||[];
+  eqList.forEach(id=>{
+    const it=ALL_ITEMS_DATA[id]||{};
+    Object.entries(it.stat_effects||it.stats||{}).forEach(([s,v])=>{
+      try{bonuses[s]=(bonuses[s]||0)+parseInt(String(v).replace('+',''));}catch(_){}
+    });
+  });
+  const eqSet=new Set(eqList);
+  Object.values(ITEM_SETS).forEach(sd=>{
+    const cnt=sd.items.filter(i=>eqSet.has(i)).length;
+    if(cnt<2)return;
+    const best=Object.keys(sd.bonuses).map(Number).sort((a,b)=>b-a).find(t=>cnt>=t);
+    if(best==null)return;
+    const b=sd.bonuses[String(best)]||sd.bonuses[best]||{};
+    if(b.stats)Object.entries(b.stats).forEach(([s,v])=>{bonuses[s]=(bonuses[s]||0)+v;});
+    if(b.stats_all)SK.forEach(s=>{bonuses[s]=(bonuses[s]||0)+b.stats_all;});
+  });
+  if(PARTY_DATA&&PARTY_DATA.members){
+    const me=(PARTY_DATA.members||[]).find(m=>m.char_key===UID+'_'+CHAR_ID);
+    if(me&&me.bonuses)Object.entries(me.bonuses).forEach(([s,v])=>{bonuses[s]=(bonuses[s]||0)+parseInt(v||0);});
+  }
+  if(TITLES_DATA&&TITLES_DEF){
+    Object.entries(TITLES_DATA.titles||{}).forEach(([tid,ts])=>{
+      const td=TITLES_DEF[tid];if(!td)return;
+      const tier=ts.current_tier||ts.tier||1;
+      const tierDef=(td.tiers||[]).find(t=>t.tier===tier);
+      if(tierDef&&tierDef.stat_bonuses)Object.entries(tierDef.stat_bonuses).forEach(([s,v])=>{bonuses[s]=(bonuses[s]||0)+parseInt(v||0);});
+    });
+  }
+  (BUFFS_DATA||[]).forEach(b=>{
+    if(b.effects)Object.entries(b.effects).forEach(([s,v])=>{bonuses[s]=(bonuses[s]||0)+parseInt(v||0);});
+  });
+  console.log('[STATS] eq:'+eqList.length+' items:'+Object.keys(ALL_ITEMS_DATA).length+' bonuses:'+JSON.stringify(bonuses));
   document.getElementById('char-stats-grid').innerHTML=
-    (sp?`<div class="sp-banner" style="grid-column:1/-1">⚡ ${sp} point${sp>1?'s':''} disponible${sp>1?'s':''} — à allouer via le bot Discord</div>`:'')
-    +SK.map(k=>`<div class="stat-block"><div class="stat-block-val">${stats[k]||0}</div><div class="stat-block-name">${SI[k]} ${SL[k]}</div></div>`).join('');
+    (sp?'<div class="sp-banner" style="grid-column:1/-1">&#9889; '+sp+' pt'+(sp>1?'s':'')+' stat dispo</div>':'')+
+    SK.map(k=>{const base=parseInt(stats[k]||0),bon=bonuses[k]||0;return '<div class="stat-block"><div class="stat-block-val">'+(base+bon)+'</div>'+(bon?'<div class="stat-block-bonus">+'+bon+'</div>':'')+'<div class="stat-block-name">'+SI[k]+' '+SL[k]+'</div></div>';}).join('');
   // Powers
   document.getElementById('char-powers-grid').innerHTML=powers.length
     ?powers.map(p=>`<div class="power-card"><div class="power-card-dot ${p.quality||'common'}"></div><div><div class="power-card-name">${e(p.name||p.id||'—')}</div><div class="power-card-qual ${p.quality||'common'}">${e((p.quality||'').toUpperCase())}</div></div></div>`).join('')
@@ -1037,14 +1070,15 @@ function renderSlotsPanel(){
 function renderItemsGrid(){
   const items=INV_DATA.items||{};
   const equipped=new Set(INV_DATA.equipped_assets||[]);
-  let entries=Object.entries(items);
+
+  // Construire la liste complète : items en stock + items équipés (sans doublon)
+  const allEntries=new Map(Object.entries(items));
+  equipped.forEach(id=>{if(!allEntries.has(id))allEntries.set(id,0);});
+
+  let entries=Array.from(allEntries.entries());
 
   if(INV_TAB==='equipped'){
-    entries=Array.from(equipped).map(id=>[id,0]).filter(([id])=>!(items[id]>0));
-    // Ajouter les équipés (qty=0 dans items car déduits)
-    const inv2=INV_DATA.items||{};
-    const equippedAll=Array.from(equipped).map(id=>[id,0]);
-    entries=equippedAll;
+    entries=Array.from(equipped).map(id=>[id,0]);
   } else if(INV_TAB==='equipment'){
     entries=entries.filter(([id])=>{const it=ALL_ITEMS_DATA[id]||{};return it.slot;});
   } else if(INV_TAB==='consumable'){
@@ -1052,8 +1086,6 @@ function renderItemsGrid(){
   } else if(INV_TAB==='other'){
     entries=entries.filter(([id])=>{const it=ALL_ITEMS_DATA[id]||{};return !it.slot&&!['consumable','food','usable'].includes(it.type);});
   }
-
-  if(INV_TAB==='equipped'){entries=Array.from(equipped).map(id=>[id,0]);}
 
   if(!entries.length){document.getElementById('inv-grid').innerHTML='<div class="empty">Aucun item</div>';return;}
 
