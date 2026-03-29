@@ -368,7 +368,7 @@ body{background:var(--bg)!important}
     <div class="code-label">Code de liaison</div>
     <input type="text" id="link-code" class="code-input" placeholder="XXXX" maxlength="12" autocomplete="off" spellcheck="false">
     <div class="code-error" id="code-error"></div>
-    <button class="code-btn" id="code-btn" id="verify-btn">CONNEXION AU NEXUS</button>
+    <button class="code-btn" id="verify-btn">CONNEXION AU NEXUS</button>
   </div>
   <div class="gate-note">Code à usage unique · valable 10 minutes<br>Utilise <span style="color:var(--blue)">/link</span> pour en générer un nouveau</div>
 </div>
@@ -649,7 +649,7 @@ function clearSess(){localStorage.removeItem('hub_session');localStorage.removeI
 
 // ── AUTH ──
 async function verifyCode(){
-  const inp=document.getElementById('link-code'),err=document.getElementById('code-error'),btn=document.getElementById('code-btn');
+  const inp=document.getElementById('link-code'),err=document.getElementById('code-error'),btn=document.getElementById('verify-btn');
   err.style.display='none';
   const code=inp.value.trim().toUpperCase();
   if(!code||code.length<4){showErr('Entre un code valide');return}
@@ -666,8 +666,12 @@ async function verifyCode(){
   function showErr(m){err.textContent=m;err.style.display='block'}
   function done(){btn.disabled=false;btn.textContent='CONNEXION AU NEXUS'}
 }
-document.getElementById('link-code').addEventListener('keydown',e=>{if(e.key==='Enter')verifyCode();});
-document.getElementById('verify-btn').addEventListener('click',verifyCode);
+document.addEventListener('DOMContentLoaded',function(){
+  const lc=document.getElementById('link-code');
+  const vb=document.getElementById('verify-btn');
+  if(lc)lc.addEventListener('keydown',e=>{if(e.key==='Enter')verifyCode();});
+  if(vb)vb.addEventListener('click',verifyCode);
+});
 
 function logout(){
   clearSess();
@@ -1292,7 +1296,7 @@ function showToast(msg,type='success',dur=3500){
 }
 window.addEventListener('scroll',()=>{document.getElementById('scroll-line').style.width=(window.scrollY/(document.body.scrollHeight-window.innerHeight)*100)+'%'});
 
-init();
+document.addEventListener('DOMContentLoaded', init);
 </script>
 <script src="js/page-transition.js"></script>
 </body>
