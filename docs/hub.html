@@ -959,6 +959,7 @@ function renderFullChar(){
       <div><div class="csb-val">${(c.xp||0).toLocaleString()}</div><div class="csb-label">XP</div></div>
       ${c.available_stat_points?`<div><div class="csb-val" style="color:var(--gold)">${c.available_stat_points}</div><div class="csb-label">STAT PTS</div></div>`:''}
     </div>`;
+  const sp=parseInt(c.available_stat_points||0);
   // Calcul bonus cumulés
   const bonuses={};
   const eqList=(INV_DATA&&INV_DATA.equipped_assets)||[];
