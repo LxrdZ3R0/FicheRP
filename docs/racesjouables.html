@@ -565,7 +565,7 @@ window.addEventListener('scroll',function(){var h=document.documentElement.scrol
   }
 
   function fi(id,lbl,val){
-    return '<div class="rp4-fg"><label class="rp4-fl">'+lbl+'</label><input class="rp4-fi" id="'+id+'" value="'+(val||'').replace(/"/g,'&quot;')+'"></div>';
+    return '<div class="rp4-fg"><label class="rp4-fl">'+lbl+'</label><input class="rp4-fi" id="'+id+'" value="'+String(val==null?'':val).replace(/"/g,'&quot;')+'"></div>';
   }
 
   /* ══════════════════════════════════════════
