@@ -835,7 +835,9 @@ async function loadTitles(){
   if(!UID){el.innerHTML='<div class="empty">Non connecté — utilise /link</div>';return;}
   el.innerHTML='<div class="empty">Chargement...</div>';
   try{
+    console.log('[TITLES] querying',C.TITLES,'/',UID);
     const snap=await db.collection(C.TITLES).doc(UID).get();
+    console.log('[TITLES] exists=',snap.exists,'data=',JSON.stringify(snap.exists?snap.data():null).slice(0,100));
     renderTitles(snap.exists?snap.data():{});
   }catch(e){console.error('[TITLES]',e);el.innerHTML='<div class="empty">Erreur: '+e.message+'</div>'}
 }
@@ -844,7 +846,9 @@ async function loadCompanions(){
   if(!CHAR_ID){document.getElementById('comp-content').innerHTML='<div class="empty">Aucun personnage actif</div>';return}
   try{
     const key=`${UID}_${CHAR_ID}`;
+    console.log('[COMP] querying',key);
     const[cSnap,cfgSnap]=await Promise.all([db.collection(C.COMP).doc(key).get(),db.collection(C.CFG).doc('companions_data').get()]);
+    console.log('[COMP] exists=',cSnap.exists);
     renderCompanions(cSnap.exists?cSnap.data():{},cfgSnap.exists?cfgSnap.data():{companions:{},evolutions:{}});
   }catch(e){console.error('[COMP]',e);document.getElementById('comp-content').innerHTML=`<div class="empty">Erreur: ${e.message}</div>`}
 }
