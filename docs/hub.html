@@ -1378,14 +1378,16 @@ async function setTheme(theme){
 
 // ── TABS ──
 const LAZY={
-  inventaire:()=>{if(!INV_DATA)loadInventory()},
+  personnage:()=>{if(CHAR)renderFullChar();},
+  inventaire:()=>{if(!INV_DATA)loadInventory();},
+  gacha:()=>{if(PLAYER)renderGacha();},
   party:loadParty,
+  progression:()=>{if(CHAR)renderProgression();initAlloc();},
   titres:loadTitles,
   compagnons:loadCompanions,
   monshop:loadMonShop,
   shops:loadShops,
   ushop:loadUshop,
-  progression:()=>{initAlloc();},
   parametres:renderSettings,
 };
 function showTab(id){
