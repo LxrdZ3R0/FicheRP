@@ -275,7 +275,25 @@ window.addEventListener('scroll',function(){var h=document.documentElement.scrol
     db = _db; isAdmin = _isAdmin;
     if (!initialized) { loadRacesData(); bindRaceCards(); initialized = true; }
   };
-  window.updateRaceAdmin = function(v) { isAdmin = v; };
+  window.updateRaceAdmin = function(v) {
+    isAdmin = v;
+    // Afficher/cacher le bloc admin si un popup est déjà ouvert
+    var block = document.getElementById('rp4-admin-block');
+    if (block) block.style.display = v ? '' : 'none';
+    // Rebinder le bouton save si maintenant admin
+    if (v) {
+      var saveBtn = document.querySelector('.rp4-save');
+      if (saveBtn && !saveBtn._bound) {
+        var ov = document.getElementById('rp-overlay');
+        var nameEl = ov && ov.querySelector('.rp4-title');
+        var raceName = nameEl ? nameEl.textContent.trim() : '';
+        if (raceName) {
+          saveBtn._bound = true;
+          saveBtn.addEventListener('click', function() { doSave(raceName, ov, saveBtn); });
+        }
+      }
+    }
+  };
 
   function loadRacesData() {
     if (!db || !window._doc) return;
@@ -393,8 +411,10 @@ window.addEventListener('scroll',function(){var h=document.documentElement.scrol
 
     /* Admin */
     var adminHTML = '';
-    if (isAdmin) {
-      adminHTML = '<div class="rp4-admin">'
+    // Toujours injecter le bloc admin dans le DOM, visible seulement si isAdmin
+    {
+      var adminVisible = isAdmin ? '' : 'display:none';
+      adminHTML = '<div class="rp4-admin" id="rp4-admin-block" style="'+adminVisible+'">'
         +'<div class="rp4-admin-t">&#9656; MODE ADMIN</div>'
         +'<div class="rp4-admin-g">'
         +fi('rp-ed-name','Nom',d.name||name)+fi('rp-ed-plural','Pluriel',d.plural||name+'s')
@@ -410,7 +430,6 @@ window.addEventListener('scroll',function(){var h=document.documentElement.scrol
         +'<div class="rp4-fg"><label class="rp4-fl">Pouvoirs (JSON)</label><textarea class="rp4-fta rp4-mono" id="rp-ed-powers">'+JSON.stringify(d.basePowers||[])+'</textarea></div>'
         +'<button class="rp4-save">Sauvegarder</button>'
         +'</div>';
-    }
 
     return ''
       /* Overlay inner wrapper */
