@@ -1,0 +1,1844 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="description" content="Jaharta RP — Hub Personnel">
+<meta name="theme-color" content="#020713">
+<title>JAHARTA — Hub</title>
+<link rel="icon" type="image/x-icon" href="img/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="img/favicon-180.png">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Exo+2:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/jaharta.css">
+<style>
+:root{
+  --font-h:'Orbitron',sans-serif;--font-b:'Rajdhani',sans-serif;
+  --font-body:'Exo 2',sans-serif;--font-m:'Share Tech Mono',monospace;
+  --blue:#4DA3FF;--violet:#8B5CF6;--gold:#ffd60a;
+  --magenta:#ff006e;--green:#44ff88;--red:#FF4757;--orange:#ff9800;
+  --text:#e2e6f0;--text2:#7c84a0;--text3:#3a4060;
+  --bg:#020713;--surface:#0c1228;--border:rgba(77,163,255,0.1);
+}
+body{background:var(--bg)!important}
+.scroll-line{position:fixed;top:0;left:0;width:0%;height:2px;background:linear-gradient(90deg,var(--blue),var(--violet));z-index:10001}
+/* NAV */
+.nav{position:fixed;top:0;left:0;right:0;z-index:1000;padding:0 clamp(1.5rem,4vw,3rem);height:72px;display:flex;align-items:center;justify-content:space-between;background:rgba(2,7,19,0.95);backdrop-filter:blur(24px);border-bottom:1px solid rgba(77,163,255,0.06)}
+.nav-logo{font-family:var(--font-h);font-weight:800;font-size:1.1rem;letter-spacing:.22em;color:#fff;text-decoration:none;display:flex;align-items:center;gap:10px}
+.nav-logo img{width:36px;height:36px;object-fit:contain}
+.nav-links{display:flex;gap:2px;align-items:center}
+.nav-links a{font-family:var(--font-b);font-size:.72rem;font-weight:500;letter-spacing:.08em;color:var(--text2);text-decoration:none;padding:8px 16px;border-radius:6px;transition:all .3s}
+.nav-links a:hover{color:#fff;background:rgba(255,255,255,0.04)}
+.nav-links a.active{color:var(--blue);background:rgba(77,163,255,0.06)}
+.nav-right{display:flex;align-items:center;gap:10px}
+.nav-avatar{width:32px;height:32px;border-radius:50%;border:1px solid rgba(77,163,255,0.3);object-fit:cover;display:none}
+.nav-username{font-family:var(--font-m);font-size:.52rem;letter-spacing:.1em;color:var(--text2)}
+.nav-logout{font-family:var(--font-m);font-size:.5rem;letter-spacing:.1em;color:var(--text3);background:none;border:1px solid rgba(255,255,255,0.06);padding:5px 10px;border-radius:4px;cursor:pointer;transition:all .3s}
+.nav-logout:hover{color:var(--red);border-color:rgba(255,71,87,0.4)}
+/* LOGIN GATE */
+.login-gate{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2rem}
+.gate-logo{font-family:var(--font-h);font-weight:900;font-size:clamp(1.8rem,5vw,3rem);letter-spacing:.12em;background:linear-gradient(135deg,var(--blue),var(--violet));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:.4rem}
+.gate-sub{font-family:var(--font-m);font-size:.55rem;letter-spacing:.4em;color:var(--text3);margin-bottom:3rem}
+.gate-desc{font-family:var(--font-body);font-size:.9rem;color:var(--text2);max-width:400px;line-height:1.9;margin-bottom:2rem}
+.code-wrap{display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;max-width:300px}
+.code-label{font-family:var(--font-m);font-size:.48rem;letter-spacing:.25em;text-transform:uppercase;color:var(--text3)}
+.code-input{font-family:var(--font-m);font-size:1.3rem;letter-spacing:.35em;text-align:center;width:100%;padding:14px;background:rgba(8,12,30,0.8);border:1px solid rgba(77,163,255,0.18);border-radius:8px;color:#fff;outline:none;text-transform:uppercase;transition:border-color .3s,box-shadow .3s}
+.code-input:focus{border-color:var(--blue);box-shadow:0 0 24px rgba(77,163,255,0.1)}
+.code-btn{font-family:var(--font-h);font-size:.58rem;font-weight:700;letter-spacing:.15em;color:var(--bg);background:linear-gradient(135deg,var(--blue),var(--violet));border:none;padding:14px 28px;border-radius:8px;cursor:pointer;width:100%;transition:all .3s}
+.code-btn:hover{box-shadow:0 0 32px rgba(77,163,255,0.25);transform:translateY(-1px)}
+.code-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.code-error{font-family:var(--font-m);font-size:.52rem;color:var(--red);display:none;margin-top:2px}
+.gate-note{font-family:var(--font-m);font-size:.42rem;color:var(--text3);margin-top:2.5rem;letter-spacing:.08em;line-height:2;max-width:300px}
+/* HUB */
+.hub-main{display:none;padding-top:72px;min-height:100vh}
+.hub-main.active{display:block}
+/* TABS */
+.hub-tabs{display:flex;border-bottom:1px solid var(--border);background:rgba(2,7,19,0.8);backdrop-filter:blur(16px);position:sticky;top:72px;z-index:100;overflow-x:auto;scrollbar-width:none}
+.hub-tabs::-webkit-scrollbar{display:none}
+.tab-btn{font-family:var(--font-b);font-size:.68rem;font-weight:600;letter-spacing:.06em;color:var(--text3);background:none;border:none;border-bottom:2px solid transparent;padding:15px 20px;cursor:pointer;transition:all .25s;white-space:nowrap;display:flex;align-items:center;gap:6px}
+.tab-btn:hover{color:var(--text2)}
+.tab-btn.active{color:var(--blue);border-bottom-color:var(--blue)}
+/* PANELS */
+.tab-panel{display:none;padding:36px clamp(1.2rem,4vw,3rem);max-width:1280px;margin:0 auto;animation:fadeUp .28s ease}
+.tab-panel.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+/* SECTION HEAD */
+.sh{display:flex;align-items:center;gap:12px;margin-bottom:24px}
+.sh-num{font-family:var(--font-h);font-size:.52rem;font-weight:600;letter-spacing:.12em;color:var(--blue);opacity:.45}
+.sh-title{font-family:var(--font-h);font-weight:700;font-size:.78rem;letter-spacing:.2em;color:var(--text);text-transform:uppercase;white-space:nowrap}
+.sh-line{flex:1;height:1px;background:linear-gradient(90deg,rgba(77,163,255,0.14),transparent)}
+/* CARD */
+.card{background:rgba(12,18,40,0.65);border:1px solid var(--border);border-radius:12px;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(77,163,255,0.35),transparent)}
+.card-body{padding:20px}
+.widget-title{font-family:var(--font-h);font-size:.58rem;font-weight:700;letter-spacing:.2em;color:var(--text3);text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.widget-title::before{content:'';width:4px;height:4px;border-radius:50%;background:var(--blue);box-shadow:0 0 6px var(--blue);flex-shrink:0}
+/* BADGE */
+.badge{font-family:var(--font-m);font-size:.44rem;letter-spacing:.1em;padding:3px 10px;border-radius:4px;border:1px solid;display:inline-block}
+.badge-race{border-color:rgba(77,163,255,0.3);color:var(--blue);background:rgba(77,163,255,0.06)}
+.badge-class{border-color:rgba(139,92,246,0.3);color:var(--violet);background:rgba(139,92,246,0.06)}
+.badge-gold{border-color:rgba(255,214,10,0.3);color:var(--gold);background:rgba(255,214,10,0.05)}
+.badge-green{border-color:rgba(68,255,136,0.3);color:var(--green);background:rgba(68,255,136,0.05)}
+/* EMPTY */
+.empty{font-family:var(--font-m);font-size:.52rem;letter-spacing:.1em;color:var(--text3);text-align:center;padding:28px;opacity:.6}
+/* SKELETON */
+@keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+.sk{background:linear-gradient(90deg,#0d1425 25%,#151e35 50%,#0d1425 75%);background-size:400px 100%;animation:shimmer 1.5s ease-in-out infinite;border-radius:5px}
+/* DASHBOARD */
+.dash-grid{display:grid;grid-template-columns:300px 1fr;gap:20px;align-items:start}
+@media(max-width:860px){.dash-grid{grid-template-columns:1fr}}
+.char-card-img{width:100%;aspect-ratio:3/4;object-fit:cover;object-position:top;display:block;background:#050910;border-radius:12px 12px 0 0}
+.char-card-placeholder{width:100%;aspect-ratio:3/4;background:linear-gradient(160deg,#050910,#0d1425);display:flex;align-items:center;justify-content:center;font-family:var(--font-m);font-size:.48rem;letter-spacing:.2em;color:var(--text3);border-radius:12px 12px 0 0}
+.char-name{font-family:var(--font-h);font-weight:700;font-size:1rem;color:#fff;margin-bottom:3px}
+.char-meta{font-family:var(--font-m);font-size:.46rem;letter-spacing:.12em;color:var(--text3);margin-bottom:12px}
+.char-lvl-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.char-lvl-label{font-family:var(--font-m);font-size:.46rem;letter-spacing:.15em;color:var(--text3)}
+.char-lvl-val{font-family:var(--font-h);font-weight:800;font-size:1.3rem;color:var(--blue)}
+.xp-bar{height:3px;background:rgba(77,163,255,0.08);border-radius:2px;overflow:hidden;margin-bottom:14px}
+.xp-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--violet));transition:width 1s ease}
+.xp-labels{display:flex;justify-content:space-between;font-family:var(--font-m);font-size:.42rem;color:var(--text3);margin-bottom:6px}
+.dash-right{display:flex;flex-direction:column;gap:18px}
+.nav-big{font-family:var(--font-h);font-weight:900;font-size:2.4rem;color:var(--gold);display:flex;align-items:baseline;gap:6px;margin-bottom:4px}
+.nav-unit{font-size:.65rem;color:var(--text3);font-weight:400}
+.nav-streak{font-family:var(--font-m);font-size:.48rem;letter-spacing:.08em;color:var(--text3)}
+.nav-streak span{color:var(--green)}
+.stats-mini{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.stat-row{display:flex;align-items:center;gap:8px;padding:7px 10px;background:rgba(77,163,255,0.03);border:1px solid rgba(77,163,255,0.06);border-radius:6px}
+.stat-icon{font-size:.8rem;width:16px;text-align:center}
+.stat-name{font-family:var(--font-m);font-size:.42rem;letter-spacing:.08em;color:var(--text3);flex:1}
+.stat-val{font-family:var(--font-h);font-weight:700;font-size:.7rem;color:var(--text)}
+.powers-list{display:flex;flex-direction:column;gap:7px}
+.power-item{display:flex;align-items:center;gap:10px;padding:9px 12px;background:rgba(77,163,255,0.02);border:1px solid rgba(77,163,255,0.07);border-radius:7px}
+.pq{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.pq.unique{background:var(--gold);box-shadow:0 0 8px var(--gold)}
+.pq.rare{background:var(--violet);box-shadow:0 0 8px var(--violet)}
+.pq.common{background:var(--text3)}
+.power-name{font-family:var(--font-b);font-weight:600;font-size:.78rem;color:var(--text);flex:1}
+.power-qual-tag{font-family:var(--font-m);font-size:.4rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text3)}
+/* PERSONNAGE */
+.char-full-grid{display:grid;grid-template-columns:260px 1fr;gap:20px;align-items:start}
+@media(max-width:820px){.char-full-grid{grid-template-columns:1fr}}
+.char-full-img{width:100%;aspect-ratio:2/3;object-fit:cover;object-position:top;border-radius:10px;border:1px solid var(--border);background:#050910;display:block}
+.char-full-placeholder{width:100%;aspect-ratio:2/3;background:linear-gradient(160deg,#050910,#0d1425);border-radius:10px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:var(--font-m);font-size:.46rem;letter-spacing:.15em;color:var(--text3)}
+.char-fullname{font-family:var(--font-h);font-weight:900;font-size:1.5rem;letter-spacing:.03em;color:#fff;margin-bottom:4px}
+.char-fullmeta{font-family:var(--font-m);font-size:.48rem;letter-spacing:.14em;color:var(--text3);margin-bottom:12px}
+.char-tags{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px}
+.csb-val{font-family:var(--font-h);font-weight:800;font-size:1.8rem;color:var(--blue)}
+.csb-label{font-family:var(--font-m);font-size:.42rem;letter-spacing:.14em;color:var(--text3)}
+.stats-full-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media(max-width:580px){.stats-full-grid{grid-template-columns:repeat(2,1fr)}}
+.stat-block{background:rgba(77,163,255,0.03);border:1px solid rgba(77,163,255,0.07);border-radius:8px;padding:14px;text-align:center}
+.stat-block-bonus{font-family:var(--font-m);font-size:.42rem;letter-spacing:.06em;color:var(--green);text-align:center;margin-top:2px}
+.stat-block-val{font-family:var(--font-h);font-weight:800;font-size:1.35rem;color:var(--blue);margin-bottom:4px}
+.stat-block-name{font-family:var(--font-m);font-size:.4rem;letter-spacing:.12em;color:var(--text3);text-transform:uppercase}
+.sp-banner{background:rgba(255,214,10,0.05);border:1px solid rgba(255,214,10,0.18);border-radius:8px;padding:12px 16px;display:flex;align-items:center;gap:10px;font-family:var(--font-m);font-size:.52rem;letter-spacing:.06em;color:var(--gold)}
+.powers-full-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:9px}
+.power-card{padding:12px 14px;background:rgba(77,163,255,0.03);border:1px solid rgba(77,163,255,0.07);border-radius:8px;display:flex;align-items:center;gap:10px}
+.power-card-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.power-card-dot.unique{background:var(--gold);box-shadow:0 0 10px rgba(255,214,10,.6)}
+.power-card-dot.rare{background:var(--violet);box-shadow:0 0 10px rgba(139,92,246,.6)}
+.power-card-dot.common{background:var(--text3)}
+.power-card-name{font-family:var(--font-b);font-weight:600;font-size:.82rem;color:var(--text)}
+.power-card-qual{font-family:var(--font-m);font-size:.4rem;letter-spacing:.1em;text-transform:uppercase;margin-top:1px}
+.power-card-qual.unique{color:var(--gold)}
+.power-card-qual.rare{color:var(--violet)}
+.power-card-qual.common{color:var(--text3)}
+/* INVENTAIRE */
+.inv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.item-card{background:rgba(12,18,40,0.6);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;position:relative}
+.item-icon{font-size:1.8rem;margin-bottom:8px;display:block}
+.item-name{font-family:var(--font-b);font-weight:600;font-size:.75rem;color:var(--text);margin-bottom:4px}
+.item-qty{font-family:var(--font-m);font-size:.46rem;letter-spacing:.08em;color:var(--text3)}
+.item-equipped{position:absolute;top:8px;right:8px;width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green)}
+.equipped-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+.equipped-slot{background:rgba(77,163,255,0.04);border:1px solid rgba(77,163,255,0.12);border-radius:8px;padding:12px;text-align:center}
+.slot-name{font-family:var(--font-m);font-size:.42rem;letter-spacing:.12em;color:var(--blue);opacity:.6;margin-bottom:6px;text-transform:uppercase}
+.slot-item{font-family:var(--font-b);font-size:.76rem;color:var(--text);font-weight:500}
+/* GACHA */
+.gacha-balance{background:rgba(255,214,10,0.05);border:1px solid rgba(255,214,10,0.18);border-radius:12px;padding:28px;text-align:center;margin-bottom:20px}
+.gacha-bal-val{font-family:var(--font-h);font-weight:900;font-size:3rem;color:var(--gold);margin-bottom:4px}
+.gacha-bal-label{font-family:var(--font-m);font-size:.48rem;letter-spacing:.2em;color:var(--text3);margin-bottom:20px}
+.gacha-cta{display:inline-flex;align-items:center;gap:10px;font-family:var(--font-h);font-size:.58rem;font-weight:700;letter-spacing:.12em;color:var(--bg);background:linear-gradient(135deg,var(--gold),var(--orange));border:none;padding:13px 28px;border-radius:8px;cursor:pointer;transition:all .3s;text-decoration:none}
+.gacha-cta:hover{box-shadow:0 0 32px rgba(255,214,10,.25);transform:translateY(-2px)}
+.pity-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.pity-card{background:rgba(12,18,40,0.6);border:1px solid var(--border);border-radius:10px;padding:18px;text-align:center}
+.pity-val{font-family:var(--font-h);font-weight:800;font-size:1.4rem;margin-bottom:4px}
+.pity-label{font-family:var(--font-m);font-size:.44rem;letter-spacing:.1em;color:var(--text3)}
+.pity-bar{height:3px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;margin-top:10px}
+.pity-fill{height:100%;border-radius:2px;transition:width .8s ease}
+/* PARTY */
+.party-members{display:flex;flex-direction:column;gap:8px}
+.member-row{display:flex;align-items:center;gap:12px;padding:10px 14px;background:rgba(77,163,255,0.03);border:1px solid rgba(77,163,255,0.07);border-radius:8px}
+.member-name{font-family:var(--font-b);font-weight:600;font-size:.84rem;color:var(--text);flex:1}
+.member-leader{color:var(--gold);font-family:var(--font-m);font-size:.42rem;letter-spacing:.1em}
+/* PROGRESSION */
+.prog-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+@media(max-width:680px){.prog-grid{grid-template-columns:1fr}}
+.prog-level-num{font-family:var(--font-h);font-weight:900;font-size:5rem;color:var(--blue);line-height:1}
+.prog-level-label{font-family:var(--font-m);font-size:.5rem;letter-spacing:.25em;color:var(--text3);margin-top:4px}
+.xp-bar-big{height:6px;background:rgba(77,163,255,0.08);border-radius:3px;overflow:hidden;margin-bottom:6px}
+.xp-fill-big{height:100%;background:linear-gradient(90deg,var(--blue),var(--violet));transition:width 1s ease}
+/* TITRES */
+.titles-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.title-card{padding:16px;background:rgba(12,18,40,0.6);border:1px solid var(--border);border-radius:10px}
+.title-name{font-family:var(--font-b);font-weight:700;font-size:.9rem;color:var(--text);margin-bottom:4px}
+.title-tier{font-family:var(--font-m);font-size:.42rem;letter-spacing:.12em;margin-bottom:10px}
+/* COMPAGNONS */
+.comp-name{font-family:var(--font-h);font-weight:700;font-size:1.1rem;color:#fff;margin-bottom:4px}
+.comp-form{font-family:var(--font-m);font-size:.48rem;letter-spacing:.12em;color:var(--text3);margin-bottom:14px}
+.comp-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.comp-stat{text-align:center;padding:12px;background:rgba(77,163,255,0.03);border:1px solid rgba(77,163,255,0.07);border-radius:8px}
+.comp-stat-val{font-family:var(--font-h);font-weight:800;font-size:1.1rem;color:var(--blue)}
+.comp-stat-label{font-family:var(--font-m);font-size:.4rem;letter-spacing:.1em;color:var(--text3);margin-top:3px}
+/* SHOP */
+.shop-name{font-family:var(--font-h);font-weight:700;font-size:1.1rem;color:#fff;margin-bottom:4px}
+.shop-tagline{font-family:var(--font-body);font-size:.85rem;color:var(--text2);margin-bottom:14px;font-style:italic}
+.shop-items-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+.shop-item{padding:12px;background:rgba(77,163,255,0.03);border:1px solid rgba(77,163,255,0.07);border-radius:8px;text-align:center}
+.shop-item-icon{font-size:1.4rem;display:block;margin-bottom:6px}
+.shop-item-name{font-family:var(--font-b);font-size:.72rem;color:var(--text);margin-bottom:4px}
+.shop-item-price{font-family:var(--font-m);font-size:.44rem;letter-spacing:.08em;color:var(--gold)}
+/* PARAMETRES */
+.settings-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+.setting-title{font-family:var(--font-h);font-size:.58rem;font-weight:700;letter-spacing:.18em;color:var(--text3);text-transform:uppercase;margin-bottom:14px}
+.theme-options{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.theme-opt{width:100%;aspect-ratio:1;border-radius:6px;border:2px solid transparent;cursor:pointer;transition:all .25s}
+.theme-opt:hover{transform:scale(1.08)}
+.theme-opt.selected{border-color:#fff;box-shadow:0 0 12px rgba(255,255,255,.2)}
+.setting-info{font-family:var(--font-m);font-size:.5rem;letter-spacing:.08em;color:var(--text3);margin-bottom:10px;line-height:1.9}
+.logout-btn{font-family:var(--font-h);font-size:.58rem;font-weight:700;letter-spacing:.14em;color:#fff;background:rgba(255,71,87,0.08);border:1px solid rgba(255,71,87,0.25);padding:12px 20px;border-radius:8px;cursor:pointer;width:100%;transition:all .3s;margin-top:8px}
+.logout-btn:hover{background:rgba(255,71,87,0.18);border-color:var(--red)}
+/* TOAST */
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(16px);background:#111827;border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:11px 22px;font-family:var(--font-m);font-size:.52rem;letter-spacing:.06em;color:var(--text);opacity:0;pointer-events:none;transition:all .3s;z-index:9999;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.success{border-color:rgba(68,255,136,0.3);color:var(--green)}
+.toast.error{border-color:rgba(255,71,87,0.3);color:var(--red)}
+.toast.info{border-color:rgba(77,163,255,0.3);color:var(--blue)}
+@media(max-width:840px){.nav-links{display:none}.tab-btn .tab-text{display:none}.tab-btn{padding:14px 12px}}
+
+/* ─── INVENTAIRE AVANCÉ ─── */
+.inv-layout{display:grid;grid-template-columns:280px 1fr;gap:20px;align-items:start}
+@media(max-width:900px){.inv-layout{grid-template-columns:1fr}}
+
+/* Slots d'équipement */
+.slots-panel{display:flex;flex-direction:column;gap:8px}
+.slot-group{background:rgba(12,18,40,0.6);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.slot-group-title{font-family:var(--font-m);font-size:.48rem;letter-spacing:.15em;color:var(--text3);padding:8px 14px;background:rgba(77,163,255,0.04);border-bottom:1px solid var(--border);text-transform:uppercase}
+.slot-item{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid rgba(77,163,255,0.05);cursor:pointer;transition:background .2s}
+.slot-item:last-child{border-bottom:none}
+.slot-item:hover{background:rgba(77,163,255,0.05)}
+.slot-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.slot-dot.filled{background:var(--blue);box-shadow:0 0 6px var(--blue)}
+.slot-dot.empty{background:rgba(77,163,255,0.15);border:1px solid rgba(77,163,255,0.2)}
+.slot-label{font-family:var(--font-m);font-size:.46rem;letter-spacing:.08em;color:var(--text3);flex:1}
+.slot-count{font-family:var(--font-h);font-size:.55rem;font-weight:700;color:var(--text)}
+.slot-count.full{color:var(--gold)}
+
+/* Grille d'items */
+.inv-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:16px}
+.inv-tab{font-family:var(--font-b);font-size:.65rem;font-weight:600;letter-spacing:.06em;color:var(--text3);background:none;border:none;border-bottom:2px solid transparent;padding:10px 16px;cursor:pointer;transition:all .2s}
+.inv-tab.active{color:var(--blue);border-bottom-color:var(--blue)}
+
+.item-card{position:relative;background:rgba(12,18,40,0.6);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;cursor:pointer;transition:all .2s}
+.item-card:hover{border-color:rgba(77,163,255,0.3);background:rgba(12,18,40,0.9)}
+.item-card.equipped{border-color:rgba(68,255,136,0.35);background:rgba(68,255,136,0.04)}
+.item-card.equippable:hover{border-color:rgba(77,163,255,0.5)}
+.item-equip-badge{position:absolute;top:6px;right:6px;font-family:var(--font-m);font-size:.38rem;letter-spacing:.06em;padding:2px 6px;border-radius:3px}
+.item-equip-badge.on{background:rgba(68,255,136,0.15);color:var(--green);border:1px solid rgba(68,255,136,0.3)}
+.item-equip-badge.off{background:rgba(77,163,255,0.1);color:var(--blue);border:1px solid rgba(77,163,255,0.2)}
+.item-icon-big{font-size:1.8rem;margin-bottom:6px;display:block}
+.item-name-sm{font-family:var(--font-b);font-weight:600;font-size:.72rem;color:var(--text);margin-bottom:2px}
+.item-slot-tag{font-family:var(--font-m);font-size:.4rem;letter-spacing:.1em;color:var(--text3);margin-bottom:4px}
+.item-qty{font-family:var(--font-m);font-size:.46rem;letter-spacing:.08em;color:var(--text3)}
+.item-effects{font-family:var(--font-m);font-size:.42rem;letter-spacing:.06em;color:var(--green);margin-top:4px}
+
+/* Rarity colors */
+.rarity-common{border-top:2px solid #6b7280}
+.rarity-uncommon{border-top:2px solid #60a5fa}
+.rarity-rare{border-top:2px solid #a78bfa}
+.rarity-epic{border-top:2px solid #8B5CF6}
+.rarity-legendary{border-top:2px solid #fbbf24}
+.rarity-mythic{border-top:2px solid #f97316}
+.rarity-unique{border-top:2px solid var(--gold)}
+.rarity-artifact{border-top:2px solid #ef4444}
+.rarity-mastercraft{border-top:2px solid #ff006e}
+.rarity-signature{border-top:2px solid var(--gold)}
+
+/* Sets */
+.sets-section{margin-top:20px}
+.set-card{padding:14px;background:rgba(12,18,40,0.6);border:1px solid var(--border);border-radius:10px;margin-bottom:10px}
+.set-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.set-name{font-family:var(--font-b);font-weight:700;font-size:.88rem;color:var(--text)}
+.set-count{font-family:var(--font-m);font-size:.48rem;letter-spacing:.1em}
+.set-thresholds{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.set-thresh{font-family:var(--font-m);font-size:.42rem;letter-spacing:.08em;padding:2px 8px;border-radius:3px;border:1px solid}
+.set-thresh.active{border-color:rgba(68,255,136,0.4);color:var(--green);background:rgba(68,255,136,0.08)}
+.set-thresh.inactive{border-color:rgba(255,255,255,0.06);color:var(--text3)}
+.set-bonus{font-family:var(--font-m);font-size:.44rem;letter-spacing:.06em;color:var(--text2);line-height:1.8}
+.set-items{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+.set-piece{font-family:var(--font-m);font-size:.4rem;letter-spacing:.06em;padding:2px 7px;border-radius:3px}
+.set-piece.have{background:rgba(68,255,136,0.1);color:var(--green);border:1px solid rgba(68,255,136,0.2)}
+.set-piece.missing{background:rgba(255,255,255,0.03);color:var(--text3);border:1px solid rgba(255,255,255,0.06)}
+
+/* Bonus total équipement */
+.equip-bonus-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
+@media(max-width:600px){.equip-bonus-grid{grid-template-columns:repeat(2,1fr)}}
+.equip-bonus-block{background:rgba(68,255,136,0.04);border:1px solid rgba(68,255,136,0.12);border-radius:8px;padding:10px;text-align:center}
+.equip-bonus-val{font-family:var(--font-h);font-weight:800;font-size:1.1rem;color:var(--green)}
+.equip-bonus-name{font-family:var(--font-m);font-size:.4rem;letter-spacing:.12em;color:var(--text3);margin-top:2px}
+
+/* Toast équipement */
+.equip-toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%) translateY(10px);background:rgba(12,18,40,0.95);border:1px solid rgba(68,255,136,0.3);border-radius:8px;padding:10px 20px;font-family:var(--font-m);font-size:.52rem;letter-spacing:.06em;color:var(--green);opacity:0;pointer-events:none;transition:all .3s;z-index:9999;white-space:nowrap}
+.equip-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.equip-toast.error{border-color:rgba(255,71,87,0.3);color:var(--red)}
+
+/* ─── ALLOCATION STATS ─── */
+.alloc-layout{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+@media(max-width:800px){.alloc-layout{grid-template-columns:1fr}}
+.alloc-stat-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(77,163,255,0.07)}
+.alloc-stat-row:last-child{border-bottom:none}
+.alloc-stat-icon{font-size:1.2rem;width:28px;text-align:center;flex-shrink:0}
+.alloc-stat-name{font-family:var(--font-m);font-size:.5rem;letter-spacing:.1em;color:var(--text3);flex:1;text-transform:uppercase}
+.alloc-stat-val{font-family:var(--font-h);font-weight:800;font-size:1rem;color:var(--text);min-width:50px;text-align:right}
+.alloc-stat-pending{font-family:var(--font-m);font-size:.5rem;color:var(--green);min-width:36px;text-align:center}
+.alloc-btns{display:flex;gap:6px;align-items:center}
+.alloc-btn{font-family:var(--font-h);font-weight:700;font-size:.75rem;width:30px;height:30px;border:1px solid rgba(77,163,255,0.2);background:rgba(77,163,255,0.06);color:var(--blue);border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.alloc-btn:hover{background:rgba(77,163,255,0.15);border-color:rgba(77,163,255,0.4)}
+.alloc-btn.minus{color:var(--red);border-color:rgba(255,71,87,0.2);background:rgba(255,71,87,0.06)}
+.alloc-btn.minus:hover{background:rgba(255,71,87,0.15)}
+.alloc-mult-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.alloc-mult-btn{font-family:var(--font-b);font-weight:700;font-size:.65rem;padding:6px 14px;border-radius:6px;border:1px solid rgba(77,163,255,0.2);background:rgba(77,163,255,0.06);color:var(--text2);cursor:pointer;transition:all .2s}
+.alloc-mult-btn.active,.alloc-mult-btn:hover{background:rgba(77,163,255,0.15);border-color:var(--blue);color:var(--blue)}
+.alloc-pts-left{font-family:var(--font-h);font-weight:800;font-size:2rem;color:var(--blue)}
+.alloc-pts-label{font-family:var(--font-m);font-size:.45rem;letter-spacing:.12em;color:var(--text3);margin-top:2px}
+.alloc-confirm-btn{width:100%;padding:14px;font-family:var(--font-b);font-weight:700;font-size:.82rem;letter-spacing:.1em;border:none;border-radius:10px;background:linear-gradient(135deg,#4DA3FF,#8B5CF6);color:#020713;cursor:pointer;transition:all .3s;margin-top:16px}
+.alloc-confirm-btn:disabled{opacity:.35;cursor:not-allowed}
+.alloc-confirm-btn:hover:not(:disabled){box-shadow:0 0 20px rgba(77,163,255,.4);transform:translateY(-1px)}
+.alloc-reset-btn{width:100%;padding:10px;font-family:var(--font-b);font-weight:600;font-size:.72rem;letter-spacing:.08em;border:1px solid rgba(255,71,87,0.2);border-radius:8px;background:transparent;color:var(--red);cursor:pointer;transition:all .2s;margin-top:8px}
+.alloc-reset-btn:hover{background:rgba(255,71,87,0.08)}
+
+/* ─── SHOPS JOUEURS ─── */
+.shops-layout{display:grid;grid-template-columns:260px 1fr;gap:20px;align-items:start}
+@media(max-width:900px){.shops-layout{grid-template-columns:1fr}}
+.shop-list-item{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:10px;cursor:pointer;transition:background .2s;border:1px solid transparent}
+.shop-list-item:hover{background:rgba(77,163,255,0.05);border-color:rgba(77,163,255,0.1)}
+.shop-list-item.active{background:rgba(77,163,255,0.08);border-color:rgba(77,163,255,0.2)}
+.shop-list-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.shop-list-dot.open{background:var(--green);box-shadow:0 0 6px var(--green)}
+.shop-list-dot.closed{background:rgba(255,71,87,0.5)}
+.shop-list-name{font-family:var(--font-b);font-weight:700;font-size:.8rem;color:var(--text);flex:1}
+.shop-list-owner{font-family:var(--font-m);font-size:.42rem;letter-spacing:.06em;color:var(--text3)}
+.shop-detail-header{margin-bottom:20px}
+.shop-detail-name{font-family:var(--font-h);font-weight:800;font-size:1.4rem;color:var(--text);margin-bottom:4px}
+.shop-detail-tagline{font-family:var(--font-m);font-size:.55rem;letter-spacing:.08em;color:var(--text3);margin-bottom:12px}
+.shop-item-card{background:rgba(12,18,40,0.6);border:1px solid var(--border);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:8px;transition:all .2s}
+.shop-item-card:hover{border-color:rgba(77,163,255,0.25);background:rgba(12,18,40,.9)}
+.shop-item-top{display:flex;align-items:center;gap:10px}
+.shop-item-icon{font-size:1.6rem}
+.shop-item-info{flex:1}
+.shop-item-name{font-family:var(--font-b);font-weight:700;font-size:.85rem;color:var(--text)}
+.shop-item-effects{font-family:var(--font-m);font-size:.42rem;color:var(--green)}
+.shop-item-qty{font-family:var(--font-m);font-size:.42rem;letter-spacing:.06em;color:var(--text3)}
+.shop-item-price{font-family:var(--font-h);font-weight:700;font-size:.9rem;color:var(--gold)}
+.shop-buy-btn{width:100%;padding:9px;font-family:var(--font-b);font-weight:700;font-size:.7rem;letter-spacing:.08em;border:none;border-radius:7px;background:linear-gradient(135deg,#4DA3FF,#8B5CF6);color:#020713;cursor:pointer;transition:all .2s}
+.shop-buy-btn:hover{opacity:.85;transform:translateY(-1px)}
+.shop-buy-btn:disabled{opacity:.3;cursor:not-allowed}
+
+/* ─── UNIVERSAL SHOP ─── */
+.ushop-cats{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:16px;flex-wrap:wrap}
+.ushop-cat{font-family:var(--font-b);font-size:.65rem;font-weight:600;letter-spacing:.06em;color:var(--text3);background:none;border:none;border-bottom:2px solid transparent;padding:10px 14px;cursor:pointer;transition:all .2s}
+.ushop-cat.active{color:var(--blue);border-bottom-color:var(--blue)}
+.ushop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+.ushop-card{background:rgba(12,18,40,0.6);border:1px solid var(--border);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:8px;transition:all .2s}
+.ushop-card:hover{border-color:rgba(77,163,255,0.25)}
+.ushop-balance{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.ushop-bal-chip{font-family:var(--font-m);font-size:.48rem;letter-spacing:.08em;padding:5px 12px;border-radius:20px;background:rgba(255,214,10,0.08);border:1px solid rgba(255,214,10,0.2);color:var(--gold)}
+</style>
+</head>
+<body>
+<div class="page-transition-overlay" id="page-transition"><div class="pt-logo-wrap"><div class="pt-glow-ring"></div><div class="pt-scan"></div><img src="img/logo-jaharta.png" class="pt-img" alt="Jaharta"></div><div class="pt-bar-wrap"><div class="pt-bar-fill"></div></div><div class="pt-text">Chargement</div></div>
+<div class="scroll-line" id="scroll-line"></div>
+<div id="toast" class="toast"></div>
+
+<!-- LOGIN GATE -->
+<div class="login-gate" id="login-gate">
+  <div class="gate-logo">JAHARTA</div>
+  <div class="gate-sub">// NEXUS HUB ACCESS //</div>
+  <p class="gate-desc">Entre le code généré par <strong style="color:var(--blue)">/link</strong> sur le serveur Discord pour accéder à ton espace personnel.</p>
+  <div class="code-wrap">
+    <div class="code-label">Code de liaison</div>
+    <input type="text" id="link-code" class="code-input" placeholder="XXXX" maxlength="12" autocomplete="off" spellcheck="false">
+    <div class="code-error" id="code-error"></div>
+    <button class="code-btn" id="verify-btn">CONNEXION AU NEXUS</button>
+  </div>
+  <div class="gate-note">Code à usage unique · valable 10 minutes<br>Utilise <span style="color:var(--blue)">/link</span> pour en générer un nouveau</div>
+</div>
+
+<!-- NAV -->
+<nav class="nav" id="main-nav" style="display:none">
+  <a href="index.html" class="nav-logo"><img src="img/logo-jaharta.png" alt="Jaharta">JAHARTA</a>
+  <div class="nav-links">
+    <a href="index.html">Accueil</a>
+    <a href="fiches.html">Fiches</a>
+    <a href="pnj.html">PNJ</a>
+    <a href="portail.html">Portail</a>
+    <a href="racesjouables.html">Races</a>
+    <a href="gacha.html">Gacha</a>
+    <a href="hub.html" class="active">Hub</a>
+  </div>
+  <div class="nav-right">
+    <img src="" alt="" class="nav-avatar" id="nav-avatar">
+    <span class="nav-username" id="nav-username"></span>
+    <button class="nav-logout" onclick="logout()">DÉCO</button>
+  </div>
+</nav>
+
+<!-- HUB MAIN -->
+<div class="hub-main" id="hub-main">
+  <div class="hub-tabs">
+    <a href="index.html" class="tab-btn" style="text-decoration:none;border-bottom:none;opacity:.55" title="Retour au site">← <span class="tab-text">Site</span></a>
+    <div style="width:1px;background:var(--border);margin:10px 0;flex-shrink:0"></div>
+    <button class="tab-btn active" onclick="showTab('dashboard')" id="tab-dashboard">🏠 <span class="tab-text">Dashboard</span></button>
+    <button class="tab-btn" onclick="showTab('personnage')" id="tab-personnage">👤 <span class="tab-text">Personnage</span></button>
+    <button class="tab-btn" onclick="showTab('inventaire')" id="tab-inventaire">🎒 <span class="tab-text">Inventaire</span></button>
+    <button class="tab-btn" onclick="showTab('gacha')" id="tab-gacha">🎰 <span class="tab-text">Gacha</span></button>
+    <button class="tab-btn" onclick="showTab('party')" id="tab-party">👥 <span class="tab-text">Party</span></button>
+    <button class="tab-btn" onclick="showTab('progression')" id="tab-progression">📈 <span class="tab-text">Progression</span></button>
+    <button class="tab-btn" onclick="showTab('titres')" id="tab-titres">🏷️ <span class="tab-text">Titres</span></button>
+    <button class="tab-btn" onclick="showTab('compagnons')" id="tab-compagnons">🐾 <span class="tab-text">Compagnons</span></button>
+    <button class="tab-btn" onclick="showTab('monshop')" id="tab-monshop">🏷️ <span class="tab-text">Mon Shop</span></button>
+    <button class="tab-btn" onclick="showTab('shops')" id="tab-shops">🏪 <span class="tab-text">Shops</span></button>
+    <button class="tab-btn" onclick="showTab('ushop')" id="tab-ushop">🛒 <span class="tab-text">Universal Shop</span></button>
+    <button class="tab-btn" onclick="showTab('parametres')" id="tab-parametres">⚙️ <span class="tab-text">Paramètres</span></button>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="tab-panel active" id="panel-dashboard">
+    <div class="sh"><span class="sh-num">01</span><span class="sh-title">Dashboard</span><div class="sh-line"></div></div>
+    <div class="dash-grid">
+      <div class="card" id="dash-char-card">
+        <div class="char-card-placeholder sk"></div>
+        <div class="card-body">
+          <div class="sk" style="height:16px;width:65%;margin-bottom:8px"></div>
+          <div class="sk" style="height:10px;width:40%;margin-bottom:14px"></div>
+          <div class="sk" style="height:80px"></div>
+        </div>
+      </div>
+      <div class="dash-right">
+        <div class="card"><div class="card-body">
+          <div class="widget-title">Navarites</div>
+          <div class="nav-big" id="dash-nav-val"><span class="sk" style="width:80px;height:36px;display:inline-block"></span></div>
+          <div class="nav-streak" id="dash-nav-streak"></div>
+        </div></div>
+        <div class="card"><div class="card-body">
+          <div class="widget-title">Statistiques</div>
+          <div class="stats-mini" id="dash-stats-grid">
+            <div class="sk" style="height:36px;border-radius:6px"></div>
+            <div class="sk" style="height:36px;border-radius:6px;animation-delay:.08s"></div>
+            <div class="sk" style="height:36px;border-radius:6px;animation-delay:.16s"></div>
+            <div class="sk" style="height:36px;border-radius:6px;animation-delay:.24s"></div>
+          </div>
+        </div></div>
+        <div class="card"><div class="card-body">
+          <div class="widget-title">Pouvoirs</div>
+          <div class="powers-list" id="dash-powers-list">
+            <div class="sk" style="height:36px;border-radius:7px"></div>
+            <div class="sk" style="height:36px;border-radius:7px;animation-delay:.1s"></div>
+          </div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PERSONNAGE -->
+  <div class="tab-panel" id="panel-personnage">
+    <div class="sh"><span class="sh-num">02</span><span class="sh-title">Personnage</span><div class="sh-line"></div></div>
+    <div class="char-full-grid" id="char-full-grid">
+      <div class="char-full-placeholder sk" id="char-img-slot"></div>
+      <div id="char-full-right">
+        <div class="card" style="margin-bottom:16px"><div class="card-body" id="char-header-body">
+          <div class="sk" style="height:22px;width:55%;margin-bottom:8px"></div>
+          <div class="sk" style="height:10px;width:35%;margin-bottom:14px"></div>
+        </div></div>
+        <div class="card" style="margin-bottom:16px"><div class="card-body">
+          <div class="sh" style="margin-bottom:14px"><span class="sh-num">—</span><span class="sh-title">Stats</span><div class="sh-line"></div></div>
+          <div class="stats-full-grid" id="char-stats-grid">
+            <div class="sk" style="height:58px;border-radius:8px"></div>
+            <div class="sk" style="height:58px;border-radius:8px;animation-delay:.05s"></div>
+            <div class="sk" style="height:58px;border-radius:8px;animation-delay:.1s"></div>
+            <div class="sk" style="height:58px;border-radius:8px;animation-delay:.15s"></div>
+          </div>
+        </div></div>
+        <div class="card"><div class="card-body">
+          <div class="sh" style="margin-bottom:14px"><span class="sh-num">—</span><span class="sh-title">Pouvoirs</span><div class="sh-line"></div></div>
+          <div class="powers-full-grid" id="char-powers-grid">
+            <div class="sk" style="height:48px;border-radius:8px"></div>
+            <div class="sk" style="height:48px;border-radius:8px;animation-delay:.07s"></div>
+          </div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INVENTAIRE -->
+  <div class="tab-panel" id="panel-inventaire">
+    <div class="sh"><span class="sh-num">03</span><span class="sh-title">Inventaire</span><div class="sh-line"></div></div>
+    <div class="inv-layout">
+      <!-- Panneau gauche : slots -->
+      <div>
+        <div class="card" style="margin-bottom:14px"><div class="card-body">
+          <div class="widget-title">Slots d'équipement</div>
+          <div id="slots-panel"><div class="empty">Chargement...</div></div>
+        </div></div>
+        <!-- Bonus totaux équipement -->
+        <div class="card"><div class="card-body">
+          <div class="widget-title">Bonus équipement total</div>
+          <div class="equip-bonus-grid" id="equip-bonus-grid"><div class="sk" style="height:50px;border-radius:8px;grid-column:1/-1"></div></div>
+        </div></div>
+      </div>
+      <!-- Panneau droit : items + sets -->
+      <div>
+        <div class="card" style="margin-bottom:16px"><div class="card-body">
+          <div class="inv-tabs">
+            <button class="inv-tab active" onclick="showInvTab('all')" id="invtab-all">Tout</button>
+            <button class="inv-tab" onclick="showInvTab('equipped')" id="invtab-equipped">Équipé</button>
+            <button class="inv-tab" onclick="showInvTab('equipment')" id="invtab-equipment">Équipement</button>
+            <button class="inv-tab" onclick="showInvTab('consumable')" id="invtab-consumable">Consommables</button>
+            <button class="inv-tab" onclick="showInvTab('other')" id="invtab-other">Autre</button>
+          </div>
+          <div class="inv-grid" id="inv-grid"><div class="empty">Chargement...</div></div>
+        </div></div>
+        <!-- Sets actifs -->
+        <div class="card"><div class="card-body">
+          <div class="sh" style="margin-bottom:14px"><span class="sh-num">—</span><span class="sh-title">Sets actifs</span><div class="sh-line"></div></div>
+          <div id="sets-grid"><div class="empty">Aucun set actif</div></div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GACHA -->
+  <div class="tab-panel" id="panel-gacha">
+    <div class="sh"><span class="sh-num">04</span><span class="sh-title">Gacha Nexus</span><div class="sh-line"></div></div>
+    <div class="gacha-balance">
+      <div class="gacha-bal-val" id="gacha-nav-val">—</div>
+      <div class="gacha-bal-label">NAVARITES DISPONIBLES</div>
+      <a href="gacha.html" class="gacha-cta">🎰 Accéder au Gacha complet</a>
+    </div>
+    <div class="card"><div class="card-body">
+      <div class="sh" style="margin-bottom:14px"><span class="sh-num">—</span><span class="sh-title">Compteurs Pity</span><div class="sh-line"></div></div>
+      <div class="pity-grid" id="pity-grid">
+        <div class="sk" style="height:80px;border-radius:10px"></div>
+        <div class="sk" style="height:80px;border-radius:10px;animation-delay:.06s"></div>
+        <div class="sk" style="height:80px;border-radius:10px;animation-delay:.12s"></div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- PARTY -->
+  <div class="tab-panel" id="panel-party">
+    <div class="sh"><span class="sh-num">05</span><span class="sh-title">Party</span><div class="sh-line"></div></div>
+    <div id="party-content"><div class="empty">Chargement...</div></div>
+  </div>
+
+  <!-- PROGRESSION -->
+  <div class="tab-panel" id="panel-progression">
+    <div class="sh"><span class="sh-num">06</span><span class="sh-title">Progression</span><div class="sh-line"></div></div>
+    <div class="prog-grid" style="margin-bottom:20px">
+      <div class="card"><div class="card-body" style="text-align:center;padding:32px 20px">
+        <div class="prog-level-num" id="prog-lvl">—</div>
+        <div class="prog-level-label">NIVEAU ACTUEL</div>
+      </div></div>
+      <div class="card"><div class="card-body">
+        <div style="font-family:var(--font-h);font-weight:800;font-size:1.6rem;color:var(--text);margin-bottom:4px" id="prog-xp">—</div>
+        <div style="font-family:var(--font-m);font-size:.46rem;letter-spacing:.14em;color:var(--text3);margin-bottom:16px">XP TOTAL</div>
+        <div class="xp-labels" id="prog-xp-labels"><span>XP</span><span>—</span></div>
+        <div class="xp-bar-big"><div class="xp-fill-big" id="prog-xp-fill" style="width:0%"></div></div>
+        <div style="margin-top:12px;font-family:var(--font-m);font-size:.46rem;letter-spacing:.08em;color:var(--text3)" id="prog-xp-needed"></div>
+      </div></div>
+    </div>
+    <div class="card"><div class="card-body">
+      <div class="sh" style="margin-bottom:14px"><span class="sh-num">—</span><span class="sh-title">Points de stat disponibles</span><div class="sh-line"></div></div>
+      <div id="prog-sp-content"><div class="empty">Chargement...</div></div>
+    </div></div>
+    <!-- ALLOCATION STATS -->
+  <div id="alloc-section" style="margin-top:20px">
+    <div class="card"><div class="card-body">
+      <div class="sh" style="margin-bottom:14px"><span class="sh-num">—</span><span class="sh-title">Allocation des stats</span><div class="sh-line"></div></div>
+      <div class="alloc-layout">
+        <div>
+          <div class="alloc-mult-row">
+            <button class="alloc-mult-btn active" onclick="setAllocMult(1)" id="amult-1">×1</button>
+            <button class="alloc-mult-btn" onclick="setAllocMult(5)" id="amult-5">×5</button>
+            <button class="alloc-mult-btn" onclick="setAllocMult(10)" id="amult-10">×10</button>
+            <button class="alloc-mult-btn" onclick="setAllocMult(50)" id="amult-50">×50</button>
+            <button class="alloc-mult-btn" onclick="setAllocMult(100)" id="amult-100">×100</button>
+          </div>
+          <div id="alloc-stats-list"><div class="empty">Chargement...</div></div>
+        </div>
+        <div>
+          <div class="card" style="text-align:center;padding:20px 14px;margin-bottom:16px">
+            <div class="alloc-pts-left" id="alloc-pts-left">0</div>
+            <div class="alloc-pts-label">POINTS DISPONIBLES</div>
+          </div>
+          <div class="card" id="alloc-preview-card" style="display:none"><div class="card-body">
+            <div class="widget-title">En attente</div>
+            <div id="alloc-preview"></div>
+          </div></div>
+          <button class="alloc-confirm-btn" id="alloc-confirm-btn" disabled onclick="confirmAlloc()">Confirmer l'allocation</button>
+          <button class="alloc-reset-btn" onclick="resetAlloc()">Tout remettre à zéro</button>
+        </div>
+      </div>
+    </div></div>
+  </div>
+  </div>
+  <!-- TITRES -->
+  <div class="tab-panel" id="panel-titres">
+    <div class="sh"><span class="sh-num">07</span><span class="sh-title">Titres</span><div class="sh-line"></div></div>
+    <div class="card"><div class="card-body">
+      <div class="titles-grid" id="titles-grid"><div class="empty">Chargement...</div></div>
+    </div></div>
+  </div>
+
+  <!-- COMPAGNONS -->
+  <div class="tab-panel" id="panel-compagnons">
+    <div class="sh"><span class="sh-num">08</span><span class="sh-title">Compagnons</span><div class="sh-line"></div></div>
+    <div id="comp-content"><div class="empty">Chargement...</div></div>
+  </div>
+
+  <!-- MON SHOP -->
+  <div class="tab-panel" id="panel-shop">
+    <div class="sh"><span class="sh-num">09</span><span class="sh-title">Ma Boutique</span><div class="sh-line"></div></div>
+    <div id="shop-content"><div class="empty">Chargement...</div></div>
+  </div>
+
+  <!-- MON SHOP -->
+  <div class="tab-panel" id="panel-monshop">
+    <div class="sh"><span class="sh-num">—</span><span class="sh-title">Mon Shop</span><div class="sh-line"></div></div>
+    <div id="monshop-content"><div class="empty">Chargement...</div></div>
+  </div>
+
+  <!-- SHOPS DES JOUEURS -->
+  <div class="tab-panel" id="panel-shops">
+    <div class="sh"><span class="sh-num">09</span><span class="sh-title">Shops des joueurs</span><div class="sh-line"></div></div>
+    <div class="shops-layout">
+      <div class="card"><div class="card-body">
+        <div class="widget-title" style="margin-bottom:12px">Boutiques ouvertes</div>
+        <div id="shops-list"><div class="empty">Chargement...</div></div>
+      </div></div>
+      <div class="card"><div class="card-body" id="shop-detail">
+        <div class="empty">Sélectionne une boutique</div>
+      </div></div>
+    </div>
+  </div>
+
+  <!-- UNIVERSAL SHOP -->
+  <div class="tab-panel" id="panel-ushop">
+    <div class="sh"><span class="sh-num">10</span><span class="sh-title">Universal Shop</span><div class="sh-line"></div></div>
+    <div class="ushop-balance" id="ushop-balance"></div>
+    <div class="ushop-cats">
+      <button class="ushop-cat active" onclick="showUshopCat('all')" id="ucatbtn-all">Tout</button>
+      <button class="ushop-cat" onclick="showUshopCat('equipment')" id="ucatbtn-equipment">Équipement</button>
+      <button class="ushop-cat" onclick="showUshopCat('consumable')" id="ucatbtn-consumable">Consommables</button>
+      <button class="ushop-cat" onclick="showUshopCat('food')" id="ucatbtn-food">Nourriture</button>
+      <button class="ushop-cat" onclick="showUshopCat('other')" id="ucatbtn-other">Autre</button>
+    </div>
+    <div class="ushop-grid" id="ushop-grid"><div class="empty">Chargement...</div></div>
+  </div>
+
+  <!-- PARAMETRES -->
+  <div class="tab-panel" id="panel-parametres">
+    <div class="sh"><span class="sh-num">10</span><span class="sh-title">Paramètres</span><div class="sh-line"></div></div>
+    <div class="settings-grid">
+      <div class="card"><div class="card-body">
+        <div class="setting-title">Thème d'affichage</div>
+        <div class="theme-options" id="theme-options">
+          <div class="theme-opt" style="background:#cc44ff" data-theme="purple" onclick="setTheme('purple')" title="Purple"></div>
+          <div class="theme-opt" style="background:#00c8ff" data-theme="dark_blue" onclick="setTheme('dark_blue')" title="Dark Blue"></div>
+          <div class="theme-opt" style="background:#60e0ff" data-theme="light_blue" onclick="setTheme('light_blue')" title="Light Blue"></div>
+          <div class="theme-opt" style="background:#00ff88" data-theme="green" onclick="setTheme('green')" title="Green"></div>
+          <div class="theme-opt" style="background:#ff3344" data-theme="red" onclick="setTheme('red')" title="Red"></div>
+          <div class="theme-opt" style="background:#ffdd00" data-theme="yellow" onclick="setTheme('yellow')" title="Yellow"></div>
+          <div class="theme-opt" style="background:#ff8800" data-theme="orange" onclick="setTheme('orange')" title="Orange"></div>
+          <div class="theme-opt" style="background:#ff44bb" data-theme="pink" onclick="setTheme('pink')" title="Pink"></div>
+        </div>
+        <div style="margin-top:10px;font-family:var(--font-m);font-size:.46rem;letter-spacing:.08em;color:var(--text3)">Thème actuel : <span id="theme-current" style="color:var(--blue)">—</span></div>
+      </div></div>
+      <div class="card"><div class="card-body">
+        <div class="setting-title">Compte</div>
+        <div class="setting-info" id="settings-user-info">—</div>
+        <div class="setting-info">Session partagée avec gacha.html</div>
+        <button class="logout-btn" onclick="logout()">⏻ SE DÉCONNECTER</button>
+      </div></div>
+      <div class="card"><div class="card-body">
+        <div class="setting-title">Collections Firestore</div>
+        <div class="setting-info">players · characters · active_characters · inventories · economy · companions_user · titles_user · parties · party_membership · gacha_pity · shops · buffs</div>
+      </div></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+// ── CONFIG ──
+const FB={apiKey:"AIzaSyAru7qZX8Gu_b8Y3oNDV-a5PmkrrkRjkcs",authDomain:"jaharta-rp.firebaseapp.com",projectId:"jaharta-rp",storageBucket:"jaharta-rp.firebasestorage.app",messagingSenderId:"217075417489",appId:"1:217075417489:web:4d1e2df422a5cd42411a30"};
+if(!firebase.apps.length)firebase.initializeApp(FB);
+const db=firebase.firestore();
+
+// ── COLLECTIONS (noms exacts du bot) ──
+const C={
+  ACTIVE:'active_characters',   // {discord_id} → {character_id, user_id}
+  CHARS:'characters',           // {char_uuid}  → perso complet
+  PLAYERS:'players',            // {discord_id} → {navarites, notoriety, display_theme, consecutive_days...}
+  INV:'inventories',            // {discord_id}_{char_uuid} → {items:{}, equipped_assets:[]}
+  COMP:'companions_user',       // {discord_id}_{char_uuid} → {owned_companions, active_companion}
+  TITLES:'titles_user',         // {discord_id} → {titles:{}, tp:0}
+  PARTIES:'parties',            // {party_id}   → {name, members[], leader_char_key...}
+  PARTY_MEM:'party_membership', // {discord_id}_{char_uuid} → {party_id}
+  PITY:'gacha_pity',            // {discord_id} → {navarites_spent_epic, navarites_spent_leg}
+  SHOPS:'shops',                // {discord_id}_{char_uuid} → {name, open, items{}}
+  LINK:'gacha_link_codes',      // {code} → {discord_id, username, avatar_url, expires_at}
+  CFG:'config',                 // items, companions_data, etc.
+};
+
+const SI={strength:'⚔️',agility:'💨',speed:'🏃',intelligence:'🧠',mana:'✨',resistance:'🛡️',charisma:'👑',aura:'🌟'};
+const SL={strength:'Force',agility:'Agilité',speed:'Vitesse',intelligence:'Intel.',mana:'Mana',resistance:'Rés.',charisma:'Charisme',aura:'Aura'};
+const SK=['strength','agility','speed','intelligence','mana','resistance','charisma','aura'];
+const PITY_T={epic:30,leg:150};
+
+// ── SESSION (partagée gacha ↔ hub) ──
+function getSess(){try{return JSON.parse(localStorage.getItem('hub_session'))||JSON.parse(localStorage.getItem('gacha_session'))}catch(e){return null}}
+function setSess(s){localStorage.setItem('hub_session',JSON.stringify(s));localStorage.setItem('gacha_session',JSON.stringify(s))}
+function clearSess(){localStorage.removeItem('hub_session');localStorage.removeItem('gacha_session')}
+
+// ── AUTH ──
+async function verifyCode(){
+  const inp=document.getElementById('link-code'),err=document.getElementById('code-error'),btn=document.getElementById('verify-btn');
+  err.style.display='none';
+  const code=inp.value.trim().toUpperCase();
+  if(!code||code.length<4){showErr('Entre un code valide');return}
+  btn.disabled=true;btn.textContent='VÉRIFICATION...';
+  try{
+    const snap=await db.collection(C.LINK).doc(code).get();
+    if(!snap.exists){showErr('Code invalide ou déjà utilisé');done();return}
+    const d=snap.data();
+    if(d.expires_at&&new Date(d.expires_at)<new Date()){showErr('Code expiré — utilise /link');db.collection(C.LINK).doc(code).delete();done();return}
+    setSess({id:d.discord_id,username:d.username,avatar:d.avatar_url});
+    db.collection(C.LINK).doc(code).delete();
+    await loadHub();
+  }catch(e){console.error('[AUTH]',e);showErr('Erreur de connexion — réessaye');done()}
+  function showErr(m){err.textContent=m;err.style.display='block'}
+  function done(){btn.disabled=false;btn.textContent='CONNEXION AU NEXUS'}
+}
+document.addEventListener('DOMContentLoaded',function(){
+  const lc=document.getElementById('link-code');
+  const vb=document.getElementById('verify-btn');
+  if(lc)lc.addEventListener('keydown',e=>{if(e.key==='Enter')verifyCode();});
+  if(vb)vb.addEventListener('click',verifyCode);
+});
+
+function logout(){
+  clearSess();
+  document.getElementById('hub-main').classList.remove('active');
+  document.getElementById('main-nav').style.display='none';
+  document.getElementById('login-gate').style.display='flex';
+  showToast('Déconnecté','info');
+}
+
+// ── STATE ──
+let CHAR=null,PLAYER=null,PITY=null,INV_DATA=null,CHAR_ID=null,UID=null,ALL_ITEMS_DATA={};
+let PARTY_DATA=null,TITLES_DATA=null,TITLES_DEF=null,BUFFS_DATA=null;
+
+// ── INIT ──
+async function init(){
+  const s=getSess();
+  console.log('[HUB] init — session:', s);
+  if(s&&s.id){
+    try{ await loadHub(); }
+    catch(err){ console.error('[HUB] loadHub failed:', err); }
+  } else {
+    console.log('[HUB] Pas de session, affichage login-gate');
+    document.getElementById('login-gate').style.display='flex';
+  }
+}
+
+async function loadHub(){
+  const s=getSess();
+  if(!s||!s.id){
+    console.warn('[HUB] loadHub: pas de session valide');
+    document.getElementById('login-gate').style.display='flex';
+    return;
+  }
+  UID=s.id;
+  console.log('[HUB] loadHub — UID:', UID);
+  // Afficher l'interface immédiatement
+  document.getElementById('login-gate').style.display='none';
+  document.getElementById('main-nav').style.display='flex';
+  document.getElementById('hub-main').classList.add('active');
+  document.getElementById('nav-username').textContent=s.username||'—';
+  if(s.avatar){const av=document.getElementById('nav-avatar');av.src=s.avatar;av.style.display='block'}
+  // Charger les données en parallèle — les erreurs n'empêchent pas l'affichage
+  try{ await Promise.all([loadCharacter(),loadPlayer()]); }
+  catch(err){ console.error('[HUB] Erreur chargement données:', err); }
+}
+
+async function loadCharacter(){
+  try{
+    const acSnap=await db.collection(C.ACTIVE).doc(UID).get();
+    if(!acSnap.exists){renderNoChar();return}
+    CHAR_ID=acSnap.data().character_id;
+    if(!CHAR_ID){renderNoChar();return}
+    const cSnap=await db.collection(C.CHARS).doc(CHAR_ID).get();
+    if(!cSnap.exists){renderNoChar();return}
+    CHAR={_id:CHAR_ID,...cSnap.data()};
+    // Charger aussi les buffs et la party membership en parallèle
+    const charKey=`${UID}_${CHAR_ID}`;
+    const[bufSnap,pmSnap]=await Promise.all([
+      db.collection('buffs').doc(UID).get(),
+      db.collection(C.PARTY_MEM).doc(charKey).get()
+    ]);
+    BUFFS_DATA=bufSnap.exists?(bufSnap.data().buffs||[]):[];
+    if(pmSnap.exists){
+      const pid=pmSnap.data().party_id;
+      if(pid){
+        const pSnap=await db.collection(C.PARTIES).doc(pid).get();
+        PARTY_DATA=pSnap.exists?pSnap.data():null;
+      }
+    }
+    renderDashChar();renderFullChar();renderProgression();initAlloc();
+  }catch(e){console.error('[CHAR]',e);renderNoChar()}
+}
+
+async function loadPlayer(){
+  try{
+    const[pSnap,pSnap2]=await Promise.all([db.collection(C.PLAYERS).doc(UID).get(),db.collection(C.PITY).doc(UID).get()]);
+    PLAYER=pSnap.exists?pSnap.data():{};
+    PITY=pSnap2.exists?pSnap2.data():{};
+    renderPlayerWidgets();renderGacha();renderSettings();
+  }catch(e){console.error('[PLAYER]',e);}
+}
+
+// Loaders paresseux (au clic de l'onglet)
+async function loadInventory(){
+  if(!CHAR_ID){document.getElementById('inv-grid').innerHTML='<div class="empty">Aucun personnage actif</div>';return}
+  try{
+    const key=`${UID}_${CHAR_ID}`;
+    const[invSnap,cfgSnap]=await Promise.all([
+      db.collection(C.INV).doc(key).get(),
+      db.collection(C.CFG).doc('items').get()
+    ]);
+    INV_DATA=invSnap.exists?invSnap.data():{items:{},equipped_assets:[]};
+    const cfg=cfgSnap.exists?cfgSnap.data():{};
+    ALL_ITEMS_DATA={...cfg.items||{},...cfg.equipment||{},...cfg.food_items||{},...cfg.consumable_items||{}};
+    renderInventory();
+  }catch(e){console.error('[INV]',e);document.getElementById('inv-grid').innerHTML='<div class="empty">Erreur de chargement</div>'}
+}
+
+async function loadParty(){
+  if(!CHAR_ID){document.getElementById('party-content').innerHTML='<div class="empty">Aucun personnage actif</div>';return}
+  try{
+    const key=`${UID}_${CHAR_ID}`;
+    const mSnap=await db.collection(C.PARTY_MEM).doc(key).get();
+    if(!mSnap.exists){document.getElementById('party-content').innerHTML='<div class="empty">Tu n\'es dans aucune party.</div>';return}
+    const pid=mSnap.data().party_id;
+    const pSnap=await db.collection(C.PARTIES).doc(String(pid)).get();
+    if(!pSnap.exists){document.getElementById('party-content').innerHTML='<div class="empty">Party introuvable.</div>';return}
+    renderParty(pSnap.data());
+  }catch(e){document.getElementById('party-content').innerHTML='<div class="empty">Erreur de chargement</div>'}
+}
+
+async function loadTitles(){
+  const el=document.getElementById('titles-grid');if(!el)return;
+  if(!UID){el.innerHTML='<div class="empty">Non connecté — utilise /link</div>';return;}
+  el.innerHTML='<div class="empty">Chargement...</div>';
+  try{
+    console.log('[TITLES] querying',C.TITLES,'/',UID);
+    const snap=await db.collection(C.TITLES).doc(UID).get();
+    console.log('[TITLES] exists=',snap.exists,'data=',JSON.stringify(snap.exists?snap.data():null).slice(0,100));
+    renderTitles(snap.exists?snap.data():{});
+  }catch(e){console.error('[TITLES]',e);el.innerHTML='<div class="empty">Erreur: '+e.message+'</div>'}
+}
+
+async function loadCompanions(){
+  if(!CHAR_ID){document.getElementById('comp-content').innerHTML='<div class="empty">Aucun personnage actif</div>';return}
+  try{
+    const key=`${UID}_${CHAR_ID}`;
+    console.log('[COMP] querying',key);
+    const[cSnap,cfgSnap]=await Promise.all([db.collection(C.COMP).doc(key).get(),db.collection(C.CFG).doc('companions_data').get()]);
+    console.log('[COMP] exists=',cSnap.exists);
+    renderCompanions(cSnap.exists?cSnap.data():{},cfgSnap.exists?cfgSnap.data():{companions:{},evolutions:{}});
+  }catch(e){console.error('[COMP]',e);document.getElementById('comp-content').innerHTML=`<div class="empty">Erreur: ${e.message}</div>`}
+}
+
+async function loadShop(){
+  if(!CHAR_ID){document.getElementById('shop-content').innerHTML='<div class="empty">Aucun personnage actif</div>';return}
+  try{
+    const snap=await db.collection(C.SHOPS).doc(`${UID}_${CHAR_ID}`).get();
+    renderShop(snap.exists?snap.data():null);
+  }catch(e){document.getElementById('shop-content').innerHTML='<div class="empty">Erreur</div>'}
+}
+
+// ── RENDER DASHBOARD ──
+function renderDashChar(){
+  const c=CHAR,fn=c.first_name||'',ln=c.last_name||'';
+  const name=[fn,ln].filter(Boolean).join(' ')||'Personnage';
+  const {level:lvl,cur:cxpDash,need:nxpDash}=levelFromXp(c.xp||0);
+  const xp=c.xp||0;const pct=Math.min(100,nxpDash>0?Math.round(cxpDash/nxpDash*100):100);
+  const stats=c.stats||{};
+  document.getElementById('dash-char-card').innerHTML=`
+    ${c.profile_image?`<img src="${e(c.profile_image)}" class="char-card-img" alt="${e(name)}" onerror="this.outerHTML='<div class=&quot;char-card-placeholder&quot;>NO IMAGE</div>'">`:`<div class="char-card-placeholder">NO IMAGE</div>`}
+    <div class="card-body">
+      <div class="char-name">${e(name)}</div>
+      <div class="char-meta">${e(c.race_category||'—')} · ${e(c.class||'—')} · ${c.age||'?'} ans</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
+        <span class="badge badge-race">${e(c.race_category||'—')}</span>
+        <span class="badge badge-class">${e(c.class||'—')}</span>
+      </div>
+      <div class="char-lvl-row"><span class="char-lvl-label">Niveau</span><span class="char-lvl-val">${lvl}</span></div>
+      <div class="xp-labels"><span>XP</span><span>${cxpDash.toLocaleString()} / ${nxpDash.toLocaleString()}</span></div>
+      <div class="xp-bar"><div class="xp-fill" style="width:${pct}%"></div></div>
+    </div>`;
+  document.getElementById('dash-stats-grid').innerHTML=SK.map(k=>`<div class="stat-row"><span class="stat-icon">${SI[k]}</span><span class="stat-name">${SL[k]}</span><span class="stat-val">${stats[k]||0}</span></div>`).join('');
+  const powers=c.powers||[];
+  document.getElementById('dash-powers-list').innerHTML=powers.length
+    ?powers.slice(0,5).map(p=>`<div class="power-item"><div class="pq ${p.quality||'common'}"></div><span class="power-name">${e(p.name||p.id||'—')}</span><span class="power-qual-tag">${e((p.quality||'').toUpperCase())}</span></div>`).join('')+(powers.length>5?`<div class="empty">+${powers.length-5} autres</div>`:'')
+    :'<div class="empty">Aucun pouvoir</div>';
+}
+
+function renderNoChar(){
+  document.getElementById('dash-char-card').innerHTML='<div class="char-card-placeholder" style="background:#050910">AUCUN PERSO ACTIF</div><div class="card-body"><div class="empty">Aucun personnage actif</div></div>';
+  document.getElementById('dash-stats-grid').innerHTML='<div class="empty" style="grid-column:1/-1">—</div>';
+  document.getElementById('dash-powers-list').innerHTML='<div class="empty">—</div>';
+}
+
+function renderPlayerWidgets(){
+  const nav=PLAYER.navarites||0,streak=PLAYER.consecutive_days||0;
+  document.getElementById('dash-nav-val').innerHTML=`<span>${nav.toLocaleString()}</span><span class="nav-unit">NAV</span>`;
+  document.getElementById('dash-nav-streak').innerHTML=streak?`<span>${streak}</span> jour${streak>1?'s':''} consécutifs`:'Pas encore de série active';
+}
+
+// ── RENDER PERSONNAGE ──
+function renderFullChar(){
+  const c=CHAR,fn=c.first_name||'',ln=c.last_name||'';
+  const name=[fn,ln].filter(Boolean).join(' ')||'Personnage';
+  const stats=c.stats||{},powers=c.powers||[];
+  // Image
+  const imgSlot=document.getElementById('char-img-slot');
+  if(imgSlot){
+    if(c.profile_image){
+      imgSlot.className='char-full-img-wrap';
+      imgSlot.innerHTML=`<img src="${e(c.profile_image)}" class="char-full-img" alt="${e(name)}" onerror="this.parentElement.innerHTML='<div class=\"char-full-placeholder\">NO IMAGE</div>'">`;
+    } else {
+      imgSlot.className='char-full-placeholder';
+      imgSlot.innerHTML='NO IMAGE';
+    }
+  }
+  // Header
+  document.getElementById('char-header-body').innerHTML=`
+    <div class="char-fullname">${e(name)}</div>
+    <div class="char-fullmeta">${e(c.race_category||'—')} · ${e(c.class||'—')} · ${c.age||'?'} ans${c.marital_status?' · '+e(c.marital_status):''}</div>
+    <div class="char-tags">
+      <span class="badge badge-race">${e(c.race_category||'—')}</span>
+      <span class="badge badge-class">${e(c.class||'—')}</span>
+      ${(c.affinity||[]).slice(0,3).map(a=>`<span class="badge badge-gold">${e(a)}</span>`).join('')}
+    </div>
+    <div style="display:flex;gap:20px;align-items:center;margin-top:16px">
+      <div><div class="csb-val">${c.level||1}</div><div class="csb-label">NIVEAU</div></div>
+      <div><div class="csb-val">${(c.xp||0).toLocaleString()}</div><div class="csb-label">XP</div></div>
+      ${c.available_stat_points?`<div><div class="csb-val" style="color:var(--gold)">${c.available_stat_points}</div><div class="csb-label">STAT PTS</div></div>`:''}
+    </div>`;
+  // Stats
+  const sp=c.available_stat_points;
+  document.getElementById('char-stats-grid').innerHTML=
+    (sp?`<div class="sp-banner" style="grid-column:1/-1">⚡ ${sp} point${sp>1?'s':''} disponible${sp>1?'s':''} — à allouer via le bot Discord</div>`:'')
+    +SK.map(k=>`<div class="stat-block"><div class="stat-block-val">${stats[k]||0}</div><div class="stat-block-name">${SI[k]} ${SL[k]}</div></div>`).join('');
+  // Powers
+  document.getElementById('char-powers-grid').innerHTML=powers.length
+    ?powers.map(p=>`<div class="power-card"><div class="power-card-dot ${p.quality||'common'}"></div><div><div class="power-card-name">${e(p.name||p.id||'—')}</div><div class="power-card-qual ${p.quality||'common'}">${e((p.quality||'').toUpperCase())}</div></div></div>`).join('')
+    :'<div class="empty">Aucun pouvoir</div>';
+}
+
+// ── CONSTANTES SETS & SLOTS ──
+const ITEM_SETS={"survie_de_rue": {"name": "Survie de Rue", "rarity": "common", "items": ["casque_chantier_renforce", "plastron_gardien_nuit", "chaussures_securite_lourdes"], "bonuses": {"3": {"stats": {"resistance": 3, "strength": 2}}}}, "coursier_du_nexus": {"name": "Coursier du Nexus", "rarity": "common", "items": ["visiere_messager", "sac_coursier_bandouliere", "baskets_skyyart"], "bonuses": {"3": {"stats": {"speed": 3, "agility": 2}}}}, "arnaqueur": {"name": "Arnaqueur", "rarity": "common", "items": ["lunettes_soleil_marque", "chevaliere_famille", "chaine_argent_terni"], "bonuses": {"3": {"stats": {"charisma": 3, "mana": 1}}}}, "milicien": {"name": "Milicien", "rarity": "uncommon", "items": ["veste_kevlar_tactique", "brassard_protection_milice", "matraque_electrique_milice"], "bonuses": {"3": {"stats": {"resistance": 5, "strength": 3}}}}, "hackeur": {"name": "Hackeur", "rarity": "uncommon", "items": ["gants_hackeur_poche", "smart_watch_nexus_v2", "analyseur_faiblesse_v1"], "bonuses": {"3": {"stats": {"intelligence": 5, "mana": 3}}}}, "pulse_blanc": {"name": "Pulse Blanc", "rarity": "uncommon", "items": ["pulse_blanc_bandeau", "pulse_blanc_combinaison", "pulse_blanc_gants", "pulse_blanc_jambieres", "pulse_blanc_bottes", "pulse_blanc_reacteur"], "bonuses": {"2": {"stats": {"speed": 3}}, "4": {"stats": {"speed": 8}}, "6": {"stats": {"speed": 15}}}}, "flux_indigo": {"name": "Flux Indigo", "rarity": "uncommon", "items": ["flux_indigo_couronne", "flux_indigo_robe", "flux_indigo_bracelet", "flux_indigo_pendentif", "flux_indigo_bague", "flux_indigo_orbe"], "bonuses": {"2": {"stats": {"mana": 3}}, "4": {"stats": {"mana": 8}}, "6": {"stats": {"mana": 15}}}}, "neon_dore": {"name": "Néon Doré", "rarity": "uncommon", "items": ["neon_dore_masque", "neon_dore_veste", "neon_dore_bagues", "neon_dore_collier", "neon_dore_boucles", "neon_dore_cape"], "bonuses": {"2": {"stats": {"charisma": 3}}, "4": {"stats": {"charisma": 8}}, "6": {"stats": {"charisma": 15}}}}, "prestige_digital": {"name": "Prestige Digital", "rarity": "uncommon", "items": ["prestige_digital_masque", "prestige_digital_costume", "prestige_digital_bagues", "prestige_digital_collier", "prestige_digital_bracelet", "prestige_digital_boucles"], "bonuses": {"2": {"stats": {"charisma": 3, "mana": 2}}, "4": {"stats": {"charisma": 7, "mana": 5}}, "6": {"stats": {"charisma": 12, "mana": 10}}}}, "circuit_rouge": {"name": "Circuit Rouge", "rarity": "rare", "items": ["circuit_rouge_casque", "circuit_rouge_plastron", "circuit_rouge_gantelets", "circuit_rouge_jambieres", "circuit_rouge_bottes", "circuit_rouge_marteau"], "bonuses": {"2": {"stats": {"strength": 5}}, "4": {"stats": {"strength": 12}}, "6": {"stats": {"strength": 22}}}}, "filament_cyan": {"name": "Filament Cyan", "rarity": "rare", "items": ["filament_cyan_capuche", "filament_cyan_veste", "filament_cyan_gants", "filament_cyan_brassards", "filament_cyan_bottes", "filament_cyan_dagues"], "bonuses": {"2": {"stats": {"agility": 5}}, "4": {"stats": {"agility": 12}}, "6": {"stats": {"agility": 22}}}}, "reseau_violet": {"name": "Réseau Violet", "rarity": "rare", "items": ["reseau_violet_diademe", "reseau_violet_manteau", "reseau_violet_interface", "reseau_violet_monocle", "reseau_violet_anneau", "reseau_violet_codex"], "bonuses": {"2": {"stats": {"intelligence": 5}}, "4": {"stats": {"intelligence": 12}}, "6": {"stats": {"intelligence": 22}}}}, "bunker_gris": {"name": "Bunker Gris", "rarity": "rare", "items": ["bunker_gris_heaume", "bunker_gris_cuirasse", "bunker_gris_gantelets", "bunker_gris_jambieres", "bunker_gris_bottes", "bunker_gris_bouclier"], "bonuses": {"2": {"stats": {"resistance": 5}}, "4": {"stats": {"resistance": 12}}, "6": {"stats": {"resistance": 22}}}}, "spectre_veloce": {"name": "Spectre Véloce", "rarity": "rare", "items": ["spectre_veloce_capuche", "spectre_veloce_combinaison", "spectre_veloce_gants", "spectre_veloce_bottes", "spectre_veloce_cape", "spectre_veloce_lames"], "bonuses": {"2": {"stats": {"agility": 4, "speed": 4}}, "4": {"stats": {"agility": 10, "speed": 10}}, "6": {"stats": {"agility": 18, "speed": 18}}}}, "rempart_spectral": {"name": "Rempart Spectral", "rarity": "rare", "items": ["rempart_spectral_heaume", "rempart_spectral_armure", "rempart_spectral_bracelet", "rempart_spectral_amulette", "rempart_spectral_bague", "rempart_spectral_bouclier"], "bonuses": {"2": {"stats": {"mana": 4, "resistance": 4}}, "4": {"stats": {"mana": 10, "resistance": 10}}, "6": {"stats": {"mana": 18, "resistance": 18}}}}, "sentinelle_hybride": {"name": "Sentinelle Hybride", "rarity": "rare", "items": ["sentinelle_hybride_casque", "sentinelle_hybride_armure", "sentinelle_hybride_brassards", "sentinelle_hybride_bottes", "sentinelle_hybride_cape", "sentinelle_hybride_bracelet", "sentinelle_hybride_lames"], "bonuses": {"2": {"stats": {"resistance": 3, "speed": 3, "agility": 3}}, "4": {"stats": {"resistance": 8, "speed": 8, "agility": 8}}, "7": {"stats": {"resistance": 15, "speed": 15, "agility": 15}}}}, "harmonie_primaire": {"name": "Harmonie Primaire", "rarity": "rare", "items": ["harmonie_casque", "harmonie_plastron", "harmonie_gants", "harmonie_bottes", "harmonie_cape", "harmonie_collier", "harmonie_anneau", "harmonie_noyau"], "bonuses": {"2": {"stats_all": 2}, "4": {"stats_all": 5}, "6": {"stats_all": 10}, "8": {"stats_all": 18}}}, "chrome_sauvage": {"name": "Chrome Sauvage", "rarity": "epic", "items": ["chrome_sauvage_casque", "chrome_sauvage_armure", "chrome_sauvage_brassards", "chrome_sauvage_gants", "chrome_sauvage_bottes", "chrome_sauvage_hache", "chrome_sauvage_griffes"], "bonuses": {"2": {"stats": {"strength": 8, "agility": 8}}, "4": {"stats": {"strength": 18, "agility": 18}}, "7": {"stats": {"strength": 30, "agility": 30}}}}, "bastion_blinde": {"name": "Bastion Blindé", "rarity": "epic", "items": ["bastion_blinde_heaume", "bastion_blinde_cuirasse", "bastion_blinde_epaulieres", "bastion_blinde_gantelets", "bastion_blinde_jambieres", "bastion_blinde_bottes"], "bonuses": {"2": {"stats": {"strength": 8, "resistance": 8}}, "4": {"stats": {"strength": 18, "resistance": 18}}, "6": {"stats": {"strength": 30, "resistance": 30}}}}, "synapse_arcane": {"name": "Synapse Arcane", "rarity": "epic", "items": ["synapse_arcane_diademe", "synapse_arcane_manteau", "synapse_arcane_gants", "synapse_arcane_bracelet", "synapse_arcane_anneau", "synapse_arcane_sceptre"], "bonuses": {"2": {"stats": {"intelligence": 8, "mana": 8}}, "4": {"stats": {"intelligence": 18, "mana": 18}}, "6": {"stats": {"intelligence": 30, "mana": 30}}}}, "predateur_mecanique": {"name": "Prédateur Mécanique", "rarity": "epic", "items": ["predateur_meca_casque", "predateur_meca_armure", "predateur_meca_brassards", "predateur_meca_gants", "predateur_meca_bottes", "predateur_meca_cape", "predateur_meca_lames"], "bonuses": {"2": {"stats": {"strength": 5, "agility": 5, "speed": 5}}, "4": {"stats": {"strength": 12, "agility": 12, "speed": 12}}, "7": {"stats": {"strength": 22, "agility": 22, "speed": 22}}}}, "conscience_nexus": {"name": "Conscience du Nexus", "rarity": "epic", "items": ["conscience_nexus_diademe", "conscience_nexus_robe", "conscience_nexus_gants", "conscience_nexus_bracelet", "conscience_nexus_collier", "conscience_nexus_anneau", "conscience_nexus_livre"], "bonuses": {"2": {"stats": {"intelligence": 5, "mana": 5, "charisma": 5}}, "4": {"stats": {"intelligence": 12, "mana": 12, "charisma": 12}}, "7": {"stats": {"intelligence": 22, "mana": 22, "charisma": 22}}}}, "protocole_genesis": {"name": "Protocole Genesis", "rarity": "epic", "items": ["genesis_couronne", "genesis_armure", "genesis_gants", "genesis_bracelet", "genesis_jambieres", "genesis_bottes", "genesis_collier", "genesis_noyau"], "bonuses": {"2": {"stats_all": 3}, "4": {"stats_all": 8}, "6": {"stats_all": 15}, "8": {"stats_all": 25}}}, "predateur_urbain": {"name": "Prédateur Urbain", "rarity": "rare", "items": ["casque_combat_spectre", "combinaison_furtive_ombre", "souliers_semelles_silence"], "bonuses": {"3": {"stats": {"agility": 10, "speed": 5}}}}, "centurion_nexus": {"name": "Centurion du Nexus", "rarity": "rare", "items": ["armure_plaques_cinetiques", "jambieres_centurion_nexus", "generateur_bouclier_force"], "bonuses": {"3": {"stats": {"resistance": 10, "strength": 5}}}}, "executeur": {"name": "Exécuteur", "rarity": "epic", "items": ["casque_executeur_nexus", "dagues_jumelles_assassin", "cape_dephasage"], "bonuses": {"3": {"stats": {"agility": 15, "intelligence": 10}}}}, "titan": {"name": "Titan", "rarity": "epic", "items": ["poings_atlas", "exosquelette_jambes_titan", "fendoir_gravite"], "bonuses": {"3": {"stats": {"strength": 15, "resistance": 10}}}}, "velvet_court": {"name": "Velvet Court", "rarity": "legendary", "items": ["velvet_courts_diadem", "velvet_courts_pendant", "velvet_courts_signet"], "bonuses": {"2": {"stats": {"charisma": 30}}, "3": {"stats": {"charisma": 80}, "buff_mult": {"charisma": 1.5}}}}, "phantom_edge": {"name": "Phantom Edge", "rarity": "legendary", "items": ["phantom_edges_cowl", "phantom_edges_bracers", "phantom_edges_stiletto"], "bonuses": {"2": {"stats": {"agility": 30}}, "3": {"stats": {"agility": 80}, "buff_mult": {"agility": 1.5}}}}, "roi_loup": {"name": "Roi-Loup", "rarity": "legendary", "items": ["collier_roi_loup_blanc", "crocs_basilic_ombre", "anneau_chronos"], "bonuses": {"3": {"stats": {"strength": 25, "agility": 25}}}}, "monarque": {"name": "Monarque", "rarity": "legendary", "items": ["couronne_monarque_dechu", "manteau_souverain_ombres", "masque_divinite_mecanique"], "bonuses": {"3": {"stats": {"mana": 25, "charisma": 25}}}}, "iron_vanguard": {"name": "Iron Vanguard", "rarity": "mythic", "items": ["iron_vanguards_helm", "iron_vanguards_fists", "iron_vanguards_warhammer", "iron_vanguards_chestplate", "iron_vanguards_greaves", "iron_vanguards_chains"], "bonuses": {"2": {"stats": {"strength": 50}}, "4": {"stats": {"strength": 120}, "buff_mult": {"strength": 1.5}}, "6": {"stats": {"strength": 200, "resistance": 50}, "buff_mult": {"strength": 2.0}}}}, "nexus_core": {"name": "Nexus", "rarity": "mythic", "items": ["original_fragment_core_nexus", "fragment_of_reality", "ia_conscience_gaia"], "bonuses": {"2": {"stats": {"mana": 50}}, "3": {"stats_all": 25}}}, "principle": {"name": "The Principle", "rarity": "unique", "items": ["wings_principle_speed", "dagger_principle_reality", "mask_principle_attraction", "book_principle_savant"], "bonuses": {"2": {"stats_all": 30}, "4": {"stats_all": 80, "buff_mult_all": 1.25}}}, "time_paradox": {"name": "Time Paradox", "rarity": "unique", "items": ["time_paradox_ring", "time_paradox_watch"], "bonuses": {"2": {"stats": {"speed": 40, "agility": 40}}}}, "hero_of_the_era": {"name": "Hero of the Era", "rarity": "artifact", "items": ["hero_eras_crown", "hero_eras_mantle", "hero_eras_gauntlets", "hero_eras_greaves", "hero_eras_blade", "hero_eras_cloak", "hero_eras_ring", "hero_eras_bracers", "hero_eras_pendant"], "bonuses": {"2": {"stats_all": 30}, "4": {"stats_all": 75}, "6": {"stats_all": 150, "buff_mult_all": 1.25}, "9": {"stats_all": 300, "buff_mult_all": 1.5, "nerf_reduction": 0.25}}}, "destiny": {"name": "Destiny", "rarity": "artifact", "items": ["destinys_gauntelet", "destinys_chains", "destinys_cuffs"], "bonuses": {"2": {"stats_all": 50}, "3": {"stats_all": 150}}}, "origin": {"name": "Origin", "rarity": "artifact", "items": ["origins_chestplate", "origins_ring"], "bonuses": {"2": {"stats": {"mana": 100, "intelligence": 50}}}}, "old_chaos": {"name": "Old Chaos", "rarity": "artifact", "items": ["old_chaos_mask", "old_chaos_ring"], "bonuses": {"2": {"stats": {"strength": 100, "mana": 50}}}}, "equalizer_set": {"name": "Equalizer", "rarity": "artifact", "items": ["equalizer", "fragment_of_reality", "birth_of_the_imaginary"], "bonuses": {"2": {"special": "equalize_to_highest"}, "3": {"special": "equalize_to_highest_plus_10pct"}}}, "baldun": {"name": "Baldun", "rarity": "mastercraft", "items": ["balduns_crown", "balduns_chestplate", "balduns_ring", "balduns_chivalery", "balduns_gauntelet", "balduns_chains", "balduns_cape", "balduns_executionner", "balduns_claws", "balduns_bracelet", "balduns_god_shoes", "great_balduns_core"], "bonuses": {"4": {"stats_all": 500}, "12": {"stats_all": 2000}}}};
+const SLOT_LIMITS={
+  tete:{label:'Tête',max:3},torse:{label:'Torse',max:1},bras:{label:'Bras',max:4},
+  mains:{label:'Mains',max:3},doigts:{label:'Doigts',max:10},poignets:{label:'Poignets',max:2},
+  jambes:{label:'Jambes',max:3},pieds:{label:'Pieds',max:2},dos:{label:'Dos',max:1},
+  cou:{label:'Cou',max:2},armes_h:{label:'Armes H',max:1},armes_l:{label:'Armes L',max:2},
+  oreilles:{label:'Oreilles',max:2},visage:{label:'Visage',max:1},special:{label:'Spécial',max:2}
+};
+
+const RARITY_COLORS={
+  common:'#6b7280',uncommon:'#60a5fa',rare:'#a78bfa',epic:'#8B5CF6',
+  legendary:'#fbbf24',mythic:'#f97316',unique:'#ffd60a',
+  artifact:'#ef4444',mastercraft:'#ff006e',signature:'#ffd60a'
+};
+
+const STAT_ICONS_INV={strength:'⚔️',agility:'💨',speed:'🏃',intelligence:'🧠',mana:'✨',resistance:'🛡️',charisma:'👑',aura:'🌟'};
+let INV_TAB='all';
+
+function showInvTab(tab){
+  INV_TAB=tab;
+  document.querySelectorAll('.inv-tab').forEach(b=>b.classList.toggle('active',b.id==='invtab-'+tab));
+  renderItemsGrid();
+}
+
+// ── RENDER INVENTAIRE COMPLET ──
+function renderInventory(){
+  if(!INV_DATA)return;
+  renderSlotsPanel();
+  renderItemsGrid();
+  renderEquipBonuses();
+  renderSets();
+}
+
+function renderSlotsPanel(){
+  const equipped=INV_DATA.equipped_assets||[];
+  const bySlot={};
+  equipped.forEach(id=>{
+    const it=ALL_ITEMS_DATA[id]||{};
+    const slot=it.slot||'other';
+    bySlot[slot]=(bySlot[slot]||[]);
+    bySlot[slot].push({id,it});
+  });
+
+  let html='';
+  const slotOrder=['tete','visage','cou','oreilles','torse','dos','bras','mains','poignets','doigts','jambes','pieds','armes_h','armes_l','special'];
+  slotOrder.forEach(slotId=>{
+    const def=SLOT_LIMITS[slotId];if(!def)return;
+    const items=bySlot[slotId]||[];
+    const isFull=items.length>=def.max;
+    html+=`<div class="slot-group">
+      <div class="slot-group-title">${def.label} (${items.length}/${def.max})</div>
+      ${items.map(({id,it})=>`
+        <div class="slot-item" onclick="toggleEquip('${id}')" title="Déséquiper">
+          <div class="slot-dot filled"></div>
+          <span class="slot-label">${e(it.name||id)}</span>
+          ${it.stat_effects?`<span style="font-family:var(--font-m);font-size:.38rem;color:var(--green)">${formatEffects(it.stat_effects)}</span>`:''}
+        </div>`).join('')}
+      ${items.length===0?`<div class="slot-item" style="opacity:.35"><div class="slot-dot empty"></div><span class="slot-label">Vide</span></div>`:''}
+    </div>`;
+  });
+  document.getElementById('slots-panel').innerHTML=html||'<div class="empty">Aucun équipement</div>';
+}
+
+function renderItemsGrid(){
+  const items=INV_DATA.items||{};
+  const equipped=new Set(INV_DATA.equipped_assets||[]);
+  let entries=Object.entries(items);
+
+  if(INV_TAB==='equipped'){
+    entries=Array.from(equipped).map(id=>[id,0]).filter(([id])=>!(items[id]>0));
+    // Ajouter les équipés (qty=0 dans items car déduits)
+    const inv2=INV_DATA.items||{};
+    const equippedAll=Array.from(equipped).map(id=>[id,0]);
+    entries=equippedAll;
+  } else if(INV_TAB==='equipment'){
+    entries=entries.filter(([id])=>{const it=ALL_ITEMS_DATA[id]||{};return it.slot;});
+  } else if(INV_TAB==='consumable'){
+    entries=entries.filter(([id])=>{const it=ALL_ITEMS_DATA[id]||{};return ['consumable','food','usable'].includes(it.type);});
+  } else if(INV_TAB==='other'){
+    entries=entries.filter(([id])=>{const it=ALL_ITEMS_DATA[id]||{};return !it.slot&&!['consumable','food','usable'].includes(it.type);});
+  }
+
+  if(INV_TAB==='equipped'){entries=Array.from(equipped).map(id=>[id,0]);}
+
+  if(!entries.length){document.getElementById('inv-grid').innerHTML='<div class="empty">Aucun item</div>';return;}
+
+  document.getElementById('inv-grid').innerHTML=entries.map(([id,qty])=>{
+    const it=ALL_ITEMS_DATA[id]||{};
+    const isEq=equipped.has(id);
+    const hasSlot=!!it.slot;
+    const rarity=(it.rarity||'common').toLowerCase();
+    const rc=RARITY_COLORS[rarity]||'#6b7280';
+    const effects=it.stat_effects||it.stats||{};
+    const effStr=Object.entries(effects).slice(0,3).map(([s,v])=>`+${v} ${STAT_ICONS_INV[s]||s}`).join(' ');
+    return`<div class="item-card rarity-${rarity}${isEq?' equipped':''}" onclick="${hasSlot?`toggleEquip('${id}')`:''}" style="${hasSlot?'cursor:pointer':''}">
+      ${isEq?'<div class="item-equip-badge on">ÉQUIPÉ</div>':hasSlot?'<div class="item-equip-badge off">ÉQUIPER</div>':''}
+      <span class="item-icon-big">${it.emoji||'📦'}</span>
+      <div class="item-name-sm" style="color:${rc}">${e(it.name||id)}</div>
+      ${it.slot?`<div class="item-slot-tag">${SLOT_LIMITS[it.slot]?.label||it.slot}</div>`:''}
+      ${effStr?`<div class="item-effects">${effStr}</div>`:''}
+      ${qty>0?`<div class="item-qty">×${qty}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function renderEquipBonuses(){
+  const equipped=INV_DATA.equipped_assets||[];
+  const totals={};
+  const ALL_STAT_KEYS=['strength','agility','speed','intelligence','mana','resistance','charisma'];
+
+  // Bonus directs items
+  equipped.forEach(id=>{
+    const it=ALL_ITEMS_DATA[id]||{};
+    const effects=it.stat_effects||it.stats||{};
+    Object.entries(effects).forEach(([s,v])=>{
+      try{totals[s]=(totals[s]||0)+parseInt(String(v).replace('+',''));}catch(e){}
+    });
+  });
+
+  // Bonus sets
+  const eqSet=new Set(equipped);
+  Object.entries(ITEM_SETS).forEach(([,setDef])=>{
+    const count=setDef.items.filter(i=>eqSet.has(i)).length;
+    if(count<2)return;
+    const thresholds=Object.keys(setDef.bonuses).map(Number).sort((a,b)=>a-b);
+    for(const t of thresholds){
+      if(count>=t){
+        const bonus=setDef.bonuses[String(t)]||setDef.bonuses[t];
+        if(bonus.stats)Object.entries(bonus.stats).forEach(([s,v])=>{totals[s]=(totals[s]||0)+v;});
+        if(bonus.stats_all)ALL_STAT_KEYS.forEach(s=>{totals[s]=(totals[s]||0)+bonus.stats_all;});
+        break;
+      }
+    }
+  });
+
+  const entries=Object.entries(totals).filter(([,v])=>v>0);
+  if(!entries.length){
+    document.getElementById('equip-bonus-grid').innerHTML='<div class="empty" style="grid-column:1/-1">Aucun bonus</div>';
+    return;
+  }
+  document.getElementById('equip-bonus-grid').innerHTML=entries.map(([s,v])=>`
+    <div class="equip-bonus-block">
+      <div class="equip-bonus-val">+${v}</div>
+      <div class="equip-bonus-name">${STAT_ICONS_INV[s]||''} ${SL[s]||s}</div>
+    </div>`).join('');
+}
+
+function renderSets(){
+  const equipped=new Set(INV_DATA.equipped_assets||[]);
+  const activeSets=[];
+
+  Object.entries(ITEM_SETS).forEach(([setId,setDef])=>{
+    const count=setDef.items.filter(i=>equipped.has(i)).length;
+    if(count<1)return; // Afficher même avec 1 pièce si le joueur l'a
+    const thresholds=Object.keys(setDef.bonuses).map(Number).sort((a,b)=>a-b);
+    const activeThresh=thresholds.filter(t=>count>=t);
+    if(count>0){
+      activeSets.push({setId,setDef,count,thresholds,activeThresh});
+    }
+  });
+
+  // Trier : sets actifs (≥2 pièces) en premier
+  activeSets.sort((a,b)=>{
+    const aActive=a.count>=2?1:0,bActive=b.count>=2?1:0;
+    return bActive-aActive||(b.count-a.count);
+  });
+
+  if(!activeSets.length){
+    document.getElementById('sets-grid').innerHTML=`<div class='empty'>Aucune pièce de set dans l'inventaire</div>`;
+    return;
+  }
+
+  const rc={common:'#6b7280',uncommon:'#60a5fa',rare:'#a78bfa',epic:'#8B5CF6',legendary:'#fbbf24',mythic:'#f97316',unique:'#ffd60a',artifact:'#ef4444',mastercraft:'#ff006e'};
+
+  document.getElementById('sets-grid').innerHTML=activeSets.map(({setId,setDef,count,thresholds,activeThresh})=>{
+    const color=rc[setDef.rarity]||'#6b7280';
+    const isActive=count>=2;
+
+    const threshHtml=thresholds.map(t=>`
+      <span class="set-thresh ${activeThresh.includes(t)?'active':'inactive'}">${t}pc</span>`).join('');
+
+    const bonusHtml=activeThresh.map(t=>{
+      const b=setDef.bonuses[t]||setDef.bonuses[String(t)];
+      const parts=[];
+      if(b.stats)Object.entries(b.stats).forEach(([s,v])=>parts.push(`+${v} ${STAT_ICONS_INV[s]||s}`));
+      if(b.stats_all)parts.push(`+${b.stats_all} tous stats`);
+      if(b.buff_mult)Object.entries(b.buff_mult).forEach(([s,m])=>parts.push(`buffs ${s} ×${m}`));
+      if(b.buff_mult_all)parts.push(`buffs ×${b.buff_mult_all}`);
+      if(b.nerf_reduction)parts.push(`-${Math.round(b.nerf_reduction*100)}% nerfs`);
+      if(b.special)parts.push(`✦ Effet spécial`);
+      return parts.length?`<div style="color:var(--green);font-size:.42rem">${t}pc : ${parts.join(' · ')}</div>`:'';
+    }).join('');
+
+    const piecesHtml=setDef.items.map(id=>{
+      const have=equipped.has(id)||!!(INV_DATA.items||{})[id];
+      const it=ALL_ITEMS_DATA[id]||{};
+      return`<span class="set-piece ${have?'have':'missing'}">${e(it.name||id.replace(/_/g,' '))}</span>`;
+    }).join('');
+
+    return`<div class="set-card" style="border-left:3px solid ${color}${isActive?'':';opacity:.65'}">
+      <div class="set-header">
+        <span class="set-name" style="color:${color}">${e(setDef.name)}</span>
+        <span class="set-count" style="color:${isActive?'var(--green)':'var(--text3)'}">${count}/${setDef.items.length}</span>
+      </div>
+      <div class="set-thresholds">${threshHtml}</div>
+      <div class="set-bonus">${bonusHtml||'<span style="color:var(--text3)">Pas encore actif</span>'}</div>
+      <div class="set-items">${piecesHtml}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── EQUIP / UNEQUIP via Firestore ──
+async function toggleEquip(itemId){
+  if(!UID||!CHAR_ID)return;
+  const equipped=INV_DATA.equipped_assets||[];
+  const items=INV_DATA.items||{};
+  const it=ALL_ITEMS_DATA[itemId]||{};
+  const isEq=equipped.includes(itemId);
+  const key=`${UID}_${CHAR_ID}`;
+
+  try{
+    let newEquipped=[...equipped];
+    let newItems={...items};
+
+    if(isEq){
+      // Déséquiper
+      newEquipped=newEquipped.filter(id=>id!==itemId);
+      newItems[itemId]=(newItems[itemId]||0)+1;
+      await db.collection(C.INV).doc(key).set({equipped_assets:newEquipped,items:newItems},{merge:true});
+      INV_DATA.equipped_assets=newEquipped;
+      INV_DATA.items=newItems;
+      showEquipToast(`✓ ${it.name||itemId} déséquipé`);
+    } else {
+      // Équiper — vérifier les limites de slot
+      const slot=it.slot;
+      if(slot){
+        const def=SLOT_LIMITS[slot];
+        if(def){
+          const inSlot=equipped.filter(id=>(ALL_ITEMS_DATA[id]||{}).slot===slot).length;
+          if(inSlot>=def.max){
+            showEquipToast(`❌ Slot ${def.label} plein (${inSlot}/${def.max})`,true);
+            return;
+          }
+        }
+      }
+      if(!items[itemId]&&!equipped.includes(itemId)){showEquipToast('❌ Item introuvable',true);return;}
+      newEquipped=[...newEquipped,itemId];
+      if(newItems[itemId]>0){
+        newItems[itemId]-=1;
+        if(newItems[itemId]<=0)delete newItems[itemId];
+      }
+      await db.collection(C.INV).doc(key).set({equipped_assets:newEquipped,items:newItems},{merge:true});
+      INV_DATA.equipped_assets=newEquipped;
+      INV_DATA.items=newItems;
+      showEquipToast(`✓ ${it.name||itemId} équipé`);
+    }
+    renderInventory();
+  }catch(err){
+    console.error('[EQUIP]',err);
+    showEquipToast('❌ Erreur — réessaye',true);
+  }
+}
+
+function formatEffects(effects){
+  if(!effects)return'';
+  return Object.entries(effects).slice(0,2).map(([s,v])=>`+${v}${STAT_ICONS_INV[s]||s}`).join(' ');
+}
+
+function showEquipToast(msg,isError=false){
+  let t=document.getElementById('equip-toast');
+  if(!t){t=document.createElement('div');t.id='equip-toast';t.className='equip-toast';document.body.appendChild(t);}
+  t.textContent=msg;
+  t.className='equip-toast show'+(isError?' error':'');
+  clearTimeout(t._t);t._t=setTimeout(()=>{t.className='equip-toast';},2500);
+}
+
+// ── RENDER GACHA ──
+function renderGacha(){
+  const nav=PLAYER.navarites||0;
+  document.getElementById('gacha-nav-val').textContent=nav.toLocaleString();
+  const se=PITY.navarites_spent_epic||0,sl=PITY.navarites_spent_leg||0,streak=(PLAYER.consecutive_days||0)%3;
+  document.getElementById('pity-grid').innerHTML=`
+    <div class="pity-card">
+      <div class="pity-val" style="color:var(--violet)">${se}<span style="font-size:.7rem;color:var(--text3)">/${PITY_T.epic}</span></div>
+      <div class="pity-label">PITY ÉPIQUE</div>
+      <div class="pity-bar"><div class="pity-fill" style="width:${Math.min(100,se/PITY_T.epic*100)}%;background:var(--violet)"></div></div>
+    </div>
+    <div class="pity-card">
+      <div class="pity-val" style="color:var(--gold)">${sl}<span style="font-size:.7rem;color:var(--text3)">/${PITY_T.leg}</span></div>
+      <div class="pity-label">PITY LÉGENDAIRE</div>
+      <div class="pity-bar"><div class="pity-fill" style="width:${Math.min(100,sl/PITY_T.leg*100)}%;background:var(--gold)"></div></div>
+    </div>
+    <div class="pity-card">
+      <div class="pity-val" style="color:var(--green)">${streak}<span style="font-size:.7rem;color:var(--text3)">/3</span></div>
+      <div class="pity-label">JOURS STREAK</div>
+      <div class="pity-bar"><div class="pity-fill" style="width:${streak/3*100}%;background:var(--green)"></div></div>
+    </div>`;
+}
+
+// ── RENDER PARTY ──
+function renderParty(p){
+  const members=p.members||[],leader=p.leader_char_key||'';
+  document.getElementById('party-content').innerHTML=`
+    <div class="card"><div class="card-body">
+      <div style="font-family:var(--font-h);font-weight:700;font-size:1.1rem;color:#fff;margin-bottom:4px">${e(p.name||'Party sans nom')}</div>
+      <div style="font-family:var(--font-m);font-size:.48rem;letter-spacing:.1em;color:var(--text3);margin-bottom:16px">${members.length} membre${members.length>1?'s':''} · PP : ${p.pp||0}${p.status==='hidden'?' · 🔒 Cachée':''}</div>
+      <div class="sh" style="margin-bottom:12px"><span class="sh-num">—</span><span class="sh-title">Membres</span><div class="sh-line"></div></div>
+      <div class="party-members">${members.map(m=>`<div class="member-row"><span class="member-name">${e(m.char_name||m.char_key||'—')}</span>${m.char_key===leader?'<span class="member-leader">👑 Leader</span>':''}${m.hidden?'<span style="font-family:var(--font-m);font-size:.4rem;color:var(--text3)">Caché</span>':''}</div>`).join('')}</div>
+      ${p.log&&p.log.length?`<div class="sh" style="margin:16px 0 12px"><span class="sh-num">—</span><span class="sh-title">Journal récent</span><div class="sh-line"></div></div><div style="display:flex;flex-direction:column;gap:6px">${p.log.slice(-5).reverse().map(l=>`<div style="font-family:var(--font-m);font-size:.46rem;letter-spacing:.06em;color:var(--text3);padding:8px 12px;background:rgba(77,163,255,.02);border-radius:6px;border:1px solid rgba(77,163,255,.05)">${e(l)}</div>`).join('')}</div>`:''}
+    </div></div>`;
+}
+
+// ── RENDER PROGRESSION ──
+function renderProgression(){
+  if(!CHAR)return;
+  const totalXp=CHAR.xp||0;
+  const{level:lvl,cur:curXp,need:nextXp}=levelFromXp(totalXp);
+  const pct=Math.min(100,nextXp>0?Math.round(curXp/nextXp*100):100);
+  document.getElementById('prog-lvl').textContent=lvl;
+  document.getElementById('prog-xp').textContent=curXp.toLocaleString()+' / '+nextXp.toLocaleString()+' XP';
+  document.getElementById('prog-xp-labels').innerHTML=`<span>Niveau ${lvl}</span><span>${curXp.toLocaleString()} / ${nextXp.toLocaleString()} XP</span>`;
+  document.getElementById('prog-xp-fill').style.width=pct+'%';
+  document.getElementById('prog-xp-needed').textContent=lvl>=500?'Niveau maximum atteint':`Il reste ${Math.max(0,nextXp-curXp).toLocaleString()} XP pour le niveau ${lvl+1}`;
+  const sp=CHAR.available_stat_points||0;
+  document.getElementById('prog-sp-content').innerHTML=sp
+    ?`<div class="sp-banner">⚡ ${sp} point${sp>1?'s':''} de stat disponible${sp>1?'s':''}</div>`
+    :'<div class="empty">Aucun point de stat disponible pour le moment</div>';
+}
+
+// ── RENDER TITRES ──
+function renderTitles(d, defs){
+  const titles=d.titles||{},entries=Object.entries(titles);
+  const el=document.getElementById('titles-grid');
+  if(!el)return;
+  if(!entries.length){el.innerHTML='<div class="empty">Aucun titre obtenu</div>';return;}
+  el.innerHTML=entries.map(([id,t])=>{
+    const tier=t.current_tier||t.tier||0;
+    const def=defs&&defs[id];
+    // Chercher le nom dans la définition du tier actuel ou du set
+    const tierDef=def&&def.tiers&&def.tiers[tier];
+    const name=(tierDef&&tierDef.name)||(def&&def.name)||id.replace(/_/g,' ');
+    const desc=(tierDef&&tierDef.description)||(def&&def.description)||'';
+    return`<div class="title-card">
+      <div class="title-name">${e(name)}</div>
+      ${desc?`<div class="title-desc">${e(desc)}</div>`:''}
+      <div class="title-tier" style="color:${tCol(tier)}">Tier ${tier} — ${tLbl(tier)}</div>
+    </div>`;
+  }).join('');
+}
+function tCol(t){return['#6b7280','#60a5fa','#a78bfa','#fbbf24','#ef4444'][Math.min(t,4)]}
+function tLbl(t){return['Commun','Peu Commun','Rare','Épique','Légendaire'][Math.min(t,4)]||'?'}
+
+// ── RENDER COMPAGNONS ──
+function renderCompanions(cu,cfg){
+  const owned=cu.owned_companions||{},active=cu.active_companion,entries=Object.entries(owned);
+  document.getElementById('comp-content').innerHTML=entries.length
+    ?`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px">
+        ${entries.map(([id,cd])=>{
+          const form=cd.current_form||id,evos=cfg.evolutions||{},comps=cfg.companions||{};
+          const info=evos[form]||comps[form]||{};
+          const lvl=compLvl(cd.xp||0),isAct=id===active;
+          return`<div class="card" style="${isAct?'border-color:rgba(68,255,136,0.3)':''}"><div class="card-body">
+            ${isAct?'<span class="badge badge-green" style="display:inline-block;margin-bottom:10px">ACTIF</span>':''}
+            <div class="comp-name">${e(info.name||form||id)}</div>
+            <div class="comp-form">Forme : ${e(form)}</div>
+            <div class="comp-stats">
+              <div class="comp-stat"><div class="comp-stat-val">${lvl}</div><div class="comp-stat-label">NIVEAU</div></div>
+              <div class="comp-stat"><div class="comp-stat-val">${(cd.xp||0).toLocaleString()}</div><div class="comp-stat-label">XP</div></div>
+              <div class="comp-stat"><div class="comp-stat-val" style="color:${cd.synchronized?'var(--green)':'var(--text3)'}">${cd.synchronized?'✓':'✗'}</div><div class="comp-stat-label">SYNC</div></div>
+            </div>
+          </div></div>`;
+        }).join('')}
+      </div>`
+    :'<div class="empty">Aucun compagnon</div>';
+}
+function compLvl(xp){let l=1,t=0;while(t+100*l<=xp){t+=100*l;l++}return l}
+
+// ── RENDER SHOP ──
+function renderShop(shop){
+  const el=document.getElementById('shop-content');
+  if(!shop||!shop.name){el.innerHTML=`<div class="empty">Tu n'as pas de boutique.</div>`;return}
+  const open=shop.open!==false,items=Object.entries(shop.items||{});
+  el.innerHTML=`<div class="card"><div class="card-body">
+    <div class="shop-name">${e(shop.name)}</div>
+    ${shop.tagline?`<div class="shop-tagline">${e(shop.tagline)}</div>`:''}
+    <div style="display:inline-flex;align-items:center;gap:6px;font-family:var(--font-m);font-size:.48rem;letter-spacing:.1em;margin-bottom:16px">
+      <div style="width:7px;height:7px;border-radius:50%;background:${open?'var(--green)':'var(--red)'}"></div>
+      <span style="color:${open?'var(--green)':'var(--red)'}">${open?'OUVERTE':'FERMÉE'}</span>
+    </div>
+    ${items.length?`<div class="sh" style="margin-bottom:12px"><span class="sh-num">—</span><span class="sh-title">Items en vente (${items.length})</span><div class="sh-line"></div></div>
+      <div class="shop-items-grid">${items.map(([id,it])=>`<div class="shop-item"><span class="shop-item-icon">${it.emoji||'📦'}</span><div class="shop-item-name">${e(it.name||id)}</div><div class="shop-item-price">${it.price||0} Nav</div></div>`).join('')}</div>`
+      :'<div class="empty">Aucun item en vente</div>'}
+  </div></div>`;
+}
+
+// ── RENDER PARAMETRES ──
+function renderSettings(){
+  try{
+    const s=getSess()||{};
+    const infoEl=document.getElementById('settings-user-info');
+    const themeEl=document.getElementById('theme-current');
+    if(infoEl)infoEl.innerHTML=`ID Discord : <span style="color:var(--blue)">${s.id||'—'}</span><br>Username : <span style="color:var(--text)">${s.username||'—'}</span>`;
+    const theme=(PLAYER&&PLAYER.display_theme)||'purple';
+    if(themeEl)themeEl.textContent=theme;
+    document.querySelectorAll('.theme-opt').forEach(el=>el.classList.toggle('selected',el.dataset.theme===theme));
+  }catch(err){console.error('[SETTINGS]',err);}
+}
+
+async function setTheme(theme){
+  try{
+    await db.collection(C.PLAYERS).doc(UID).set({display_theme:theme},{merge:true});
+    PLAYER.display_theme=theme;renderSettings();
+    showToast('Thème mis à jour','success');
+  }catch(err){showToast('Erreur lors de la mise à jour','error')}
+}
+
+// ── TABS ──
+const LAZY={
+  inventaire:()=>{if(!INV_DATA)loadInventory()},
+  party:loadParty,
+  titres:loadTitles,
+  compagnons:loadCompanions,
+  monshop:loadMonShop,
+  shops:loadShops,
+  ushop:loadUshop,
+  progression:()=>{initAlloc();},
+  parametres:renderSettings,
+};
+function showTab(id){
+  console.log('[TAB] showTab:', id, '| LAZY fn:', typeof LAZY[id], '| UID:', UID);
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  const panel=document.getElementById('panel-'+id);
+  const btn=document.getElementById('tab-'+id);
+  if(!panel){console.error('[TAB] panel-'+id+' introuvable !');return;}
+  panel.classList.add('active');
+  if(btn)btn.classList.add('active');
+  if(LAZY[id]){
+    try{
+      const result=LAZY[id]();
+      if(result&&result.catch)result.catch(err=>console.error('[TAB] '+id+' error:',err));
+    }catch(err){console.error('[TAB] '+id+' sync error:',err);}
+  }else{
+    console.log('[TAB] Pas de LAZY pour:', id);
+  }
+}
+
+// ── UTILS ──
+// Formule XP exacte du bot (stats_common.py)
+// xp_needed_for_next_level(level) = 500 * level
+// total_xp_required_for_level(level) = 500 * (n*(n+1)/2) avec n=level-1
+function totalXpForLevel(lvl){
+  const n=Math.max(0,Math.floor(lvl)-1);
+  return 500*(n*(n+1)/2);
+}
+function xpForNextLevel(lvl){return 500*Math.max(1,Math.floor(lvl));}
+function levelFromXp(totalXp){
+  let xp=Math.max(0,totalXp),level=1;
+  while(level<500){
+    const need=xpForNextLevel(level);
+    if(xp<need)return{level,cur:xp,need};
+    xp-=need;level++;
+  }
+  return{level:500,cur:0,need:0};
+}
+// Legacy alias
+function lvlXP(lvl){return totalXpForLevel(lvl);}
+function e(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function showToast(msg,type='success',dur=3500){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className=`toast ${type} show`;
+  clearTimeout(t._t);t._t=setTimeout(()=>{t.className='toast'},dur);
+}
+window.addEventListener('scroll',()=>{document.getElementById('scroll-line').style.width=(window.scrollY/(document.body.scrollHeight-window.innerHeight)*100)+'%'});
+
+
+// ══════════════════════════════════════════════
+// MON SHOP (shop personnel du joueur)
+// ══════════════════════════════════════════════
+let MY_SHOP_DATA = null;
+
+async function loadMonShop(){
+  const el = document.getElementById('monshop-content');
+  if(!el) return;
+  if(!UID || !CHAR_ID){ el.innerHTML='<div class="empty">Aucun personnage actif</div>'; return; }
+  el.innerHTML='<div class="empty">Chargement...</div>';
+  try{
+    const snap = await db.collection(C.SHOPS).doc(`${UID}_${CHAR_ID}`).get();
+    MY_SHOP_DATA = snap.exists ? snap.data() : null;
+    renderMonShop();
+  }catch(err){ console.error('[MONSHOP]',err); el.innerHTML='<div class="empty">Erreur de chargement</div>'; }
+}
+
+function renderMonShop(){
+  const el = document.getElementById('monshop-content');
+  if(!el) return;
+
+  if(!MY_SHOP_DATA){
+    el.innerHTML=`
+      <div class="card"><div class="card-body" style="text-align:center;padding:40px 20px">
+        <div style="font-size:3rem;margin-bottom:16px">🏪</div>
+        <div style="font-family:var(--font-b);font-weight:700;font-size:1.1rem;color:var(--text);margin-bottom:8px">Pas encore de boutique</div>
+        <div style="font-family:var(--font-m);font-size:.5rem;letter-spacing:.08em;color:var(--text3)">Utilise <span style="color:var(--blue)">/char_shop_create</span> dans Discord pour créer ta boutique</div>
+      </div></div>`;
+    return;
+  }
+
+  const s = MY_SHOP_DATA;
+  const items = s.items || {};
+  const entries = Object.entries(items);
+  const statusColor = s.open ? 'var(--green)' : 'var(--red)';
+  const statusLabel = s.open ? '● OUVERT' : '● FERMÉ';
+
+  el.innerHTML=`
+    <div class="card" style="margin-bottom:20px"><div class="card-body">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div style="font-family:var(--font-h);font-weight:800;font-size:1.4rem;color:var(--text)">${e(s.name||'Mon Shop')}</div>
+        <span style="font-family:var(--font-m);font-size:.48rem;letter-spacing:.1em;color:${statusColor}">${statusLabel}</span>
+      </div>
+      <div style="font-family:var(--font-m);font-size:.52rem;letter-spacing:.06em;color:var(--text3);margin-bottom:16px">${e(s.tagline||'Aucune accroche')}</div>
+      <div style="display:flex;gap:24px;flex-wrap:wrap">
+        <div><div style="font-family:var(--font-h);font-weight:800;font-size:1.4rem;color:var(--blue)">${entries.length}</div><div style="font-family:var(--font-m);font-size:.42rem;letter-spacing:.1em;color:var(--text3)">ARTICLES EN VENTE</div></div>
+        <div><div style="font-family:var(--font-h);font-weight:800;font-size:1.4rem;color:var(--gold)">${(s.sales_log||[]).length}</div><div style="font-family:var(--font-m);font-size:.42rem;letter-spacing:.1em;color:var(--text3)">VENTES RÉCENTES</div></div>
+      </div>
+      <div style="margin-top:12px;font-family:var(--font-m);font-size:.44rem;letter-spacing:.06em;color:var(--text3)">Pour modifier ton shop (ajouter/retirer des articles, ouvrir/fermer) utilise les commandes Discord : <span style="color:var(--blue)">/char_shop_add</span>, <span style="color:var(--blue)">/char_shop_remove</span>, <span style="color:var(--blue)">/char_shop_open</span></div>
+    </div></div>
+
+    ${entries.length ? `
+    <div class="card"><div class="card-body">
+      <div class="sh" style="margin-bottom:14px"><span class="sh-num">—</span><span class="sh-title">Articles en vente</span><div class="sh-line"></div></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px">
+        ${entries.map(([item_id, si])=>{
+          const it = ALL_ITEMS_DATA[item_id] || {};
+          const price = si.price || {};
+          const effects = it.stat_effects || it.stats || {};
+          const effStr = Object.entries(effects).slice(0,2).map(([s,v])=>`+${v} ${STAT_ICONS_INV[s]||s}`).join(' ');
+          const rarity = (it.rarity||'common').toLowerCase();
+          const rc = RARITY_COLORS[rarity]||'#6b7280';
+          return `<div class="shop-item-card rarity-${rarity}">
+            <div class="shop-item-top">
+              <span class="shop-item-icon">${it.emoji||'📦'}</span>
+              <div class="shop-item-info">
+                <div class="shop-item-name" style="color:${rc}">${e(it.name||item_id)}</div>
+                ${effStr?`<div class="shop-item-effects">${effStr}</div>`:''}
+                <div class="shop-item-qty">${si.qty===-1||si.qty===undefined?'∞':'×'+si.qty} en stock</div>
+              </div>
+            </div>
+            <div class="shop-item-price">${formatShopPrice(price)}</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div></div>` : '<div class="empty">Aucun article en vente — utilise <code>/char_shop_add</code></div>'}
+
+    ${s.sales_log && s.sales_log.length ? `
+    <div class="card" style="margin-top:16px"><div class="card-body">
+      <div class="sh" style="margin-bottom:14px"><span class="sh-num">—</span><span class="sh-title">Dernières ventes</span><div class="sh-line"></div></div>
+      ${s.sales_log.slice(-5).reverse().map(log=>`
+        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(77,163,255,0.06);font-family:var(--font-m);font-size:.48rem">
+          <span style="color:var(--text2)">${e(log.item_name||log.item_id||'Item')}</span>
+          <span style="color:var(--gold)">${formatShopPrice(log.price||{})}</span>
+        </div>`).join('')}
+    </div></div>` : ''}
+  `;
+}
+
+// ══════════════════════════════════════════════
+// ALLOCATION DES STATS
+// ══════════════════════════════════════════════
+const ALLOC_STATS=[
+  {id:'strength',label:'Force',icon:'⚔️'},
+  {id:'agility',label:'Agilité',icon:'💨'},
+  {id:'speed',label:'Vitesse',icon:'🏃'},
+  {id:'intelligence',label:'Intelligence',icon:'🧠'},
+  {id:'mana',label:'Mana',icon:'✨'},
+  {id:'resistance',label:'Résistance',icon:'🛡️'},
+  {id:'charisma',label:'Charisme',icon:'👑'},
+];
+let ALLOC_PENDING={strength:0,agility:0,speed:0,intelligence:0,mana:0,resistance:0,charisma:0};
+let ALLOC_MULT=1;
+let ALLOC_AVAIL=0;
+
+function initAlloc(){
+  if(!CHAR)return;
+  ALLOC_AVAIL=parseInt(CHAR.available_stat_points||CHAR.unallocated_stat_points||0);
+  ALLOC_PENDING={strength:0,agility:0,speed:0,intelligence:0,mana:0,resistance:0,charisma:0};
+  renderAllocStats();
+}
+
+function renderAllocStats(){
+  const stats=CHAR?CHAR.stats||{}:{};
+  const aura=CHAR&&CHAR.aura_enabled;
+  const allocated=Object.values(ALLOC_PENDING).reduce((a,b)=>a+b,0);
+  const left=ALLOC_AVAIL-allocated;
+  const ptsEl=document.getElementById('alloc-pts-left');
+  const confirmEl=document.getElementById('alloc-confirm-btn');
+  if(ptsEl)ptsEl.textContent=left;
+  if(confirmEl)confirmEl.disabled=allocated===0||left<0;
+  const preview=document.getElementById('alloc-preview-card');
+  const previewEl=document.getElementById('alloc-preview');
+  if(allocated>0&&preview&&previewEl){
+    preview.style.display='block';
+    previewEl.innerHTML=ALLOC_STATS.filter(s=>ALLOC_PENDING[s.id]>0)
+      .map(s=>`<div style="display:flex;justify-content:space-between;padding:4px 0;font-family:var(--font-m);font-size:.5rem"><span style="color:var(--text2)">${s.icon} ${s.label}</span><span style="color:var(--green)">+${ALLOC_PENDING[s.id]}</span></div>`).join('');
+  } else if(preview){preview.style.display='none';}
+  const auraStats=aura?[...ALLOC_STATS,{id:'aura',label:'Aura',icon:'🌟'}]:ALLOC_STATS;
+  const listEl=document.getElementById('alloc-stats-list');
+  if(!listEl)return;
+  listEl.innerHTML=auraStats.map(s=>{
+    const cur=parseInt(stats[s.id]||0);
+    const pend=ALLOC_PENDING[s.id]||0;
+    const canAdd=left>=ALLOC_MULT;
+    const canSub=pend>0;
+    return`<div class="alloc-stat-row">
+      <span class="alloc-stat-icon">${s.icon}</span>
+      <span class="alloc-stat-name">${s.label}</span>
+      <span class="alloc-stat-val">${cur}</span>
+      <span class="alloc-stat-pending" style="color:${pend>0?'var(--green)':'var(--text3)'}">${pend>0?'+'+pend:''}</span>
+      <div class="alloc-btns">
+        <button class="alloc-btn minus" onclick="addAllocStat('${s.id}',-1)" ${canSub?'':'disabled'}>−</button>
+        <button class="alloc-btn" onclick="addAllocStat('${s.id}',1)" ${canAdd?'':'disabled'}>+</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function setAllocMult(m){
+  ALLOC_MULT=m;
+  document.querySelectorAll('.alloc-mult-btn').forEach(b=>b.classList.toggle('active',b.id==='amult-'+m));
+  renderAllocStats();
+}
+
+function addAllocStat(stat,dir){
+  const allocated=Object.values(ALLOC_PENDING).reduce((a,b)=>a+b,0);
+  const left=ALLOC_AVAIL-allocated;
+  if(dir>0){const add=Math.min(ALLOC_MULT,left);if(add<=0)return;ALLOC_PENDING[stat]=(ALLOC_PENDING[stat]||0)+add;}
+  else{const sub=Math.min(ALLOC_MULT,ALLOC_PENDING[stat]||0);if(sub<=0)return;ALLOC_PENDING[stat]-=sub;}
+  renderAllocStats();
+}
+
+function resetAlloc(){Object.keys(ALLOC_PENDING).forEach(k=>ALLOC_PENDING[k]=0);renderAllocStats();}
+
+async function confirmAlloc(){
+  if(!CHAR_ID||!UID)return;
+  const allocated=Object.values(ALLOC_PENDING).reduce((a,b)=>a+b,0);
+  if(allocated===0)return;
+  const btn=document.getElementById('alloc-confirm-btn');
+  btn.disabled=true;btn.textContent='Sauvegarde...';
+  try{
+    // Copie profonde des stats pour éviter les mutations
+    const stats=JSON.parse(JSON.stringify(CHAR.stats||{}));
+    Object.entries(ALLOC_PENDING).forEach(([stat,val])=>{
+      if(val>0) stats[stat]=(parseInt(stats[stat]||0)+val);
+    });
+    const newAvail=Math.max(0,ALLOC_AVAIL-allocated);
+    // Écriture Firestore
+    await db.collection(C.CHARS).doc(CHAR_ID).set(
+      {stats, available_stat_points:newAvail, unallocated_stat_points:newAvail},
+      {merge:true}
+    );
+    // Mise à jour locale
+    CHAR.stats=stats;
+    CHAR.available_stat_points=newAvail;
+    CHAR.unallocated_stat_points=newAvail;
+    ALLOC_AVAIL=newAvail;
+    Object.keys(ALLOC_PENDING).forEach(k=>{ALLOC_PENDING[k]=0;});
+    // UI feedback
+    btn.textContent='✓ Appliqué';
+    btn.style.background='var(--green)';
+    btn.style.color='#020713';
+    // Re-render sans toucher au bouton (le setTimeout s'en charge)
+    renderAllocStats();
+    renderFullChar();
+    renderProgression();
+    showEquipToast('✓ Stats allouées avec succès !');
+    setTimeout(()=>{
+      const b=document.getElementById('alloc-confirm-btn');
+      if(b){b.style.background='';b.style.color='';b.textContent="Confirmer l'allocation";b.disabled=true;}
+    },2500);
+  }catch(err){
+    console.error('[ALLOC]',err);
+    const b=document.getElementById('alloc-confirm-btn');
+    if(b){b.disabled=false;b.textContent="Confirmer l'allocation";}
+    showEquipToast('❌ Erreur Firestore — vérifie les rules',true);
+  }
+}
+
+// ══════════════════════════════════════════════
+// SHOPS DES JOUEURS
+// ══════════════════════════════════════════════
+let ALL_SHOPS_DATA=[];
+let ACTIVE_SHOP_KEY=null;
+
+async function loadShops(){
+  const listEl=document.getElementById('shops-list');
+  if(!listEl)return;
+  try{
+    const snap=await db.collection(C.SHOPS).get();
+    ALL_SHOPS_DATA=[];
+    snap.forEach(doc=>{const d=doc.data();if(d.open&&Object.keys(d.items||{}).length>0)ALL_SHOPS_DATA.push({key:doc.id,...d});});
+    renderShopsList();
+  }catch(err){console.error('[SHOPS]',err);listEl.innerHTML='<div class="empty">Erreur de chargement</div>';}
+}
+
+function renderShopsList(){
+  const listEl=document.getElementById('shops-list');if(!listEl)return;
+  if(!ALL_SHOPS_DATA.length){listEl.innerHTML='<div class="empty">Aucun shop ouvert</div>';return;}
+  listEl.innerHTML=ALL_SHOPS_DATA.map(s=>`
+    <div class="shop-list-item${ACTIVE_SHOP_KEY===s.key?' active':''}" onclick="selectShop('${s.key}')">
+      <div class="shop-list-dot open"></div>
+      <div><div class="shop-list-name">${e(s.name||s.key)}</div><div class="shop-list-owner">${e(s.tagline||'')}</div></div>
+    </div>`).join('');
+}
+
+function selectShop(key){
+  ACTIVE_SHOP_KEY=key;renderShopsList();
+  const shop=ALL_SHOPS_DATA.find(s=>s.key===key);
+  if(shop)renderShopDetail(shop);
+}
+
+function renderShopDetail(shop){
+  const det=document.getElementById('shop-detail');if(!det)return;
+  const entries=Object.entries(shop.items||{});
+  if(!entries.length){det.innerHTML='<div class="empty">Ce shop est vide</div>';return;}
+  det.innerHTML=`
+    <div class="shop-detail-header">
+      <div class="shop-detail-name">${e(shop.name||'Shop')}</div>
+      <div class="shop-detail-tagline">${e(shop.tagline||'')}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px">
+      ${entries.map(([item_id,si])=>{
+        const it=ALL_ITEMS_DATA[item_id]||{};
+        const price=si.price||{};
+        const effects=it.stat_effects||it.stats||{};
+        const effStr=Object.entries(effects).slice(0,2).map(([s,v])=>`+${v} ${STAT_ICONS_INV[s]||s}`).join(' ');
+        return`<div class="shop-item-card">
+          <div class="shop-item-top">
+            <span class="shop-item-icon">${it.emoji||'📦'}</span>
+            <div class="shop-item-info">
+              <div class="shop-item-name">${e(it.name||item_id)}</div>
+              ${effStr?`<div class="shop-item-effects">${effStr}</div>`:''}
+              <div class="shop-item-qty">${si.qty===-1||si.qty===undefined?'∞':'×'+si.qty} en stock</div>
+            </div>
+          </div>
+          <div class="shop-item-price">${formatShopPrice(price)}</div>
+          <button class="shop-buy-btn" onclick="buyFromPlayerShop('${shop.key}','${item_id}')">Acheter</button>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+async function buyFromPlayerShop(shopKey,itemId){
+  if(!UID||!CHAR_ID){showEquipToast('❌ Connecte-toi',true);return;}
+  const shop=ALL_SHOPS_DATA.find(s=>s.key===shopKey);if(!shop)return;
+  const si=shop.items[itemId];const it=ALL_ITEMS_DATA[itemId]||{};
+  const price=si.price||{};const charKey=`${UID}_${CHAR_ID}`;
+  try{
+    const[econSnap,invSnap]=await Promise.all([db.collection(C.ECONOMY).doc(charKey).get(),db.collection(C.INV).doc(charKey).get()]);
+    const personal=Object.assign({},(econSnap.exists?econSnap.data().personal:null)||{});
+    for(const[cur,amt] of Object.entries(price)){if((personal[cur]||0)<amt){showEquipToast(`❌ Pas assez de ${formatCurLabel(cur)}`,true);return;}}
+    for(const[cur,amt] of Object.entries(price)){personal[cur]=(personal[cur]||0)-amt;}
+    const invItems=Object.assign({},(invSnap.exists?invSnap.data().items:null)||{});
+    invItems[itemId]=(invItems[itemId]||0)+1;
+    const newShopItems=Object.assign({},shop.items);
+    if(si.qty!==-1&&si.qty!==undefined){newShopItems[itemId]={...si,qty:si.qty-1};if(newShopItems[itemId].qty<=0)delete newShopItems[itemId];}
+    const sellerSnap=await db.collection(C.ECONOMY).doc(shopKey).get();
+    const sellerPersonal=Object.assign({},(sellerSnap.exists?sellerSnap.data().personal:null)||{});
+    for(const[cur,amt] of Object.entries(price)){sellerPersonal[cur]=(sellerPersonal[cur]||0)+amt;}
+    await Promise.all([
+      db.collection(C.ECONOMY).doc(charKey).set({personal},{merge:true}),
+      db.collection(C.INV).doc(charKey).set({items:invItems},{merge:true}),
+      db.collection(C.SHOPS).doc(shopKey).set({items:newShopItems},{merge:true}),
+      db.collection(C.ECONOMY).doc(shopKey).set({personal:sellerPersonal},{merge:true}),
+    ]);
+    shop.items=newShopItems;
+    if(!newShopItems||!Object.keys(newShopItems).length)ALL_SHOPS_DATA=ALL_SHOPS_DATA.filter(s=>s.key!==shopKey);
+    renderShopsList();selectShop(shopKey);
+    showEquipToast(`✓ ${it.name||itemId} acheté !`);
+  }catch(err){console.error('[BUY_SHOP]',err);showEquipToast('❌ Erreur achat',true);}
+}
+
+function formatShopPrice(price){
+  if(!price||!Object.keys(price).length)return'Gratuit';
+  return Object.entries(price).map(([c,a])=>`${a} ${formatCurLabel(c)}`).join(' + ');
+}
+function formatCurLabel(c){const s=c.replace('_kanite','');return s.charAt(0).toUpperCase()+s.slice(1)+' K';}
+
+// ══════════════════════════════════════════════
+// UNIVERSAL SHOP
+// ══════════════════════════════════════════════
+let USHOP_CAT='all';
+let USHOP_ITEMS={};
+
+async function loadUshop(){
+  if(Object.keys(USHOP_ITEMS).length)return;
+  const gridEl=document.getElementById('ushop-grid');if(!gridEl)return;
+  try{
+    const snap=await db.collection(C.CFG).doc('items').get();
+    if(!snap.exists){gridEl.innerHTML='<div class="empty">Shop indisponible</div>';return;}
+    const d=snap.data();
+    USHOP_ITEMS={};
+    for(const sec of['items','equipment','food_items','consumable_items']){
+      if(d[sec]&&typeof d[sec]==='object'){
+        Object.entries(d[sec]).forEach(([id,it])=>{if(it&&it.price)USHOP_ITEMS[id]={...it,_section:sec};});
+      }
+    }
+    renderUshop();renderUshopBalance();
+  }catch(err){console.error('[USHOP]',err);gridEl.innerHTML='<div class="empty">Erreur chargement</div>';}
+}
+
+async function renderUshopBalance(){
+  if(!UID||!CHAR_ID)return;
+  const balEl=document.getElementById('ushop-balance');if(!balEl)return;
+  try{
+    const snap=await db.collection(C.ECONOMY).doc(`${UID}_${CHAR_ID}`).get();
+    const personal=snap.exists?(snap.data().personal||{}):{};
+    const currencies=['bronze_kanite','silver_kanite','gold_kanite','platinum_kanite'];
+    balEl.innerHTML=currencies.filter(c=>(personal[c]||0)>0)
+      .map(c=>`<div class="ushop-bal-chip">${personal[c].toLocaleString()} ${formatCurLabel(c)}</div>`).join('')
+      ||'<div style="font-family:var(--font-m);font-size:.5rem;color:var(--text3)">Solde vide</div>';
+  }catch(err){}
+}
+
+function showUshopCat(cat){
+  USHOP_CAT=cat;
+  document.querySelectorAll('.ushop-cat').forEach(b=>b.classList.toggle('active',b.id==='ucatbtn-'+cat));
+  renderUshop();
+}
+
+function renderUshop(){
+  const gridEl=document.getElementById('ushop-grid');if(!gridEl)return;
+  const CAT_SECTIONS={equipment:['equipment'],consumable:['consumable_items'],food:['food_items'],other:['items']};
+  const allowed=USHOP_CAT==='all'?null:CAT_SECTIONS[USHOP_CAT]||null;
+  const entries=Object.entries(USHOP_ITEMS).filter(([,it])=>!allowed||allowed.includes(it._section));
+  if(!entries.length){gridEl.innerHTML='<div class="empty">Aucun item</div>';return;}
+  gridEl.innerHTML=entries.map(([id,it])=>{
+    const rawPrice=it.price||{};
+    let priceStr='—';
+    if(rawPrice.amount&&rawPrice.currency){priceStr=`${rawPrice.amount} ${formatCurLabel(rawPrice.currency)}`;}
+    else if(typeof rawPrice==='object'){priceStr=Object.entries(rawPrice).filter(([k])=>!['currency','amount','secondary_currency','secondary_amount'].includes(k)).map(([c,a])=>`${a} ${formatCurLabel(c)}`).join(' + ')||'—';}
+    const rarity=(it.rarity||'common').toLowerCase();
+    const rc=RARITY_COLORS[rarity]||'#6b7280';
+    const effects=it.stat_effects||it.stats||{};
+    const effStr=Object.entries(effects).slice(0,3).map(([s,v])=>`+${v} ${STAT_ICONS_INV[s]||s}`).join(' ');
+    return`<div class="ushop-card rarity-${rarity}">
+      <span style="font-size:1.8rem;display:block;margin-bottom:6px">${it.emoji||'📦'}</span>
+      <div style="font-family:var(--font-b);font-weight:700;font-size:.82rem;color:${rc};margin-bottom:4px">${e(it.name||id)}</div>
+      ${it.slot?`<div style="font-family:var(--font-m);font-size:.42rem;letter-spacing:.08em;color:var(--text3)">${SLOT_LIMITS[(it.slot||'').toLowerCase()]?.label||it.slot}</div>`:''}
+      ${effStr?`<div style="font-family:var(--font-m);font-size:.42rem;color:var(--green);margin:4px 0">${effStr}</div>`:''}
+      <div style="font-family:var(--font-h);font-weight:700;font-size:.9rem;color:var(--gold);margin:8px 0">${priceStr}</div>
+      <button class="shop-buy-btn" onclick="buyFromUshop('${id}')">Acheter</button>
+    </div>`;
+  }).join('');
+}
+
+async function buyFromUshop(itemId){
+  if(!UID||!CHAR_ID){showEquipToast('❌ Connecte-toi',true);return;}
+  const it=USHOP_ITEMS[itemId];if(!it)return;
+  const rawPrice=it.price||{};
+  let price={};
+  if(rawPrice.amount&&rawPrice.currency){price[rawPrice.currency]=rawPrice.amount;}
+  else{Object.entries(rawPrice).forEach(([k,v])=>{if(!['currency','amount','secondary_currency','secondary_amount'].includes(k))price[k]=v;});}
+  const charKey=`${UID}_${CHAR_ID}`;
+  try{
+    const[econSnap,invSnap]=await Promise.all([db.collection(C.ECONOMY).doc(charKey).get(),db.collection(C.INV).doc(charKey).get()]);
+    const personal=Object.assign({},(econSnap.exists?econSnap.data().personal:null)||{});
+    for(const[cur,amt] of Object.entries(price)){if((personal[cur]||0)<amt){showEquipToast(`❌ Pas assez de ${formatCurLabel(cur)}`,true);return;}}
+    for(const[cur,amt] of Object.entries(price)){personal[cur]=(personal[cur]||0)-amt;}
+    const invItems=Object.assign({},(invSnap.exists?invSnap.data().items:null)||{});
+    invItems[itemId]=(invItems[itemId]||0)+1;
+    await Promise.all([
+      db.collection(C.ECONOMY).doc(charKey).set({personal},{merge:true}),
+      db.collection(C.INV).doc(charKey).set({items:invItems},{merge:true}),
+    ]);
+    renderUshopBalance();showEquipToast(`✓ ${it.name||itemId} acheté !`);
+  }catch(err){console.error('[USHOP_BUY]',err);showEquipToast('❌ Erreur achat',true);}
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+<script src="js/page-transition.js"></script>
+</body>
+</html>
