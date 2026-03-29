@@ -1,313 +1,284 @@
-/* ═══════════════════════════════════════════════════════════════════════
-   docs/js/jaharta-card.js — Web Component <jaharta-card>
-   ═══════════════════════════════════════════════════════════════════════
-   Encapsule toute la logique de rendu d'une carte personnage.
-   Avant : buildCard(ch) construisait ~80 lignes de DOM à la main.
-   Après : une seule ligne — el.fiche = data — et la carte apparaît.
+/* jaharta-card.js — Web Component <jaharta-card>
+   Design : fidele a la preview + modifications demandees
+   - Tilt 3D + reflet speculaire JS (argente / prismatique S+)
+   - body opacity 15%, blur 2px
+   - Neon hover couleur de race (--rc)
+   - Aucune limite d affichage race/raceSpecific
+   - Titre POUVOIRS sans emoji
+   - Underline sur le NOM couleur de race
+   - Badge rang+niveau preserve identique preview */
 
-   UTILISATION dans fiches.html (module ESM) :
-     import '/js/jaharta-card.js';              // enregistre le custom element
-     const el = document.createElement('jaharta-card');
-     el.fiche = { id, firstname, lastname, race, rank, stats, ... };
-     container.appendChild(el);
+const HIGH_RANKS = ["S","SS","SSS","X","T","G","G+","Z"];
+const MAX_TILT   = 6;
+const SCRAMBLE   = "アイウエオカキクケコΨΩΣΔЯЖЩЦABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-   DESIGN — Light DOM (pas de Shadow DOM) :
-     Le composant rend ses enfants directement dans le DOM principal.
-     Avantages :
-       · Hérite automatiquement de jaharta.css (pas de duplication CSS)
-       · Les CSS variables (--cyan, --gold…) fonctionnent sans config
-       · Pas de flash de contenu non stylé
-     Inconvénients acceptés :
-       · Moins d'encapsulation (ok pour ce projet mono-équipe)
+function bindTilt(card) {
+  const isPrismatic = HIGH_RANKS.includes(card.dataset.rank);
+  card.addEventListener("mousemove", e => {
+    const r  = card.getBoundingClientRect();
+    const nx = (e.clientX - r.left  - r.width  / 2) / (r.width  / 2);
+    const ny = (r.height / 2 - (e.clientY - r.top)) / (r.height / 2);
+    card.style.transform =
+      "perspective(800px) rotateX("+(ny*MAX_TILT).toFixed(2)+"deg) "+
+      "rotateY("+(nx*MAX_TILT).toFixed(2)+"deg) scale(1.02)";
+    const reflet = card.querySelector(".card-reflet");
+    if (reflet) {
+      const lx = 50 + nx * 35;
+      const ly = 50 - ny * 35;
+      reflet.style.background = isPrismatic
+        ? "radial-gradient(ellipse 55% 40% at "+lx+"% "+ly+"%,rgba(255,80,80,.08) 0%,rgba(255,200,50,.07) 22%,rgba(80,255,130,.06) 44%,rgba(77,163,255,.08) 66%,rgba(180,80,255,.07) 88%,transparent 100%)"
+        : "radial-gradient(ellipse 55% 40% at "+lx+"% "+ly+"%,rgba(255,255,255,.10) 0%,rgba(255,255,255,.04) 45%,transparent 75%)";
+    }
+  });
+  card.addEventListener("mouseleave", () => {
+    card.style.transform = "";
+    const reflet = card.querySelector(".card-reflet");
+    if (reflet) reflet.style.background = "";
+  });
+}
 
-   DÉPENDANCES (chargées AVANT ce fichier via <script src>) :
-     window.RACES          → constants.js
-     window.RANKS          → constants.js
-     window.sanitize()     → utils.js
-     window._isAdmin       → module Firebase fiches.html
-     window.openEditFiche  → module Firebase fiches.html
-     window.deleteFicheById→ module Firebase fiches.html
-   ═══════════════════════════════════════════════════════════════════════ */
+function bindScramble(card) {
+  const targets = [card.querySelector(".card-fn"), card.querySelector(".card-ln")];
+  card.addEventListener("mouseenter", () => {
+    targets.forEach(el => {
+      if (!el) return;
+      const orig = el.dataset.orig || el.textContent.trim();
+      el.dataset.orig = orig;
+      el.style.fontFamily = "Share Tech Mono, monospace";
+      let iter = 0;
+      clearInterval(el._scrI);
+      el._scrI = setInterval(() => {
+        el.textContent = orig.split("").map((c, i) => {
+          if (c === " ") return " ";
+          if (i < iter) return orig[i];
+          return SCRAMBLE[Math.floor(Math.random() * SCRAMBLE.length)];
+        }).join("");
+        if (iter >= orig.length) { clearInterval(el._scrI); el.style.fontFamily = ""; }
+        iter += 0.5;
+      }, 35);
+    });
+  });
+}
 
 class JahartaCard extends HTMLElement {
-
   constructor() {
     super();
-    /* display:contents = l'élément est transparent pour le layout.
-       Sa div enfante .rp-card participe directement à la CSS grid. */
-    this.style.display = 'contents';
+    this.style.display = "contents";
     this._data = null;
   }
+  set fiche(data) { this._data = data; if (this.isConnected) this._render(); }
+  get fiche() { return this._data; }
+  connectedCallback() { if (this._data) this._render(); }
 
-  /* ── API publique : assigner les données déclenche le rendu ── */
-  set fiche(data) {
-    this._data = data;
-    /* Ne rendre que si l'élément est dans le DOM (connectedCallback) */
-    if (this.isConnected) this._render();
-  }
-
-  get fiche() {
-    return this._data;
-  }
-
-  /* ── Cycle de vie : appelé quand l'élément est inséré dans le DOM ── */
-  connectedCallback() {
-    if (this._data) this._render();
-  }
-
-  /* ════════════════════════════════════════════════════════════════════
-     RENDER — Construit tout le DOM de la carte
-     ════════════════════════════════════════════════════════════════════ */
   _render() {
-    const ch = this._data;
+    const ch          = this._data;
+    const RACES       = window.RACES || {};
+    const RANKS       = window.RANKS || {};
+    const rc          = RACES[ch.race] || { color: "#4DA3FF", label: ch.race || "?" };
+    const rk          = RANKS[ch.rank] || { color: "#6b7280" };
+    const raceColor   = rc.color;
+    const rankColor   = rk.color;
+    const rank        = ch.rank || "F";
+    const level       = ch.level || 0;
+    const isPrismatic = HIGH_RANKS.includes(rank);
 
-    /* Accès aux données globales (chargées par constants.js) */
-    const RACES = window.RACES || {};
-    const RANKS = window.RANKS || {};
-    const san   = window.sanitize || (s => String(s || '').trim().slice(0, 2000));
+    const card = document.createElement("div");
+    card.className = "rp-card" + (isPrismatic ? " prismatic" : "");
+    card.dataset.race  = ch.race || "";
+    card.dataset.rank  = rank;
+    card.dataset.level = level;
+    card.style.setProperty("--rc", raceColor);
 
-    const rc = RACES[ch.race] || { color: '#00c8ff', label: ch.race || '?' };
-    const rk = RANKS[ch.rank] || RANKS.F || { color: '#6b7280' };
+    let totalStats = 0;
+    const stats = ch.stats || {};
+    ["str","agi","spd","int","mana","res","cha","aura"].forEach(k => { totalStats += (stats[k]||0); });
+    card.dataset.totalStats = totalStats;
 
-    /* ── Racine : div.rp-card (styles dans jaharta.css) ── */
-    const card = document.createElement('div');
-    card.className    = 'rp-card';
-    card.dataset.race   = ch.race  || '';  /* pour filterRace() */
-    card.dataset.rank   = ch.rank  || '';  /* pour filterRank() */
+    /* Reflet */
+    const reflet = document.createElement("div");
+    reflet.className = "card-reflet";
+    card.appendChild(reflet);
 
-    /* ──────────────────────────────
-       PHOTO + éléments superposés
-       ────────────────────────────── */
-    const photo = document.createElement('div');
-    photo.className = 'card-photo';
+    /* Glow */
+    const glow = document.createElement("div");
+    glow.className = "card-glow";
+    glow.style.boxShadow = "0 0 30px "+raceColor+"15,0 0 60px "+raceColor+"08";
+    card.appendChild(glow);
 
-    /* Bande colorée (race) */
-    const stripe = document.createElement('div');
-    stripe.className = 'card-stripe';
-    stripe.style.background = `linear-gradient(90deg,${rc.color},${rc.color}20)`;
+    /* PHOTO */
+    const photo = document.createElement("div");
+    photo.className = "card-photo";
+
+    const stripe = document.createElement("div");
+    stripe.className = "card-stripe";
+    stripe.style.background = "linear-gradient(90deg,"+raceColor+","+raceColor+"20)";
     photo.appendChild(stripe);
 
-    /* Image ou placeholder initiales */
     if (ch.photoUrl || ch.photo) {
-      const img    = document.createElement('img');
-      img.src      = ch.photoUrl || ch.photo;
-      img.alt      = ch.firstname || '';
-      img.loading  = 'lazy';
-      img.style.cssText =
-        'position:absolute;inset:0;width:100%;height:100%;' +
-        'object-fit:cover;object-position:top center;z-index:1;';
-      img.onerror = () => img.remove();
+      const img   = document.createElement("img");
+      img.src     = ch.photoUrl || ch.photo;
+      img.alt     = ch.firstname || "";
+      img.loading = "lazy";
       photo.appendChild(img);
     } else {
-      const ph      = document.createElement('div');
-      ph.className  = 'card-photo-ph';
-      ph.style.color = rc.color;
-      ph.textContent = (ch.firstname?.[0] || '') + (ch.lastname?.[0] || '');
+      const ph = document.createElement("div");
+      ph.style.cssText = "width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-family:var(--font-h);font-size:2.5rem;font-weight:900;color:"+raceColor+";opacity:0.4";
+      ph.textContent = (ch.firstname?.[0]||"")+( ch.lastname?.[0]||"");
       photo.appendChild(ph);
     }
 
-    /* Overlay dégradé bas */
-    const ov = document.createElement('div');
-    ov.className = 'card-photo-ov';
+    const ov = document.createElement("div");
+    ov.className = "card-photo-ov";
     photo.appendChild(ov);
 
-    /* ── Badge Rang (haut-droite) ── */
-    const badge = document.createElement('div');
-    badge.className = 'rank-badge';
-    badge.style.color = rk.color;
+    /* Badge rang+niveau — identique preview */
+    const badge = document.createElement("div");
+    badge.className = "rank-badge";
+    badge.style.color = rankColor;
+    if (isPrismatic) badge.style.animation = "rankPulse 2.5s infinite";
 
-    const bv = document.createElement('div');
-    bv.className = 'rb-val' + (ch.rank === 'SSS' ? ' sm' : '');
-    /* Animation pulsante pour les rangs élevés */
-    if (['SSS','X','T','G','G+','Z'].includes(ch.rank)) {
-      bv.style.animation = 'rankPulse 2.5s infinite';
+    const rbVal = document.createElement("div");
+    rbVal.className = "rb-val";
+    rbVal.textContent = rank;
+    badge.appendChild(rbVal);
+
+    const rbLbl = document.createElement("div");
+    rbLbl.className = "rb-lbl";
+    rbLbl.textContent = "RANG";
+    badge.appendChild(rbLbl);
+
+    if (level) {
+      const rbLevel = document.createElement("div");
+      rbLevel.className = "rb-level";
+      rbLevel.textContent = "Nv."+level;
+      badge.appendChild(rbLevel);
     }
-    bv.textContent = ch.rank || '?';
-
-    const bl = document.createElement('div');
-    bl.className  = 'rb-lbl';
-    bl.textContent = 'RANG';
-
-    badge.appendChild(bv);
-    badge.appendChild(bl);
     photo.appendChild(badge);
 
-    /* ── Barre de stats (bas de photo, cachée si tout à 0) ── */
-    const statDefs = [
-      { k: 'str',  lbl: 'STR',  cls: 'sb-str'  },
-      { k: 'agi',  lbl: 'AGI',  cls: 'sb-agi'  },
-      { k: 'spd',  lbl: 'SPD',  cls: 'sb-spd'  },
-      { k: 'int',  lbl: 'INT',  cls: 'sb-int'  },
-      { k: 'mana', lbl: 'MNA',  cls: 'sb-mana' },
-      { k: 'res',  lbl: 'RES',  cls: 'sb-res'  },
-      { k: 'cha',  lbl: 'CHA',  cls: 'sb-cha'  },
-      { k: 'aura', lbl: 'AUR',  cls: 'sb-aura' },
-    ];
-
-    const s        = ch.stats || {};
-    const hasStats = statDefs.some(d => (s[d.k] || 0) > 0);
-
+    /* Stats bar */
+    const statDefs = [{k:"str",l:"STR",c:"sb-str"},{k:"agi",l:"AGI",c:"sb-agi"},{k:"spd",l:"SPD",c:"sb-spd"},{k:"int",l:"INT",c:"sb-int"},{k:"mana",l:"MNA",c:"sb-mana"},{k:"res",l:"RES",c:"sb-res"},{k:"cha",l:"CHA",c:"sb-cha"},{k:"aura",l:"AUR",c:"sb-aura"}];
+    const hasStats = statDefs.some(d => (stats[d.k]||0) > 0);
     if (hasStats) {
-      const bar = document.createElement('div');
-      bar.className = 'stats-bar';
-
+      const bar = document.createElement("div");
+      bar.className = "stats-bar";
       statDefs.forEach(d => {
-        const v = s[d.k] || 0;
-        /* Cacher AURA si valeur nulle */
-        if (d.k === 'aura' && v === 0) return;
-
-        const item  = document.createElement('div');
-        item.className = `sb-item ${d.cls}`;
-
-        const lbl   = document.createElement('div');
-        lbl.className = 'sb-lbl';
-        lbl.textContent = d.lbl;
-
-        const val   = document.createElement('div');
-        val.className = 'sb-val';
-        val.textContent = v;
-
-        const barEl = document.createElement('div');
-        barEl.className = 'sb-bar';
-
-        const fill  = document.createElement('div');
-        fill.className = 'sb-fill';
-        fill.style.width = Math.min(100, Math.round(v / 9999 * 100)) + '%';
-
-        barEl.appendChild(fill);
-        item.appendChild(lbl);
-        item.appendChild(val);
-        item.appendChild(barEl);
+        const v = stats[d.k] || 0;
+        if (d.k === "aura" && v === 0) return;
+        const item = document.createElement("div");
+        item.className = "sb-item "+d.c;
+        item.innerHTML = "<div class=sb-lbl>"+d.l+"</div><div class=sb-val>"+v+"</div><div class=sb-bar><div class=sb-fill style=width:"+Math.min(100,Math.round(v/9999*100))+"%></div></div>";
         bar.appendChild(item);
       });
-
-      if (bar.children.length > 0) photo.appendChild(bar);
+      if (bar.children.length) photo.appendChild(bar);
     }
 
     card.appendChild(photo);
 
-    /* ──────────────────────────────
-       CORPS DE CARTE
-       ────────────────────────────── */
-    const body = document.createElement('div');
-    body.className = 'card-body';
+    /* BODY */
+    const body = document.createElement("div");
+    body.className = "card-body";
 
-    /* Prénom (petites capitales) */
-    const fn = document.createElement('div');
-    fn.className  = 'card-fn';
-    fn.textContent = san(ch.firstname || '');
+    const fn = document.createElement("div");
+    fn.className = "card-fn";
+    fn.textContent = ch.firstname || "";
     body.appendChild(fn);
 
-    /* Nom (grande typo) */
-    const ln = document.createElement('div');
-    ln.className  = 'card-ln';
-    ln.textContent = san(ch.lastname || '');
+    /* Nom avec underline race */
+    const ln = document.createElement("div");
+    ln.className = "card-ln";
+    ln.textContent = ch.lastname || "";
     body.appendChild(ln);
 
-    /* Âge — affiché si renseigné */
-    if (ch.age) {
-      const age = document.createElement('div');
-      age.className   = 'card-age';
-      age.textContent = ch.age;
-      body.appendChild(age);
+    /* Race pill — aucune limite */
+    const pill = document.createElement("div");
+    pill.className = "card-rpill";
+    pill.style.cssText = "color:"+raceColor+";border-color:"+raceColor+"44;background:"+raceColor+"0e";
+    const pip = document.createElement("span");
+    pip.className = "rpip";
+    pip.style.cssText = "background:"+raceColor+";box-shadow:0 0 4px "+raceColor;
+    pill.appendChild(pip);
+    const raceSpan = document.createElement("span");
+    raceSpan.textContent = ch.race || "";
+    pill.appendChild(raceSpan);
+    if (ch.raceSpecific) {
+      const sep = document.createElement("span");
+      sep.style.cssText = "opacity:.4;margin:0 3px";
+      sep.textContent = ".";
+      pill.appendChild(sep);
+      const specific = document.createElement("span");
+      specific.style.opacity = ".85";
+      specific.textContent = ch.raceSpecific;
+      pill.appendChild(specific);
     }
-
-    /* Pilule race · race spécifique */
-    const pill = document.createElement('div');
-    pill.className = 'card-rpill';
-    pill.style.cssText =
-      `color:${rc.color};border-color:${rc.color}44;background:${rc.color}0e;`;
-    const raceLabel = ch.raceSpecific
-      ? `${rc.label} <span style="opacity:.5;margin:0 3px">·</span>` +
-        `<span style="opacity:.85">${ch.raceSpecific}</span>`
-      : rc.label;
-    pill.innerHTML =
-      `<span class="rpip" style="background:${rc.color};box-shadow:0 0 4px ${rc.color}"></span>` +
-      raceLabel;
     body.appendChild(pill);
 
-    /* Description */
-    const desc = document.createElement('p');
-    desc.className  = 'card-desc';
-    desc.textContent = san(ch.desc || ch.bio || '');
+    const desc = document.createElement("p");
+    desc.className = "card-desc";
+    desc.textContent = ch.desc || ch.bio || "";
     body.appendChild(desc);
 
-    /* ── Pouvoirs (si présents) ── */
+    /* Pouvoirs — SANS emoji */
     const powers = ch.powers || [];
     if (powers.length > 0) {
-      const ps = document.createElement('div');
-      ps.className = 'powers-section';
-
-      const pt = document.createElement('div');
-      pt.className  = 'powers-title';
-      pt.textContent = '⚡ Pouvoirs';
+      const ps = document.createElement("div");
+      ps.className = "powers-section";
+      const pt = document.createElement("div");
+      pt.className = "powers-title";
+      pt.textContent = "POUVOIRS";
       ps.appendChild(pt);
-
-      const pl = document.createElement('div');
-      pl.className = 'powers-list';
-
+      const pl = document.createElement("div");
+      pl.className = "powers-list";
       powers.forEach(pw => {
-        const pi = document.createElement('div');
-        pi.className    = 'power-item';
-        pi.style.borderColor = rc.color + '88';
-        pi.style.background  = rc.color + '08';
-
-        const pn = document.createElement('div');
-        pn.className  = 'power-name';
-        pn.style.color = rc.color;
+        const pi = document.createElement("div");
+        pi.className = "power-item";
+        pi.style.borderColor = raceColor+"88";
+        pi.style.background  = raceColor+"08";
+        const pn = document.createElement("div");
+        pn.className = "power-name";
+        pn.style.color = raceColor;
         pn.textContent = pw.name || pw;
         pi.appendChild(pn);
-
         if (pw.desc) {
-          const pd = document.createElement('div');
-          pd.className  = 'power-desc';
+          const pd = document.createElement("div");
+          pd.className = "power-desc";
           pd.textContent = pw.desc;
           pi.appendChild(pd);
         }
         pl.appendChild(pi);
       });
-
       ps.appendChild(pl);
       body.appendChild(ps);
     }
 
-    /* ── Liens (fiche, fichier, etc.) ── */
-    const links = document.createElement('div');
-    links.className = 'card-links';
+    /* Liens */
+    const ls = ch.links||(ch.linkUrl?[{t:ch.linkType||"Fiche",h:ch.linkUrl}]:[]);
+    if (ls.length > 0) {
+      const linksDiv = document.createElement("div");
+      linksDiv.className = "card-links";
+      ls.forEach(l => {
+        const a = document.createElement("a");
+        a.className = "lbtn";
+        a.href = l.h || l.url || "#";
+        a.target = "_blank";
+        a.textContent = l.t || l.type || "Lien";
+        linksDiv.appendChild(a);
+      });
+      body.appendChild(linksDiv);
+    }
 
-    const ls = ch.links || (ch.linkUrl ? [{ t: ch.linkType || 'Fiche', h: ch.linkUrl }] : []);
-    ls.forEach(l => {
-      const a     = document.createElement('a');
-      a.className = 'lbtn';
-      a.href      = l.h || l.url || '#';
-      a.target    = '_blank';
-      a.innerHTML =
-        `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">` +
-        `<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>` +
-        `<polyline points="14 2 14 8 20 8"/></svg>${l.t || l.type || 'Lien'}`;
-      links.appendChild(a);
-    });
-
-    /* Masquer la section liens si elle est vide */
-    if (ls.length > 0) body.appendChild(links);
-
-    /* ── Boutons admin (Modifier / Supprimer) — affichés si connecté ── */
+    /* Admin */
     if (ch.id) {
-      const adminRow = document.createElement('div');
-      adminRow.className = 'card-admin-row';
-      /* Visibilité pilotée par window._isAdmin (mis à jour par le module Firebase) */
-      adminRow.style.display = window._isAdmin ? 'flex' : 'none';
-
-      const editBtn = document.createElement('button');
-      editBtn.className  = 'card-edit-btn';
-      editBtn.textContent = '✎ Modifier';
-      editBtn.onclick    = () => window.openEditFiche?.(ch.id);
-
-      const delBtn = document.createElement('button');
-      delBtn.className  = 'card-del-btn';
-      delBtn.textContent = '✕ Supprimer';
-      delBtn.onclick    = () => window.deleteFicheById?.(ch.id);
-
+      const adminRow = document.createElement("div");
+      adminRow.className = "card-admin-row";
+      adminRow.style.display = window._isAdmin ? "flex" : "none";
+      const editBtn = document.createElement("button");
+      editBtn.className = "card-edit-btn";
+      editBtn.textContent = "✎ Modifier";
+      editBtn.onclick = () => window.openEditFiche?.(ch.id);
+      const delBtn = document.createElement("button");
+      delBtn.className = "card-del-btn";
+      delBtn.textContent = "✕ Supprimer";
+      delBtn.onclick = () => window.deleteFicheById?.(ch.id);
       adminRow.appendChild(editBtn);
       adminRow.appendChild(delBtn);
       body.appendChild(adminRow);
@@ -315,25 +286,18 @@ class JahartaCard extends HTMLElement {
 
     card.appendChild(body);
 
-    /* Décoration coin bas-gauche */
-    const deco = document.createElement('div');
-    deco.className = 'cdeco';
-    card.appendChild(deco);
-
-    /* ── Exposition des attributs de filtrage sur l'élément hôte ── */
-    this.dataset.race = ch.race || '';
-    this.dataset.rank = ch.rank || '';
-
-    /* ── Insertion finale : remplace le contenu précédent ── */
+    this.dataset.race = ch.race || "";
+    this.dataset.rank = rank;
     this.replaceChildren(card);
+
+    bindTilt(card);
+    bindScramble(card);
   }
 
-  /* ── Met à jour la visibilité des boutons admin sans re-render complet ── */
   updateAdminVisibility(isAdmin) {
-    const row = this.querySelector('.card-admin-row');
-    if (row) row.style.display = isAdmin ? 'flex' : 'none';
+    const row = this.querySelector(".card-admin-row");
+    if (row) row.style.display = isAdmin ? "flex" : "none";
   }
 }
 
-/* Enregistre le custom element <jaharta-card> */
-customElements.define('jaharta-card', JahartaCard);
+customElements.define("jaharta-card", JahartaCard);

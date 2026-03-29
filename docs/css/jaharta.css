@@ -3,19 +3,19 @@
    Cyberpunk-Fantasy Hybrid Aesthetic
    ============================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Exo+2:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Exo+2:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Share+Tech+Mono&display=swap');
 
 /* --- CSS Variables --- */
 :root {
-  --bg-deep: #06060c;
+  --bg-deep: #030612;
   --bg-dark: #0a0a14;
   --bg-surface: #0f0f1a;
   --bg-card: #12122080;
 
-  --cyan: #00f0ff;
+  --cyan: #4DA3FF;
   --cyan-dim: #00a0aa;
   --cyan-glow: #00f0ff60;
-  --violet: #b44aff;
+  --violet: #8B5CF6;
   --violet-dim: #7b2fbd;
   --violet-glow: #b44aff40;
   --magenta: #ff2a8a;
@@ -189,29 +189,17 @@ body::before {
   overflow: hidden;
 }
 
-/* Map Background */
+/* Map Background — désactivée, remplacée par le globe WebGL */
 .hero-bg {
-  position: absolute;
-  inset: 0;
-  background: url('assets/map-holographic.png') center center / cover no-repeat;
-  opacity: 0.2;
-  transform: scale(1.1);
-  animation: heroBgDrift 30s ease-in-out infinite alternate;
+  display: none;
 }
 
-@keyframes heroBgDrift {
-  0% { transform: scale(1.1) translate(0, 0); }
-  50% { transform: scale(1.15) translate(-1%, 0.5%); }
-  100% { transform: scale(1.1) translate(0.5%, -0.5%); }
-}
-
-/* Gradient overlays */
+/* Gradient overlays — léger vignettage pour lisibilité du texte */
 .hero-overlay {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 60% 50% at 50% 50%, transparent 0%, var(--bg-deep) 100%),
-    linear-gradient(180deg, #06060c80 0%, transparent 30%, transparent 70%, var(--bg-deep) 100%);
+    linear-gradient(180deg, transparent 0%, transparent 60%, rgba(2,6,18,0.85) 100%);
 }
 
 /* Decorative grid lines */
@@ -858,7 +846,7 @@ body::before {
     padding: 80px 0 20px;
     transform: translateX(100%);
     transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
-    z-index: 200;
+    z-index: 1100;
   }
   .nav-links.open { transform: translateX(0); }
   .nav-links a {
@@ -868,6 +856,21 @@ body::before {
     font-size: 0.75rem;
   }
   .nav-links a:hover { background: rgba(0,240,255,0.04); }
+  .nav-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1050;
+    background: rgba(0,0,0,0.6);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s;
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+  }
+  .nav-backdrop.open {
+    opacity: 1;
+    pointer-events: all;
+  }
 }
 
 /* --- Navigation Cards --- */
@@ -1121,60 +1124,129 @@ body::before {
   align-items: center;
   justify-content: center;
   flex-direction: column;
-  gap: 16px;
+  gap: 0;
   opacity: 1;
   pointer-events: all;
-  transition: opacity 0.4s ease;
+  transition: opacity 0.5s ease;
 }
 .page-transition-overlay.hidden {
   opacity: 0;
   pointer-events: none;
 }
-.pt-logo {
-  font-family: var(--font-display);
-  font-weight: 900;
-  font-size: 1.5rem;
-  letter-spacing: 0.3em;
-  background: linear-gradient(135deg, var(--cyan) 0%, #80ffea 40%, #b44aff 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  filter: drop-shadow(0 0 20px rgba(0,240,255,0.4));
-  animation: ptPulse 1.2s ease-in-out infinite;
+
+/* ── Loader SVG wrapper ── */
+.pt-logo-wrap {
+  position: relative;
+  width: 160px;
+  height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-@keyframes ptPulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
+
+/* glow ring behind the SVG */
+.pt-glow-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(0,240,255,0.08);
+  animation: ptSpinCW 10s linear infinite, ptPulseRing 2.4s ease-in-out infinite;
 }
-.pt-bar {
-  width: 100px;
+.pt-glow-ring::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  background: conic-gradient(from 0deg, transparent 70%, rgba(0,240,255,0.7) 100%) border-box;
+  -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: destination-out;
+  mask-composite: exclude;
+}
+
+/* scan line */
+.pt-scan {
+  position: absolute;
+  left: 0; right: 0;
   height: 2px;
-  background: rgba(0,240,255,0.15);
+  background: linear-gradient(90deg, transparent, rgba(0,240,255,0.55), transparent);
+  animation: ptScanY 2s cubic-bezier(0.45,0,0.55,1) infinite;
+  border-radius: 2px;
+  filter: blur(1px);
+  z-index: 2;
+}
+
+/* the SVG itself */
+.pt-svg {
+  width: 110px;
+  height: 110px;
+  position: relative;
+  z-index: 3;
+  filter: drop-shadow(0 0 14px rgba(0,240,255,0.5));
+  animation: ptBreathe 2.4s ease-in-out infinite;
+}
+.pt-svg .svg-ring-outer { animation: ptSpinCW 5s linear infinite; transform-origin: 50% 50%; }
+.pt-svg .svg-ring-inner { animation: ptSpinCCW 3.5s linear infinite; transform-origin: 50% 50%; }
+.pt-svg .svg-star       { animation: ptPulseStar 2.4s ease-in-out infinite; transform-origin: 50% 50%; }
+.pt-svg .svg-lines      { animation: ptFlare 2.4s ease-in-out infinite; transform-origin: 50% 50%; }
+
+/* progress bar */
+.pt-bar-wrap {
+  margin-top: 28px;
+  width: 90px;
+  height: 1px;
+  background: rgba(0,240,255,0.12);
   border-radius: 1px;
   overflow: hidden;
   position: relative;
 }
-.pt-bar::after {
-  content: '';
+.pt-bar-fill {
   position: absolute;
-  top: 0;
-  left: -40%;
+  top: 0; left: -40%;
   width: 40%;
   height: 100%;
   background: linear-gradient(90deg, transparent, var(--cyan), #b44aff, transparent);
-  animation: ptSlide 0.8s ease-in-out infinite;
+  animation: ptSlide 1s ease-in-out infinite;
 }
-@keyframes ptSlide {
-  0% { left: -40%; }
-  100% { left: 100%; }
-}
+
 .pt-text {
+  margin-top: 10px;
   font-family: var(--font-heading);
-  font-size: 0.6rem;
+  font-size: 0.55rem;
   font-weight: 500;
   letter-spacing: 0.4em;
   text-transform: uppercase;
-  color: var(--text-dim);
+  color: rgba(0,240,255,0.35);
+}
+
+/* ── Keyframes ── */
+@keyframes ptSpinCW  { to { transform: rotate(360deg);  } }
+@keyframes ptSpinCCW { to { transform: rotate(-360deg); } }
+@keyframes ptBreathe {
+  0%, 100% { transform: scale(1);    filter: drop-shadow(0 0 14px rgba(0,240,255,0.5)); }
+  50%       { transform: scale(1.06); filter: drop-shadow(0 0 28px rgba(0,240,255,0.85)); }
+}
+@keyframes ptPulseStar {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.7; }
+}
+@keyframes ptFlare {
+  0%, 100% { stroke-width: 2.5; }
+  50%       { stroke-width: 4; }
+}
+@keyframes ptPulseRing {
+  0%, 100% { opacity: 0.4; }
+  50%       { opacity: 1; }
+}
+@keyframes ptScanY {
+  0%   { top: 10%; opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { top: 90%; opacity: 0; }
+}
+@keyframes ptSlide {
+  0%   { left: -40%; }
+  100% { left: 100%; }
 }
 
 /* ============================================
@@ -1735,170 +1807,19 @@ a.admin-badge:hover { border-color: rgba(0,255,136,0.6); box-shadow: 0 0 12px rg
   background: linear-gradient(90deg, rgba(0,240,255,0.15), transparent) !important;
 }
 
-/* ── CARD REDESIGN — cybernetic premium ── */
-.rp-card {
-  position: relative;
-  background: rgba(10,10,20,0.8) !important;
-  border: 1px solid rgba(0,240,255,0.1) !important;
-  overflow: hidden;
-  clip-path: none !important;
-  border-radius: 6px !important;
-  transition: border-color 0.4s, box-shadow 0.4s, transform 0.35s !important;
-  cursor: default;
-  display: flex;
-  flex-direction: column;
-  backdrop-filter: blur(12px);
+/* ── CARD REDESIGN — Ethereal Nexus ── */
+/* ── Card styles are fully managed by fiches.html <style> block ── */
+/* rp-card reveal */
+.rp-card, .pnj-card {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.6s cubic-bezier(0.16,1,0.3,1), transform 0.6s cubic-bezier(0.16,1,0.3,1), border-color 0.4s, box-shadow 0.4s;
 }
-.rp-card::before {
-  content: '' !important;
-  position: absolute !important;
-  top: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  height: 2px !important;
-  background: linear-gradient(90deg, var(--cyan), var(--violet, #b44aff), transparent) !important;
-  opacity: 0 !important;
-  transition: opacity 0.4s !important;
-  z-index: 10;
-}
-.rp-card:hover::before { opacity: 1 !important; }
-.rp-card:hover {
-  transform: translateY(-8px) !important;
-  border-color: rgba(0,240,255,0.25) !important;
-  box-shadow:
-    0 0 30px rgba(0,240,255,0.1),
-    0 20px 50px rgba(0,0,0,0.5),
-    inset 0 0 30px rgba(0,240,255,0.02) !important;
+.rp-card.card-revealed, .pnj-card.card-revealed {
+  opacity: 1;
+  transform: translateY(0);
 }
 
-/* Race-specific hover glow */
-.rp-card[data-race="Humanoids"]:hover { border-color: #00c8ff !important; box-shadow: 0 0 30px rgba(0,200,255,0.12), 0 20px 50px rgba(0,0,0,0.5) !important; }
-.rp-card[data-race="Zooids"]:hover { border-color: #44ff88 !important; box-shadow: 0 0 30px rgba(68,255,136,0.12), 0 20px 50px rgba(0,0,0,0.5) !important; }
-.rp-card[data-race="MythZooids"]:hover { border-color: #b06eff !important; box-shadow: 0 0 30px rgba(176,110,255,0.14), 0 20px 50px rgba(0,0,0,0.5) !important; }
-.rp-card[data-race="Demons"]:hover { border-color: #ff3030 !important; box-shadow: 0 0 30px rgba(255,48,48,0.14), 0 20px 50px rgba(0,0,0,0.5) !important; }
-.rp-card[data-race="Artificial"]:hover { border-color: #ffd60a !important; box-shadow: 0 0 30px rgba(255,214,10,0.12), 0 20px 50px rgba(0,0,0,0.5) !important; }
-.rp-card[data-race="Semi-Liquid"]:hover { border-color: #00e5cc !important; box-shadow: 0 0 30px rgba(0,229,204,0.12), 0 20px 50px rgba(0,0,0,0.5) !important; }
-.rp-card[data-race="Undead"]:hover { border-color: #9a8cff !important; box-shadow: 0 0 30px rgba(154,140,255,0.14), 0 20px 50px rgba(0,0,0,0.5) !important; }
-
-/* Card corner deco — subtle instead of clip-path */
-.cdeco {
-  position: absolute !important;
-  bottom: 0 !important;
-  right: 0 !important;
-  width: 0 !important;
-  height: 0 !important;
-  border: none !important;
-  display: none !important;
-}
-
-/* ── RANK BADGE — much more prominent ── */
-.rank-badge {
-  position: absolute !important;
-  top: 12px !important;
-  right: 12px !important;
-  z-index: 5 !important;
-  background: rgba(6,6,12,0.92) !important;
-  border: 1px solid currentColor !important;
-  border-radius: 6px !important;
-  padding: 8px 14px !important;
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  gap: 2px !important;
-  min-width: 56px !important;
-  backdrop-filter: blur(12px) !important;
-  box-shadow: 0 0 20px rgba(0,0,0,0.5), 0 0 12px currentColor !important;
-}
-.rb-val {
-  font-family: var(--font-display) !important;
-  font-size: 1.4rem !important;
-  font-weight: 900 !important;
-  line-height: 1 !important;
-  text-shadow: 0 0 16px currentColor !important;
-}
-.rb-val.sm { font-size: 1rem !important; }
-.rb-lbl {
-  font-family: var(--font-heading) !important;
-  font-size: 0.5rem !important;
-  font-weight: 600 !important;
-  letter-spacing: 0.2em !important;
-  text-transform: uppercase !important;
-  opacity: 0.6 !important;
-}
-.rb-level {
-  font-family: var(--font-display) !important;
-  font-size: 0.6rem !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.08em !important;
-  margin-top: 2px !important;
-  padding-top: 4px !important;
-  border-top: 1px solid rgba(255,255,255,0.1) !important;
-  text-shadow: 0 0 10px currentColor !important;
-}
-@keyframes rankPulse {
-  0%, 100% { text-shadow: 0 0 16px currentColor; box-shadow: 0 0 20px rgba(0,0,0,0.5), 0 0 12px currentColor; }
-  50% { text-shadow: 0 0 28px currentColor, 0 0 50px currentColor; box-shadow: 0 0 20px rgba(0,0,0,0.5), 0 0 24px currentColor; }
-}
-
-/* ── Card body text — cleaner ── */
-.card-fn {
-  font-family: var(--font-display) !important;
-  font-size: 0.95rem !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.1em !important;
-}
-.card-ln {
-  font-family: var(--font-display) !important;
-  font-size: 0.72rem !important;
-  font-weight: 600 !important;
-  letter-spacing: 0.18em !important;
-  color: var(--text-secondary) !important;
-  text-transform: uppercase !important;
-}
-.card-age {
-  font-family: var(--font-heading) !important;
-  font-weight: 500;
-  color: var(--text-dim) !important;
-}
-.card-rpill {
-  font-family: var(--font-heading) !important;
-  font-size: 0.65rem !important;
-  font-weight: 600 !important;
-  letter-spacing: 0.08em !important;
-  padding: 5px 12px !important;
-  border-radius: 3px !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  gap: 6px !important;
-}
-.card-desc {
-  font-family: var(--font-body) !important;
-  font-size: 0.82rem !important;
-  font-weight: 300 !important;
-  color: var(--text-secondary) !important;
-  line-height: 1.6 !important;
-}
-
-/* ── Card links — cleaner ── */
-.lbtn {
-  font-family: var(--font-heading) !important;
-  font-size: 0.65rem !important;
-  font-weight: 600 !important;
-  letter-spacing: 0.1em !important;
-  color: var(--cyan) !important;
-  border: 1px solid rgba(0,240,255,0.25) !important;
-  border-radius: 3px !important;
-  padding: 8px 16px !important;
-  background: rgba(0,240,255,0.04) !important;
-  transition: all 0.3s !important;
-}
-.lbtn:hover {
-  border-color: var(--cyan) !important;
-  background: rgba(0,240,255,0.1) !important;
-  box-shadow: 0 0 16px rgba(0,240,255,0.15) !important;
-}
-
-/* ── Filters — rounder, cleaner ── */
 .race-btn, .rank-btn-v5 {
   clip-path: none !important;
   border-radius: 3px !important;
@@ -2180,19 +2101,19 @@ a.admin-badge:hover { border-color: rgba(0,255,136,0.6); box-shadow: 0 0 12px rg
   --accent-bg: rgba(0,240,255,0.05);
 }
 
-/* ── PNJ cards — unified dark premium style ── */
+/* ── PNJ cards — Ethereal Nexus style ── */
 .pnj-card {
   clip-path: none !important;
-  border-radius: 6px !important;
-  background: rgba(10,10,20,0.8) !important;
-  border: 1px solid rgba(0,240,255,0.1) !important;
+  border-radius: 8px !important;
+  background: rgba(8,10,22,0.85) !important;
+  border: 1px solid rgba(255,255,255,0.05) !important;
   backdrop-filter: blur(12px) !important;
-  transition: all 0.4s !important;
+  transition: all 0.4s cubic-bezier(0.16,1,0.3,1) !important;
 }
 .pnj-card:hover {
   transform: translateY(-6px) !important;
-  border-color: rgba(0,240,255,0.2) !important;
-  box-shadow: 0 0 24px rgba(0,240,255,0.08), 0 16px 40px rgba(0,0,0,0.4) !important;
+  border-color: rgba(255,255,255,0.1) !important;
+  box-shadow: 0 0 20px rgba(0,240,255,0.06), 0 16px 40px rgba(0,0,0,0.4) !important;
 }
 .pnj-card::before {
   content: '' !important;
@@ -2201,8 +2122,8 @@ a.admin-badge:hover { border-color: rgba(0,255,136,0.6); box-shadow: 0 0 12px rg
   left: 0 !important;
   right: 0 !important;
   height: 2px !important;
-  background: linear-gradient(90deg, var(--cyan), #b44aff, transparent) !important;
-  opacity: 0 !important;
+  background: linear-gradient(90deg, transparent, var(--cyan), transparent) !important;
+  opacity: 0.4 !important;
   transition: opacity 0.4s !important;
 }
 .pnj-card:hover::before { opacity: 1 !important; }
@@ -2212,33 +2133,28 @@ a.admin-badge:hover { border-color: rgba(0,255,136,0.6); box-shadow: 0 0 12px rg
   clip-path: none !important;
 }
 
-/* ── Portail featured cards ── */
+/* ── Portail featured cards — Ethereal ── */
 .featured-card {
   clip-path: none !important;
-  border-radius: 6px !important;
-  background: rgba(10,10,20,0.8) !important;
-  border: 1px solid rgba(0,240,255,0.1) !important;
+  border-radius: 8px !important;
+  background: rgba(8,10,22,0.85) !important;
+  border: 1px solid rgba(255,255,255,0.05) !important;
   backdrop-filter: blur(12px) !important;
-  transition: all 0.4s !important;
+  transition: all 0.4s cubic-bezier(0.16,1,0.3,1) !important;
 }
 .featured-card:hover {
   transform: translateY(-6px) !important;
-  border-color: rgba(0,240,255,0.2) !important;
-  box-shadow: 0 0 24px rgba(0,240,255,0.08), 0 16px 40px rgba(0,0,0,0.4) !important;
+  border-color: rgba(255,255,255,0.1) !important;
+  box-shadow: 0 0 20px rgba(0,240,255,0.06), 0 16px 40px rgba(0,0,0,0.4) !important;
 }
 .featured-card::before {
   clip-path: none !important;
-  border-radius: 6px 6px 0 0 !important;
+  border-radius: 8px 8px 0 0 !important;
 }
 
-/* ── Race cards (racesjouables) ── */
+/* ── Race cards (racesjouables) — handled in page inline styles ── */
 .race-card {
   clip-path: none !important;
-  border-radius: 6px !important;
-  backdrop-filter: blur(10px) !important;
-}
-.race-card:hover {
-  border-radius: 6px !important;
 }
 
 /* ── Buttons — all clip-paths removed, border-radius applied ── */
@@ -2323,15 +2239,15 @@ a.admin-badge:hover { border-color: rgba(0,255,136,0.6); box-shadow: 0 0 12px rg
 }
 
 /* ============================================
-   RANK LEGEND — Cybernetic Premium Redesign
+   RANK LEGEND — Ethereal Crystal Bar
    ============================================ */
 .rank-legend {
   clip-path: none !important;
-  border-radius: 6px !important;
-  background: rgba(10,10,20,0.7) !important;
-  border: 1px solid rgba(0,240,255,0.1) !important;
+  border-radius: 8px !important;
+  background: rgba(8,10,22,0.7) !important;
+  border: 1px solid rgba(255,255,255,0.05) !important;
   padding: 20px 24px !important;
-  backdrop-filter: blur(12px) !important;
+  backdrop-filter: blur(16px) !important;
   display: flex !important;
   gap: 0 !important;
   flex-wrap: wrap !important;
@@ -2344,8 +2260,8 @@ a.admin-badge:hover { border-color: rgba(0,255,136,0.6); box-shadow: 0 0 12px rg
   position: absolute;
   top: 0; left: 0; right: 0;
   height: 1px;
-  background: linear-gradient(90deg, var(--cyan), #b44aff, transparent);
-  opacity: 0.5;
+  background: linear-gradient(90deg, transparent, var(--cyan), #b44aff, transparent);
+  opacity: 0.35;
 }
 
 .rl-title {
@@ -2362,27 +2278,30 @@ a.admin-badge:hover { border-color: rgba(0,255,136,0.6); box-shadow: 0 0 12px rg
 .rl-pill {
   font-family: var(--font-display) !important;
   font-weight: 800 !important;
-  font-size: 0.65rem !important;
-  letter-spacing: 0.08em !important;
+  font-size: 0.62rem !important;
+  letter-spacing: 0.1em !important;
   padding: 6px 14px !important;
   margin: 3px !important;
   border-radius: 4px !important;
   border-width: 1px !important;
   border-style: solid !important;
-  transition: all 0.3s !important;
+  transition: all 0.35s cubic-bezier(0.16,1,0.3,1) !important;
   position: relative;
   overflow: hidden;
+  background: rgba(0,0,0,0.3) !important;
 }
 .rl-pill::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.05), transparent);
+  background: linear-gradient(135deg, rgba(255,255,255,0.04), transparent 50%);
   pointer-events: none;
 }
 .rl-pill:hover {
-  transform: translateY(-3px) scale(1.05) !important;
-  box-shadow: 0 0 16px currentColor, 0 8px 20px rgba(0,0,0,0.4) !important;
+  transform: translateY(-2px) scale(1.06) !important;
+  text-shadow: 0 0 8px currentColor !important;
+  box-shadow: 0 0 14px currentColor, 0 4px 16px rgba(0,0,0,0.5) !important;
+  background: rgba(0,0,0,0.15) !important;
   z-index: 2;
 }
 
@@ -2406,38 +2325,67 @@ a.admin-badge:hover { border-color: rgba(0,255,136,0.6); box-shadow: 0 0 12px rg
   background: linear-gradient(90deg, transparent, var(--text-dim));
 }
 
-/* Filter buttons — unified rounded style */
+/* Filter buttons — ethereal dark style */
 .race-btn {
   clip-path: none !important;
   border-radius: 4px !important;
   font-family: var(--font-heading) !important;
-  font-size: 0.65rem !important;
+  font-size: 0.62rem !important;
   font-weight: 600 !important;
-  letter-spacing: 0.1em !important;
+  letter-spacing: 0.12em !important;
   padding: 7px 14px !important;
-  backdrop-filter: blur(6px) !important;
-  transition: all 0.25s !important;
+  background: rgba(0,0,0,0.25) !important;
+  border: 1px solid currentColor !important;
+  border-color: inherit !important;
+  backdrop-filter: blur(8px) !important;
+  transition: all 0.3s cubic-bezier(0.16,1,0.3,1) !important;
+  text-transform: uppercase !important;
 }
 .race-btn::before {
   border-radius: 4px 0 0 4px !important;
+  background: currentColor !important;
+  opacity: 0 !important;
 }
 .race-btn:hover, .race-btn.active {
+  background: rgba(255,255,255,0.04) !important;
   transform: translateY(-2px) !important;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.3) !important;
+  box-shadow: 0 0 12px currentColor, 0 4px 16px rgba(0,0,0,0.4) !important;
+  text-shadow: 0 0 8px currentColor !important;
+}
+.race-btn:hover::before, .race-btn.active::before {
+  opacity: 0.8 !important;
 }
 .rcnt {
   font-family: var(--font-display) !important;
-  font-size: 0.48rem !important;
+  font-size: 0.46rem !important;
   border-radius: 3px !important;
+  background: rgba(255,255,255,0.06) !important;
+  padding: 2px 6px !important;
+}
+
+/* Rank filter buttons (same .race-btn class but for ranks) */
+.rank-btn-v5 {
+  clip-path: none !important;
+  border-radius: 4px !important;
+  background: rgba(0,0,0,0.25) !important;
+  backdrop-filter: blur(8px) !important;
+  transition: all 0.3s cubic-bezier(0.16,1,0.3,1) !important;
+}
+.rank-btn-v5:hover, .rank-btn-v5.active {
+  background: rgba(255,255,255,0.04) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 0 10px currentColor, 0 4px 14px rgba(0,0,0,0.4) !important;
+  text-shadow: 0 0 6px currentColor !important;
 }
 
 /* Filter group labels */
 .filter-group-label {
-  font-family: var(--font-display) !important;
-  font-size: 0.52rem !important;
+  font-family: var(--font-heading) !important;
+  font-size: 0.55rem !important;
   font-weight: 600 !important;
-  letter-spacing: 0.2em !important;
+  letter-spacing: 0.22em !important;
   color: var(--text-dim) !important;
+  text-transform: uppercase !important;
 }
 
 @media (max-width: 900px) {
@@ -2445,3 +2393,25 @@ a.admin-badge:hover { border-color: rgba(0,255,136,0.6); box-shadow: 0 0 12px rg
   .hero-title--sub { font-size: clamp(1.6rem, 8vw, 2.8rem) !important; }
   .hero-stats { flex-direction: column; gap: 10px; }
 }
+
+/* ══════════════════════════════════════════════
+   STAGGERED CARD REVEAL — quinconce animation
+   Applied to .rp-card, .pnj-card via JS
+   ══════════════════════════════════════════════ */
+.rp-card, .pnj-card {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.6s cubic-bezier(0.16,1,0.3,1),
+              transform 0.6s cubic-bezier(0.16,1,0.3,1),
+              border-color 0.4s, box-shadow 0.4s !important;
+}
+.rp-card.card-revealed, .pnj-card.card-revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Shared scanline animation for card overlays */
+@keyframes hpx-pan{from{background-position:0% 0%}to{background-position:0% -100%}}
+
+/* PNJ card hover shows scanlines */
+.pnj-card:hover .hpx-ov{opacity:1!important;}

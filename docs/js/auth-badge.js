@@ -44,7 +44,7 @@ onAuthStateChanged(auth, user => {
   if (badge) badge.classList.toggle('visible', !!user);
 
   /* ── Lien "⚙ Connexion" / "⚙ Connecté" ── */
-  const navLink = document.querySelector('.nav-admin');
+  const navLink = document.querySelector('.nav-admin-link');
   if (navLink) {
     if (user) {
       navLink.textContent = '⚙ Connecté';

@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
 /* --- Navbar scroll effect --- */
 function initNav() {
   const nav = document.getElementById('nav');
+  if (!nav) return;
   let ticking = false;
 
   window.addEventListener('scroll', () => {
@@ -150,59 +151,43 @@ function initMobileNav() {
   const toggle = document.getElementById('nav-toggle');
   const navLinks = document.getElementById('nav-links');
   if (!toggle || !navLinks) return;
+  // Skip if already initialized by an inline script
+  if (toggle.dataset.navInit) return;
+  toggle.dataset.navInit = '1';
+
+  const bd = document.getElementById('nav-backdrop');
+
+  function openNav() {
+    navLinks.classList.add('open');
+    if (bd) bd.classList.add('open');
+    toggle.textContent = '✕';
+  }
+  function closeNav() {
+    navLinks.classList.remove('open');
+    if (bd) bd.classList.remove('open');
+    toggle.textContent = '☰';
+  }
 
   toggle.addEventListener('click', () => {
-    const isOpen = navLinks.classList.toggle('open');
-    toggle.textContent = isOpen ? '✕' : '☰';
+    navLinks.classList.contains('open') ? closeNav() : openNav();
   });
+
+  if (bd) bd.addEventListener('click', closeNav);
 
   // Close on link click
   navLinks.querySelectorAll('a').forEach(a => {
-    a.addEventListener('click', () => {
-      navLinks.classList.remove('open');
-      toggle.textContent = '☰';
-    });
+    a.addEventListener('click', closeNav);
   });
 
   // Close on outside click
   document.addEventListener('click', (e) => {
     if (!navLinks.contains(e.target) && !toggle.contains(e.target)) {
-      navLinks.classList.remove('open');
-      toggle.textContent = '☰';
+      closeNav();
     }
   });
 }
 
-/* --- Page Transition --- */
-function initPageTransition() {
-  const overlay = document.getElementById('page-transition');
-  if (!overlay) return;
-
-  // Fade in on load
-  window.addEventListener('load', () => {
-    setTimeout(() => overlay.classList.add('hidden'), 300);
-  });
-  // Safety timeout
-  setTimeout(() => overlay.classList.add('hidden'), 1500);
-
-  // Intercept internal links
-  document.addEventListener('click', (e) => {
-    const link = e.target.closest('a[href]');
-    if (!link) return;
-
-    const href = link.getAttribute('href');
-    if (!href || href.startsWith('#') || href.startsWith('http') ||
-        href.startsWith('mailto') || link.target === '_blank') return;
-
-    const currentPage = window.location.pathname.split('/').pop() || 'index.html';
-    if (href === currentPage) return;
-
-    e.preventDefault();
-    overlay.classList.remove('hidden');
-    setTimeout(() => { window.location.href = href; }, 350);
-  });
-}
+/* --- Page Transition --- managed by page-transition.js */
 
 // Init new features
 initMobileNav();
-initPageTransition();

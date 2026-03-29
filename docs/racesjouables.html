@@ -6,119 +6,820 @@
 <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png">
 <link rel="apple-touch-icon" sizes="180x180" href="img/favicon-180.png">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>JAHARTA // Races Jouables</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&display=swap">
+<title>JAHARTA — Races Jouables</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Exo+2:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/jaharta.css">
 <style>
-:root{--accent:var(--gold);--accent-rgb:255,214,10;--accent-border:rgba(255,214,10,0.22);--accent-bg:rgba(255,214,10,0.04);--accent-grid:rgba(255,214,10,0.015);}
-.scroll-progress{position:fixed;top:0;left:0;z-index:9998;width:0%;height:2px;background:linear-gradient(90deg,var(--cyan),var(--magenta),var(--gold));pointer-events:none;}
-.noise{position:fixed;inset:0;z-index:9997;pointer-events:none;opacity:.035;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-size:200px;}
-.nav-toggle{display:none;background:none;border:1px solid var(--border);color:var(--cyan);cursor:pointer;width:40px;height:40px;align-items:center;justify-content:center;font-size:1.1rem;}
-@media(max-width:880px){.nav-toggle{display:flex;}header nav{position:fixed;top:68px;right:0;bottom:0;width:280px;background:rgba(6,6,12,.98);border-left:1px solid var(--border);backdrop-filter:blur(24px);flex-direction:column;gap:0;padding:20px 0;transform:translateX(100%);transition:transform .35s cubic-bezier(.4,0,.2,1);z-index:200;}header nav.open{transform:translateX(0);}header nav a{padding:14px 28px;border:none;font-size:.72rem;}header nav a span{display:inline!important;}.nav-backdrop{position:fixed;inset:0;z-index:99;background:rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .3s;}.nav-backdrop.open{opacity:1;pointer-events:all;}}
-[data-reveal]{opacity:0;transform:translateY(20px);}[data-reveal].revealed{opacity:1;transform:translateY(0);transition:all .6s cubic-bezier(.4,0,.2,1);}
-.page-hero{position:relative;z-index:1;padding:56px 44px 40px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,rgba(255,214,10,.03),transparent);}
-.page-hero::before{content:'';position:absolute;top:-60px;left:50%;transform:translateX(-50%);width:600px;height:350px;background:radial-gradient(ellipse,rgba(255,214,10,.06),transparent 65%);pointer-events:none;}
-.ph-tag{font-family:'Rajdhani',sans-serif;font-size:.6rem;color:var(--gold);letter-spacing:.22em;text-transform:uppercase;margin-bottom:12px;}
-.ph-title{font-family:'Orbitron',sans-serif;font-weight:900;font-size:clamp(2rem,5vw,3.2rem);color:#fff;letter-spacing:.06em;line-height:1;}
-.ph-title span{color:var(--gold);text-shadow:0 0 22px var(--gold);}
-.ph-sub{font-family:'Rajdhani',sans-serif;font-size:.62rem;color:var(--muted);letter-spacing:.15em;margin-top:10px;}
-.page-wrap{position:relative;z-index:1;padding:48px 44px;max-width:1300px;margin:0 auto;}
-.race-group{margin-bottom:56px;}
-.group-header{display:flex;align-items:center;gap:14px;margin-bottom:22px;padding-bottom:14px;border-bottom:1px solid var(--border);}
-.group-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
-.group-title{font-family:'Orbitron',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.18em;text-transform:uppercase;}
-.group-count{font-family:'Rajdhani',sans-serif;font-size:.58rem;color:var(--muted);letter-spacing:.1em;margin-left:auto;}
-.race-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;}
-.race-card{background:var(--panel);border:1px solid var(--border);padding:14px 16px;position:relative;clip-path:polygon(8px 0%,100% 0%,100% calc(100% - 8px),calc(100% - 8px) 100%,0% 100%,0% 8px);transition:all .2s;cursor:default;}
-.race-card::before{content:'';position:absolute;left:0;top:0;width:3px;height:100%;background:var(--rc,var(--cyan));opacity:.6;transition:opacity .2s;}
-.race-card:hover{border-color:var(--rc,var(--cyan));background:rgba(255,255,255,.025);transform:translateY(-2px);}.race-card:hover::before{opacity:1;}
-.race-name{font-family:'Orbitron',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.12em;color:#fff;}
-.race-id{font-family:'Rajdhani',sans-serif;font-size:.52rem;color:var(--muted);margin-top:3px;}
-footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:40px 44px 32px;margin-top:20px;}
-.footer-inner{max-width:1300px;margin:0 auto;display:grid;grid-template-columns:1fr auto 1fr;align-items:start;gap:40px;}
-.f-logo{font-family:'Orbitron',sans-serif;font-weight:900;font-size:.9rem;letter-spacing:.28em;color:var(--cyan);opacity:.5;margin-bottom:8px;}
-.f-tagline{font-family:'Rajdhani',sans-serif;font-size:.52rem;color:var(--muted);letter-spacing:.14em;}
-.f-status{text-align:center;}.f-status-dot{display:inline-flex;align-items:center;gap:7px;font-family:'Rajdhani',sans-serif;font-size:.56rem;color:var(--muted);letter-spacing:.15em;}
-.f-version{font-family:'Rajdhani',sans-serif;font-size:.5rem;color:rgba(90,122,144,.5);letter-spacing:.12em;margin-top:6px;}
-.f-links-col{text-align:right;}.f-links{display:flex;gap:18px;justify-content:flex-end;flex-wrap:wrap;}
-.f-links a{font-family:'Rajdhani',sans-serif;font-size:.56rem;color:var(--muted);text-decoration:none;letter-spacing:.1em;transition:color .2s;}.f-links a:hover{color:var(--gold);}
-.f-bottom{max-width:1300px;margin:28px auto 0;padding-top:20px;border-top:1px solid var(--border);text-align:center;}
-.f-copy{font-family:'Rajdhani',sans-serif;font-size:.48rem;color:rgba(90,122,144,.4);letter-spacing:.16em;}
-@media(max-width:880px){.page-hero,.page-wrap{padding:32px 16px}.race-grid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}.footer-inner{grid-template-columns:1fr;text-align:center;gap:24px}.f-links-col{text-align:center}.f-links{justify-content:center}footer{padding:32px 20px 24px}}
+/* PREVIEW */
+
+:root{--bg:#020713;--bg2:#070d1e;--blue:#4DA3FF;--purple:#6C5CE7;--violet:#8B5CF6;--red:#FF4757;--text:#e2e6f0;--text2:#7c84a0;--text3:#3a4060;--font-h:"Orbitron",sans-serif;--font-b:"Rajdhani",sans-serif;--font-body:"Exo 2",sans-serif;--font-m:"Share Tech Mono",monospace}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+body{background:transparent;color:var(--text);font-family:var(--font-body);font-weight:300;line-height:1.7;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+::selection{background:var(--blue);color:var(--bg)}
+body::before{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;opacity:0.02;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.scroll-line{position:fixed;top:0;left:0;width:0%;height:2px;background:linear-gradient(90deg,var(--blue),var(--violet));z-index:10001}
+.nav{position:fixed;top:0;left:0;right:0;z-index:1000;padding:0 clamp(1.5rem,4vw,3rem);height:72px;display:flex;align-items:center;justify-content:space-between;background:rgba(2,7,19,0.92);backdrop-filter:blur(24px) saturate(1.4);border-bottom:1px solid rgba(77,163,255,0.06)}
+.nav-logo{font-family:var(--font-h);font-weight:800;font-size:1.1rem;letter-spacing:.22em;color:#fff;text-decoration:none;display:flex;align-items:center;gap:10px}
+.nav-links{display:flex;gap:2px}.nav-links a{font-family:var(--font-b);font-size:.72rem;font-weight:500;letter-spacing:.08em;color:var(--text2);text-decoration:none;padding:8px 16px;border-radius:6px;transition:all .3s}.nav-links a:hover{color:#fff;background:rgba(255,255,255,0.04)}.nav-links a.active{color:var(--blue);background:rgba(77,163,255,0.06)}
+.hero-sub{position:relative;min-height:45vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:120px 2rem 60px;overflow:hidden}
+.hero-sub-overlay{position:absolute;inset:0;background:none;pointer-events:none}
+.hero-sub-content{position:relative;z-index:2}
+.hero-sub-tag{font-family:var(--font-m);font-size:.55rem;letter-spacing:.5em;text-transform:uppercase;color:var(--text3);margin-bottom:1.5rem}
+.glitch-wrap{position:relative;display:inline-block}
+.glitch-title{font-family:var(--font-h);font-weight:900;font-size:clamp(2rem,6vw,3.5rem);letter-spacing:.08em;margin-bottom:.8rem;background:linear-gradient(135deg,var(--blue),var(--violet));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;position:relative}
+.glitch-title::before,.glitch-title::after{content:attr(data-text);position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,var(--blue),var(--violet));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;opacity:0;pointer-events:none}
+@keyframes g1{0%,100%{opacity:0;transform:translate(0)}3%{opacity:.8;transform:translate(-3px,-1px);clip-path:inset(20% 0 60% 0)}5%{opacity:0}6%{opacity:.6;transform:translate(2px,1px);clip-path:inset(50% 0 20% 0)}8%{opacity:0;transform:translate(0)}}
+@keyframes g2{0%,100%{opacity:0;transform:translate(0)}3%{opacity:.7;transform:translate(3px,2px);clip-path:inset(70% 0 5% 0)}4.5%{opacity:0}5.5%{opacity:.5;transform:translate(-2px,-1px);clip-path:inset(10% 0 80% 0)}7%{opacity:0;transform:translate(0)}}
+@keyframes g3{0%,100%{opacity:0;transform:translate(0)}2%{opacity:.9;transform:translate(-1px,2px);clip-path:inset(40% 0 30% 0)}4%{opacity:.3;transform:translate(2px,-2px);clip-path:inset(5% 0 70% 0)}6%{opacity:0;transform:translate(0)}}
+.glitch-title::before{animation:g1 3s infinite,g2 3s 1s infinite,g3 3s 2s infinite}
+.glitch-title::after{animation:g2 3s .5s infinite,g3 3s 1.5s infinite,g1 3s 2.5s infinite}
+.hero-sub-desc{font-family:var(--font-body);font-size:.9rem;color:var(--text2);max-width:500px;margin:0 auto 2rem;font-weight:300}
+.hero-stats{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+.hero-stat{display:flex;align-items:center;gap:10px;background:rgba(77,163,255,0.03);border:1px solid rgba(77,163,255,0.1);border-radius:8px;padding:10px 20px}
+.hero-stat-num{font-family:var(--font-h);font-size:1.1rem;font-weight:800;color:var(--blue)}
+.hero-stat-lbl{font-family:var(--font-m);font-size:.5rem;letter-spacing:.15em;text-transform:uppercase;color:var(--text3)}
+.page-wrap{max-width:1400px;margin:0 auto;padding:48px clamp(1.5rem,4vw,3rem)}
+.section-head{display:flex;align-items:center;gap:16px;margin-bottom:32px}
+.sh-num{font-family:var(--font-h);font-size:.6rem;font-weight:600;letter-spacing:.12em;color:var(--blue);opacity:.5}
+.sh-title{font-family:var(--font-h);font-weight:700;font-size:.85rem;letter-spacing:.2em;color:var(--text);text-transform:uppercase;white-space:nowrap}
+.sh-line{flex:1;height:1px;background:linear-gradient(90deg,rgba(77,163,255,0.15),transparent)}
+.footer{border-top:1px solid rgba(255,255,255,0.04);padding:3rem clamp(1.5rem,4vw,3rem);display:flex;align-items:center;justify-content:space-between;gap:2rem;flex-wrap:wrap}
+.footer-brand{font-family:var(--font-h);font-size:.7rem;font-weight:700;letter-spacing:.2em;color:var(--text3)}
+.footer-links{display:flex;gap:18px}.footer-links a{font-size:.68rem;color:var(--text2);text-decoration:none;transition:color .2s}.footer-links a:hover{color:#fff}
+.footer-copy{font-family:var(--font-m);font-size:.45rem;color:var(--text3);letter-spacing:.15em}
+/* Races */
+.race-group{margin-bottom:56px;opacity:0;transform:translateY(30px)}.race-group.visible{opacity:1;transform:translateY(0);transition:all .6s cubic-bezier(0.16,1,0.3,1)}
+.group-header{display:flex;align-items:center;gap:14px;margin-bottom:22px;padding-bottom:14px;position:relative}.group-header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,var(--gc,var(--blue)),transparent 60%);opacity:0.3}
+.group-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;box-shadow:0 0 10px var(--gc),0 0 20px var(--gc);animation:dotP 3s ease-in-out infinite}@keyframes dotP{0%,100%{box-shadow:0 0 8px var(--gc),0 0 16px transparent}50%{box-shadow:0 0 14px var(--gc),0 0 28px var(--gc)}}
+.group-title{font-family:var(--font-h);font-weight:800;font-size:.9rem;letter-spacing:.2em;text-transform:uppercase}
+.group-count{font-family:var(--font-m);font-size:.45rem;letter-spacing:.12em;color:var(--text2);margin-left:auto;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);padding:4px 14px;border-radius:20px}
+.race-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
+.race-card{background:rgba(8,12,30,0.20);border:1px solid rgba(255,255,255,0.04);padding:18px 16px 14px;position:relative;overflow:hidden;border-radius:10px;cursor:pointer;backdrop-filter:blur(4px);transition:all .4s cubic-bezier(0.16,1,0.3,1)}
+.race-card::before{content:'';position:absolute;left:0;top:10px;bottom:10px;width:2px;background:linear-gradient(180deg,var(--rc,var(--blue)),transparent);opacity:0.4;transition:opacity .4s;border-radius:2px}
+.race-card::after{content:'◈';position:absolute;top:10px;right:12px;font-size:.8rem;color:var(--rc,var(--blue));opacity:0.06;transition:all .4s}
+.race-card:hover{border-color:color-mix(in srgb,var(--rc,var(--blue)) 35%,transparent);background:rgba(8,12,30,0.35);transform:translateY(-4px);box-shadow:0 0 20px color-mix(in srgb,var(--rc,var(--blue)) 12%,transparent),0 12px 32px rgba(0,0,0,0.4)}
+.race-card:hover::before{opacity:1}.race-card:hover::after{opacity:0.3;transform:scale(1.2) rotate(15deg)}
+.race-name{font-family:var(--font-h);font-weight:700;font-size:.72rem;letter-spacing:.12em;color:#fff;display:block;margin-bottom:4px;transition:text-shadow .4s}
+.race-card:hover .race-name{text-shadow:0 0 10px color-mix(in srgb,var(--rc,var(--blue)) 50%,transparent)}
+.race-id{font-family:var(--font-m);font-size:.45rem;color:var(--rc,var(--blue));opacity:0.35;letter-spacing:.08em;transition:opacity .3s}.race-card:hover .race-id{opacity:0.65}
+@media(max-width:880px){.nav-links{display:none}.hero-sub{min-height:35vh;padding:100px 1.5rem 40px}.page-wrap{padding:32px 1rem}.race-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}.footer{flex-direction:column;text-align:center}}
+
+/* ORIGINAL */
+
+
+:root{--bg:#020713;--bg2:#070d1e;--blue:#4DA3FF;--purple:#6C5CE7;--violet:#8B5CF6;--red:#FF4757;--text:#e2e6f0;--text2:#7c84a0;--text3:#3a4060;--font-h:"Orbitron",sans-serif;--font-b:"Rajdhani",sans-serif;--font-body:"Exo 2",sans-serif;--font-m:"Share Tech Mono",monospace}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+body{background:transparent;color:var(--text);font-family:var(--font-body);font-weight:300;line-height:1.7;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+::selection{background:var(--blue);color:var(--bg)}
+body::before{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;opacity:0.02;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.scroll-line{position:fixed;top:0;left:0;width:0%;height:2px;background:linear-gradient(90deg,var(--blue),var(--violet));z-index:10001}
+.nav{position:fixed;top:0;left:0;right:0;z-index:1000;padding:0 clamp(1.5rem,4vw,3rem);height:72px;display:flex;align-items:center;justify-content:space-between;background:rgba(2,7,19,0.92);backdrop-filter:blur(24px) saturate(1.4);border-bottom:1px solid rgba(77,163,255,0.06)}
+.nav-logo{font-family:var(--font-h);font-weight:800;font-size:1.1rem;letter-spacing:.22em;color:#fff;text-decoration:none}
+.nav-links{display:flex;gap:2px}.nav-links a{font-family:var(--font-b);font-size:.72rem;font-weight:500;letter-spacing:.08em;color:var(--text2);text-decoration:none;padding:8px 16px;border-radius:6px;transition:all .3s}.nav-links a:hover{color:#fff;background:rgba(255,255,255,0.04)}.nav-links a.active{color:var(--blue);background:rgba(77,163,255,0.06)}
+.hero-sub{position:relative;min-height:45vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:120px 2rem 60px;overflow:hidden}
+.hero-sub-overlay{position:absolute;inset:0;background:none;pointer-events:none}
+.hero-sub-content{position:relative;z-index:2}
+.hero-sub-tag{font-family:var(--font-m);font-size:.55rem;letter-spacing:.5em;text-transform:uppercase;color:var(--text3);margin-bottom:1.5rem}
+.glitch-wrap{position:relative;display:inline-block}
+.glitch-title{font-family:var(--font-h);font-weight:900;font-size:clamp(2rem,6vw,3.5rem);letter-spacing:.08em;margin-bottom:.8rem;background:linear-gradient(135deg,var(--blue),var(--violet));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;position:relative}
+.glitch-title::before,.glitch-title::after{content:attr(data-text);position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,var(--blue),var(--violet));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;opacity:0;pointer-events:none}
+@keyframes g1{0%,100%{opacity:0;transform:translate(0)}3%{opacity:.8;transform:translate(-3px,-1px);clip-path:inset(20% 0 60% 0)}5%{opacity:0}6%{opacity:.6;transform:translate(2px,1px);clip-path:inset(50% 0 20% 0)}8%{opacity:0;transform:translate(0)}}
+@keyframes g2{0%,100%{opacity:0;transform:translate(0)}3%{opacity:.7;transform:translate(3px,2px);clip-path:inset(70% 0 5% 0)}4.5%{opacity:0}5.5%{opacity:.5;transform:translate(-2px,-1px);clip-path:inset(10% 0 80% 0)}7%{opacity:0;transform:translate(0)}}
+@keyframes g3{0%,100%{opacity:0;transform:translate(0)}2%{opacity:.9;transform:translate(-1px,2px);clip-path:inset(40% 0 30% 0)}4%{opacity:.3;transform:translate(2px,-2px);clip-path:inset(5% 0 70% 0)}6%{opacity:0;transform:translate(0)}}
+.glitch-title::before{animation:g1 3s infinite,g2 3s 1s infinite,g3 3s 2s infinite}
+.glitch-title::after{animation:g2 3s .5s infinite,g3 3s 1.5s infinite,g1 3s 2.5s infinite}
+.hero-sub-desc{font-family:var(--font-body);font-size:.9rem;color:var(--text2);max-width:500px;margin:0 auto 2rem;font-weight:300}
+.hero-stats{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+.hero-stat{display:flex;align-items:center;gap:10px;background:rgba(77,163,255,0.03);border:1px solid rgba(77,163,255,0.1);border-radius:8px;padding:10px 20px}
+.hero-stat-num{font-family:var(--font-h);font-size:1.1rem;font-weight:800;color:var(--blue)}
+.hero-stat-lbl{font-family:var(--font-m);font-size:.5rem;letter-spacing:.15em;text-transform:uppercase;color:var(--text3)}
+.page-wrap{max-width:1400px;margin:0 auto;padding:48px clamp(1.5rem,4vw,3rem)}
+.section-head{display:flex;align-items:center;gap:16px;margin-bottom:32px}
+.sh-num{font-family:var(--font-h);font-size:.6rem;font-weight:600;letter-spacing:.12em;color:var(--blue);opacity:.5}
+.sh-title{font-family:var(--font-h);font-weight:700;font-size:.85rem;letter-spacing:.2em;color:var(--text);text-transform:uppercase;white-space:nowrap}
+.sh-line{flex:1;height:1px;background:linear-gradient(90deg,rgba(77,163,255,0.15),transparent)}
+.footer{border-top:1px solid rgba(255,255,255,0.04);padding:3rem clamp(1.5rem,4vw,3rem);display:flex;align-items:center;justify-content:space-between;gap:2rem;flex-wrap:wrap}
+.footer-brand{font-family:var(--font-h);font-size:.7rem;font-weight:700;letter-spacing:.2em;color:var(--text3)}
+.footer-links{display:flex;gap:18px}.footer-links a{font-size:.68rem;color:var(--text2);text-decoration:none;transition:color .2s}.footer-links a:hover{color:#fff}
+.footer-copy{font-family:var(--font-m);font-size:.45rem;color:var(--text3);letter-spacing:.15em}
+/* Races */
+.race-group{margin-bottom:56px;opacity:0;transform:translateY(30px)}.race-group.visible{opacity:1;transform:translateY(0);transition:all .6s cubic-bezier(0.16,1,0.3,1)}
+.group-header{display:flex;align-items:center;gap:14px;margin-bottom:22px;padding-bottom:14px;position:relative}.group-header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,var(--gc,var(--blue)),transparent 60%);opacity:0.3}
+.group-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;box-shadow:0 0 10px var(--gc),0 0 20px var(--gc);animation:dotP 3s ease-in-out infinite}@keyframes dotP{0%,100%{box-shadow:0 0 8px var(--gc),0 0 16px transparent}50%{box-shadow:0 0 14px var(--gc),0 0 28px var(--gc)}}
+.group-title{font-family:var(--font-h);font-weight:800;font-size:.9rem;letter-spacing:.2em;text-transform:uppercase}
+.group-count{font-family:var(--font-m);font-size:.45rem;letter-spacing:.12em;color:var(--text2);margin-left:auto;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);padding:4px 14px;border-radius:20px}
+.race-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
+.race-card{background:rgba(8,12,30,0.20);border:1px solid rgba(255,255,255,0.04);padding:18px 16px 14px;position:relative;overflow:hidden;border-radius:10px;cursor:pointer;backdrop-filter:blur(4px);transition:all .4s cubic-bezier(0.16,1,0.3,1)}
+.race-card::before{content:'';position:absolute;left:0;top:10px;bottom:10px;width:2px;background:linear-gradient(180deg,var(--rc,var(--blue)),transparent);opacity:0.4;transition:opacity .4s;border-radius:2px}
+.race-card::after{content:'◈';position:absolute;top:10px;right:12px;font-size:.8rem;color:var(--rc,var(--blue));opacity:0.06;transition:all .4s}
+.race-card:hover{border-color:color-mix(in srgb,var(--rc,var(--blue)) 35%,transparent);background:rgba(8,12,30,0.35);transform:translateY(-4px);box-shadow:0 0 20px color-mix(in srgb,var(--rc,var(--blue)) 12%,transparent),0 12px 32px rgba(0,0,0,0.4)}
+.race-card:hover::before{opacity:1}.race-card:hover::after{opacity:0.3;transform:scale(1.2) rotate(15deg)}
+.race-name{font-family:var(--font-h);font-weight:700;font-size:.72rem;letter-spacing:.12em;color:#fff;display:block;margin-bottom:4px;transition:text-shadow .4s}
+.race-card:hover .race-name{text-shadow:0 0 10px color-mix(in srgb,var(--rc,var(--blue)) 50%,transparent)}
+.race-id{font-family:var(--font-m);font-size:.45rem;color:var(--rc,var(--blue));opacity:0.35;letter-spacing:.08em;transition:opacity .3s}.race-card:hover .race-id{opacity:0.65}
+@media(max-width:880px){.nav-links{display:none}.hero-sub{min-height:35vh;padding:100px 1.5rem 40px}.page-wrap{padding:32px 1rem}.race-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}.footer{flex-direction:column;text-align:center}}
+
+
 </style>
 <script src="js/debug.js"></script>
 <script src="js/constants.js"></script>
 <script src="js/utils.js"></script>
+<script type="module">
+import{initializeApp,getApps}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import{getFirestore,collection,doc,setDoc,getDocs,getDoc}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import{getAuth,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+const firebaseConfig={apiKey:"AIzaSyAru7qZX8Gu_b8Y3oNDV-a5PmkrrkRjkcs",authDomain:"jaharta-rp.firebaseapp.com",projectId:"jaharta-rp",storageBucket:"jaharta-rp.firebasestorage.app",messagingSenderId:"217075417489",appId:"1:217075417489:web:4d1e2df422a5cd42411a30"};
+const app=getApps().length?getApps()[0]:initializeApp(firebaseConfig);
+const db=getFirestore(app);const auth=getAuth(app);
+window._db=db;window._collection=collection;window._doc=doc;window._setDoc=setDoc;window._getDocs=getDocs;
+onAuthStateChanged(auth,async user=>{
+  let canEditRaces=false;
+  if(user){
+    try{
+      const snap=await getDoc(doc(db,'admins',user.uid));
+      if(snap.exists()&&snap.data().role==='admin')canEditRaces=true;
+    }catch(e){console.warn('[race-auth]',e.message);}
+  }
+  window._isAdmin=canEditRaces;
+  if(typeof window.updateRaceAdmin==='function')window.updateRaceAdmin(canEditRaces);
+  if(typeof window.initRacePopups==='function')window.initRacePopups(db,canEditRaces);
+});
+document.addEventListener('DOMContentLoaded',function(){
+  if(typeof window.initRacePopups==='function'&&window._db)window.initRacePopups(window._db,!!window._isAdmin);
+});
+</script>
 </head>
 <body>
-<div class="page-transition-overlay" id="page-transition"><div class="pt-logo">JAHARTA</div><div class="pt-bar"></div><div class="pt-text">Chargement</div></div>
+<div class="page-transition-overlay" id="page-transition"><div class="pt-logo-wrap"><div class="pt-glow-ring"></div><div class="pt-scan"></div><svg class="pt-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" fill="none"><circle class="svg-ring-outer" cx="100" cy="100" r="68" stroke="#00f0ff" stroke-width="3.5"/><path class="svg-ring-inner" d="M 46 100 Q 100 58 154 100" stroke="#00f0ff" stroke-width="1.8" stroke-linecap="round" fill="none" opacity="0.5"/><path class="svg-ring-inner" d="M 46 100 Q 100 142 154 100" stroke="#00f0ff" stroke-width="1.8" stroke-linecap="round" fill="none" opacity="0.5"/><path class="svg-star" d="M 100 22 C 88 60 88 140 100 178 C 112 140 112 60 100 22 Z" fill="#00f0ff"/><path class="svg-star" d="M 22 100 C 60 88 140 88 178 100 C 140 112 60 112 22 100 Z" fill="#00f0ff"/><line class="svg-lines" x1="38" y1="38" x2="162" y2="162" stroke="#00f0ff" stroke-width="2.5" stroke-linecap="round"/><line class="svg-lines" x1="162" y1="38" x2="38" y2="162" stroke="#00f0ff" stroke-width="2.5" stroke-linecap="round"/><circle cx="100" cy="100" r="5" fill="#06060c"/><circle cx="100" cy="100" r="2.5" fill="#00f0ff"/></svg></div><div class="pt-bar-wrap"><div class="pt-bar-fill"></div></div><div class="pt-text">Chargement</div></div>
 <div class="scroll-progress" id="scroll-progress"></div>
-<div class="noise"></div>
 
-
-  <nav class="nav" id="nav">
-    <a href="index.html" class="nav-logo">JAHARTA</a>
-    <div class="nav-links" id="nav-links">
-      <a href="index.html">Accueil</a>
-      <a href="fiches.html">Fiches RP</a>
-      <a href="pnj.html">PNJ</a>
-      <a href="portail.html">Portail</a>
-      <a href="racesjouables.html" class="active">Races</a>
-      <a href="admin.html" class="nav-admin-link">Admin</a>
-      <a href="admin.html" class="admin-badge" id="admin-badge">ADMIN</a>
-    </div>
-    <button class="nav-toggle" id="nav-toggle" aria-label="Menu">☰</button>
-  </nav>
-
-<section class="hero hero--sub" id="hero">
-    <canvas id="particles-canvas"></canvas>
-    <div class="hero-bg" style="opacity:0"></div>
-    <div class="hero-grid"></div>
-    <div class="hero-overlay"></div>
-    <div class="hero-content">
-      <p class="hero-pretitle">Encyclopédie · Races Jouables</p>
-      <h1 class="hero-title hero-title--sub" data-text="RACES JOUABLES">
-        <span class="glow-text">RACES JOUABLES</span>
-      </h1>
-      <p class="hero-subtitle">Les espèces disponibles dans l'univers de Jaharta</p>
-      
-    </div>
-  </section>
-
-<div class="page-wrap">
-  <div class="race-group" data-reveal><div class="group-header"><div class="group-dot" style="background:#00c8ff;box-shadow:0 0 8px #00c8ff"></div><span class="group-title" style="color:#00c8ff">Humanoids</span><span class="group-count">6 races · Groupe Standard</span></div><div class="race-grid"><div class="race-card" style="--rc:#00c8ff"><span class="race-name">Human</span><span class="race-id">#01</span></div><div class="race-card" style="--rc:#00c8ff"><span class="race-name">Elf</span><span class="race-id">#02</span></div><div class="race-card" style="--rc:#00c8ff"><span class="race-name">Vampire</span><span class="race-id">#03</span></div><div class="race-card" style="--rc:#00c8ff"><span class="race-name">Dwarf</span><span class="race-id">#04</span></div><div class="race-card" style="--rc:#00c8ff"><span class="race-name">Orc</span><span class="race-id">#05</span></div><div class="race-card" style="--rc:#00c8ff"><span class="race-name">Oni</span><span class="race-id">#06</span></div></div></div>
-
-  <div class="race-group" data-reveal data-delay="100"><div class="group-header"><div class="group-dot" style="background:#44ff88;box-shadow:0 0 8px #44ff88"></div><span class="group-title" style="color:#44ff88">Zooids</span><span class="group-count">13 races · Hybrides animaux</span></div><div class="race-grid"><div class="race-card" style="--rc:#44ff88"><span class="race-name">Neko</span><span class="race-id">#10</span></div><div class="race-card" style="--rc:#44ff88"><span class="race-name">Doggo</span><span class="race-id">#11</span></div><div class="race-card" style="--rc:#44ff88"><span class="race-name">Bunny</span><span class="race-id">#12</span></div><div class="race-card" style="--rc:#44ff88"><span class="race-name">Draph</span><span class="race-id">#13</span></div><div class="race-card" style="--rc:#44ff88"><span class="race-name">Lamia</span><span class="race-id">#14</span></div><div class="race-card" style="--rc:#44ff88"><span class="race-name">Cowie</span><span class="race-id">#15</span></div><div class="race-card" style="--rc:#44ff88"><span class="race-name">Kakuen</span><span class="race-id">#16</span></div><div class="race-card" style="--rc:#44ff88"><span class="race-name">Dormouse</span><span class="race-id">#17</span></div><div class="race-card" style="--rc:#44ff88"><span class="race-name">Jinko</span><span class="race-id">#18</span></div><div class="race-card" style="--rc:#44ff88"><span class="race-name">Gyoubu</span><span class="race-id">#19</span></div><div class="race-card" style="--rc:#44ff88"><span class="race-name">Xiongmao</span><span class="race-id">#20</span></div><div class="race-card" style="--rc:#44ff88"><span class="race-name">Siren</span><span class="race-id">#21</span></div><div class="race-card" style="--rc:#44ff88"><span class="race-name">Moth</span><span class="race-id">#22</span></div></div></div>
-
-  <div class="race-group" data-reveal data-delay="200"><div class="group-header"><div class="group-dot" style="background:#b06eff;box-shadow:0 0 8px #b06eff"></div><span class="group-title" style="color:#b06eff">Mythical Zooids</span><span class="group-count">11 races · Hybrides mythiques</span></div><div class="race-grid"><div class="race-card" style="--rc:#b06eff"><span class="race-name">Qilin</span><span class="race-id">#23</span></div><div class="race-card" style="--rc:#b06eff"><span class="race-name">Dragon</span><span class="race-id">#24</span></div><div class="race-card" style="--rc:#b06eff"><span class="race-name">Minotaur</span><span class="race-id">#25</span></div><div class="race-card" style="--rc:#b06eff"><span class="race-name">Hellhound</span><span class="race-id">#26</span></div><div class="race-card" style="--rc:#b06eff"><span class="race-name">Sphynx</span><span class="race-id">#27</span></div><div class="race-card" style="--rc:#b06eff"><span class="race-name">Phoenix</span><span class="race-id">#28</span></div><div class="race-card" style="--rc:#b06eff"><span class="race-name">Fenrir</span><span class="race-id">#29</span></div><div class="race-card" style="--rc:#b06eff"><span class="race-name">Unicorn</span><span class="race-id">#30</span></div><div class="race-card" style="--rc:#b06eff"><span class="race-name">Kitsune</span><span class="race-id">#31</span></div><div class="race-card" style="--rc:#b06eff"><span class="race-name">Salamander</span><span class="race-id">#32</span></div><div class="race-card" style="--rc:#b06eff"><span class="race-name">Hakutaku</span><span class="race-id">#33</span></div></div></div>
-
-  <div class="race-group" data-reveal data-delay="300"><div class="group-header"><div class="group-dot" style="background:#ff3030;box-shadow:0 0 8px #ff3030"></div><span class="group-title" style="color:#ff3030">Demons</span><span class="group-count">3 races · Créatures infernales</span></div><div class="race-grid"><div class="race-card" style="--rc:#ff3030"><span class="race-name">Tiefling</span><span class="race-id">#34</span></div><div class="race-card" style="--rc:#ff3030"><span class="race-name">Succubus</span><span class="race-id">#35</span></div><div class="race-card" style="--rc:#ff3030"><span class="race-name">Devil</span><span class="race-id">#36</span></div></div></div>
-
-  <div class="race-group" data-reveal data-delay="350"><div class="group-header"><div class="group-dot" style="background:#ffd60a;box-shadow:0 0 8px #ffd60a"></div><span class="group-title" style="color:#ffd60a">Artificial</span><span class="group-count">2 races · Entités construites</span></div><div class="race-grid"><div class="race-card" style="--rc:#ffd60a"><span class="race-name">Android</span><span class="race-id">#37</span></div><div class="race-card" style="--rc:#ffd60a"><span class="race-name">Shuma</span><span class="race-id">#38</span></div></div></div>
-
-  <div class="race-group" data-reveal data-delay="400"><div class="group-header"><div class="group-dot" style="background:#00e5cc;box-shadow:0 0 8px #00e5cc"></div><span class="group-title" style="color:#00e5cc">Semi-Liquid</span><span class="group-count">2 races · Formes semi-liquides</span></div><div class="race-grid"><div class="race-card" style="--rc:#00e5cc"><span class="race-name">Slime</span><span class="race-id">#39</span></div><div class="race-card" style="--rc:#00e5cc"><span class="race-name">Nureonago</span><span class="race-id">#40</span></div></div></div>
-
-  <div class="race-group" data-reveal data-delay="450"><div class="group-header"><div class="group-dot" style="background:#9a8cff;box-shadow:0 0 8px #9a8cff"></div><span class="group-title" style="color:#9a8cff">Undead</span><span class="group-count">2 races · Morts-vivants</span></div><div class="race-grid"><div class="race-card" style="--rc:#9a8cff"><span class="race-name">Jiangshi</span><span class="race-id">#41</span></div><div class="race-card" style="--rc:#9a8cff"><span class="race-name">Joker</span><span class="race-id">#42</span></div></div></div>
-</div>
-
-<footer>
-  <div class="footer-inner">
-    <div><div class="f-logo">JAHARTA // RP</div><div class="f-tagline">Univers Jaharta · Roleplay Officiel</div></div>
-    <div class="f-status"><div class="f-status-dot"><span class="hdot"></span> 42 RACES JOUABLES</div><div class="f-version">v5.0.0</div></div>
-    <div class="f-links-col"><div class="f-links"><a href="index.html">Accueil</a><a href="fiches.html">Fiches</a><a href="pnj.html">PNJ</a><a href="portail.html">Portail</a></div></div>
+<div class="scroll-line" id="scroll-line"></div>
+<nav class="nav" id="nav">
+  <a href="index.html" class="nav-logo"><img src="img/logo-jaharta.png" alt="Logo Jaharta" style="width:36px;height:36px;object-fit:contain;vertical-align:middle;margin-right:10px;">JAHARTA</a>
+  <div class="nav-links" id="nav-links">
+    <a href="index.html">Accueil</a>
+    <a href="fiches.html">Fiches RP</a>
+    <a href="pnj.html">PNJ</a>
+    <a href="portail.html">Portail</a>
+    <a href="racesjouables.html" class="active">Races</a>
+    <a href="gacha.html">Gacha</a>
+    <a href="admin.html" class="nav-admin-link">Admin</a>
+    <a href="admin.html" class="admin-badge" id="admin-badge">ADMIN</a>
   </div>
-  <div class="f-bottom"><div class="f-copy">© 2024 — 2026 JAHARTA RP · TOUS DROITS RÉSERVÉS</div></div>
-</footer>
+  <button class="nav-toggle" id="nav-toggle" aria-label="Menu">☰</button>
+</nav>
+<div class="nav-backdrop" id="nav-backdrop"></div>
+<section class="hero-sub"><div class="hero-sub-overlay"></div><div class="hero-sub-content"><p class="hero-sub-tag">Encyclop&eacute;die &middot; Races Jouables</p><div class="glitch-wrap"><h1 class="glitch-title" data-text="RACES JOUABLES">RACES JOUABLES</h1></div><p class="hero-sub-desc">Les 42 esp&egrave;ces disponibles dans l'univers de Jaharta</p><div class="hero-stats"><div class="hero-stat"><span class="hero-stat-num" id="count-races">0</span><span class="hero-stat-lbl">Races</span></div><div class="hero-stat"><span class="hero-stat-num">7</span><span class="hero-stat-lbl">Groupes</span></div></div></div></section>
+<div class="page-wrap">
+  <div class="race-group rv" style="--gc:#4DA3FF"><div class="group-header"><div class="group-dot" style="background:#4DA3FF"></div><span class="group-title" style="color:#4DA3FF">Humanoids</span><span class="group-count">6 races</span></div><div class="race-grid">
+    <div class="race-card" style="--rc:#4DA3FF"><span class="race-name">Human</span><span class="race-id">#01</span></div>
+    <div class="race-card" style="--rc:#4DA3FF"><span class="race-name">Elf</span><span class="race-id">#02</span></div>
+    <div class="race-card" style="--rc:#4DA3FF"><span class="race-name">Vampire</span><span class="race-id">#03</span></div>
+    <div class="race-card" style="--rc:#4DA3FF"><span class="race-name">Dwarf</span><span class="race-id">#04</span></div>
+    <div class="race-card" style="--rc:#4DA3FF"><span class="race-name">Orc</span><span class="race-id">#05</span></div>
+    <div class="race-card" style="--rc:#4DA3FF"><span class="race-name">Oni</span><span class="race-id">#06</span></div>
+  </div></div>
+  <div class="race-group rv" style="--gc:#44ff88"><div class="group-header"><div class="group-dot" style="background:#44ff88"></div><span class="group-title" style="color:#44ff88">Zooids</span><span class="group-count">13 races</span></div><div class="race-grid">
+    <div class="race-card" style="--rc:#44ff88"><span class="race-name">Neko</span><span class="race-id">#10</span></div>
+    <div class="race-card" style="--rc:#44ff88"><span class="race-name">Doggo</span><span class="race-id">#11</span></div>
+    <div class="race-card" style="--rc:#44ff88"><span class="race-name">Bunny</span><span class="race-id">#12</span></div>
+    <div class="race-card" style="--rc:#44ff88"><span class="race-name">Draph</span><span class="race-id">#13</span></div>
+    <div class="race-card" style="--rc:#44ff88"><span class="race-name">Lamia</span><span class="race-id">#14</span></div>
+    <div class="race-card" style="--rc:#44ff88"><span class="race-name">Cowie</span><span class="race-id">#15</span></div>
+    <div class="race-card" style="--rc:#44ff88"><span class="race-name">Kakuen</span><span class="race-id">#16</span></div>
+    <div class="race-card" style="--rc:#44ff88"><span class="race-name">Dormouse</span><span class="race-id">#17</span></div>
+    <div class="race-card" style="--rc:#44ff88"><span class="race-name">Jinko</span><span class="race-id">#18</span></div>
+    <div class="race-card" style="--rc:#44ff88"><span class="race-name">Gyoubu</span><span class="race-id">#19</span></div>
+    <div class="race-card" style="--rc:#44ff88"><span class="race-name">Xiongmao</span><span class="race-id">#20</span></div>
+    <div class="race-card" style="--rc:#44ff88"><span class="race-name">Siren</span><span class="race-id">#21</span></div>
+    <div class="race-card" style="--rc:#44ff88"><span class="race-name">Moth</span><span class="race-id">#22</span></div>
+  </div></div>
+  <div class="race-group rv" style="--gc:#8B5CF6"><div class="group-header"><div class="group-dot" style="background:#8B5CF6"></div><span class="group-title" style="color:#8B5CF6">Mythical Zooids</span><span class="group-count">11 races</span></div><div class="race-grid">
+    <div class="race-card" style="--rc:#8B5CF6"><span class="race-name">Qilin</span><span class="race-id">#23</span></div>
+    <div class="race-card" style="--rc:#8B5CF6"><span class="race-name">Dragon</span><span class="race-id">#24</span></div>
+    <div class="race-card" style="--rc:#8B5CF6"><span class="race-name">Minotaur</span><span class="race-id">#25</span></div>
+    <div class="race-card" style="--rc:#8B5CF6"><span class="race-name">Hellhound</span><span class="race-id">#26</span></div>
+    <div class="race-card" style="--rc:#8B5CF6"><span class="race-name">Sphynx</span><span class="race-id">#27</span></div>
+    <div class="race-card" style="--rc:#8B5CF6"><span class="race-name">Phoenix</span><span class="race-id">#28</span></div>
+    <div class="race-card" style="--rc:#8B5CF6"><span class="race-name">Fenrir</span><span class="race-id">#29</span></div>
+    <div class="race-card" style="--rc:#8B5CF6"><span class="race-name">Unicorn</span><span class="race-id">#30</span></div>
+    <div class="race-card" style="--rc:#8B5CF6"><span class="race-name">Kitsune</span><span class="race-id">#31</span></div>
+    <div class="race-card" style="--rc:#8B5CF6"><span class="race-name">Salamander</span><span class="race-id">#32</span></div>
+    <div class="race-card" style="--rc:#8B5CF6"><span class="race-name">Hakutaku</span><span class="race-id">#33</span></div>
+  </div></div>
+  <div class="race-group rv" style="--gc:#FF4757"><div class="group-header"><div class="group-dot" style="background:#FF4757"></div><span class="group-title" style="color:#FF4757">Demons</span><span class="group-count">3 races</span></div><div class="race-grid">
+    <div class="race-card" style="--rc:#FF4757"><span class="race-name">Tiefling</span><span class="race-id">#34</span></div>
+    <div class="race-card" style="--rc:#FF4757"><span class="race-name">Succubus</span><span class="race-id">#35</span></div>
+    <div class="race-card" style="--rc:#FF4757"><span class="race-name">Devil</span><span class="race-id">#36</span></div>
+  </div></div>
+  <div class="race-group rv" style="--gc:#ffd60a"><div class="group-header"><div class="group-dot" style="background:#ffd60a"></div><span class="group-title" style="color:#ffd60a">Artificial</span><span class="group-count">2 races</span></div><div class="race-grid">
+    <div class="race-card" style="--rc:#ffd60a"><span class="race-name">Android</span><span class="race-id">#37</span></div>
+    <div class="race-card" style="--rc:#ffd60a"><span class="race-name">Shuma</span><span class="race-id">#38</span></div>
+  </div></div>
+  <div class="race-group rv" style="--gc:#00e5cc"><div class="group-header"><div class="group-dot" style="background:#00e5cc"></div><span class="group-title" style="color:#00e5cc">Semi-Liquid</span><span class="group-count">2 races</span></div><div class="race-grid">
+    <div class="race-card" style="--rc:#00e5cc"><span class="race-name">Slime</span><span class="race-id">#39</span></div>
+    <div class="race-card" style="--rc:#00e5cc"><span class="race-name">Nureonago</span><span class="race-id">#40</span></div>
+  </div></div>
+  <div class="race-group rv" style="--gc:#9a8cff"><div class="group-header"><div class="group-dot" style="background:#9a8cff"></div><span class="group-title" style="color:#9a8cff">Undead</span><span class="group-count">2 races</span></div><div class="race-grid">
+    <div class="race-card" style="--rc:#9a8cff"><span class="race-name">Jiangshi</span><span class="race-id">#41</span></div>
+    <div class="race-card" style="--rc:#9a8cff"><span class="race-name">Joker</span><span class="race-id">#42</span></div>
+  </div></div>
+</div>
+<footer class="footer"><div class="footer-brand">JAHARTA</div><div class="footer-links"><a href="#">Fiches</a><a href="#">PNJ</a><a href="#">Portail</a><a href="#">Races</a></div><div class="footer-copy">&copy; 2024 &mdash; 2026 JAHARTA</div></footer>
 
 <script>
-(function(){const bar=document.getElementById('scroll-progress');let t=false;window.addEventListener('scroll',()=>{if(!t){requestAnimationFrame(()=>{const h=document.documentElement.scrollHeight-window.innerHeight;bar.style.width=h>0?(window.scrollY/h*100)+'%':'0%';t=false;});t=true;}},{passive:true});})();
-(function(){const els=document.querySelectorAll('[data-reveal]');if(!('IntersectionObserver' in window)){els.forEach(el=>el.classList.add('revealed'));return;}const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){setTimeout(()=>e.target.classList.add('revealed'),parseInt(e.target.dataset.delay||'0'));obs.unobserve(e.target);}});},{threshold:.1,rootMargin:'0px 0px -40px 0px'});els.forEach(el=>obs.observe(el));})();
-(function(){const toggle=document.getElementById('nav-toggle');const nav=document.getElementById('nav-links');const bd=document.getElementById('nav-backdrop');if(!toggle||!nav)return;function cl(){nav.classList.remove('open');bd.classList.remove('open');toggle.textContent='☰';}function op(){nav.classList.add('open');bd.classList.add('open');toggle.textContent='✕';}toggle.addEventListener('click',()=>{nav.classList.contains('open')?cl():op();});bd.addEventListener('click',cl);nav.querySelectorAll('a').forEach(a=>a.addEventListener('click',cl));})();
-(function(){const h=document.querySelector('header');if(!h)return;let s=false;window.addEventListener('scroll',()=>{const v=window.scrollY>80;if(v!==s){s=v;h.style.height=v?'56px':'';h.style.borderBottomColor=v?'rgba(0,240,255,.22)':'';}},{passive:true});})();
+
+document.querySelectorAll('.rv').forEach(function(g,i){setTimeout(function(){g.classList.add('visible');},300+i*120);});
+(function(){var el=document.getElementById('count-races');var t=42,d=1800,s=null;function step(ts){if(!s)s=ts;var p=Math.min((ts-s)/d,1);el.textContent=Math.floor((1-Math.pow(1-p,3))*t);if(p<1)requestAnimationFrame(step);else el.textContent=t;}requestAnimationFrame(step);})();
+window.addEventListener('scroll',function(){var h=document.documentElement.scrollHeight-window.innerHeight;document.getElementById('scroll-line').style.width=h>0?(window.scrollY/h*100)+'%':'0%';},{passive:true});
+
 </script>
+<script src="js/kanji-blob.js"></script>
+<script>
+
+/* ═══════════════════════════════════════════════════════════════
+   race-popup-v4.js — HUD Cyberpunk Frame + Canvas Radar + Particles
+   ═══════════════════════════════════════════════════════════════ */
+(function() {
+  'use strict';
+
+  var DEFAULT_FIELDS = {
+    name:'',plural:'',category:'',longevity:'',
+    affinity:'',access:'Ouverte',description:'',imageUrl:'',
+    baseStats:{str:0,agi:0,spd:0,int:0,mana:0,res:0,cha:0,aura:0},
+    basePowers:[]
+  };
+
+  var racesData = {};
+  var isAdmin = false;
+  var db = null;
+  var initialized = false;
+  var _rafPortrait = null;
+  var _rafDots = null;
+
+  window.initRacePopups = function(_db, _isAdmin) {
+    db = _db; isAdmin = _isAdmin;
+    if (!initialized) { loadRacesData(); bindRaceCards(); initialized = true; }
+  };
+  window.updateRaceAdmin = function(v) { isAdmin = v; };
+
+  function loadRacesData() {
+    if (!db || !window._getDocs) return;
+    try {
+      window._getDocs(window._collection(db,'races_data')).then(function(snap) {
+        snap.forEach(function(d) { racesData[d.id] = d.data(); });
+      }).catch(function(){});
+    } catch(e) {}
+  }
+
+  function saveRaceData(name, data) {
+    if (!db || !window._setDoc) return Promise.reject(new Error('No Firebase'));
+    return window._setDoc(window._doc(db,'races_data',name), data, {merge:true});
+  }
+
+  function bindRaceCards() {
+    document.querySelectorAll('.race-card').forEach(function(card) {
+      card.style.cursor = 'pointer';
+      card.addEventListener('click', function() {
+        var name = card.querySelector('.race-name') && card.querySelector('.race-name').textContent.trim();
+        if (name) openRacePopup(name, card.style.getPropertyValue('--rc') || '#00e5ff');
+      });
+    });
+  }
+  window.rebindRaceCards = bindRaceCards;
+
+  /* ── Open ── */
+  function openRacePopup(raceName, accent) {
+    var old = document.getElementById('rp-overlay');
+    if (old) { cancelAnimationFrame(_rafPortrait); clearInterval(_rafDots); old.remove(); }
+    var data = Object.assign({}, DEFAULT_FIELDS, racesData[raceName] || {});
+    var overlay = document.createElement('div');
+    overlay.id = 'rp-overlay';
+    overlay.className = 'rp-ov';
+    overlay.innerHTML = buildHTML(raceName, data, accent);
+    document.body.appendChild(overlay);
+    document.body.style.overflow = 'hidden';
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() { overlay.classList.add('rp-open'); });
+    });
+    overlay.addEventListener('click', function(e) { if (e.target === overlay) closePopup(); });
+    overlay.querySelector('.rp-x').addEventListener('click', closePopup);
+    var saveBtn = overlay.querySelector('.rp-save');
+    if (saveBtn) saveBtn.addEventListener('click', function() { doSave(raceName, overlay, saveBtn); });
+    // Boot animations after DOM paint
+    setTimeout(function() { bootCanvases(data, accent); bootDots(); }, 60);
+  }
+
+  /* ── Close ── */
+  function closePopup() {
+    var ov = document.getElementById('rp-overlay');
+    if (!ov) return;
+    cancelAnimationFrame(_rafPortrait);
+    clearInterval(_rafDots);
+    ov.classList.remove('rp-open');
+    ov.classList.add('rp-closing');
+    document.body.style.overflow = '';
+    setTimeout(function() { ov.remove(); }, 450);
+  }
+
+  /* ══════════════════════════════════════════
+     BUILD HTML
+  ══════════════════════════════════════════ */
+  function buildHTML(name, d, ac) {
+    var powers = d.basePowers || [];
+    var stats = d.baseStats || {};
+    var SK = ['str','agi','spd','int','mana','res','cha','aura'];
+    var SL = ['STR','AGI','SPD','INT','MNA','RES','CHA','AUR'];
+    var SC = ['#FF4757','#00e5ff','#44ff88','#60a5fa','#b44aff','#ffd60a','#f97316','#e040fb'];
+    var accessColor = d.access === 'Ouverte' ? '#00ff88' : '#ffd60a';
+    var accessLabel = d.access || 'Ouverte';
+    var catLabel = d.category || '';
+    var idx = name.charCodeAt(0) % 99 + 1;
+
+    /* Portrait */
+    var portraitInner = d.imageUrl
+      ? '<img src="'+d.imageUrl+'" style="width:100%;height:100%;object-fit:cover;object-position:top center;position:absolute;inset:0;">'
+      : '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:Orbitron,sans-serif;font-size:64px;font-weight:900;color:'+ac+'18;z-index:1;">'+name[0]+'</div>';
+
+    /* Powers */
+    var powHTML = powers.length > 0
+      ? powers.map(function(p,pi) {
+          var pc = SC[pi % SC.length];
+          return '<div class="rp4-pw" style="--pwc:'+pc+'">'
+            +'<span class="rp4-pw-dot" style="background:'+pc+';box-shadow:0 0 6px '+pc+'"></span>'
+            +'<div><span class="rp4-pw-n" style="color:'+ac+'">'+(p.name||p)+'</span>'
+            +(p.desc ? '<span class="rp4-pw-d">'+p.desc+'</span>' : '')
+            +'</div></div>';
+        }).join('')
+      : '<div class="rp4-empty">Aucun pouvoir de base enregistré.</div>';
+
+    /* Vertical stat bars */
+    var vbars = SK.map(function(k,i) {
+      var v = Math.round((stats[k]||0));
+      var pct = Math.round(Math.min(v,100));
+      return '<div class="rp4-vb-wrap">'
+        +'<span class="rp4-vb-val">'+v+'</span>'
+        +'<div class="rp4-vb-track"><div class="rp4-vb-fill" data-pct="'+pct+'" style="background:linear-gradient(180deg,'+SC[i]+','+SC[i]+'44);box-shadow:0 -3px 8px '+SC[i]+'88;"></div></div>'
+        +'<span class="rp4-vb-lbl">'+SL[i]+'</span>'
+        +'</div>';
+    }).join('');
+
+    /* Admin */
+    var adminHTML = '';
+    if (isAdmin) {
+      adminHTML = '<div class="rp4-admin">'
+        +'<div class="rp4-admin-t">&#9656; MODE ADMIN</div>'
+        +'<div class="rp4-admin-g">'
+        +fi('rp-ed-name','Nom',d.name||name)+fi('rp-ed-plural','Pluriel',d.plural||name+'s')
+        +fi('rp-ed-category','Cat\u00e9gorie',d.category||'')+fi('rp-ed-longevity','Long\u00e9vit\u00e9',d.longevity||'')
+        +fi('rp-ed-affinity','Affinit\u00e9',d.affinity||'')
+        +'<div class="rp4-fg"><label class="rp4-fl">Acc\u00e8s</label><select class="rp4-fi" id="rp-ed-access">'
+        +'<option value="Ouverte"'+(d.access==='Ouverte'?' selected':'')+'>Ouverte</option>'
+        +'<option value="Sous conditions"'+(d.access!=='Ouverte'?' selected':'')+'>Sous conditions</option>'
+        +'</select></div></div>'
+        +'<div class="rp4-fg"><label class="rp4-fl">Image (URL)</label><input class="rp4-fi" id="rp-ed-image" value="'+(d.imageUrl||'').replace(/"/g,'&quot;')+'" placeholder="https://..."></div>'
+        +'<div class="rp4-fg"><label class="rp4-fl">Description</label><textarea class="rp4-fta" id="rp-ed-desc">'+(d.description||'')+'</textarea></div>'
+        +'<div class="rp4-fg"><label class="rp4-fl">Stats (JSON)</label><textarea class="rp4-fta rp4-mono" id="rp-ed-stats">'+JSON.stringify(d.baseStats||{})+'</textarea></div>'
+        +'<div class="rp4-fg"><label class="rp4-fl">Pouvoirs (JSON)</label><textarea class="rp4-fta rp4-mono" id="rp-ed-powers">'+JSON.stringify(d.basePowers||[])+'</textarea></div>'
+        +'<button class="rp4-save">Sauvegarder</button>'
+        +'</div>';
+    }
+
+    return ''
+      /* Overlay inner wrapper */
+      +'<div class="rp4-outer">'
+      /* Corner decorations */
+      +'<div class="rp4-ce tl"></div><div class="rp4-ce tr"></div>'
+      +'<div class="rp4-ce bl"></div><div class="rp4-ce br"></div>'
+      /* Close */
+      +'<button class="rp-x">\u2715</button>'
+      /* Popup */
+      +'<div class="rp4-popup">'
+      /* Noise overlay */
+      +'<div class="rp4-noise"></div>'
+      /* Scan line */
+      +'<div class="rp4-scan"></div>'
+      /* Top accent bar */
+      +'<div class="rp4-topbar" style="background:linear-gradient(90deg,transparent,'+ac+',#ff2d78,'+ac+',transparent)"></div>'
+      /* ── HEADER ── */
+      +'<div class="rp4-header">'
+        /* Portrait */
+        +'<div class="rp4-portrait-wrap" id="rp4-portrait-wrap">'
+          +portraitInner
+          +'<div class="rp4-portrait-grid"></div>'
+          +'<canvas id="rp4-portrait-canvas"></canvas>'
+          +'<div class="rp4-portrait-ov"></div>'
+          +'<svg class="rp4-reticle" viewBox="0 0 60 60" fill="none">'
+            +'<circle cx="30" cy="30" r="27" stroke="'+ac+'" stroke-width="0.5" opacity="0.2"/>'
+            +'<circle cx="30" cy="30" r="18" stroke="'+ac+'" stroke-width="0.5" opacity="0.15"/>'
+            +'<line x1="30" y1="3" x2="30" y2="12" stroke="'+ac+'" stroke-width="0.8" opacity="0.4"/>'
+            +'<line x1="30" y1="48" x2="30" y2="57" stroke="'+ac+'" stroke-width="0.8" opacity="0.4"/>'
+            +'<line x1="3" y1="30" x2="12" y2="30" stroke="'+ac+'" stroke-width="0.8" opacity="0.4"/>'
+            +'<line x1="48" y1="30" x2="57" y2="30" stroke="'+ac+'" stroke-width="0.8" opacity="0.4"/>'
+            +'<circle cx="30" cy="30" r="2.5" fill="'+ac+'" opacity="0.5"/>'
+            +'<circle cx="30" cy="30" r="5" stroke="#ff2d78" stroke-width="0.5" opacity="0.4"/>'
+          +'</svg>'
+          +'<div class="rp4-portrait-readout">'
+            +'<span>ID: JHT-'+String(idx).padStart(3,'0')+'</span>'
+            +'<span>SCAN: 98.'+Math.floor(Math.random()*9+1)+'%</span>'
+            +'<span>STS: ACTIVE</span>'
+          +'</div>'
+        +'</div>'
+        /* Center info */
+        +'<div class="rp4-center">'
+          +'<div class="rp4-id-row">'
+            +'<span class="rp4-id" style="color:'+ac+';border-color:'+ac+'44;background:'+ac+'0a">#'+String(idx).padStart(2,'0')+'</span>'
+            +(catLabel ? '<span class="rp4-cat">'+catLabel.toUpperCase()+'</span>' : '')
+            +'<span class="rp4-access" style="color:'+accessColor+';border-color:'+accessColor+'33;background:'+accessColor+'08">&#9670; '+accessLabel.toUpperCase()+'</span>'
+          +'</div>'
+          +'<div class="rp4-title-wrap">'
+            +'<div class="rp4-title-glow" style="color:'+ac+'">'+name.toUpperCase()+'</div>'
+            +'<div class="rp4-title">'+name.toUpperCase()+'</div>'
+          +'</div>'
+          +(d.plural ? '<div class="rp4-subtitle">Pluriel : '+d.plural+'</div>' : '')
+          +'<div class="rp4-meta-grid">'
+            +'<div class="rp4-mc" style="--mca:'+ac+'"><span class="rp4-ml">Long\u00e9vit\u00e9</span><span class="rp4-mv" style="color:'+ac+'">'+(d.longevity||'—')+'</span></div>'
+            +'<div class="rp4-mc" style="--mca:'+ac+'"><span class="rp4-ml">Affinit\u00e9</span><span class="rp4-mv" style="color:'+ac+'">'+(d.affinity||'—')+'</span></div>'
+            +'<div class="rp4-mc" style="--mca:'+ac+'"><span class="rp4-ml">Acc\u00e8s</span><span class="rp4-mv" style="color:'+accessColor+'">'+accessLabel+'</span></div>'
+            +'<div class="rp4-mc" style="--mca:'+ac+'"><span class="rp4-ml">Groupe</span><span class="rp4-mv" style="color:'+ac+'">'+(catLabel||'—')+'</span></div>'
+          +'</div>'
+        +'</div>'
+        /* Radar panel */
+        +'<div class="rp4-radar-panel">'
+          +'<div class="rp4-rlbl">STATS DE BASE</div>'
+          +'<canvas id="rp4-radar" width="164" height="164"></canvas>'
+        +'</div>'
+      +'</div>'
+      /* ── BODY 3 cols ── */
+      +'<div class="rp4-body">'
+        /* Description */
+        +'<div class="rp4-col">'
+          +'<div class="rp4-stitle">Description</div>'
+          +'<div class="rp4-desc" style="border-color:'+ac+'40">'+(d.description||'Aucune description disponible pour cette race.')+'</div>'
+        +'</div>'
+        +'<div class="rp4-divider"></div>'
+        /* Powers */
+        +'<div class="rp4-col">'
+          +'<div class="rp4-stitle">Pouvoirs de base</div>'
+          +'<div class="rp4-powers">'+powHTML+'</div>'
+        +'</div>'
+        +'<div class="rp4-divider"></div>'
+        /* Stat bars */
+        +'<div class="rp4-col rp4-stats-col">'
+          +'<div class="rp4-stitle">Statistiques</div>'
+          +'<div class="rp4-vbars" id="rp4-vbars">'+vbars+'</div>'
+        +'</div>'
+      +'</div>'
+      /* ── BOTTOMBAR ── */
+      +'<div class="rp4-bottom">'
+        +'<span class="rp4-bdb">JAHARTA_DB \u00b7 RACE_INDEX:'+String(idx).padStart(3,'0')+' \u00b7 v4.0</span>'
+        +'<div class="rp4-bdots" id="rp4-bdots">'
+          +'<div class="rp4-dot active"></div>'
+          +'<div class="rp4-dot"></div><div class="rp4-dot"></div>'
+          +'<div class="rp4-dot"></div><div class="rp4-dot"></div>'
+        +'</div>'
+        +'<div class="rp4-sig"><div style="height:8px"></div><div style="height:12px"></div><div style="height:18px"></div><div style="height:12px"></div><div style="height:8px"></div></div>'
+        +'<span class="rp4-status">&#9670; ONLINE</span>'
+      +'</div>'
+      /* Admin */
+      +adminHTML
+      +'</div>' /* /.rp4-popup */
+      +'</div>'; /* /.rp4-outer */
+  }
+
+  function fi(id,lbl,val){
+    return '<div class="rp4-fg"><label class="rp4-fl">'+lbl+'</label><input class="rp4-fi" id="'+id+'" value="'+(val||'').replace(/"/g,'&quot;')+'"></div>';
+  }
+
+  /* ══════════════════════════════════════════
+     CANVAS ANIMATIONS
+  ══════════════════════════════════════════ */
+  function bootCanvases(data, ac) {
+    /* — Portrait canvas — */
+    var pw = document.getElementById('rp4-portrait-wrap');
+    var pc = document.getElementById('rp4-portrait-canvas');
+    if (pw && pc) {
+      pc.width = pw.offsetWidth || 200;
+      pc.height = pw.offsetHeight || 280;
+      var ctx = pc.getContext('2d');
+      function drawPortrait() {
+        var W = pc.width, H = pc.height, t = Date.now()/1000;
+        ctx.clearRect(0,0,W,H);
+        var pulse = 0.5 + Math.sin(t*0.7)*0.15;
+        var g = ctx.createRadialGradient(W/2,H*0.42,0,W/2,H*0.42,W*0.55);
+        g.addColorStop(0,'rgba(0,229,255,'+(0.09*pulse)+')');
+        g.addColorStop(0.6,'rgba(180,74,255,'+(0.04*pulse)+')');
+        g.addColorStop(1,'transparent');
+        ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+        /* Orbiting particles */
+        for (var i=0;i<8;i++) {
+          var a = t*0.5+(i/8)*Math.PI*2;
+          var r = 28+Math.sin(t*0.4+i)*7;
+          var px = W/2+Math.cos(a)*r, py = H*0.42+Math.sin(a)*r*0.38;
+          var al = 0.3+Math.sin(t+i)*0.2;
+          ctx.beginPath(); ctx.arc(px,py,1.5,0,Math.PI*2);
+          ctx.fillStyle='rgba(0,229,255,'+al+')';
+          ctx.shadowBlur=5; ctx.shadowColor='#00e5ff';
+          ctx.fill(); ctx.shadowBlur=0;
+        }
+        /* Live readout */
+        ctx.font='7px "Share Tech Mono",monospace'; ctx.textAlign='right';
+        var freq = 850+Math.floor(Math.sin(t*2.2)*40);
+        var psi  = 90+Math.floor(Math.sin(t*1.4)*4);
+        var lines2 = ['FREQ: '+freq+' Hz','PSI: '+psi+'%','TRK: ON'];
+        lines2.forEach(function(l,i2){
+          if(Math.floor(t*2+i2)%6===0) return;
+          ctx.fillStyle='rgba(0,229,255,'+(0.18+i2*0.06)+')';
+          ctx.fillText(l,W-7,16+i2*12);
+        });
+        _rafPortrait = requestAnimationFrame(drawPortrait);
+      }
+      drawPortrait();
+    }
+
+    /* — Radar canvas — */
+    var rc = document.getElementById('rp4-radar');
+    if (!rc) return;
+    var rctx = rc.getContext('2d');
+    var CX=82,CY=82,R=62,N=8,A0=-Math.PI/2;
+    var SK=['str','agi','spd','int','mana','res','cha','aura'];
+    var SC=['#FF4757','#00e5ff','#44ff88','#60a5fa','#b44aff','#ffd60a','#f97316','#e040fb'];
+    var SL=['STR','AGI','SPD','INT','MNA','RES','CHA','AUR'];
+    var stats = data.baseStats||{};
+    var maxV = Math.max.apply(null,SK.map(function(k){return stats[k]||0;}).concat([1]));
+    var vals = SK.map(function(k){return (stats[k]||0)/maxV;});
+
+    function rpt(i,r2){var a=A0+(i/N)*Math.PI*2;return[CX+Math.cos(a)*r2,CY+Math.sin(a)*r2];}
+
+    var startT = null;
+    function drawRadar(ts) {
+      if(!startT) startT=ts;
+      var prog = Math.min((ts-startT)/1000,1);
+      var ease = 1-Math.pow(1-prog,3);
+      rctx.clearRect(0,0,164,164);
+      /* Grid */
+      for(var ring=1;ring<=4;ring++){
+        var rr=R*ring/4; rctx.beginPath();
+        for(var i=0;i<N;i++){var p=rpt(i,rr);i===0?rctx.moveTo(p[0],p[1]):rctx.lineTo(p[0],p[1]);}
+        rctx.closePath(); rctx.strokeStyle='rgba(0,229,255,0.06)'; rctx.lineWidth=0.5; rctx.stroke();
+      }
+      /* Axes */
+      for(var i=0;i<N;i++){
+        var ep=rpt(i,R); rctx.beginPath(); rctx.moveTo(CX,CY); rctx.lineTo(ep[0],ep[1]);
+        rctx.strokeStyle='rgba(0,229,255,0.05)'; rctx.lineWidth=0.5; rctx.stroke();
+      }
+      /* Data shape */
+      rctx.beginPath();
+      for(var i=0;i<N;i++){
+        var v=Math.max(vals[i]*ease,0.04); var p=rpt(i,R*v);
+        i===0?rctx.moveTo(p[0],p[1]):rctx.lineTo(p[0],p[1]);
+      }
+      rctx.closePath();
+      var grd=rctx.createRadialGradient(CX,CY,0,CX,CY,R);
+      grd.addColorStop(0,'rgba(0,229,255,0.18)'); grd.addColorStop(1,'rgba(180,74,255,0.05)');
+      rctx.fillStyle=grd; rctx.fill();
+      rctx.strokeStyle='rgba(0,229,255,0.7)'; rctx.lineWidth=1.2; rctx.stroke();
+      /* Dots + labels */
+      for(var i=0;i<N;i++){
+        var v=Math.max(vals[i]*ease,0.04); var dp=rpt(i,R*v);
+        rctx.beginPath(); rctx.arc(dp[0],dp[1],2.5,0,Math.PI*2);
+        rctx.fillStyle=SC[i]; rctx.shadowBlur=7; rctx.shadowColor=SC[i]; rctx.fill(); rctx.shadowBlur=0;
+        var lp=rpt(i,R+14);
+        rctx.font='500 7px "Share Tech Mono",monospace'; rctx.textAlign='center'; rctx.textBaseline='middle';
+        rctx.fillStyle='rgba(255,255,255,0.28)'; rctx.fillText(SL[i],lp[0],lp[1]);
+      }
+      if(prog<1) requestAnimationFrame(drawRadar);
+      else {
+        setInterval(function(){
+          var pulse2=1+Math.sin(Date.now()/1300)*0.012;
+          /* Just redraw with full vals scaled by pulse */
+          var saved=vals.map(function(v){return v*pulse2;});
+          rctx.clearRect(0,0,164,164);
+          for(var ring=1;ring<=4;ring++){
+            var rr=R*ring/4; rctx.beginPath();
+            for(var i=0;i<N;i++){var p=rpt(i,rr);i===0?rctx.moveTo(p[0],p[1]):rctx.lineTo(p[0],p[1]);}
+            rctx.closePath(); rctx.strokeStyle='rgba(0,229,255,0.06)'; rctx.lineWidth=0.5; rctx.stroke();
+          }
+          for(var i=0;i<N;i++){
+            var ep=rpt(i,R); rctx.beginPath(); rctx.moveTo(CX,CY); rctx.lineTo(ep[0],ep[1]);
+            rctx.strokeStyle='rgba(0,229,255,0.05)'; rctx.lineWidth=0.5; rctx.stroke();
+          }
+          rctx.beginPath();
+          for(var i=0;i<N;i++){
+            var v2=Math.max(saved[i],0.04); var p=rpt(i,R*v2);
+            i===0?rctx.moveTo(p[0],p[1]):rctx.lineTo(p[0],p[1]);
+          }
+          rctx.closePath();
+          var grd2=rctx.createRadialGradient(CX,CY,0,CX,CY,R);
+          grd2.addColorStop(0,'rgba(0,229,255,0.18)'); grd2.addColorStop(1,'rgba(180,74,255,0.05)');
+          rctx.fillStyle=grd2; rctx.fill();
+          rctx.strokeStyle='rgba(0,229,255,0.7)'; rctx.lineWidth=1.2; rctx.stroke();
+          for(var i=0;i<N;i++){
+            var v2=Math.max(saved[i],0.04); var dp=rpt(i,R*v2);
+            rctx.beginPath(); rctx.arc(dp[0],dp[1],2.5,0,Math.PI*2);
+            rctx.fillStyle=SC[i]; rctx.shadowBlur=7; rctx.shadowColor=SC[i]; rctx.fill(); rctx.shadowBlur=0;
+            var lp=rpt(i,R+14);
+            rctx.font='500 7px "Share Tech Mono",monospace'; rctx.textAlign='center'; rctx.textBaseline='middle';
+            rctx.fillStyle='rgba(255,255,255,0.28)'; rctx.fillText(SL[i],lp[0],lp[1]);
+          }
+        },40);
+      }
+    }
+    requestAnimationFrame(drawRadar);
+
+    /* — Animate vertical bars — */
+    var fills = document.querySelectorAll('.rp4-vb-fill');
+    fills.forEach(function(f,i){
+      var pct = parseInt(f.getAttribute('data-pct')||'0');
+      f.style.height = '0%';
+      setTimeout(function(){ f.style.height = Math.round(pct*0.9)+'%'; }, 300+i*70);
+    });
+  }
+
+  /* — Dot pulse — */
+  function bootDots() {
+    var dots = document.querySelectorAll('#rp4-bdots .rp4-dot');
+    if (!dots.length) return;
+    var ai = 0;
+    _rafDots = setInterval(function(){
+      dots.forEach(function(d){ d.classList.remove('active'); });
+      ai = (ai+1) % dots.length;
+      dots[ai].classList.add('active');
+    }, 550);
+  }
+
+  /* ── Save ── */
+  function doSave(name, overlay, btn) {
+    btn.disabled=true; btn.textContent='Sauvegarde...';
+    var data={
+      name:(document.getElementById('rp-ed-name')&&document.getElementById('rp-ed-name').value||name).trim(),
+      plural:(document.getElementById('rp-ed-plural')&&document.getElementById('rp-ed-plural').value||'').trim(),
+      category:(document.getElementById('rp-ed-category')&&document.getElementById('rp-ed-category').value||'').trim(),
+      longevity:(document.getElementById('rp-ed-longevity')&&document.getElementById('rp-ed-longevity').value||'').trim(),
+      affinity:(document.getElementById('rp-ed-affinity')&&document.getElementById('rp-ed-affinity').value||'').trim(),
+      access:(document.getElementById('rp-ed-access')&&document.getElementById('rp-ed-access').value)||'Ouverte',
+      description:(document.getElementById('rp-ed-desc')&&document.getElementById('rp-ed-desc').value||'').trim(),
+      imageUrl:(document.getElementById('rp-ed-image')&&document.getElementById('rp-ed-image').value||'').trim()
+    };
+    try{data.baseStats=JSON.parse(document.getElementById('rp-ed-stats').value||'{}');}catch(e){data.baseStats={};}
+    try{data.basePowers=JSON.parse(document.getElementById('rp-ed-powers').value||'[]');}catch(e){data.basePowers=[];}
+    saveRaceData(name,data).then(function(){
+      racesData[name]=data; btn.textContent='\u2713 OK'; btn.style.color='#44ff88';
+      setTimeout(function(){btn.disabled=false;btn.textContent='Sauvegarder';btn.style.color='';},2000);
+    }).catch(function(){
+      btn.textContent='Erreur'; btn.style.color='#FF4757'; btn.disabled=false;
+      setTimeout(function(){btn.textContent='Sauvegarder';btn.style.color='';},3000);
+    });
+  }
+
+  /* ══════════════════════════════════════════
+     CSS
+  ══════════════════════════════════════════ */
+  var css = document.createElement('style');
+  css.textContent = `
+  .rp-ov{position:fixed;inset:0;z-index:10000;background:rgba(2,5,15,0.82);backdrop-filter:blur(18px);display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;transition:opacity .4s;pointer-events:none}
+  .rp-ov.rp-open{opacity:1;pointer-events:all}
+  .rp-ov.rp-closing{opacity:0;pointer-events:none}
+
+  .rp4-outer{position:relative;width:820px;max-width:96vw}
+
+  /* Corner external decorations */
+  .rp4-ce{position:absolute;width:18px;height:18px;border-color:#ff2d78;border-style:solid;opacity:.55;z-index:5;pointer-events:none}
+  .rp4-ce.tl{top:-4px;left:-4px;border-width:2px 0 0 2px}
+  .rp4-ce.tr{top:-4px;right:-4px;border-width:2px 2px 0 0}
+  .rp4-ce.bl{bottom:-4px;left:-4px;border-width:0 0 2px 2px}
+  .rp4-ce.br{bottom:-4px;right:-4px;border-width:0 2px 2px 0}
+
+  /* Close button */
+  .rp-x{position:absolute;top:10px;right:10px;z-index:20;background:rgba(2,5,15,0.7);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.4);width:28px;height:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.75rem;clip-path:polygon(0 0,calc(100% - 5px) 0,100% 5px,100% 100%,5px 100%,0 calc(100% - 5px));transition:all .2s;backdrop-filter:blur(8px)}
+  .rp-x:hover{color:#FF4757;border-color:rgba(255,71,87,.4);background:rgba(255,71,87,.08)}
+
+  /* Main popup */
+  .rp4-popup{position:relative;background:rgba(3,6,18,.97);border:1px solid rgba(0,229,255,.16);clip-path:polygon(0 0,calc(100% - 28px) 0,100% 28px,100% 100%,28px 100%,0 calc(100% - 28px));overflow:hidden;transform:scale(.93) translateY(20px);filter:blur(3px);transition:transform .45s cubic-bezier(.16,1,.3,1),filter .45s}
+  .rp-open .rp4-popup{transform:scale(1) translateY(0);filter:blur(0)}
+  .rp-closing .rp4-popup{transform:scale(.93) translateY(20px);filter:blur(3px)}
+
+  /* Corner cut fill */
+  .rp4-popup::after{content:'';position:absolute;top:0;right:0;width:28px;height:28px;background:rgba(0,229,255,.05);border-bottom:1px solid rgba(0,229,255,.2);border-left:1px solid rgba(0,229,255,.2);pointer-events:none;z-index:2}
+
+  /* Noise */
+  .rp4-noise{position:absolute;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");opacity:.022;pointer-events:none;z-index:0}
+
+  /* Scan line */
+  .rp4-scan{position:absolute;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,229,255,.4) 30%,rgba(0,229,255,.7) 50%,rgba(0,229,255,.4) 70%,transparent);animation:rp4ScanY 4s linear infinite;z-index:3;pointer-events:none}
+  @keyframes rp4ScanY{0%{top:0%;opacity:0}5%{opacity:1}95%{opacity:.7}100%{top:100%;opacity:0}}
+
+  /* Top accent */
+  .rp4-topbar{height:3px;position:relative;z-index:2;opacity:.7}
+  .rp4-topbar::after{content:'';position:absolute;inset:0;background:inherit;filter:blur(4px);opacity:.5}
+
+  /* ── HEADER ── */
+  .rp4-header{position:relative;z-index:2;display:flex;align-items:stretch;border-bottom:1px solid rgba(0,229,255,.07);background:linear-gradient(180deg,rgba(0,229,255,.03) 0%,transparent 100%)}
+
+  /* Portrait */
+  .rp4-portrait-wrap{width:190px;flex-shrink:0;position:relative;overflow:hidden;border-right:1px solid rgba(0,229,255,.1);min-height:250px;background:#030610}
+  .rp4-portrait-grid{position:absolute;inset:0;z-index:2;background-image:linear-gradient(rgba(0,229,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,.035) 1px,transparent 1px);background-size:18px 18px;pointer-events:none}
+  #rp4-portrait-canvas{position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-events:none}
+  .rp4-portrait-ov{position:absolute;inset:0;z-index:4;background:linear-gradient(90deg,transparent 55%,rgba(3,6,18,.85) 100%),linear-gradient(180deg,transparent 50%,rgba(3,6,18,.95) 100%);pointer-events:none}
+  .rp4-reticle{position:absolute;top:50%;left:50%;transform:translate(-50%,-58%);width:58px;height:58px;z-index:5;animation:rp4RetSpin 10s linear infinite;pointer-events:none}
+  @keyframes rp4RetSpin{to{transform:translate(-50%,-58%) rotate(360deg)}}
+  .rp4-portrait-readout{position:absolute;bottom:10px;left:8px;z-index:6;display:flex;flex-direction:column;gap:2px}
+  .rp4-portrait-readout span{font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(0,229,255,.42);display:block;letter-spacing:.06em}
+
+  /* Center */
+  .rp4-center{flex:1;padding:16px 20px 14px;display:flex;flex-direction:column;gap:10px;position:relative;z-index:2;min-width:0}
+  .rp4-id-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .rp4-id{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:.2em;padding:3px 9px;border:1px solid;clip-path:polygon(5px 0%,100% 0%,calc(100% - 5px) 100%,0% 100%)}
+  .rp4-cat{font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(255,255,255,.22);letter-spacing:.15em}
+  .rp4-access{margin-left:auto;font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:.15em;padding:3px 9px;border:1px solid;clip-path:polygon(0 0%,calc(100% - 5px) 0%,100% 100%,5px 100%)}
+  .rp4-title-wrap{position:relative}
+  .rp4-title{font-family:'Orbitron',sans-serif;font-size:28px;font-weight:900;letter-spacing:.07em;color:#fff;line-height:1;position:relative;z-index:1}
+  .rp4-title-glow{position:absolute;top:0;left:0;font-family:'Orbitron',sans-serif;font-size:28px;font-weight:900;letter-spacing:.07em;filter:blur(10px);opacity:.25;z-index:0;animation:rp4TGlow 3s ease-in-out infinite}
+  @keyframes rp4TGlow{0%,100%{opacity:.18}50%{opacity:.38}}
+  .rp4-subtitle{font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:400;color:rgba(255,255,255,.28);letter-spacing:.1em;margin-top:-4px}
+  .rp4-meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:4px}
+  .rp4-mc{background:rgba(0,229,255,.025);border:1px solid rgba(0,229,255,.08);padding:7px 10px;position:relative;clip-path:polygon(0 0,calc(100% - 5px) 0,100% 5px,100% 100%,5px 100%,0 calc(100% - 5px))}
+  .rp4-mc::before{content:'';position:absolute;top:0;left:0;right:5px;height:1px;background:linear-gradient(90deg,var(--mca,#00e5ff),transparent);opacity:.25}
+  .rp4-ml{display:block;font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(255,255,255,.22);letter-spacing:.18em;text-transform:uppercase;margin-bottom:2px}
+  .rp4-mv{font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:600}
+
+  /* Radar panel */
+  .rp4-radar-panel{width:190px;flex-shrink:0;border-left:1px solid rgba(0,229,255,.07);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 8px;background:rgba(0,0,0,.18);position:relative;z-index:2}
+  .rp4-rlbl{font-family:'Share Tech Mono',monospace;font-size:7px;letter-spacing:.28em;color:rgba(0,229,255,.25);text-transform:uppercase;margin-bottom:8px}
+  #rp4-radar{width:164px;height:164px}
+
+  /* ── BODY ── */
+  .rp4-body{position:relative;z-index:2;display:grid;grid-template-columns:1fr 1px 1fr 1px 190px;border-top:1px solid rgba(0,229,255,.05)}
+  .rp4-divider{background:linear-gradient(180deg,rgba(0,229,255,.1) 0%,transparent 100%)}
+  .rp4-col{padding:0 0 14px}
+  .rp4-stats-col{background:rgba(0,0,0,.15);border-left:1px solid rgba(0,229,255,.05)}
+  .rp4-stitle{font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:.28em;color:rgba(255,255,255,.18);text-transform:uppercase;padding:11px 14px 7px;display:flex;align-items:center;gap:8px}
+  .rp4-stitle::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(0,229,255,.12),transparent)}
+  .rp4-desc{font-family:'Rajdhani',sans-serif;font-size:12.5px;font-weight:300;color:rgba(255,255,255,.45);line-height:1.75;margin:0 14px;padding:8px 11px;border-left:2px solid;background:rgba(255,45,120,.025)}
+  .rp4-powers{padding:0 12px;display:flex;flex-direction:column;gap:5px}
+  .rp4-pw{display:flex;align-items:flex-start;gap:9px;padding:6px 9px;background:rgba(0,229,255,.02);border:1px solid rgba(0,229,255,.07);clip-path:polygon(0 0,calc(100% - 5px) 0,100% 5px,100% 100%,5px 100%,0 calc(100% - 5px));transition:background .2s}
+  .rp4-pw:hover{background:rgba(0,229,255,.05)}
+  .rp4-pw-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-top:4px}
+  .rp4-pw-n{font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:600;display:block;line-height:1.2}
+  .rp4-pw-d{font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:300;color:rgba(255,255,255,.32);display:block;margin-top:2px;line-height:1.4}
+  .rp4-empty{font-family:'Rajdhani',sans-serif;font-size:12px;color:rgba(255,255,255,.2);font-style:italic;padding:0 12px}
+
+  /* Vertical bars */
+  .rp4-vbars{display:flex;gap:5px;justify-content:center;align-items:flex-end;height:110px;padding:0 12px;margin:4px 0 10px}
+  .rp4-vb-wrap{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1}
+  .rp4-vb-val{font-family:'Share Tech Mono',monospace;font-size:7px;color:rgba(255,255,255,.35)}
+  .rp4-vb-track{width:100%;max-height:84px;flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);display:flex;align-items:flex-end;overflow:hidden}
+  .rp4-vb-fill{width:100%;height:0%;transition:height 1s cubic-bezier(.16,1,.3,1)}
+  .rp4-vb-lbl{font-family:'Share Tech Mono',monospace;font-size:7px;color:rgba(255,255,255,.22);letter-spacing:.04em}
+
+  /* Bottombar */
+  .rp4-bottom{position:relative;z-index:2;border-top:1px solid rgba(0,229,255,.06);display:flex;align-items:center;padding:7px 18px;gap:14px;background:rgba(0,0,0,.22)}
+  .rp4-bdb{font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(0,229,255,.2);letter-spacing:.12em}
+  .rp4-bdots{display:flex;gap:4px;align-items:center}
+  .rp4-dot{width:4px;height:4px;border-radius:50%;background:rgba(0,229,255,.12)}
+  .rp4-dot.active{background:#ff2d78;box-shadow:0 0 5px #ff2d78}
+  .rp4-sig{display:flex;align-items:flex-end;gap:2px;margin-left:auto}
+  .rp4-sig div{width:3px;background:rgba(0,255,136,.55);border-radius:1px}
+  .rp4-status{font-family:'Share Tech Mono',monospace;font-size:8px;color:#00ff88;letter-spacing:.2em;animation:rp4Blink 2s step-end infinite}
+  @keyframes rp4Blink{50%{opacity:0}}
+
+  /* Admin */
+  .rp4-admin{border-top:1px solid rgba(255,255,255,.04);padding:16px 20px 20px;position:relative;z-index:2}
+  .rp4-admin-t{font-family:'Orbitron',sans-serif;font-size:8px;font-weight:600;letter-spacing:.25em;color:#4DA3FF;margin-bottom:12px}
+  .rp4-admin-g{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+  .rp4-fg{margin-bottom:7px}
+  .rp4-fl{display:block;font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.22);margin-bottom:3px}
+  .rp4-fi,.rp4-fta{width:100%;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.07);color:#e2e6f0;font-family:'Rajdhani',sans-serif;font-size:13px;padding:7px 9px;outline:none;transition:border-color .2s;box-sizing:border-box}
+  .rp4-fi:focus,.rp4-fta:focus{border-color:#4DA3FF}
+  .rp4-fta{resize:vertical;min-height:55px;font-size:12px}
+  .rp4-mono{font-family:'Share Tech Mono',monospace;font-size:10px}
+  .rp4-save{width:100%;font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:#020713;background:linear-gradient(135deg,#4DA3FF,#8B5CF6);border:none;padding:11px;cursor:pointer;transition:all .3s;margin-top:6px;clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px))}
+  .rp4-save:hover{box-shadow:0 0 20px rgba(77,163,255,.3);transform:translateY(-1px)}
+  .rp4-save:disabled{opacity:.5;cursor:not-allowed}
+
+  @media(max-width:700px){
+    .rp4-header{flex-direction:column}
+    .rp4-portrait-wrap{width:100%;min-height:180px;max-height:200px;border-right:none;border-bottom:1px solid rgba(0,229,255,.08)}
+    .rp4-portrait-ov{background:linear-gradient(180deg,transparent 40%,rgba(3,6,18,.95) 100%) !important}
+    .rp4-radar-panel{width:100%;border-left:none;border-top:1px solid rgba(0,229,255,.06)}
+    .rp4-body{grid-template-columns:1fr}
+    .rp4-divider{display:none}
+    .rp4-admin-g{grid-template-columns:1fr}
+  }
+  `;
+  document.head.appendChild(css);
+})();
+
+
+</script>
+<script>
+
+(function(){if(typeof window.initRacePopups==='function')window.initRacePopups(null,false);})();
+
+</script>
+
 <script type="module" src="js/auth-badge.js"></script>
 <script src="js/script.js"></script>
-<script>(function(){var t=document.getElementById('nav-toggle'),n=document.getElementById('nav-links');if(!t||!n)return;t.addEventListener('click',function(){var o=n.classList.toggle('open');t.textContent=o?'\u2715':'\u2630';});document.addEventListener('click',function(e){if(!n.contains(e.target)&&!t.contains(e.target)){n.classList.remove('open');t.textContent='\u2630';}});})();</script>
 <script src="js/page-transition.js"></script>
 <script src="js/music-player.js"></script>
 </body>

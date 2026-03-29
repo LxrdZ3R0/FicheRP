@@ -121,24 +121,5 @@
     }, { once: true });
   }
 
-  if (!st.playing) {
-    function tryPlay(e) {
-      if (wrap.contains(e.target)) return;
-      document.removeEventListener('click', tryPlay);
-      document.removeEventListener('keydown', tryPlay);
-      document.removeEventListener('touchend', tryPlay);
-      muted = false; syncMute();
-      if (audio.readyState >= 2) {
-        audio.play().then(function(){ setPlaying(true); }).catch(function(){});
-      } else {
-        loadTrack(idx);
-        audio.addEventListener('canplay', function() {
-          audio.play().then(function(){ setPlaying(true); }).catch(function(){});
-        }, { once: true });
-      }
-    }
-    document.addEventListener('click', tryPlay, { passive: true });
-    document.addEventListener('keydown', tryPlay, { passive: true });
-    document.addEventListener('touchend', tryPlay, { passive: true });
-  }
+  /* Music plays only when user clicks the player button */
 })();
