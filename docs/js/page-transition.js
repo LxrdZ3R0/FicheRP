@@ -1,27 +1,41 @@
-/* page-transition.js — Cybernetic page transitions */
-(function() {
+/* page-transition.js — Smooth fade in/out entre les pages */
+(function () {
   var overlay = document.getElementById('page-transition');
   if (!overlay) return;
 
-  // Fade out on load
-  function hideOverlay() {
-    setTimeout(function() { overlay.classList.add('hidden'); }, 300);
+  // ── Fade IN à l'arrivée sur la page ──────────────────────────
+  function fadeIn() {
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        overlay.classList.add('hidden');
+      });
+    });
   }
-  if (document.readyState === 'complete') hideOverlay();
-  else window.addEventListener('load', hideOverlay);
-  setTimeout(function() { overlay.classList.add('hidden'); }, 1500);
 
-  // Intercept internal links
-  document.addEventListener('click', function(e) {
+  if (document.readyState === 'complete') {
+    fadeIn();
+  } else {
+    window.addEventListener('load', fadeIn);
+    setTimeout(fadeIn, 1800); // fallback
+  }
+
+  // ── Fade OUT au clic sur un lien interne ──────────────────────
+  document.addEventListener('click', function (e) {
     var link = e.target.closest('a[href]');
     if (!link) return;
     var href = link.getAttribute('href');
-    if (!href || href.startsWith('#') || href.startsWith('http') ||
-        href.startsWith('mailto') || link.target === '_blank') return;
+    if (
+      !href ||
+      href.startsWith('#') ||
+      href.startsWith('http') ||
+      href.startsWith('mailto') ||
+      href.startsWith('javascript') ||
+      link.target === '_blank'
+    ) return;
     var current = window.location.pathname.split('/').pop() || 'index.html';
     if (href === current) return;
     e.preventDefault();
     overlay.classList.remove('hidden');
-    setTimeout(function() { window.location.href = href; }, 200);
+    setTimeout(function () { window.location.href = href; }, 420);
   });
 })();
