@@ -349,7 +349,7 @@ window.addEventListener('scroll',function(){var h=document.documentElement.scrol
     });
     overlay.addEventListener('click', function(e) { if (e.target === overlay) closePopup(); });
     overlay.querySelector('.rp-x').addEventListener('click', closePopup);
-    var saveBtn = overlay.querySelector('.rp-save');
+    var saveBtn = overlay.querySelector('.rp4-save');
     if (saveBtn) saveBtn.addEventListener('click', function() { doSave(raceName, overlay, saveBtn); });
     // Boot animations after DOM paint
     setTimeout(function() { bootCanvases(data, accent); bootDots(); }, 60);
