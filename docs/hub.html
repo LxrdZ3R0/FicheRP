@@ -405,6 +405,7 @@ body{background:var(--bg)!important}
     <button class="tab-btn" onclick="showTab('progression')" id="tab-progression">📈 <span class="tab-text">Progression</span></button>
     <button class="tab-btn" onclick="showTab('titres')" id="tab-titres">🏷️ <span class="tab-text">Titres</span></button>
     <button class="tab-btn" onclick="showTab('compagnons')" id="tab-compagnons">🐾 <span class="tab-text">Compagnons</span></button>
+    <button class="tab-btn" onclick="showTab('monshop')" id="tab-monshop">🏷️ <span class="tab-text">Mon Shop</span></button>
     <button class="tab-btn" onclick="showTab('shops')" id="tab-shops">🏪 <span class="tab-text">Shops</span></button>
     <button class="tab-btn" onclick="showTab('ushop')" id="tab-ushop">🛒 <span class="tab-text">Universal Shop</span></button>
     <button class="tab-btn" onclick="showTab('parametres')" id="tab-parametres">⚙️ <span class="tab-text">Paramètres</span></button>
@@ -606,6 +607,12 @@ body{background:var(--bg)!important}
   <div class="tab-panel" id="panel-shop">
     <div class="sh"><span class="sh-num">09</span><span class="sh-title">Ma Boutique</span><div class="sh-line"></div></div>
     <div id="shop-content"><div class="empty">Chargement...</div></div>
+  </div>
+
+  <!-- MON SHOP -->
+  <div class="tab-panel" id="panel-monshop">
+    <div class="sh"><span class="sh-num">—</span><span class="sh-title">Mon Shop</span><div class="sh-line"></div></div>
+    <div id="monshop-content"><div class="empty">Chargement...</div></div>
   </div>
 
   <!-- SHOPS DES JOUEURS -->
@@ -851,8 +858,8 @@ async function loadShop(){
 function renderDashChar(){
   const c=CHAR,fn=c.first_name||'',ln=c.last_name||'';
   const name=[fn,ln].filter(Boolean).join(' ')||'Personnage';
-  const lvl=c.level||1,xp=c.xp||0,nxp=lvlXP(lvl+1),cxp=lvlXP(lvl);
-  const pct=Math.min(100,Math.round((xp-cxp)/Math.max(1,nxp-cxp)*100));
+  const {level:lvl,cur:cxpDash,need:nxpDash}=levelFromXp(c.xp||0);
+  const xp=c.xp||0;const pct=Math.min(100,nxpDash>0?Math.round(cxpDash/nxpDash*100):100);
   const stats=c.stats||{};
   document.getElementById('dash-char-card').innerHTML=`
     ${c.profile_image?`<img src="${e(c.profile_image)}" class="char-card-img" alt="${e(name)}" onerror="this.outerHTML='<div class=&quot;char-card-placeholder&quot;>NO IMAGE</div>'">`:`<div class="char-card-placeholder">NO IMAGE</div>`}
@@ -1242,16 +1249,17 @@ function renderParty(p){
 // ── RENDER PROGRESSION ──
 function renderProgression(){
   if(!CHAR)return;
-  const lvl=CHAR.level||1,xp=CHAR.xp||0,nxp=lvlXP(lvl+1),cxp=lvlXP(lvl);
-  const pct=Math.min(100,Math.round((xp-cxp)/Math.max(1,nxp-cxp)*100));
+  const totalXp=CHAR.xp||0;
+  const{level:lvl,cur:curXp,need:nextXp}=levelFromXp(totalXp);
+  const pct=Math.min(100,nextXp>0?Math.round(curXp/nextXp*100):100);
   document.getElementById('prog-lvl').textContent=lvl;
-  document.getElementById('prog-xp').textContent=xp.toLocaleString()+' XP';
-  document.getElementById('prog-xp-labels').innerHTML=`<span>Niveau ${lvl}</span><span>${xp.toLocaleString()} / ${nxp.toLocaleString()}</span>`;
+  document.getElementById('prog-xp').textContent=curXp.toLocaleString()+' / '+nextXp.toLocaleString()+' XP';
+  document.getElementById('prog-xp-labels').innerHTML=`<span>Niveau ${lvl}</span><span>${curXp.toLocaleString()} / ${nextXp.toLocaleString()} XP</span>`;
   document.getElementById('prog-xp-fill').style.width=pct+'%';
-  document.getElementById('prog-xp-needed').textContent=`Il reste ${Math.max(0,nxp-xp).toLocaleString()} XP pour le niveau ${lvl+1}`;
+  document.getElementById('prog-xp-needed').textContent=lvl>=500?'Niveau maximum atteint':`Il reste ${Math.max(0,nextXp-curXp).toLocaleString()} XP pour le niveau ${lvl+1}`;
   const sp=CHAR.available_stat_points||0;
   document.getElementById('prog-sp-content').innerHTML=sp
-    ?`<div class="sp-banner">⚡ ${sp} point${sp>1?'s':''} de stat disponible${sp>1?'s':''} — à allouer via le bot Discord</div>`
+    ?`<div class="sp-banner">⚡ ${sp} point${sp>1?'s':''} de stat disponible${sp>1?'s':''}</div>`
     :'<div class="empty">Aucun point de stat disponible pour le moment</div>';
 }
 
@@ -1332,6 +1340,10 @@ const LAZY={
   titres:loadTitles,
   compagnons:loadCompanions,
   shop:loadShop,
+  monshop:loadMonShop,
+  shops:loadShops,
+  ushop:loadUshop,
+  progression:()=>{initAlloc();},
 };
 function showTab(id){
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
@@ -1342,7 +1354,25 @@ function showTab(id){
 }
 
 // ── UTILS ──
-function lvlXP(lvl){return Math.round(50*Math.pow(Math.max(0,lvl-1),1.8))}
+// Formule XP exacte du bot (stats_common.py)
+// xp_needed_for_next_level(level) = 500 * level
+// total_xp_required_for_level(level) = 500 * (n*(n+1)/2) avec n=level-1
+function totalXpForLevel(lvl){
+  const n=Math.max(0,Math.floor(lvl)-1);
+  return 500*(n*(n+1)/2);
+}
+function xpForNextLevel(lvl){return 500*Math.max(1,Math.floor(lvl));}
+function levelFromXp(totalXp){
+  let xp=Math.max(0,totalXp),level=1;
+  while(level<500){
+    const need=xpForNextLevel(level);
+    if(xp<need)return{level,cur:xp,need};
+    xp-=need;level++;
+  }
+  return{level:500,cur:0,need:0};
+}
+// Legacy alias
+function lvlXP(lvl){return totalXpForLevel(lvl);}
 function e(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function showToast(msg,type='success',dur=3500){
   const t=document.getElementById('toast');
@@ -1350,6 +1380,96 @@ function showToast(msg,type='success',dur=3500){
   clearTimeout(t._t);t._t=setTimeout(()=>{t.className='toast'},dur);
 }
 window.addEventListener('scroll',()=>{document.getElementById('scroll-line').style.width=(window.scrollY/(document.body.scrollHeight-window.innerHeight)*100)+'%'});
+
+
+// ══════════════════════════════════════════════
+// MON SHOP (shop personnel du joueur)
+// ══════════════════════════════════════════════
+let MY_SHOP_DATA = null;
+
+async function loadMonShop(){
+  const el = document.getElementById('monshop-content');
+  if(!el) return;
+  if(!UID || !CHAR_ID){ el.innerHTML='<div class="empty">Aucun personnage actif</div>'; return; }
+  el.innerHTML='<div class="empty">Chargement...</div>';
+  try{
+    const snap = await db.collection(C.SHOPS).doc(`${UID}_${CHAR_ID}`).get();
+    MY_SHOP_DATA = snap.exists ? snap.data() : null;
+    renderMonShop();
+  }catch(err){ console.error('[MONSHOP]',err); el.innerHTML='<div class="empty">Erreur de chargement</div>'; }
+}
+
+function renderMonShop(){
+  const el = document.getElementById('monshop-content');
+  if(!el) return;
+
+  if(!MY_SHOP_DATA){
+    el.innerHTML=`
+      <div class="card"><div class="card-body" style="text-align:center;padding:40px 20px">
+        <div style="font-size:3rem;margin-bottom:16px">🏪</div>
+        <div style="font-family:var(--font-b);font-weight:700;font-size:1.1rem;color:var(--text);margin-bottom:8px">Pas encore de boutique</div>
+        <div style="font-family:var(--font-m);font-size:.5rem;letter-spacing:.08em;color:var(--text3)">Utilise <span style="color:var(--blue)">/char_shop_create</span> dans Discord pour créer ta boutique</div>
+      </div></div>`;
+    return;
+  }
+
+  const s = MY_SHOP_DATA;
+  const items = s.items || {};
+  const entries = Object.entries(items);
+  const statusColor = s.open ? 'var(--green)' : 'var(--red)';
+  const statusLabel = s.open ? '● OUVERT' : '● FERMÉ';
+
+  el.innerHTML=`
+    <div class="card" style="margin-bottom:20px"><div class="card-body">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div style="font-family:var(--font-h);font-weight:800;font-size:1.4rem;color:var(--text)">${e(s.name||'Mon Shop')}</div>
+        <span style="font-family:var(--font-m);font-size:.48rem;letter-spacing:.1em;color:${statusColor}">${statusLabel}</span>
+      </div>
+      <div style="font-family:var(--font-m);font-size:.52rem;letter-spacing:.06em;color:var(--text3);margin-bottom:16px">${e(s.tagline||'Aucune accroche')}</div>
+      <div style="display:flex;gap:24px;flex-wrap:wrap">
+        <div><div style="font-family:var(--font-h);font-weight:800;font-size:1.4rem;color:var(--blue)">${entries.length}</div><div style="font-family:var(--font-m);font-size:.42rem;letter-spacing:.1em;color:var(--text3)">ARTICLES EN VENTE</div></div>
+        <div><div style="font-family:var(--font-h);font-weight:800;font-size:1.4rem;color:var(--gold)">${(s.sales_log||[]).length}</div><div style="font-family:var(--font-m);font-size:.42rem;letter-spacing:.1em;color:var(--text3)">VENTES RÉCENTES</div></div>
+      </div>
+      <div style="margin-top:12px;font-family:var(--font-m);font-size:.44rem;letter-spacing:.06em;color:var(--text3)">Pour modifier ton shop (ajouter/retirer des articles, ouvrir/fermer) utilise les commandes Discord : <span style="color:var(--blue)">/char_shop_add</span>, <span style="color:var(--blue)">/char_shop_remove</span>, <span style="color:var(--blue)">/char_shop_open</span></div>
+    </div></div>
+
+    ${entries.length ? `
+    <div class="card"><div class="card-body">
+      <div class="sh" style="margin-bottom:14px"><span class="sh-num">—</span><span class="sh-title">Articles en vente</span><div class="sh-line"></div></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px">
+        ${entries.map(([item_id, si])=>{
+          const it = ALL_ITEMS_DATA[item_id] || {};
+          const price = si.price || {};
+          const effects = it.stat_effects || it.stats || {};
+          const effStr = Object.entries(effects).slice(0,2).map(([s,v])=>`+${v} ${STAT_ICONS_INV[s]||s}`).join(' ');
+          const rarity = (it.rarity||'common').toLowerCase();
+          const rc = RARITY_COLORS[rarity]||'#6b7280';
+          return `<div class="shop-item-card rarity-${rarity}">
+            <div class="shop-item-top">
+              <span class="shop-item-icon">${it.emoji||'📦'}</span>
+              <div class="shop-item-info">
+                <div class="shop-item-name" style="color:${rc}">${e(it.name||item_id)}</div>
+                ${effStr?`<div class="shop-item-effects">${effStr}</div>`:''}
+                <div class="shop-item-qty">${si.qty===-1||si.qty===undefined?'∞':'×'+si.qty} en stock</div>
+              </div>
+            </div>
+            <div class="shop-item-price">${formatShopPrice(price)}</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div></div>` : '<div class="empty">Aucun article en vente — utilise <code>/char_shop_add</code></div>'}
+
+    ${s.sales_log && s.sales_log.length ? `
+    <div class="card" style="margin-top:16px"><div class="card-body">
+      <div class="sh" style="margin-bottom:14px"><span class="sh-num">—</span><span class="sh-title">Dernières ventes</span><div class="sh-line"></div></div>
+      ${s.sales_log.slice(-5).reverse().map(log=>`
+        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(77,163,255,0.06);font-family:var(--font-m);font-size:.48rem">
+          <span style="color:var(--text2)">${e(log.item_name||log.item_id||'Item')}</span>
+          <span style="color:var(--gold)">${formatShopPrice(log.price||{})}</span>
+        </div>`).join('')}
+    </div></div>` : ''}
+  `;
+}
 
 // ══════════════════════════════════════════════
 // ALLOCATION DES STATS
@@ -1434,19 +1554,41 @@ async function confirmAlloc(){
   const btn=document.getElementById('alloc-confirm-btn');
   btn.disabled=true;btn.textContent='Sauvegarde...';
   try{
-    const stats=Object.assign({},CHAR.stats||{});
-    Object.entries(ALLOC_PENDING).forEach(([s,v])=>{if(v>0)stats[s]=(parseInt(stats[s]||0)+v);});
-    const newAvail=ALLOC_AVAIL-allocated;
-    await db.collection(C.CHARS).doc(CHAR_ID).set({stats,available_stat_points:newAvail,unallocated_stat_points:newAvail},{merge:true});
-    CHAR.stats=stats;CHAR.available_stat_points=newAvail;
-    ALLOC_AVAIL=newAvail;Object.keys(ALLOC_PENDING).forEach(k=>ALLOC_PENDING[k]=0);
-    btn.textContent='✓ Appliqué';btn.style.background='var(--green)';
-    setTimeout(()=>{btn.style.background='';btn.textContent="Confirmer l\'allocation";btn.disabled=false;},2000);
-    renderAllocStats();renderFullChar();
-    showEquipToast('✓ Stats allouées !');
+    // Copie profonde des stats pour éviter les mutations
+    const stats=JSON.parse(JSON.stringify(CHAR.stats||{}));
+    Object.entries(ALLOC_PENDING).forEach(([stat,val])=>{
+      if(val>0) stats[stat]=(parseInt(stats[stat]||0)+val);
+    });
+    const newAvail=Math.max(0,ALLOC_AVAIL-allocated);
+    // Écriture Firestore
+    await db.collection(C.CHARS).doc(CHAR_ID).set(
+      {stats, available_stat_points:newAvail, unallocated_stat_points:newAvail},
+      {merge:true}
+    );
+    // Mise à jour locale
+    CHAR.stats=stats;
+    CHAR.available_stat_points=newAvail;
+    CHAR.unallocated_stat_points=newAvail;
+    ALLOC_AVAIL=newAvail;
+    Object.keys(ALLOC_PENDING).forEach(k=>{ALLOC_PENDING[k]=0;});
+    // UI feedback
+    btn.textContent='✓ Appliqué';
+    btn.style.background='var(--green)';
+    btn.style.color='#020713';
+    // Re-render sans toucher au bouton (le setTimeout s'en charge)
+    renderAllocStats();
+    renderFullChar();
+    renderProgression();
+    showEquipToast('✓ Stats allouées avec succès !');
+    setTimeout(()=>{
+      const b=document.getElementById('alloc-confirm-btn');
+      if(b){b.style.background='';b.style.color='';b.textContent="Confirmer l'allocation";b.disabled=true;}
+    },2500);
   }catch(err){
-    console.error('[ALLOC]',err);btn.disabled=false;btn.textContent="Confirmer l\'allocation";
-    showEquipToast('❌ Erreur',true);
+    console.error('[ALLOC]',err);
+    const b=document.getElementById('alloc-confirm-btn');
+    if(b){b.disabled=false;b.textContent="Confirmer l'allocation";}
+    showEquipToast('❌ Erreur Firestore — vérifie les rules',true);
   }
 }
 
