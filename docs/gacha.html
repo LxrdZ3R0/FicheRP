@@ -631,9 +631,21 @@ function bannerAccent(id,name){
 let U=null,SB=null,BANNERS=[];
 
 // ═══ SESSION (localStorage) ═══
-function getSession(){try{return JSON.parse(localStorage.getItem('gacha_session'))}catch(e){return null}}
-function setSession(s){localStorage.setItem('gacha_session',JSON.stringify(s))}
-function clearSession(){localStorage.removeItem('gacha_session')}
+function getSession(){
+  // Lire gacha_session OU hub_session (partagé avec le hub)
+  try{
+    return JSON.parse(localStorage.getItem('gacha_session'))
+        || JSON.parse(localStorage.getItem('hub_session'));
+  }catch(e){return null}
+}
+function setSession(s){
+  localStorage.setItem('gacha_session',JSON.stringify(s));
+  localStorage.setItem('hub_session',JSON.stringify(s)); // sync avec le hub
+}
+function clearSession(){
+  localStorage.removeItem('gacha_session');
+  localStorage.removeItem('hub_session');
+}
 
 // ═══ AUTH — Code verification via Firestore ═══
 async function verifyCode(){
@@ -684,17 +696,29 @@ async function loadUser(){
   const s=getSession();
   if(!s||!s.id)return null;
   try{
-    const snap=await db.collection('gacha_players').doc(s.id).get();
-    if(!snap.exists)return null;
-    const d=snap.data();
+    // Lire players/ (bot Firestore)
+    const [pSnap,pitySnap]=await Promise.all([
+      db.collection('players').doc(s.id).get(),
+      db.collection('gacha_pity').doc(s.id).get(),
+    ]);
+    const d=pSnap.exists?pSnap.data():{};
+    const pity=pitySnap.exists?pitySnap.data():{};
+    // Convertir la structure pity bot → structure attendue par le UI
     U={
       id:s.id,
       username:d.username||s.username||'—',
       avatar:d.avatar_url||s.avatar||'',
       navarites:d.navarites||0,
       booster:d.booster||false,
-      pity:d.pity||{},
-      streak:d.streak||{},
+      pity:{
+        spent_epic:pity.navarites_spent_epic||0,
+        threshold_epic:30,
+        spent_leg:pity.navarites_spent_leg||0,
+        threshold_leg:150,
+      },
+      streak:{
+        days_in_cycle:(d.consecutive_days||0)%3,
+      },
     };
     return U;
   }catch(e){console.error('[LOAD_USER]',e);return null}

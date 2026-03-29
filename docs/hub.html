@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="description" content="Jaharta RP — Hub Personnel">
+<meta name="theme-color" content="#020713">
+<title>JAHARTA — Hub</title>
+<link rel="icon" type="image/x-icon" href="img/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="img/favicon-180.png">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Exo+2:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/jaharta.css">
+<style>
+:root{
+  --font-h:'Orbitron',sans-serif;--font-b:'Rajdhani',sans-serif;
+  --font-body:'Exo 2',sans-serif;--font-m:'Share Tech Mono',monospace;
+  --blue:#4DA3FF;--violet:#8B5CF6;--gold:#ffd60a;
+  --magenta:#ff006e;--green:#44ff88;--red:#FF4757;--orange:#ff9800;
+  --text:#e2e6f0;--text2:#7c84a0;--text3:#3a4060;
+  --bg:#020713;--surface:#0c1228;--border:rgba(77,163,255,0.1);
+}
+body{background:var(--bg)!important}
+.scroll-line{position:fixed;top:0;left:0;width:0%;height:2px;background:linear-gradient(90deg,var(--blue),var(--violet));z-index:10001}
+/* NAV */
+.nav{position:fixed;top:0;left:0;right:0;z-index:1000;padding:0 clamp(1.5rem,4vw,3rem);height:72px;display:flex;align-items:center;justify-content:space-between;background:rgba(2,7,19,0.95);backdrop-filter:blur(24px);border-bottom:1px solid rgba(77,163,255,0.06)}
+.nav-logo{font-family:var(--font-h);font-weight:800;font-size:1.1rem;letter-spacing:.22em;color:#fff;text-decoration:none;display:flex;align-items:center;gap:10px}
+.nav-logo img{width:36px;height:36px;object-fit:contain}
+.nav-links{display:flex;gap:2px;align-items:center}
+.nav-links a{font-family:var(--font-b);font-size:.72rem;font-weight:500;letter-spacing:.08em;color:var(--text2);text-decoration:none;padding:8px 16px;border-radius:6px;transition:all .3s}
+.nav-links a:hover{color:#fff;background:rgba(255,255,255,0.04)}
+.nav-links a.active{color:var(--blue);background:rgba(77,163,255,0.06)}
+.nav-right{display:flex;align-items:center;gap:10px}
+.nav-avatar{width:32px;height:32px;border-radius:50%;border:1px solid rgba(77,163,255,0.3);object-fit:cover;display:none}
+.nav-username{font-family:var(--font-m);font-size:.52rem;letter-spacing:.1em;color:var(--text2)}
+.nav-logout{font-family:var(--font-m);font-size:.5rem;letter-spacing:.1em;color:var(--text3);background:none;border:1px solid rgba(255,255,255,0.06);padding:5px 10px;border-radius:4px;cursor:pointer;transition:all .3s}
+.nav-logout:hover{color:var(--red);border-color:rgba(255,71,87,0.4)}
+/* LOGIN GATE */
+.login-gate{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2rem}
+.gate-logo{font-family:var(--font-h);font-weight:900;font-size:clamp(1.8rem,5vw,3rem);letter-spacing:.12em;background:linear-gradient(135deg,var(--blue),var(--violet));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:.4rem}
+.gate-sub{font-family:var(--font-m);font-size:.55rem;letter-spacing:.4em;color:var(--text3);margin-bottom:3rem}
+.gate-desc{font-family:var(--font-body);font-size:.9rem;color:var(--text2);max-width:400px;line-height:1.9;margin-bottom:2rem}
+.code-wrap{display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;max-width:300px}
+.code-label{font-family:var(--font-m);font-size:.48rem;letter-spacing:.25em;text-transform:uppercase;color:var(--text3)}
+.code-input{font-family:var(--font-m);font-size:1.3rem;letter-spacing:.35em;text-align:center;width:100%;padding:14px;background:rgba(8,12,30,0.8);border:1px solid rgba(77,163,255,0.18);border-radius:8px;color:#fff;outline:none;text-transform:uppercase;transition:border-color .3s,box-shadow .3s}
+.code-input:focus{border-color:var(--blue);box-shadow:0 0 24px rgba(77,163,255,0.1)}
+.code-btn{font-family:var(--font-h);font-size:.58rem;font-weight:700;letter-spacing:.15em;color:var(--bg);background:linear-gradient(135deg,var(--blue),var(--violet));border:none;padding:14px 28px;border-radius:8px;cursor:pointer;width:100%;transition:all .3s}
+.code-btn:hover{box-shadow:0 0 32px rgba(77,163,255,0.25);transform:translateY(-1px)}
+.code-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.code-error{font-family:var(--font-m);font-size:.52rem;color:var(--red);display:none;margin-top:2px}
+.gate-note{font-family:var(--font-m);font-size:.42rem;color:var(--text3);margin-top:2.5rem;letter-spacing:.08em;line-height:2;max-width:300px}
+/* HUB */
+.hub-main{display:none;padding-top:72px;min-height:100vh}
+.hub-main.active{display:block}
+/* TABS */
+.hub-tabs{display:flex;border-bottom:1px solid var(--border);background:rgba(2,7,19,0.8);backdrop-filter:blur(16px);position:sticky;top:72px;z-index:100;overflow-x:auto;scrollbar-width:none}
+.hub-tabs::-webkit-scrollbar{display:none}
+.tab-btn{font-family:var(--font-b);font-size:.68rem;font-weight:600;letter-spacing:.06em;color:var(--text3);background:none;border:none;border-bottom:2px solid transparent;padding:15px 20px;cursor:pointer;transition:all .25s;white-space:nowrap;display:flex;align-items:center;gap:6px}
+.tab-btn:hover{color:var(--text2)}
+.tab-btn.active{color:var(--blue);border-bottom-color:var(--blue)}
+/* PANELS */
+.tab-panel{display:none;padding:36px clamp(1.2rem,4vw,3rem);max-width:1280px;margin:0 auto;animation:fadeUp .28s ease}
+.tab-panel.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+/* SECTION HEAD */
+.sh{display:flex;align-items:center;gap:12px;margin-bottom:24px}
+.sh-num{font-family:var(--font-h);font-size:.52rem;font-weight:600;letter-spacing:.12em;color:var(--blue);opacity:.45}
+.sh-title{font-family:var(--font-h);font-weight:700;font-size:.78rem;letter-spacing:.2em;color:var(--text);text-transform:uppercase;white-space:nowrap}
+.sh-line{flex:1;height:1px;background:linear-gradient(90deg,rgba(77,163,255,0.14),transparent)}
+/* CARD */
+.card{background:rgba(12,18,40,0.65);border:1px solid var(--border);border-radius:12px;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(77,163,255,0.35),transparent)}
+.card-body{padding:20px}
+.widget-title{font-family:var(--font-h);font-size:.58rem;font-weight:700;letter-spacing:.2em;color:var(--text3);text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.widget-title::before{content:'';width:4px;height:4px;border-radius:50%;background:var(--blue);box-shadow:0 0 6px var(--blue);flex-shrink:0}
+/* BADGE */
+.badge{font-family:var(--font-m);font-size:.44rem;letter-spacing:.1em;padding:3px 10px;border-radius:4px;border:1px solid;display:inline-block}
+.badge-race{border-color:rgba(77,163,255,0.3);color:var(--blue);background:rgba(77,163,255,0.06)}
+.badge-class{border-color:rgba(139,92,246,0.3);color:var(--violet);background:rgba(139,92,246,0.06)}
+.badge-gold{border-color:rgba(255,214,10,0.3);color:var(--gold);background:rgba(255,214,10,0.05)}
+.badge-green{border-color:rgba(68,255,136,0.3);color:var(--green);background:rgba(68,255,136,0.05)}
+/* EMPTY */
+.empty{font-family:var(--font-m);font-size:.52rem;letter-spacing:.1em;color:var(--text3);text-align:center;padding:28px;opacity:.6}
+/* SKELETON */
+@keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+.sk{background:linear-gradient(90deg,#0d1425 25%,#151e35 50%,#0d1425 75%);background-size:400px 100%;animation:shimmer 1.5s ease-in-out infinite;border-radius:5px}
+/* DASHBOARD */
+.dash-grid{display:grid;grid-template-columns:300px 1fr;gap:20px;align-items:start}
+@media(max-width:860px){.dash-grid{grid-template-columns:1fr}}
+.char-card-img{width:100%;aspect-ratio:3/4;object-fit:cover;object-position:top;display:block;background:#050910;border-radius:12px 12px 0 0}
+.char-card-placeholder{width:100%;aspect-ratio:3/4;background:linear-gradient(160deg,#050910,#0d1425);display:flex;align-items:center;justify-content:center;font-family:var(--font-m);font-size:.48rem;letter-spacing:.2em;color:var(--text3);border-radius:12px 12px 0 0}
+.char-name{font-family:var(--font-h);font-weight:700;font-size:1rem;color:#fff;margin-bottom:3px}
+.char-meta{font-family:var(--font-m);font-size:.46rem;letter-spacing:.12em;color:var(--text3);margin-bottom:12px}
+.char-lvl-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.char-lvl-label{font-family:var(--font-m);font-size:.46rem;letter-spacing:.15em;color:var(--text3)}
+.char-lvl-val{font-family:var(--font-h);font-weight:800;font-size:1.3rem;color:var(--blue)}
+.xp-bar{height:3px;background:rgba(77,163,255,0.08);border-radius:2px;overflow:hidden;margin-bottom:14px}
+.xp-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--violet));transition:width 1s ease}
+.xp-labels{display:flex;justify-content:space-between;font-family:var(--font-m);font-size:.42rem;color:var(--text3);margin-bottom:6px}
+.dash-right{display:flex;flex-direction:column;gap:18px}
+.nav-big{font-family:var(--font-h);font-weight:900;font-size:2.4rem;color:var(--gold);display:flex;align-items:baseline;gap:6px;margin-bottom:4px}
+.nav-unit{font-size:.65rem;color:var(--text3);font-weight:400}
+.nav-streak{font-family:var(--font-m);font-size:.48rem;letter-spacing:.08em;color:var(--text3)}
+.nav-streak span{color:var(--green)}
+.stats-mini{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.stat-row{display:flex;align-items:center;gap:8px;padding:7px 10px;background:rgba(77,163,255,0.03);border:1px solid rgba(77,163,255,0.06);border-radius:6px}
+.stat-icon{font-size:.8rem;width:16px;text-align:center}
+.stat-name{font-family:var(--font-m);font-size:.42rem;letter-spacing:.08em;color:var(--text3);flex:1}
+.stat-val{font-family:var(--font-h);font-weight:700;font-size:.7rem;color:var(--text)}
+.powers-list{display:flex;flex-direction:column;gap:7px}
+.power-item{display:flex;align-items:center;gap:10px;padding:9px 12px;background:rgba(77,163,255,0.02);border:1px solid rgba(77,163,255,0.07);border-radius:7px}
+.pq{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.pq.unique{background:var(--gold);box-shadow:0 0 8px var(--gold)}
+.pq.rare{background:var(--violet);box-shadow:0 0 8px var(--violet)}
+.pq.common{background:var(--text3)}
+.power-name{font-family:var(--font-b);font-weight:600;font-size:.78rem;color:var(--text);flex:1}
+.power-qual-tag{font-family:var(--font-m);font-size:.4rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text3)}
+/* PERSONNAGE */
+.char-full-grid{display:grid;grid-template-columns:260px 1fr;gap:20px;align-items:start}
+@media(max-width:820px){.char-full-grid{grid-template-columns:1fr}}
+.char-full-img{width:100%;aspect-ratio:2/3;object-fit:cover;object-position:top;border-radius:10px;border:1px solid var(--border);background:#050910;display:block}
+.char-full-placeholder{width:100%;aspect-ratio:2/3;background:linear-gradient(160deg,#050910,#0d1425);border-radius:10px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:var(--font-m);font-size:.46rem;letter-spacing:.15em;color:var(--text3)}
+.char-fullname{font-family:var(--font-h);font-weight:900;font-size:1.5rem;letter-spacing:.03em;color:#fff;margin-bottom:4px}
+.char-fullmeta{font-family:var(--font-m);font-size:.48rem;letter-spacing:.14em;color:var(--text3);margin-bottom:12px}
+.char-tags{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px}
+.csb-val{font-family:var(--font-h);font-weight:800;font-size:1.8rem;color:var(--blue)}
+.csb-label{font-family:var(--font-m);font-size:.42rem;letter-spacing:.14em;color:var(--text3)}
+.stats-full-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media(max-width:580px){.stats-full-grid{grid-template-columns:repeat(2,1fr)}}
+.stat-block{background:rgba(77,163,255,0.03);border:1px solid rgba(77,163,255,0.07);border-radius:8px;padding:14px;text-align:center}
+.stat-block-val{font-family:var(--font-h);font-weight:800;font-size:1.35rem;color:var(--blue);margin-bottom:4px}
+.stat-block-name{font-family:var(--font-m);font-size:.4rem;letter-spacing:.12em;color:var(--text3);text-transform:uppercase}
+.sp-banner{background:rgba(255,214,10,0.05);border:1px solid rgba(255,214,10,0.18);border-radius:8px;padding:12px 16px;display:flex;align-items:center;gap:10px;font-family:var(--font-m);font-size:.52rem;letter-spacing:.06em;color:var(--gold)}
+.powers-full-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:9px}
+.power-card{padding:12px 14px;background:rgba(77,163,255,0.03);border:1px solid rgba(77,163,255,0.07);border-radius:8px;display:flex;align-items:center;gap:10px}
+.power-card-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.power-card-dot.unique{background:var(--gold);box-shadow:0 0 10px rgba(255,214,10,.6)}
+.power-card-dot.rare{background:var(--violet);box-shadow:0 0 10px rgba(139,92,246,.6)}
+.power-card-dot.common{background:var(--text3)}
+.power-card-name{font-family:var(--font-b);font-weight:600;font-size:.82rem;color:var(--text)}
+.power-card-qual{font-family:var(--font-m);font-size:.4rem;letter-spacing:.1em;text-transform:uppercase;margin-top:1px}
+.power-card-qual.unique{color:var(--gold)}
+.power-card-qual.rare{color:var(--violet)}
+.power-card-qual.common{color:var(--text3)}
+/* INVENTAIRE */
+.inv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.item-card{background:rgba(12,18,40,0.6);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;position:relative}
+.item-icon{font-size:1.8rem;margin-bottom:8px;display:block}
+.item-name{font-family:var(--font-b);font-weight:600;font-size:.75rem;color:var(--text);margin-bottom:4px}
+.item-qty{font-family:var(--font-m);font-size:.46rem;letter-spacing:.08em;color:var(--text3)}
+.item-equipped{position:absolute;top:8px;right:8px;width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green)}
+.equipped-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+.equipped-slot{background:rgba(77,163,255,0.04);border:1px solid rgba(77,163,255,0.12);border-radius:8px;padding:12px;text-align:center}
+.slot-name{font-family:var(--font-m);font-size:.42rem;letter-spacing:.12em;color:var(--blue);opacity:.6;margin-bottom:6px;text-transform:uppercase}
+.slot-item{font-family:var(--font-b);font-size:.76rem;color:var(--text);font-weight:500}
+/* GACHA */
+.gacha-balance{background:rgba(255,214,10,0.05);border:1px solid rgba(255,214,10,0.18);border-radius:12px;padding:28px;text-align:center;margin-bottom:20px}
+.gacha-bal-val{font-family:var(--font-h);font-weight:900;font-size:3rem;color:var(--gold);margin-bottom:4px}
+.gacha-bal-label{font-family:var(--font-m);font-size:.48rem;letter-spacing:.2em;color:var(--text3);margin-bottom:20px}
+.gacha-cta{display:inline-flex;align-items:center;gap:10px;font-family:var(--font-h);font-size:.58rem;font-weight:700;letter-spacing:.12em;color:var(--bg);background:linear-gradient(135deg,var(--gold),var(--orange));border:none;padding:13px 28px;border-radius:8px;cursor:pointer;transition:all .3s;text-decoration:none}
+.gacha-cta:hover{box-shadow:0 0 32px rgba(255,214,10,.25);transform:translateY(-2px)}
+.pity-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.pity-card{background:rgba(12,18,40,0.6);border:1px solid var(--border);border-radius:10px;padding:18px;text-align:center}
+.pity-val{font-family:var(--font-h);font-weight:800;font-size:1.4rem;margin-bottom:4px}
+.pity-label{font-family:var(--font-m);font-size:.44rem;letter-spacing:.1em;color:var(--text3)}
+.pity-bar{height:3px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;margin-top:10px}
+.pity-fill{height:100%;border-radius:2px;transition:width .8s ease}
+/* PARTY */
+.party-members{display:flex;flex-direction:column;gap:8px}
+.member-row{display:flex;align-items:center;gap:12px;padding:10px 14px;background:rgba(77,163,255,0.03);border:1px solid rgba(77,163,255,0.07);border-radius:8px}
+.member-name{font-family:var(--font-b);font-weight:600;font-size:.84rem;color:var(--text);flex:1}
+.member-leader{color:var(--gold);font-family:var(--font-m);font-size:.42rem;letter-spacing:.1em}
+/* PROGRESSION */
+.prog-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+@media(max-width:680px){.prog-grid{grid-template-columns:1fr}}
+.prog-level-num{font-family:var(--font-h);font-weight:900;font-size:5rem;color:var(--blue);line-height:1}
+.prog-level-label{font-family:var(--font-m);font-size:.5rem;letter-spacing:.25em;color:var(--text3);margin-top:4px}
+.xp-bar-big{height:6px;background:rgba(77,163,255,0.08);border-radius:3px;overflow:hidden;margin-bottom:6px}
+.xp-fill-big{height:100%;background:linear-gradient(90deg,var(--blue),var(--violet));transition:width 1s ease}
+/* TITRES */
+.titles-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.title-card{padding:16px;background:rgba(12,18,40,0.6);border:1px solid var(--border);border-radius:10px}
+.title-name{font-family:var(--font-b);font-weight:700;font-size:.9rem;color:var(--text);margin-bottom:4px}
+.title-tier{font-family:var(--font-m);font-size:.42rem;letter-spacing:.12em;margin-bottom:10px}
+/* COMPAGNONS */
+.comp-name{font-family:var(--font-h);font-weight:700;font-size:1.1rem;color:#fff;margin-bottom:4px}
+.comp-form{font-family:var(--font-m);font-size:.48rem;letter-spacing:.12em;color:var(--text3);margin-bottom:14px}
+.comp-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.comp-stat{text-align:center;padding:12px;background:rgba(77,163,255,0.03);border:1px solid rgba(77,163,255,0.07);border-radius:8px}
+.comp-stat-val{font-family:var(--font-h);font-weight:800;font-size:1.1rem;color:var(--blue)}
+.comp-stat-label{font-family:var(--font-m);font-size:.4rem;letter-spacing:.1em;color:var(--text3);margin-top:3px}
+/* SHOP */
+.shop-name{font-family:var(--font-h);font-weight:700;font-size:1.1rem;color:#fff;margin-bottom:4px}
+.shop-tagline{font-family:var(--font-body);font-size:.85rem;color:var(--text2);margin-bottom:14px;font-style:italic}
+.shop-items-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+.shop-item{padding:12px;background:rgba(77,163,255,0.03);border:1px solid rgba(77,163,255,0.07);border-radius:8px;text-align:center}
+.shop-item-icon{font-size:1.4rem;display:block;margin-bottom:6px}
+.shop-item-name{font-family:var(--font-b);font-size:.72rem;color:var(--text);margin-bottom:4px}
+.shop-item-price{font-family:var(--font-m);font-size:.44rem;letter-spacing:.08em;color:var(--gold)}
+/* PARAMETRES */
+.settings-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+.setting-title{font-family:var(--font-h);font-size:.58rem;font-weight:700;letter-spacing:.18em;color:var(--text3);text-transform:uppercase;margin-bottom:14px}
+.theme-options{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.theme-opt{width:100%;aspect-ratio:1;border-radius:6px;border:2px solid transparent;cursor:pointer;transition:all .25s}
+.theme-opt:hover{transform:scale(1.08)}
+.theme-opt.selected{border-color:#fff;box-shadow:0 0 12px rgba(255,255,255,.2)}
+.setting-info{font-family:var(--font-m);font-size:.5rem;letter-spacing:.08em;color:var(--text3);margin-bottom:10px;line-height:1.9}
+.logout-btn{font-family:var(--font-h);font-size:.58rem;font-weight:700;letter-spacing:.14em;color:#fff;background:rgba(255,71,87,0.08);border:1px solid rgba(255,71,87,0.25);padding:12px 20px;border-radius:8px;cursor:pointer;width:100%;transition:all .3s;margin-top:8px}
+.logout-btn:hover{background:rgba(255,71,87,0.18);border-color:var(--red)}
+/* TOAST */
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(16px);background:#111827;border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:11px 22px;font-family:var(--font-m);font-size:.52rem;letter-spacing:.06em;color:var(--text);opacity:0;pointer-events:none;transition:all .3s;z-index:9999;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.success{border-color:rgba(68,255,136,0.3);color:var(--green)}
+.toast.error{border-color:rgba(255,71,87,0.3);color:var(--red)}
+.toast.info{border-color:rgba(77,163,255,0.3);color:var(--blue)}
+@media(max-width:840px){.nav-links{display:none}.tab-btn .tab-text{display:none}.tab-btn{padding:14px 12px}}
+</style>
+</head>
+<body>
+<div class="scroll-line" id="scroll-line"></div>
+<div id="toast" class="toast"></div>
+
+<!-- LOGIN GATE -->
+<div class="login-gate" id="login-gate">
+  <div class="gate-logo">JAHARTA</div>
+  <div class="gate-sub">// NEXUS HUB ACCESS //</div>
+  <p class="gate-desc">Entre le code généré par <strong style="color:var(--blue)">/link</strong> sur le serveur Discord pour accéder à ton espace personnel.</p>
+  <div class="code-wrap">
+    <div class="code-label">Code de liaison</div>
+    <input type="text" id="link-code" class="code-input" placeholder="XXXX" maxlength="12" autocomplete="off" spellcheck="false">
+    <div class="code-error" id="code-error"></div>
+    <button class="code-btn" id="code-btn" onclick="verifyCode()">CONNEXION AU NEXUS</button>
+  </div>
+  <div class="gate-note">Code à usage unique · valable 10 minutes<br>Utilise <span style="color:var(--blue)">/link</span> pour en générer un nouveau</div>
+</div>
+
+<!-- NAV -->
+<nav class="nav" id="main-nav" style="display:none">
+  <a href="index.html" class="nav-logo"><img src="img/logo-jaharta.png" alt="Jaharta">JAHARTA</a>
+  <div class="nav-links">
+    <a href="index.html">Accueil</a>
+    <a href="fiches.html">Fiches</a>
+    <a href="pnj.html">PNJ</a>
+    <a href="portail.html">Portail</a>
+    <a href="racesjouables.html">Races</a>
+    <a href="gacha.html">Gacha</a>
+    <a href="hub.html" class="active">Hub</a>
+  </div>
+  <div class="nav-right">
+    <img src="" alt="" class="nav-avatar" id="nav-avatar">
+    <span class="nav-username" id="nav-username"></span>
+    <button class="nav-logout" onclick="logout()">DÉCO</button>
+  </div>
+</nav>
+
+<!-- HUB MAIN -->
+<div class="hub-main" id="hub-main">
+  <div class="hub-tabs">
+    <a href="index.html" class="tab-btn" style="text-decoration:none;border-bottom:none;opacity:.55" title="Retour au site">← <span class="tab-text">Site</span></a>
+    <div style="width:1px;background:var(--border);margin:10px 0;flex-shrink:0"></div>
+    <button class="tab-btn active" onclick="showTab('dashboard')" id="tab-dashboard">🏠 <span class="tab-text">Dashboard</span></button>
+    <button class="tab-btn" onclick="showTab('personnage')" id="tab-personnage">👤 <span class="tab-text">Personnage</span></button>
+    <button class="tab-btn" onclick="showTab('inventaire')" id="tab-inventaire">🎒 <span class="tab-text">Inventaire</span></button>
+    <button class="tab-btn" onclick="showTab('gacha')" id="tab-gacha">🎰 <span class="tab-text">Gacha</span></button>
+    <button class="tab-btn" onclick="showTab('party')" id="tab-party">👥 <span class="tab-text">Party</span></button>
+    <button class="tab-btn" onclick="showTab('progression')" id="tab-progression">📈 <span class="tab-text">Progression</span></button>
+    <button class="tab-btn" onclick="showTab('titres')" id="tab-titres">🏷️ <span class="tab-text">Titres</span></button>
+    <button class="tab-btn" onclick="showTab('compagnons')" id="tab-compagnons">🐾 <span class="tab-text">Compagnons</span></button>
+    <button class="tab-btn" onclick="showTab('shop')" id="tab-shop">🏪 <span class="tab-text">Shop</span></button>
+    <button class="tab-btn" onclick="showTab('parametres')" id="tab-parametres">⚙️ <span class="tab-text">Paramètres</span></button>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="tab-panel active" id="panel-dashboard">
+    <div class="sh"><span class="sh-num">01</span><span class="sh-title">Dashboard</span><div class="sh-line"></div></div>
+    <div class="dash-grid">
+      <div class="card" id="dash-char-card">
+        <div class="char-card-placeholder sk"></div>
+        <div class="card-body">
+          <div class="sk" style="height:16px;width:65%;margin-bottom:8px"></div>
+          <div class="sk" style="height:10px;width:40%;margin-bottom:14px"></div>
+          <div class="sk" style="height:80px"></div>
+        </div>
+      </div>
+      <div class="dash-right">
+        <div class="card"><div class="card-body">
+          <div class="widget-title">Navarites</div>
+          <div class="nav-big" id="dash-nav-val"><span class="sk" style="width:80px;height:36px;display:inline-block"></span></div>
+          <div class="nav-streak" id="dash-nav-streak"></div>
+        </div></div>
+        <div class="card"><div class="card-body">
+          <div class="widget-title">Statistiques</div>
+          <div class="stats-mini" id="dash-stats-grid">
+            <div class="sk" style="height:36px;border-radius:6px"></div>
+            <div class="sk" style="height:36px;border-radius:6px;animation-delay:.08s"></div>
+            <div class="sk" style="height:36px;border-radius:6px;animation-delay:.16s"></div>
+            <div class="sk" style="height:36px;border-radius:6px;animation-delay:.24s"></div>
+          </div>
+        </div></div>
+        <div class="card"><div class="card-body">
+          <div class="widget-title">Pouvoirs</div>
+          <div class="powers-list" id="dash-powers-list">
+            <div class="sk" style="height:36px;border-radius:7px"></div>
+            <div class="sk" style="height:36px;border-radius:7px;animation-delay:.1s"></div>
+          </div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PERSONNAGE -->
+  <div class="tab-panel" id="panel-personnage">
+    <div class="sh"><span class="sh-num">02</span><span class="sh-title">Personnage</span><div class="sh-line"></div></div>
+    <div class="char-full-grid" id="char-full-grid">
+      <div class="char-full-placeholder sk" id="char-img-slot"></div>
+      <div id="char-full-right">
+        <div class="card" style="margin-bottom:16px"><div class="card-body" id="char-header-body">
+          <div class="sk" style="height:22px;width:55%;margin-bottom:8px"></div>
+          <div class="sk" style="height:10px;width:35%;margin-bottom:14px"></div>
+        </div></div>
+        <div class="card" style="margin-bottom:16px"><div class="card-body">
+          <div class="sh" style="margin-bottom:14px"><span class="sh-num">—</span><span class="sh-title">Stats</span><div class="sh-line"></div></div>
+          <div class="stats-full-grid" id="char-stats-grid">
+            <div class="sk" style="height:58px;border-radius:8px"></div>
+            <div class="sk" style="height:58px;border-radius:8px;animation-delay:.05s"></div>
+            <div class="sk" style="height:58px;border-radius:8px;animation-delay:.1s"></div>
+            <div class="sk" style="height:58px;border-radius:8px;animation-delay:.15s"></div>
+          </div>
+        </div></div>
+        <div class="card"><div class="card-body">
+          <div class="sh" style="margin-bottom:14px"><span class="sh-num">—</span><span class="sh-title">Pouvoirs</span><div class="sh-line"></div></div>
+          <div class="powers-full-grid" id="char-powers-grid">
+            <div class="sk" style="height:48px;border-radius:8px"></div>
+            <div class="sk" style="height:48px;border-radius:8px;animation-delay:.07s"></div>
+          </div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INVENTAIRE -->
+  <div class="tab-panel" id="panel-inventaire">
+    <div class="sh"><span class="sh-num">03</span><span class="sh-title">Inventaire</span><div class="sh-line"></div></div>
+    <div class="card" style="margin-bottom:20px"><div class="card-body">
+      <div class="sh" style="margin-bottom:14px"><span class="sh-num">—</span><span class="sh-title">Équipements actifs</span><div class="sh-line"></div></div>
+      <div class="equipped-grid" id="equipped-grid"><div class="empty">Chargement...</div></div>
+    </div></div>
+    <div class="card"><div class="card-body">
+      <div class="sh" style="margin-bottom:14px"><span class="sh-num">—</span><span class="sh-title">Items</span><div class="sh-line"></div></div>
+      <div class="inv-grid" id="inv-grid"><div class="empty">Chargement...</div></div>
+    </div></div>
+  </div>
+
+  <!-- GACHA -->
+  <div class="tab-panel" id="panel-gacha">
+    <div class="sh"><span class="sh-num">04</span><span class="sh-title">Gacha Nexus</span><div class="sh-line"></div></div>
+    <div class="gacha-balance">
+      <div class="gacha-bal-val" id="gacha-nav-val">—</div>
+      <div class="gacha-bal-label">NAVARITES DISPONIBLES</div>
+      <a href="gacha.html" class="gacha-cta">🎰 Accéder au Gacha complet</a>
+    </div>
+    <div class="card"><div class="card-body">
+      <div class="sh" style="margin-bottom:14px"><span class="sh-num">—</span><span class="sh-title">Compteurs Pity</span><div class="sh-line"></div></div>
+      <div class="pity-grid" id="pity-grid">
+        <div class="sk" style="height:80px;border-radius:10px"></div>
+        <div class="sk" style="height:80px;border-radius:10px;animation-delay:.06s"></div>
+        <div class="sk" style="height:80px;border-radius:10px;animation-delay:.12s"></div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- PARTY -->
+  <div class="tab-panel" id="panel-party">
+    <div class="sh"><span class="sh-num">05</span><span class="sh-title">Party</span><div class="sh-line"></div></div>
+    <div id="party-content"><div class="empty">Chargement...</div></div>
+  </div>
+
+  <!-- PROGRESSION -->
+  <div class="tab-panel" id="panel-progression">
+    <div class="sh"><span class="sh-num">06</span><span class="sh-title">Progression</span><div class="sh-line"></div></div>
+    <div class="prog-grid" style="margin-bottom:20px">
+      <div class="card"><div class="card-body" style="text-align:center;padding:32px 20px">
+        <div class="prog-level-num" id="prog-lvl">—</div>
+        <div class="prog-level-label">NIVEAU ACTUEL</div>
+      </div></div>
+      <div class="card"><div class="card-body">
+        <div style="font-family:var(--font-h);font-weight:800;font-size:1.6rem;color:var(--text);margin-bottom:4px" id="prog-xp">—</div>
+        <div style="font-family:var(--font-m);font-size:.46rem;letter-spacing:.14em;color:var(--text3);margin-bottom:16px">XP TOTAL</div>
+        <div class="xp-labels" id="prog-xp-labels"><span>XP</span><span>—</span></div>
+        <div class="xp-bar-big"><div class="xp-fill-big" id="prog-xp-fill" style="width:0%"></div></div>
+        <div style="margin-top:12px;font-family:var(--font-m);font-size:.46rem;letter-spacing:.08em;color:var(--text3)" id="prog-xp-needed"></div>
+      </div></div>
+    </div>
+    <div class="card"><div class="card-body">
+      <div class="sh" style="margin-bottom:14px"><span class="sh-num">—</span><span class="sh-title">Points de stat disponibles</span><div class="sh-line"></div></div>
+      <div id="prog-sp-content"><div class="empty">Chargement...</div></div>
+    </div></div>
+  </div>
+
+  <!-- TITRES -->
+  <div class="tab-panel" id="panel-titres">
+    <div class="sh"><span class="sh-num">07</span><span class="sh-title">Titres</span><div class="sh-line"></div></div>
+    <div class="card"><div class="card-body">
+      <div class="titles-grid" id="titles-grid"><div class="empty">Chargement...</div></div>
+    </div></div>
+  </div>
+
+  <!-- COMPAGNONS -->
+  <div class="tab-panel" id="panel-compagnons">
+    <div class="sh"><span class="sh-num">08</span><span class="sh-title">Compagnons</span><div class="sh-line"></div></div>
+    <div id="comp-content"><div class="empty">Chargement...</div></div>
+  </div>
+
+  <!-- SHOP -->
+  <div class="tab-panel" id="panel-shop">
+    <div class="sh"><span class="sh-num">09</span><span class="sh-title">Ma Boutique</span><div class="sh-line"></div></div>
+    <div id="shop-content"><div class="empty">Chargement...</div></div>
+  </div>
+
+  <!-- PARAMETRES -->
+  <div class="tab-panel" id="panel-parametres">
+    <div class="sh"><span class="sh-num">10</span><span class="sh-title">Paramètres</span><div class="sh-line"></div></div>
+    <div class="settings-grid">
+      <div class="card"><div class="card-body">
+        <div class="setting-title">Thème d'affichage</div>
+        <div class="theme-options" id="theme-options">
+          <div class="theme-opt" style="background:#cc44ff" data-theme="purple" onclick="setTheme('purple')" title="Purple"></div>
+          <div class="theme-opt" style="background:#00c8ff" data-theme="dark_blue" onclick="setTheme('dark_blue')" title="Dark Blue"></div>
+          <div class="theme-opt" style="background:#60e0ff" data-theme="light_blue" onclick="setTheme('light_blue')" title="Light Blue"></div>
+          <div class="theme-opt" style="background:#00ff88" data-theme="green" onclick="setTheme('green')" title="Green"></div>
+          <div class="theme-opt" style="background:#ff3344" data-theme="red" onclick="setTheme('red')" title="Red"></div>
+          <div class="theme-opt" style="background:#ffdd00" data-theme="yellow" onclick="setTheme('yellow')" title="Yellow"></div>
+          <div class="theme-opt" style="background:#ff8800" data-theme="orange" onclick="setTheme('orange')" title="Orange"></div>
+          <div class="theme-opt" style="background:#ff44bb" data-theme="pink" onclick="setTheme('pink')" title="Pink"></div>
+        </div>
+        <div style="margin-top:10px;font-family:var(--font-m);font-size:.46rem;letter-spacing:.08em;color:var(--text3)">Thème actuel : <span id="theme-current" style="color:var(--blue)">—</span></div>
+      </div></div>
+      <div class="card"><div class="card-body">
+        <div class="setting-title">Compte</div>
+        <div class="setting-info" id="settings-user-info">—</div>
+        <div class="setting-info">Session partagée avec gacha.html</div>
+        <button class="logout-btn" onclick="logout()">⏻ SE DÉCONNECTER</button>
+      </div></div>
+      <div class="card"><div class="card-body">
+        <div class="setting-title">Collections Firestore</div>
+        <div class="setting-info">players · characters · active_characters · inventories · economy · companions_user · titles_user · parties · party_membership · gacha_pity · shops · buffs</div>
+      </div></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+// ── CONFIG ──
+const FB={apiKey:"AIzaSyAru7qZX8Gu_b8Y3oNDV-a5PmkrrkRjkcs",authDomain:"jaharta-rp.firebaseapp.com",projectId:"jaharta-rp",storageBucket:"jaharta-rp.firebasestorage.app",messagingSenderId:"217075417489",appId:"1:217075417489:web:4d1e2df422a5cd42411a30"};
+if(!firebase.apps.length)firebase.initializeApp(FB);
+const db=firebase.firestore();
+
+// ── COLLECTIONS (noms exacts du bot) ──
+const C={
+  ACTIVE:'active_characters',   // {discord_id} → {character_id, user_id}
+  CHARS:'characters',           // {char_uuid}  → perso complet
+  PLAYERS:'players',            // {discord_id} → {navarites, notoriety, display_theme, consecutive_days...}
+  INV:'inventories',            // {discord_id}_{char_uuid} → {items:{}, equipped_assets:[]}
+  COMP:'companions_user',       // {discord_id}_{char_uuid} → {owned_companions, active_companion}
+  TITLES:'titles_user',         // {discord_id} → {titles:{}, tp:0}
+  PARTIES:'parties',            // {party_id}   → {name, members[], leader_char_key...}
+  PARTY_MEM:'party_membership', // {discord_id}_{char_uuid} → {party_id}
+  PITY:'gacha_pity',            // {discord_id} → {navarites_spent_epic, navarites_spent_leg}
+  SHOPS:'shops',                // {discord_id}_{char_uuid} → {name, open, items{}}
+  LINK:'gacha_link_codes',      // {code} → {discord_id, username, avatar_url, expires_at}
+  CFG:'config',                 // items, companions_data, etc.
+};
+
+const SI={strength:'⚔️',agility:'💨',speed:'🏃',intelligence:'🧠',mana:'✨',resistance:'🛡️',charisma:'👑',aura:'🌟'};
+const SL={strength:'Force',agility:'Agilité',speed:'Vitesse',intelligence:'Intel.',mana:'Mana',resistance:'Rés.',charisma:'Charisme',aura:'Aura'};
+const SK=['strength','agility','speed','intelligence','mana','resistance','charisma','aura'];
+const PITY_T={epic:30,leg:150};
+
+// ── SESSION (partagée gacha ↔ hub) ──
+function getSess(){try{return JSON.parse(localStorage.getItem('hub_session'))||JSON.parse(localStorage.getItem('gacha_session'))}catch(e){return null}}
+function setSess(s){localStorage.setItem('hub_session',JSON.stringify(s));localStorage.setItem('gacha_session',JSON.stringify(s))}
+function clearSess(){localStorage.removeItem('hub_session');localStorage.removeItem('gacha_session')}
+
+// ── AUTH ──
+async function verifyCode(){
+  const inp=document.getElementById('link-code'),err=document.getElementById('code-error'),btn=document.getElementById('code-btn');
+  err.style.display='none';
+  const code=inp.value.trim().toUpperCase();
+  if(!code||code.length<4){showErr('Entre un code valide');return}
+  btn.disabled=true;btn.textContent='VÉRIFICATION...';
+  try{
+    const snap=await db.collection(C.LINK).doc(code).get();
+    if(!snap.exists){showErr('Code invalide ou déjà utilisé');done();return}
+    const d=snap.data();
+    if(d.expires_at&&new Date(d.expires_at)<new Date()){showErr('Code expiré — utilise /link');db.collection(C.LINK).doc(code).delete();done();return}
+    setSess({id:d.discord_id,username:d.username,avatar:d.avatar_url});
+    db.collection(C.LINK).doc(code).delete();
+    await loadHub();
+  }catch(e){console.error('[AUTH]',e);showErr('Erreur de connexion — réessaye');done()}
+  function showErr(m){err.textContent=m;err.style.display='block'}
+  function done(){btn.disabled=false;btn.textContent='CONNEXION AU NEXUS'}
+}
+document.getElementById('link-code').addEventListener('keydown',e=>{if(e.key==='Enter')verifyCode()});
+
+function logout(){
+  clearSess();
+  document.getElementById('hub-main').classList.remove('active');
+  document.getElementById('main-nav').style.display='none';
+  document.getElementById('login-gate').style.display='flex';
+  showToast('Déconnecté','info');
+}
+
+// ── STATE ──
+let CHAR=null,PLAYER=null,PITY=null,INV_DATA=null,CHAR_ID=null,UID=null;
+
+// ── INIT ──
+async function init(){const s=getSess();if(s&&s.id)await loadHub()}
+
+async function loadHub(){
+  const s=getSess();if(!s)return;
+  UID=s.id;
+  document.getElementById('login-gate').style.display='none';
+  document.getElementById('main-nav').style.display='flex';
+  document.getElementById('hub-main').classList.add('active');
+  document.getElementById('nav-username').textContent=s.username||'—';
+  if(s.avatar){const av=document.getElementById('nav-avatar');av.src=s.avatar;av.style.display='block'}
+  await Promise.all([loadCharacter(),loadPlayer()]);
+}
+
+async function loadCharacter(){
+  try{
+    const acSnap=await db.collection(C.ACTIVE).doc(UID).get();
+    if(!acSnap.exists){renderNoChar();return}
+    CHAR_ID=acSnap.data().character_id;
+    if(!CHAR_ID){renderNoChar();return}
+    const cSnap=await db.collection(C.CHARS).doc(CHAR_ID).get();
+    if(!cSnap.exists){renderNoChar();return}
+    CHAR={_id:CHAR_ID,...cSnap.data()};
+    renderDashChar();renderFullChar();renderProgression();
+  }catch(e){console.error('[CHAR]',e);renderNoChar()}
+}
+
+async function loadPlayer(){
+  try{
+    const[pSnap,pSnap2]=await Promise.all([db.collection(C.PLAYERS).doc(UID).get(),db.collection(C.PITY).doc(UID).get()]);
+    PLAYER=pSnap.exists?pSnap.data():{};
+    PITY=pSnap2.exists?pSnap2.data():{};
+    renderPlayerWidgets();renderGacha();renderSettings();
+  }catch(e){console.error('[PLAYER]',e)}
+}
+
+// Loaders paresseux (au clic de l'onglet)
+async function loadInventory(){
+  if(!CHAR_ID){document.getElementById('inv-grid').innerHTML='<div class="empty">Aucun personnage actif</div>';return}
+  try{
+    const key=`${UID}_${CHAR_ID}`;
+    const[invSnap,cfgSnap]=await Promise.all([db.collection(C.INV).doc(key).get(),db.collection(C.CFG).doc('items').get()]);
+    INV_DATA=invSnap.exists?invSnap.data():{items:{},equipped_assets:[]};
+    const cfg=cfgSnap.exists?cfgSnap.data():{};
+    const all={...cfg.items||{},...cfg.equipment||{}};
+    renderInventory(INV_DATA,all);
+  }catch(e){console.error('[INV]',e);document.getElementById('inv-grid').innerHTML='<div class="empty">Erreur de chargement</div>'}
+}
+
+async function loadParty(){
+  if(!CHAR_ID){document.getElementById('party-content').innerHTML='<div class="empty">Aucun personnage actif</div>';return}
+  try{
+    const key=`${UID}_${CHAR_ID}`;
+    const mSnap=await db.collection(C.PARTY_MEM).doc(key).get();
+    if(!mSnap.exists){document.getElementById('party-content').innerHTML='<div class="empty">Tu n\'es dans aucune party.</div>';return}
+    const pid=mSnap.data().party_id;
+    const pSnap=await db.collection(C.PARTIES).doc(String(pid)).get();
+    if(!pSnap.exists){document.getElementById('party-content').innerHTML='<div class="empty">Party introuvable.</div>';return}
+    renderParty(pSnap.data());
+  }catch(e){document.getElementById('party-content').innerHTML='<div class="empty">Erreur de chargement</div>'}
+}
+
+async function loadTitles(){
+  try{
+    const snap=await db.collection(C.TITLES).doc(UID).get();
+    renderTitles(snap.exists?snap.data():{});
+  }catch(e){document.getElementById('titles-grid').innerHTML='<div class="empty">Erreur</div>'}
+}
+
+async function loadCompanions(){
+  if(!CHAR_ID){document.getElementById('comp-content').innerHTML='<div class="empty">Aucun personnage actif</div>';return}
+  try{
+    const key=`${UID}_${CHAR_ID}`;
+    const[cSnap,cfgSnap]=await Promise.all([db.collection(C.COMP).doc(key).get(),db.collection(C.CFG).doc('companions_data').get()]);
+    renderCompanions(cSnap.exists?cSnap.data():{},cfgSnap.exists?cfgSnap.data():{companions:{},evolutions:{}});
+  }catch(e){document.getElementById('comp-content').innerHTML='<div class="empty">Erreur</div>'}
+}
+
+async function loadShop(){
+  if(!CHAR_ID){document.getElementById('shop-content').innerHTML='<div class="empty">Aucun personnage actif</div>';return}
+  try{
+    const snap=await db.collection(C.SHOPS).doc(`${UID}_${CHAR_ID}`).get();
+    renderShop(snap.exists?snap.data():null);
+  }catch(e){document.getElementById('shop-content').innerHTML='<div class="empty">Erreur</div>'}
+}
+
+// ── RENDER DASHBOARD ──
+function renderDashChar(){
+  const c=CHAR,fn=c.first_name||'',ln=c.last_name||'';
+  const name=[fn,ln].filter(Boolean).join(' ')||'Personnage';
+  const lvl=c.level||1,xp=c.xp||0,nxp=lvlXP(lvl+1),cxp=lvlXP(lvl);
+  const pct=Math.min(100,Math.round((xp-cxp)/Math.max(1,nxp-cxp)*100));
+  const stats=c.stats||{};
+  document.getElementById('dash-char-card').innerHTML=`
+    ${c.profile_image?`<img src="${e(c.profile_image)}" class="char-card-img" alt="${e(name)}" onerror="this.outerHTML='<div class=&quot;char-card-placeholder&quot;>NO IMAGE</div>'">`:`<div class="char-card-placeholder">NO IMAGE</div>`}
+    <div class="card-body">
+      <div class="char-name">${e(name)}</div>
+      <div class="char-meta">${e(c.race_category||'—')} · ${e(c.class||'—')} · ${c.age||'?'} ans</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
+        <span class="badge badge-race">${e(c.race_category||'—')}</span>
+        <span class="badge badge-class">${e(c.class||'—')}</span>
+      </div>
+      <div class="char-lvl-row"><span class="char-lvl-label">Niveau</span><span class="char-lvl-val">${lvl}</span></div>
+      <div class="xp-labels"><span>XP</span><span>${xp.toLocaleString()} / ${nxp.toLocaleString()}</span></div>
+      <div class="xp-bar"><div class="xp-fill" style="width:${pct}%"></div></div>
+    </div>`;
+  document.getElementById('dash-stats-grid').innerHTML=SK.map(k=>`<div class="stat-row"><span class="stat-icon">${SI[k]}</span><span class="stat-name">${SL[k]}</span><span class="stat-val">${stats[k]||0}</span></div>`).join('');
+  const powers=c.powers||[];
+  document.getElementById('dash-powers-list').innerHTML=powers.length
+    ?powers.slice(0,5).map(p=>`<div class="power-item"><div class="pq ${p.quality||'common'}"></div><span class="power-name">${e(p.name||p.id||'—')}</span><span class="power-qual-tag">${e((p.quality||'').toUpperCase())}</span></div>`).join('')+(powers.length>5?`<div class="empty">+${powers.length-5} autres</div>`:'')
+    :'<div class="empty">Aucun pouvoir</div>';
+}
+
+function renderNoChar(){
+  document.getElementById('dash-char-card').innerHTML='<div class="char-card-placeholder" style="background:#050910">AUCUN PERSO ACTIF</div><div class="card-body"><div class="empty">Aucun personnage actif</div></div>';
+  document.getElementById('dash-stats-grid').innerHTML='<div class="empty" style="grid-column:1/-1">—</div>';
+  document.getElementById('dash-powers-list').innerHTML='<div class="empty">—</div>';
+}
+
+function renderPlayerWidgets(){
+  const nav=PLAYER.navarites||0,streak=PLAYER.consecutive_days||0;
+  document.getElementById('dash-nav-val').innerHTML=`<span>${nav.toLocaleString()}</span><span class="nav-unit">NAV</span>`;
+  document.getElementById('dash-nav-streak').innerHTML=streak?`<span>${streak}</span> jour${streak>1?'s':''} consécutifs`:'Pas encore de série active';
+}
+
+// ── RENDER PERSONNAGE ──
+function renderFullChar(){
+  const c=CHAR,fn=c.first_name||'',ln=c.last_name||'';
+  const name=[fn,ln].filter(Boolean).join(' ')||'Personnage';
+  const stats=c.stats||{},powers=c.powers||[];
+  // Image
+  const imgSlot=document.getElementById('char-img-slot');
+  if(c.profile_image){
+    const img=document.createElement('img');
+    img.src=c.profile_image;img.className='char-full-img';img.alt=name;
+    img.onerror=()=>{img.outerHTML='<div class="char-full-placeholder">NO IMAGE</div>'};
+    imgSlot.replaceWith(img);
+  } else {
+    imgSlot.className='char-full-placeholder';imgSlot.textContent='NO IMAGE';
+  }
+  // Header
+  document.getElementById('char-header-body').innerHTML=`
+    <div class="char-fullname">${e(name)}</div>
+    <div class="char-fullmeta">${e(c.race_category||'—')} · ${e(c.class||'—')} · ${c.age||'?'} ans${c.marital_status?' · '+e(c.marital_status):''}</div>
+    <div class="char-tags">
+      <span class="badge badge-race">${e(c.race_category||'—')}</span>
+      <span class="badge badge-class">${e(c.class||'—')}</span>
+      ${(c.affinity||[]).slice(0,3).map(a=>`<span class="badge badge-gold">${e(a)}</span>`).join('')}
+    </div>
+    <div style="display:flex;gap:20px;align-items:center;margin-top:16px">
+      <div><div class="csb-val">${c.level||1}</div><div class="csb-label">NIVEAU</div></div>
+      <div><div class="csb-val">${(c.xp||0).toLocaleString()}</div><div class="csb-label">XP</div></div>
+      ${c.available_stat_points?`<div><div class="csb-val" style="color:var(--gold)">${c.available_stat_points}</div><div class="csb-label">STAT PTS</div></div>`:''}
+    </div>`;
+  // Stats
+  const sp=c.available_stat_points;
+  document.getElementById('char-stats-grid').innerHTML=
+    (sp?`<div class="sp-banner" style="grid-column:1/-1">⚡ ${sp} point${sp>1?'s':''} disponible${sp>1?'s':''} — à allouer via le bot Discord</div>`:'')
+    +SK.map(k=>`<div class="stat-block"><div class="stat-block-val">${stats[k]||0}</div><div class="stat-block-name">${SI[k]} ${SL[k]}</div></div>`).join('');
+  // Powers
+  document.getElementById('char-powers-grid').innerHTML=powers.length
+    ?powers.map(p=>`<div class="power-card"><div class="power-card-dot ${p.quality||'common'}"></div><div><div class="power-card-name">${e(p.name||p.id||'—')}</div><div class="power-card-qual ${p.quality||'common'}">${e((p.quality||'').toUpperCase())}</div></div></div>`).join('')
+    :'<div class="empty">Aucun pouvoir</div>';
+}
+
+// ── RENDER INVENTAIRE ──
+function renderInventory(inv,all){
+  const items=inv.items||{},equipped=inv.equipped_assets||[];
+  const eg=document.getElementById('equipped-grid');
+  eg.innerHTML=equipped.length
+    ?equipped.map(id=>{const it=all[id]||{};return`<div class="equipped-slot"><div class="slot-name">${e(it.slot||id)}</div><div class="slot-item">${e(it.name||id)}</div></div>`}).join('')
+    :'<div class="empty">Aucun équipement actif</div>';
+  const entries=Object.entries(items).filter(([,q])=>q>0);
+  document.getElementById('inv-grid').innerHTML=entries.length
+    ?entries.map(([id,qty])=>{const it=all[id]||{},isEq=equipped.includes(id);return`<div class="item-card">${isEq?'<div class="item-equipped"></div>':''}<span class="item-icon">${it.emoji||'📦'}</span><div class="item-name">${e(it.name||id)}</div><div class="item-qty">×${qty}</div></div>`}).join('')
+    :'<div class="empty">Inventaire vide</div>';
+}
+
+// ── RENDER GACHA ──
+function renderGacha(){
+  const nav=PLAYER.navarites||0;
+  document.getElementById('gacha-nav-val').textContent=nav.toLocaleString();
+  const se=PITY.navarites_spent_epic||0,sl=PITY.navarites_spent_leg||0,streak=(PLAYER.consecutive_days||0)%3;
+  document.getElementById('pity-grid').innerHTML=`
+    <div class="pity-card">
+      <div class="pity-val" style="color:var(--violet)">${se}<span style="font-size:.7rem;color:var(--text3)">/${PITY_T.epic}</span></div>
+      <div class="pity-label">PITY ÉPIQUE</div>
+      <div class="pity-bar"><div class="pity-fill" style="width:${Math.min(100,se/PITY_T.epic*100)}%;background:var(--violet)"></div></div>
+    </div>
+    <div class="pity-card">
+      <div class="pity-val" style="color:var(--gold)">${sl}<span style="font-size:.7rem;color:var(--text3)">/${PITY_T.leg}</span></div>
+      <div class="pity-label">PITY LÉGENDAIRE</div>
+      <div class="pity-bar"><div class="pity-fill" style="width:${Math.min(100,sl/PITY_T.leg*100)}%;background:var(--gold)"></div></div>
+    </div>
+    <div class="pity-card">
+      <div class="pity-val" style="color:var(--green)">${streak}<span style="font-size:.7rem;color:var(--text3)">/3</span></div>
+      <div class="pity-label">JOURS STREAK</div>
+      <div class="pity-bar"><div class="pity-fill" style="width:${streak/3*100}%;background:var(--green)"></div></div>
+    </div>`;
+}
+
+// ── RENDER PARTY ──
+function renderParty(p){
+  const members=p.members||[],leader=p.leader_char_key||'';
+  document.getElementById('party-content').innerHTML=`
+    <div class="card"><div class="card-body">
+      <div style="font-family:var(--font-h);font-weight:700;font-size:1.1rem;color:#fff;margin-bottom:4px">${e(p.name||'Party sans nom')}</div>
+      <div style="font-family:var(--font-m);font-size:.48rem;letter-spacing:.1em;color:var(--text3);margin-bottom:16px">${members.length} membre${members.length>1?'s':''} · PP : ${p.pp||0}${p.status==='hidden'?' · 🔒 Cachée':''}</div>
+      <div class="sh" style="margin-bottom:12px"><span class="sh-num">—</span><span class="sh-title">Membres</span><div class="sh-line"></div></div>
+      <div class="party-members">${members.map(m=>`<div class="member-row"><span class="member-name">${e(m.char_name||m.char_key||'—')}</span>${m.char_key===leader?'<span class="member-leader">👑 Leader</span>':''}${m.hidden?'<span style="font-family:var(--font-m);font-size:.4rem;color:var(--text3)">Caché</span>':''}</div>`).join('')}</div>
+      ${p.log&&p.log.length?`<div class="sh" style="margin:16px 0 12px"><span class="sh-num">—</span><span class="sh-title">Journal récent</span><div class="sh-line"></div></div><div style="display:flex;flex-direction:column;gap:6px">${p.log.slice(-5).reverse().map(l=>`<div style="font-family:var(--font-m);font-size:.46rem;letter-spacing:.06em;color:var(--text3);padding:8px 12px;background:rgba(77,163,255,.02);border-radius:6px;border:1px solid rgba(77,163,255,.05)">${e(l)}</div>`).join('')}</div>`:''}
+    </div></div>`;
+}
+
+// ── RENDER PROGRESSION ──
+function renderProgression(){
+  if(!CHAR)return;
+  const lvl=CHAR.level||1,xp=CHAR.xp||0,nxp=lvlXP(lvl+1),cxp=lvlXP(lvl);
+  const pct=Math.min(100,Math.round((xp-cxp)/Math.max(1,nxp-cxp)*100));
+  document.getElementById('prog-lvl').textContent=lvl;
+  document.getElementById('prog-xp').textContent=xp.toLocaleString()+' XP';
+  document.getElementById('prog-xp-labels').innerHTML=`<span>Niveau ${lvl}</span><span>${xp.toLocaleString()} / ${nxp.toLocaleString()}</span>`;
+  document.getElementById('prog-xp-fill').style.width=pct+'%';
+  document.getElementById('prog-xp-needed').textContent=`Il reste ${Math.max(0,nxp-xp).toLocaleString()} XP pour le niveau ${lvl+1}`;
+  const sp=CHAR.available_stat_points||0;
+  document.getElementById('prog-sp-content').innerHTML=sp
+    ?`<div class="sp-banner">⚡ ${sp} point${sp>1?'s':''} de stat disponible${sp>1?'s':''} — à allouer via le bot Discord</div>`
+    :'<div class="empty">Aucun point de stat disponible pour le moment</div>';
+}
+
+// ── RENDER TITRES ──
+function renderTitles(d){
+  const titles=d.titles||{},entries=Object.entries(titles);
+  document.getElementById('titles-grid').innerHTML=entries.length
+    ?entries.map(([id,t])=>`<div class="title-card"><div class="title-name">${e(t.name||id)}</div><div class="title-tier" style="color:${tCol(t.tier||0)}">${tLbl(t.tier||0)}</div></div>`).join('')
+    :'<div class="empty">Aucun titre obtenu</div>';
+}
+function tCol(t){return['#6b7280','#60a5fa','#a78bfa','#fbbf24','#ef4444'][Math.min(t,4)]}
+function tLbl(t){return['Commun','Peu Commun','Rare','Épique','Légendaire'][Math.min(t,4)]||'?'}
+
+// ── RENDER COMPAGNONS ──
+function renderCompanions(cu,cfg){
+  const owned=cu.owned_companions||{},active=cu.active_companion,entries=Object.entries(owned);
+  document.getElementById('comp-content').innerHTML=entries.length
+    ?`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px">
+        ${entries.map(([id,cd])=>{
+          const form=cd.current_form||id,evos=cfg.evolutions||{},comps=cfg.companions||{};
+          const info=evos[form]||comps[form]||{};
+          const lvl=compLvl(cd.xp||0),isAct=id===active;
+          return`<div class="card" style="${isAct?'border-color:rgba(68,255,136,0.3)':''}"><div class="card-body">
+            ${isAct?'<span class="badge badge-green" style="display:inline-block;margin-bottom:10px">ACTIF</span>':''}
+            <div class="comp-name">${e(info.name||form||id)}</div>
+            <div class="comp-form">Forme : ${e(form)}</div>
+            <div class="comp-stats">
+              <div class="comp-stat"><div class="comp-stat-val">${lvl}</div><div class="comp-stat-label">NIVEAU</div></div>
+              <div class="comp-stat"><div class="comp-stat-val">${(cd.xp||0).toLocaleString()}</div><div class="comp-stat-label">XP</div></div>
+              <div class="comp-stat"><div class="comp-stat-val" style="color:${cd.synchronized?'var(--green)':'var(--text3)'}">${cd.synchronized?'✓':'✗'}</div><div class="comp-stat-label">SYNC</div></div>
+            </div>
+          </div></div>`;
+        }).join('')}
+      </div>`
+    :'<div class="empty">Aucun compagnon</div>';
+}
+function compLvl(xp){let l=1,t=0;while(t+100*l<=xp){t+=100*l;l++}return l}
+
+// ── RENDER SHOP ──
+function renderShop(shop){
+  const el=document.getElementById('shop-content');
+  if(!shop||!shop.name){el.innerHTML='<div class="empty">Tu n\'as pas de boutique.</div>';return}
+  const open=shop.open!==false,items=Object.entries(shop.items||{});
+  el.innerHTML=`<div class="card"><div class="card-body">
+    <div class="shop-name">${e(shop.name)}</div>
+    ${shop.tagline?`<div class="shop-tagline">${e(shop.tagline)}</div>`:''}
+    <div style="display:inline-flex;align-items:center;gap:6px;font-family:var(--font-m);font-size:.48rem;letter-spacing:.1em;margin-bottom:16px">
+      <div style="width:7px;height:7px;border-radius:50%;background:${open?'var(--green)':'var(--red)'}"></div>
+      <span style="color:${open?'var(--green)':'var(--red)'}">${open?'OUVERTE':'FERMÉE'}</span>
+    </div>
+    ${items.length?`<div class="sh" style="margin-bottom:12px"><span class="sh-num">—</span><span class="sh-title">Items en vente (${items.length})</span><div class="sh-line"></div></div>
+      <div class="shop-items-grid">${items.map(([id,it])=>`<div class="shop-item"><span class="shop-item-icon">${it.emoji||'📦'}</span><div class="shop-item-name">${e(it.name||id)}</div><div class="shop-item-price">${it.price||0} Nav</div></div>`).join('')}</div>`
+      :'<div class="empty">Aucun item en vente</div>'}
+  </div></div>`;
+}
+
+// ── RENDER PARAMETRES ──
+function renderSettings(){
+  const s=getSess();
+  document.getElementById('settings-user-info').innerHTML=`ID Discord : <span style="color:var(--blue)">${s.id||'—'}</span><br>Username : <span style="color:var(--text)">${s.username||'—'}</span>`;
+  const theme=PLAYER.display_theme||'purple';
+  document.getElementById('theme-current').textContent=theme;
+  document.querySelectorAll('.theme-opt').forEach(el=>el.classList.toggle('selected',el.dataset.theme===theme));
+}
+
+async function setTheme(theme){
+  try{
+    await db.collection(C.PLAYERS).doc(UID).set({display_theme:theme},{merge:true});
+    PLAYER.display_theme=theme;renderSettings();
+    showToast('Thème mis à jour','success');
+  }catch(err){showToast('Erreur lors de la mise à jour','error')}
+}
+
+// ── TABS ──
+const LAZY={
+  inventaire:()=>{if(!INV_DATA)loadInventory()},
+  party:loadParty,
+  titres:loadTitles,
+  compagnons:loadCompanions,
+  shop:loadShop,
+};
+function showTab(id){
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  document.getElementById('tab-'+id).classList.add('active');
+  if(LAZY[id])LAZY[id]();
+}
+
+// ── UTILS ──
+function lvlXP(lvl){return Math.round(50*Math.pow(Math.max(0,lvl-1),1.8))}
+function e(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function showToast(msg,type='success',dur=3500){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className=`toast ${type} show`;
+  clearTimeout(t._t);t._t=setTimeout(()=>{t.className='toast'},dur);
+}
+window.addEventListener('scroll',()=>{document.getElementById('scroll-line').style.width=(window.scrollY/(document.body.scrollHeight-window.innerHeight)*100)+'%'});
+
+init();
+</script>
+</body>
+</html>
