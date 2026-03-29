@@ -681,17 +681,36 @@ function logout(){
 let CHAR=null,PLAYER=null,PITY=null,INV_DATA=null,CHAR_ID=null,UID=null,ALL_ITEMS_DATA={};
 
 // ── INIT ──
-async function init(){const s=getSess();if(s&&s.id)await loadHub()}
+async function init(){
+  const s=getSess();
+  console.log('[HUB] init — session:', s);
+  if(s&&s.id){
+    try{ await loadHub(); }
+    catch(err){ console.error('[HUB] loadHub failed:', err); }
+  } else {
+    console.log('[HUB] Pas de session, affichage login-gate');
+    document.getElementById('login-gate').style.display='flex';
+  }
+}
 
 async function loadHub(){
-  const s=getSess();if(!s)return;
+  const s=getSess();
+  if(!s||!s.id){
+    console.warn('[HUB] loadHub: pas de session valide');
+    document.getElementById('login-gate').style.display='flex';
+    return;
+  }
   UID=s.id;
+  console.log('[HUB] loadHub — UID:', UID);
+  // Afficher l'interface immédiatement
   document.getElementById('login-gate').style.display='none';
   document.getElementById('main-nav').style.display='flex';
   document.getElementById('hub-main').classList.add('active');
   document.getElementById('nav-username').textContent=s.username||'—';
   if(s.avatar){const av=document.getElementById('nav-avatar');av.src=s.avatar;av.style.display='block'}
-  await Promise.all([loadCharacter(),loadPlayer()]);
+  // Charger les données en parallèle — les erreurs n'empêchent pas l'affichage
+  try{ await Promise.all([loadCharacter(),loadPlayer()]); }
+  catch(err){ console.error('[HUB] Erreur chargement données:', err); }
 }
 
 async function loadCharacter(){
