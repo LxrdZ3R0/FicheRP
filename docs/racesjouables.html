@@ -131,21 +131,34 @@ import{getAuth,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/10.12.
 const firebaseConfig={apiKey:"AIzaSyAru7qZX8Gu_b8Y3oNDV-a5PmkrrkRjkcs",authDomain:"jaharta-rp.firebaseapp.com",projectId:"jaharta-rp",storageBucket:"jaharta-rp.firebasestorage.app",messagingSenderId:"217075417489",appId:"1:217075417489:web:4d1e2df422a5cd42411a30"};
 const app=getApps().length?getApps()[0]:initializeApp(firebaseConfig);
 const db=getFirestore(app);const auth=getAuth(app);
-window._db=db;window._collection=collection;window._doc=doc;window._setDoc=setDoc;window._getDocs=getDocs;
-onAuthStateChanged(auth,async user=>{
-  let canEditRaces=false;
+window._db=db;window._collection=collection;window._doc=doc;window._setDoc=setDoc;window._getDocs=getDocs;window._getDoc=getDoc;
+
+// Vérification admin — on écoute onAuthStateChanged ET l'event jaharta:auth de auth-badge.js
+async function checkAdmin(user){
+  let canEdit=false;
   if(user){
     try{
       const snap=await getDoc(doc(db,'admins',user.uid));
-      if(snap.exists()&&snap.data().role==='admin')canEditRaces=true;
+      if(snap.exists()&&snap.data().role==='admin')canEdit=true;
     }catch(e){console.warn('[race-auth]',e.message);}
   }
-  window._isAdmin=canEditRaces;
-  if(typeof window.updateRaceAdmin==='function')window.updateRaceAdmin(canEditRaces);
-  if(typeof window.initRacePopups==='function')window.initRacePopups(db,canEditRaces);
+  window._isAdmin=canEdit;
+  if(typeof window.updateRaceAdmin==='function')window.updateRaceAdmin(canEdit);
+  if(typeof window.initRacePopups==='function')window.initRacePopups(db,canEdit);
+}
+
+onAuthStateChanged(auth,checkAdmin);
+
+// Écouter l'event dispatché par auth-badge.js comme fallback
+document.addEventListener('jaharta:auth',function(e){
+  if(e.detail&&e.detail.user)checkAdmin(e.detail.user);
 });
+
+// Fallback DOMContentLoaded — si l'auth est déjà connue
 document.addEventListener('DOMContentLoaded',function(){
-  if(typeof window.initRacePopups==='function'&&window._db)window.initRacePopups(window._db,!!window._isAdmin);
+  if(typeof window.initRacePopups==='function'&&window._db){
+    window.initRacePopups(window._db,!!window._isAdmin);
+  }
 });
 </script>
 </head>
@@ -265,17 +278,30 @@ window.addEventListener('scroll',function(){var h=document.documentElement.scrol
   window.updateRaceAdmin = function(v) { isAdmin = v; };
 
   function loadRacesData() {
-    if (!db || !window._getDocs) return;
+    if (!db || !window._doc) return;
     try {
-      window._getDocs(window._collection(db,'races_data')).then(function(snap) {
-        snap.forEach(function(d) { racesData[d.id] = d.data(); });
-      }).catch(function(){});
+      // Lire depuis config/races_data (même doc que le bot)
+      window._getDoc(window._doc(db,'config','races_data')).then(function(snap) {
+        if (snap.exists()) {
+          var d = snap.data();
+          // Le document est {raceName: {data}, ...}
+          Object.keys(d).forEach(function(raceName) {
+            if (typeof d[raceName] === 'object' && d[raceName] !== null) {
+              racesData[raceName] = d[raceName];
+            }
+          });
+        }
+      }).catch(function(e){ console.warn('[races] load error', e); });
     } catch(e) {}
   }
 
   function saveRaceData(name, data) {
     if (!db || !window._setDoc) return Promise.reject(new Error('No Firebase'));
-    return window._setDoc(window._doc(db,'races_data',name), data, {merge:true});
+    // Écrit dans config/races_data (même collection que le bot)
+    // On merge uniquement la clé de cette race dans le document global
+    var update = {};
+    update[name] = data;
+    return window._setDoc(window._doc(db,'config','races_data'), update, {merge:true});
   }
 
   function bindRaceCards() {
