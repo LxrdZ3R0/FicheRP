@@ -792,13 +792,24 @@ async function loadCharacter(){
     const cSnap=await db.collection(C.CHARS).doc(CHAR_ID).get();
     if(!cSnap.exists){renderNoChar();return}
     CHAR={_id:CHAR_ID,...cSnap.data()};
-    // Charger aussi les buffs et la party membership en parallèle
+    // Charger toutes les données nécessaires en parallèle
     const charKey=`${UID}_${CHAR_ID}`;
-    const[bufSnap,pmSnap]=await Promise.all([
+    const[invSnap,cfgSnap,bufSnap,pmSnap]=await Promise.all([
+      db.collection(C.INV).doc(charKey).get(),
+      db.collection(C.CFG).doc('items').get(),
       db.collection('buffs').doc(UID).get(),
       db.collection(C.PARTY_MEM).doc(charKey).get()
     ]);
+    // Inventaire
+    INV_DATA=invSnap.exists?invSnap.data():{items:{},equipped_assets:[]};
+    // Items config
+    if(cfgSnap.exists){
+      const d=cfgSnap.data();
+      ALL_ITEMS_DATA={...d.items||{},...d.equipment||{},...d.food_items||{},...d.consumable_items||{}};
+    }
+    // Buffs
     BUFFS_DATA=bufSnap.exists?(bufSnap.data().buffs||[]):[];
+    // Party
     if(pmSnap.exists){
       const pid=pmSnap.data().party_id;
       if(pid){
