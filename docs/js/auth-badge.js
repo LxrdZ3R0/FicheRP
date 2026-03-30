@@ -36,17 +36,25 @@ const auth = getAuth(app);
 
 onAuthStateChanged(auth, user => {
 
-  /* ── État admin global ── */
-  window._isAdmin = !!user;
+  /* ── VIP Discord IDs — always treated as admin ── */
+  const VIP_IDS = ['1365423700047958037','372065190142803982','1051163695222358117'];
+  let isVipSession = false;
+  try {
+    const gs = JSON.parse(localStorage.getItem('gacha_session') || localStorage.getItem('hub_session') || 'null');
+    if (gs && VIP_IDS.includes(String(gs.id))) isVipSession = true;
+  } catch(e) {}
+
+  /* ── État admin global (Firebase auth OR VIP Discord session) ── */
+  window._isAdmin = !!user || isVipSession;
 
   /* ── Badge vert "ADMIN" dans le nav ── */
   const badge = document.getElementById('admin-badge');
-  if (badge) badge.classList.toggle('visible', !!user);
+  if (badge) badge.classList.toggle('visible', !!user || isVipSession);
 
   /* ── Lien "⚙ Connexion" / "⚙ Connecté" ── */
   const navLink = document.querySelector('.nav-admin-link');
   if (navLink) {
-    if (user) {
+    if (user || isVipSession) {
       navLink.textContent = '⚙ Connecté';
       navLink.removeAttribute('href');
       navLink.style.cursor  = 'default';
@@ -61,10 +69,10 @@ onAuthStateChanged(auth, user => {
 
   /* ── Bouton "+ Ajouter une fiche" (fiches.html) ── */
   const addBtn = document.getElementById('add-char-btn');
-  if (addBtn) addBtn.style.display = user ? 'inline-flex' : 'none';
+  if (addBtn) addBtn.style.display = (user || isVipSession) ? 'inline-flex' : 'none';
 
   /* ── Dispatch un event custom pour les scripts non-module ──
      Permet à n'importe quelle page d'écouter : 
      document.addEventListener('jaharta:auth', e => { if(e.detail.user) ... }) */
-  document.dispatchEvent(new CustomEvent('jaharta:auth', { detail: { user } }));
+  document.dispatchEvent(new CustomEvent('jaharta:auth', { detail: { user, isVipSession } }));
 });
