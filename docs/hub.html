@@ -361,45 +361,57 @@ body{background:var(--bg)!important}
 .ushop-bal-chip{font-family:var(--font-m);font-size:.48rem;letter-spacing:.08em;padding:5px 12px;border-radius:20px;background:rgba(255,214,10,0.08);border:1px solid rgba(255,214,10,0.2);color:var(--gold)}
 
 /* ═══════════════════════════════════════════════════════
-   OVERHAUL — Body text +75%, grey→white, neon breathing
+   OVERHAUL — Body text +57%, grey→white, neon breathing, filters
    ═══════════════════════════════════════════════════════ */
 
-/* ── Body text size boost (+75%) — targeting content text classes ── */
-/* Mono labels: .42→.74, .4→.7, .44→.77, .46→.81, .48→.84, .5→.88, .52→.91 */
+/* ── Filter bar ── */
+.filter-bar{display:flex;gap:10px;padding:10px 0;flex-wrap:wrap}
+.filter-select{font-family:var(--font-m);font-size:.7rem;letter-spacing:.06em;color:var(--text);background:rgba(12,18,40,0.8);border:1px solid var(--border);border-radius:6px;padding:7px 12px;outline:none;cursor:pointer;transition:border-color .2s}
+.filter-select:focus{border-color:var(--blue)}
+.filter-select option{background:#0c1228;color:var(--text)}
+
+/* ── Body text size boost (+57% = old 75% minus 10%) ── */
 .stat-name,.char-meta,.char-fullmeta,.xp-labels,.char-lvl-label,
-.slot-name,.item-slot-tag,.item-effects,.item-qty,
-.power-qual-tag,.power-card-qual,.set-thresh,.set-bonus,.set-piece,
+.slot-name,.item-slot-tag,.item-qty,
+.power-qual-tag,.power-card-qual,.set-thresh,.set-piece,
 .equip-bonus-name,.shop-list-owner,.shop-detail-tagline,
-.shop-item-effects,.shop-item-qty,.shop-item-price,
+.shop-item-qty,
 .ushop-bal-chip,.code-label,.gate-note,
 .inv-group-header,.inv-group-count,.ushop-group-header,
 .pity-label,.nav-streak,.nav-unit,.gacha-bal-label,
-.code-error,.sp-banner{font-size:.77rem}
+.code-error,.sp-banner{font-size:.69rem}
 
-/* Body text: .65→1.14, .68→1.19, .72→1.26, .75→1.31, .76→1.33, .78→1.37, .8→1.4, .82→1.44, .85→1.49, .88→1.54, .9→1.58 */
-.tab-btn,.inv-tab,.ushop-cat{font-size:1.14rem}
-.nav-links a{font-size:1.26rem}
-.slot-item .slot-label{font-size:.81rem}
-.power-name,.power-card-name{font-size:1.37rem}
-.item-name,.item-name-sm{font-size:1.26rem}
-.shop-item-name,.shop-list-name{font-size:1.44rem}
-.set-name{font-size:1.54rem}
-.gate-desc{font-size:1.58rem}
-.gate-sub{font-size:.96rem}
-.widget-title{font-size:1.02rem}
-.badge{font-size:.77rem}
-.stat-val{font-size:1.23rem}
-.stat-icon{font-size:1.4rem}
-.shop-buy-btn{font-size:1.23rem}
-.char-name{font-size:1.75rem}
-.empty{font-size:.91rem}
-.set-count{font-size:.84rem}
-.nav-username{font-size:.91rem}
-.nav-logout{font-size:.88rem}
-.item-icon-big{font-size:2.2rem}
-.shop-item-icon{font-size:2.8rem}
-.slot-count{font-size:.96rem}
-.equip-bonus-val{font-size:1.93rem}
+/* Item effects & bonus text — boosted larger */
+.item-effects{font-size:.82rem;color:var(--green);font-weight:500}
+.shop-item-effects{font-size:.82rem}
+.shop-item-price{font-size:1.1rem}
+.set-bonus{font-size:.72rem}
+.equip-bonus-name{font-size:.65rem}
+
+/* Body text sizes (previous -10%) */
+.tab-btn,.inv-tab,.ushop-cat{font-size:1.03rem}
+.nav-links a{font-size:1.13rem}
+.slot-item .slot-label{font-size:.73rem}
+.power-name,.power-card-name{font-size:1.23rem}
+.item-name,.item-name-sm{font-size:1.13rem}
+.shop-item-name,.shop-list-name{font-size:1.3rem}
+.set-name{font-size:1.39rem}
+.gate-desc{font-size:1.42rem}
+.gate-sub{font-size:.86rem}
+.widget-title{font-size:.92rem}
+.badge{font-size:.69rem}
+.stat-val{font-size:1.1rem}
+.stat-icon{font-size:1.26rem}
+.shop-buy-btn{font-size:1.1rem}
+.char-name{font-size:1.57rem}
+.empty{font-size:.82rem}
+.set-count{font-size:.76rem}
+.nav-username{font-size:.82rem}
+.nav-logout{font-size:.79rem}
+.item-icon-big{font-size:2rem}
+.shop-item-icon{font-size:2.5rem}
+.slot-count{font-size:.86rem}
+.equip-bonus-val{font-size:1.74rem}
 
 /* ── Breathing neon border animation for Epic+ items ── */
 @keyframes neonBreatheEpic{
@@ -593,6 +605,27 @@ body{background:var(--bg)!important}
             <button class="inv-tab" onclick="showInvTab('consumable')" id="invtab-consumable">Consommables</button>
             <button class="inv-tab" onclick="showInvTab('other')" id="invtab-other">Autre</button>
           </div>
+          <div class="filter-bar" id="inv-filters">
+            <select class="filter-select" id="inv-filter-rarity" onchange="renderItemsGrid()">
+              <option value="">Toutes raretés</option>
+              <option value="common">Common</option><option value="uncommon">Uncommon</option>
+              <option value="rare">Rare</option><option value="epic">Epic</option>
+              <option value="legendary">Legendary</option><option value="mythic">Mythic</option>
+              <option value="unique">Unique</option><option value="artifact">Artifact</option>
+              <option value="mastercraft">Mastercraft</option>
+            </select>
+            <select class="filter-select" id="inv-filter-slot" onchange="renderItemsGrid()">
+              <option value="">Tous slots</option>
+              <option value="tete">Tête</option><option value="visage">Visage</option>
+              <option value="cou">Cou</option><option value="oreilles">Oreilles</option>
+              <option value="torse">Torse</option><option value="dos">Dos</option>
+              <option value="bras">Bras</option><option value="mains">Mains</option>
+              <option value="poignets">Poignets</option><option value="doigts">Doigts</option>
+              <option value="jambes">Jambes</option><option value="pieds">Pieds</option>
+              <option value="armes_h">Armes H</option><option value="armes_l">Armes L</option>
+              <option value="special">Spécial</option>
+            </select>
+          </div>
           <div class="inv-grid" id="inv-grid"><div class="empty">Chargement...</div></div>
         </div></div>
         <!-- Sets actifs -->
@@ -723,6 +756,27 @@ body{background:var(--bg)!important}
       <button class="ushop-cat" onclick="showUshopCat('consumable')" id="ucatbtn-consumable">Consommables</button>
       <button class="ushop-cat" onclick="showUshopCat('food')" id="ucatbtn-food">Nourriture</button>
       <button class="ushop-cat" onclick="showUshopCat('other')" id="ucatbtn-other">Autre</button>
+    </div>
+    <div class="filter-bar" id="ushop-filters">
+      <select class="filter-select" id="ushop-filter-rarity" onchange="renderUshop()">
+        <option value="">Toutes raretés</option>
+        <option value="common">Common</option><option value="uncommon">Uncommon</option>
+        <option value="rare">Rare</option><option value="epic">Epic</option>
+        <option value="legendary">Legendary</option><option value="mythic">Mythic</option>
+        <option value="unique">Unique</option><option value="artifact">Artifact</option>
+        <option value="mastercraft">Mastercraft</option>
+      </select>
+      <select class="filter-select" id="ushop-filter-slot" onchange="renderUshop()">
+        <option value="">Tous slots</option>
+        <option value="tete">Tête</option><option value="visage">Visage</option>
+        <option value="cou">Cou</option><option value="oreilles">Oreilles</option>
+        <option value="torse">Torse</option><option value="dos">Dos</option>
+        <option value="bras">Bras</option><option value="mains">Mains</option>
+        <option value="poignets">Poignets</option><option value="doigts">Doigts</option>
+        <option value="jambes">Jambes</option><option value="pieds">Pieds</option>
+        <option value="armes_h">Armes H</option><option value="armes_l">Armes L</option>
+        <option value="special">Spécial</option>
+      </select>
     </div>
     <div class="ushop-grid" id="ushop-grid"><div class="empty">Chargement...</div></div>
   </div>
@@ -1186,6 +1240,12 @@ function renderItemsGrid(){
   } else if(INV_TAB==='other'){
     entries=entries.filter(([id])=>{const it=ALL_ITEMS_DATA[id]||{};return !it.slot&&!['consumable','food','usable'].includes(it.type);});
   }
+
+  // Apply rarity + slot filters
+  const fRarity=(document.getElementById('inv-filter-rarity')||{}).value||'';
+  const fSlot=(document.getElementById('inv-filter-slot')||{}).value||'';
+  if(fRarity) entries=entries.filter(([id])=>(ALL_ITEMS_DATA[id]||{}).rarity?.toLowerCase()===fRarity);
+  if(fSlot) entries=entries.filter(([id])=>(ALL_ITEMS_DATA[id]||{}).slot===fSlot);
 
   if(!entries.length){document.getElementById('inv-grid').innerHTML='<div class="empty">Aucun item</div>';return;}
 
@@ -2124,7 +2184,14 @@ function renderUshop(){
   const gridEl=document.getElementById('ushop-grid');if(!gridEl)return;
   const CAT_SECTIONS={equipment:['equipment'],consumable:['consumable_items'],food:['food_items'],other:['items']};
   const allowed=USHOP_CAT==='all'?null:CAT_SECTIONS[USHOP_CAT]||null;
-  const entries=Object.entries(USHOP_ITEMS).filter(([,it])=>!allowed||allowed.includes(it._section));
+  let entries=Object.entries(USHOP_ITEMS).filter(([,it])=>!allowed||allowed.includes(it._section));
+
+  // Apply rarity + slot filters
+  const fRarity=(document.getElementById('ushop-filter-rarity')||{}).value||'';
+  const fSlot=(document.getElementById('ushop-filter-slot')||{}).value||'';
+  if(fRarity) entries=entries.filter(([,it])=>(it.rarity||'').toLowerCase()===fRarity);
+  if(fSlot) entries=entries.filter(([,it])=>(it.slot||'').toLowerCase()===fSlot);
+
   if(!entries.length){gridEl.innerHTML='<div class="empty">Aucun item</div>';return;}
 
   const RORD={common:0,uncommon:1,rare:2,epic:3,legendary:4,mythic:5,unique:6,artifact:7,mastercraft:8,signature:9};
