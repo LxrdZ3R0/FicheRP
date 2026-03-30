@@ -12,7 +12,7 @@
 <script type="module">
 /* ── Firebase ── */
 import{initializeApp,getApps}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import{getFirestore,initializeFirestore,persistentLocalCache,collection,addDoc,onSnapshot,doc,getDoc,updateDoc,deleteDoc,serverTimestamp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import{getFirestore,initializeFirestore,persistentLocalCache,collection,addDoc,onSnapshot,doc,getDoc,getDocs,updateDoc,deleteDoc,serverTimestamp,query,where}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import{getAuth,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import{getStorage,ref,uploadBytes,getDownloadURL}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
@@ -42,6 +42,43 @@ const HIGH_RANKS=['S','SS','SSS','X','T','G','G+','Z'];
 const GOLD_RANKS=['A','S','SS','SSS','X'];   /* reflet doré */
 const PRISM_RANKS=['T','G','G+','Z'];         /* reflet prismatique */
 const STATS=[{k:'str',l:'STR',c:'sb-str'},{k:'agi',l:'AGI',c:'sb-agi'},{k:'spd',l:'SPD',c:'sb-spd'},{k:'int',l:'INT',c:'sb-int'},{k:'mana',l:'MNA',c:'sb-mana'},{k:'res',l:'RES',c:'sb-res'},{k:'cha',l:'CHA',c:'sb-cha'},{k:'aura',l:'AUR',c:'sb-aura'}];
+
+/* ── Rank from level (mirrors bot stats_common.py) ── */
+function rankFromLevel(lvl){
+  lvl=parseInt(lvl)||0;
+  if(lvl>=450)return'Z';if(lvl>=400)return'G+';if(lvl>=350)return'G';
+  if(lvl>=300)return'T';if(lvl>=260)return'X';if(lvl>=220)return'SSS';
+  if(lvl>=180)return'SS';if(lvl>=140)return'S';if(lvl>=100)return'A';
+  if(lvl>=80)return'B';if(lvl>=60)return'C';if(lvl>=40)return'D';
+  if(lvl>=20)return'E';return'F';
+}
+
+/* ── Map bot character → fiche card format ── */
+function charToFiche(id,c){
+  const s=c.stats||{};
+  return{
+    id:id,
+    _source:'characters',
+    firstname:c.first_name||'',
+    lastname:c.last_name||'',
+    age:c.age||'',
+    race:c.race_category||'',
+    raceSpecific:c.class||'',
+    rank:rankFromLevel(c.level||0),
+    level:c.level||0,
+    stats:{
+      str:s.strength||0,agi:s.agility||0,spd:s.speed||0,
+      int:s.intelligence||0,mana:s.mana||0,res:s.resistance||0,
+      cha:s.charisma||0,aura:s.aura||0
+    },
+    powers:(c.powers||[]).map(p=>typeof p==='string'?{name:p}:p),
+    desc:c.bio||c.description||'',
+    photoUrl:c.profile_image||'',
+    links:[],
+    status:'validee',
+    createdAt:c.created_at?{toMillis:()=>new Date(c.created_at).getTime()}:null,
+  };
+}
 
 
 
@@ -277,8 +314,8 @@ function buildCard(ch){
     body.appendChild(ld);
   }
 
-  /* Admin */
-  if(ch.id){
+  /* Admin — uniquement pour fiches manuelles (pas les persos bot) */
+  if(ch.id&&ch._source!=='characters'){
     const ar=document.createElement('div');ar.className='card-admin-row';
     ar.style.display=window._isAdmin?'flex':'none';
     const eb=document.createElement('button');eb.className='card-edit-btn';eb.textContent='✎ Modifier';
@@ -341,38 +378,88 @@ window.sortCards=function(mode,btn){
 };
 
 /* ── Firebase loader ── */
+let _cardsLoaded=false;
 window._loadCards=function(){
+  if(_cardsLoaded)return; // Déjà abonné — pas de double snapshot
+  _cardsLoaded=true;
   if(typeof window.Skeleton!=='undefined')Skeleton.show('cards-container',6);
   try{
-    onSnapshot(collection(db,'fiches'),snap=>{
+    // ── Source 1 : collection characters (persos bot — source de vérité) ──
+    // ── Source 2 : collection fiches (fiches manuelles admin — legacy)    ──
+    // On fusionne les deux. Les characters sont toujours affichés ;
+    // les fiches manuelles sont affichées uniquement si admin ou status=validee.
+
+    let charDocs=[];
+    let ficheDocs=[];
+    let charLoaded=false, ficheLoaded=false;
+
+    function renderAll(){
+      if(!charLoaded||!ficheLoaded)return;
       const ctn=document.getElementById('cards-container');
       const noRes=document.getElementById('no-results');
       const empty=document.getElementById('empty-state');
       if(empty)empty.remove();
       if(typeof window.Skeleton!=='undefined')Skeleton.hide('cards-container');
       [...ctn.children].forEach(el=>{if(el!==noRes&&!el.id)el.remove();});
-      const docs=[];snap.forEach(d=>docs.push({id:d.id,...d.data()}));
-      const visible=docs.filter(d=>d.status==='validee'||(window._isAdmin&&d.status));
-      visible.sort((a,b)=>{
-        const ta=a.createdAt?.toMillis?.()??0;
-        const tb=b.createdAt?.toMillis?.()??0;
+
+      // Convertir characters → format fiche
+      const fromChars=charDocs
+        .filter(c=>c.status!=='graveyard')
+        .map(c=>charToFiche(c.id,c));
+
+      // Fiches manuelles (admin legacy)
+      const fromFiches=ficheDocs
+        .filter(d=>d.status==='validee'||(window._isAdmin&&d.status));
+
+      // Fusionner — characters d'abord, puis fiches manuelles
+      const all=[...fromChars,...fromFiches];
+
+      // Tri par date de création (plus récent en premier)
+      all.sort((a,b)=>{
+        const ta=a.createdAt?.toMillis?.()??
+                 (a.created_at?new Date(a.created_at).getTime():0);
+        const tb=b.createdAt?.toMillis?.()??
+                 (b.created_at?new Date(b.created_at).getTime():0);
         return tb-ta;
       });
-      visible.forEach((d,idx)=>{
+
+      all.forEach((d,idx)=>{
         const el=buildCard(d);
         el.querySelector('.rp-card').dataset.index=idx;
         ctn.insertBefore(el,noRes);
       });
-      window.animateCount(visible.length);
+      window.animateCount(all.length);
       window.updateCounts();
       window.setLive();
       setTimeout(window.revealCards,120);
       const e2=document.getElementById('empty-state2');
-      if(e2)e2.style.display=visible.length===0?'block':'none';
+      if(e2)e2.style.display=all.length===0?'block':'none';
+    }
+
+    // Charger characters (snapshot live)
+    onSnapshot(collection(db,'characters'),snap=>{
+      charDocs=[];
+      snap.forEach(d=>charDocs.push({id:d.id,...d.data()}));
+      charLoaded=true;
+      renderAll();
     },err=>{
-      console.error('[Fiches]',err.message);
-      if(typeof window.Skeleton!=='undefined')Skeleton.hide('cards-container');
+      console.warn('[Fiches] characters load:',err.message);
+      charLoaded=true;
+      renderAll();
     });
+
+    // Charger fiches manuelles (snapshot live)
+    onSnapshot(collection(db,'fiches'),snap=>{
+      ficheDocs=[];
+      snap.forEach(d=>ficheDocs.push({id:d.id,...d.data()}));
+      ficheLoaded=true;
+      renderAll();
+    },err=>{
+      console.warn('[Fiches] fiches load:',err.message);
+      ficheLoaded=true;
+      renderAll();
+    });
+
   }catch(e){
     const el=document.getElementById('empty-state');
     if(el)el.textContent='⚠ Firebase: '+e.message;
@@ -671,6 +758,7 @@ body::before{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;
 <script src="js/debug.js"></script>
 <script src="js/constants.js"></script>
 <script src="js/utils.js"></script>
+<script src="js/jaharta-cache.js"></script>
 <script type="module" src="js/auth-badge.js"></script>
 </head>
 <body>

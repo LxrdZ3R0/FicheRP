@@ -141,6 +141,7 @@ html{scroll-behavior:smooth}
 <script src="js/debug.js"></script>
 <script src="js/constants.js"></script>
 <script src="js/utils.js"></script>
+<script src="js/jaharta-cache.js"></script>
 <script type="module">
 import{initializeApp,getApps}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import{getFirestore,collection,doc,setDoc,getDocs,getDoc}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -168,9 +169,10 @@ async function checkAdmin(user){
   let canEdit=false;
   if(user){
     try{
-      const snap=await getDoc(doc(db,'admins',user.uid));
-      // Accepter role 'admin' ET 'modo' pour l'édition des races
-      const role=snap.exists()&&snap.data().role;
+      const data = window.JCache
+        ? await window.JCache.getModular(getDoc, doc, db, 'admins', user.uid, 300)
+        : (await getDoc(doc(db,'admins',user.uid))).data();
+      const role=data&&data.role;
       if(role==='admin'||role==='modo') canEdit=true;
     }catch(e){console.warn('[race-auth]',e.message);}
   }
@@ -378,21 +380,36 @@ document.querySelectorAll('.rv').forEach(function(g,i){setTimeout(function(){g.c
       console.warn('[races] Firebase non prêt, chargement différé.');
       return;
     }
-    // Source principale : config/races_data (doc unique contenant toutes les races)
-    window._getDoc(window._doc(db,'config','races_data')).then(function(snap) {
-      if (snap.exists()) {
-        var d = snap.data();
-        Object.keys(d).forEach(function(raceName) {
-          if (typeof d[raceName] === 'object' && d[raceName] !== null) {
-            racesData[raceName] = d[raceName];
-          }
-        });
-        console.log('[races] Données chargées depuis config/races_data :', Object.keys(racesData).length, 'races');
-      } else {
+    // Utilise le cache global JCache pour éviter les reads redondants
+    (window.JCache
+      ? window.JCache.getModular(window._getDoc, window._doc, db, 'config', 'races_data', 600)
+      : window._getDoc(window._doc(db,'config','races_data')).then(function(snap){return snap.exists()?snap.data():null;})
+    ).then(function(d) {
+      if (!d) {
         console.warn('[races] config/races_data introuvable — vérifier Firestore.');
+        return;
       }
+      var STAT_MAP = {strength:'str',agility:'agi',speed:'spd',intelligence:'int',mana:'mana',resistance:'res',charisma:'cha',aura:'aura'};
+      Object.keys(d).forEach(function(raceName) {
+        if (typeof d[raceName] !== 'object' || d[raceName] === null) return;
+        var raw = d[raceName];
+        var entry = Object.assign({}, raw);
+        if (raw.strength !== undefined && !raw.baseStats) {
+          var bs = {};
+          Object.keys(STAT_MAP).forEach(function(botKey) {
+            bs[STAT_MAP[botKey]] = parseInt(raw[botKey]) || 0;
+          });
+          entry.baseStats = bs;
+        }
+        if (Array.isArray(entry.affinity)) {
+          entry.affinity = entry.affinity.join(', ');
+        }
+        if (!entry.basePowers) entry.basePowers = [];
+        racesData[raceName] = entry;
+      });
+      console.log('[races] Données chargées :', Object.keys(racesData).length, 'races');
     }).catch(function(e) {
-      console.error('[races] Erreur chargement config/races_data :', e.code, e.message);
+      console.error('[races] Erreur chargement config/races_data :', e.code||'', e.message);
     });
   }
 
@@ -795,24 +812,45 @@ document.querySelectorAll('.rv').forEach(function(g,i){setTimeout(function(){g.c
       return;
     }
     btn.disabled=true; btn.textContent='Sauvegarde...';
-    var data={
+
+    // Lire les champs du formulaire (format site)
+    var siteData={
       name:(document.getElementById('rp-ed-name')&&document.getElementById('rp-ed-name').value||name).trim(),
       plural:(document.getElementById('rp-ed-plural')&&document.getElementById('rp-ed-plural').value||'').trim(),
       category:(document.getElementById('rp-ed-category')&&document.getElementById('rp-ed-category').value||'').trim(),
       longevity:(document.getElementById('rp-ed-longevity')&&document.getElementById('rp-ed-longevity').value||'').trim(),
-      affinity:(document.getElementById('rp-ed-affinity')&&document.getElementById('rp-ed-affinity').value||'').trim(),
       access:(document.getElementById('rp-ed-access')&&document.getElementById('rp-ed-access').value)||'Ouverte',
       description:(document.getElementById('rp-ed-desc')&&document.getElementById('rp-ed-desc').value||'').trim(),
       imageUrl:(document.getElementById('rp-ed-image')&&document.getElementById('rp-ed-image').value||'').trim()
     };
-    try{data.baseStats=JSON.parse(document.getElementById('rp-ed-stats').value||'{}');}catch(e){
-      console.warn('[races] JSON baseStats invalide, réinitialisation à {}'); data.baseStats={};
+
+    // Affinity : string du formulaire → écrire AUSSI comme array pour le bot
+    var affinityStr=(document.getElementById('rp-ed-affinity')&&document.getElementById('rp-ed-affinity').value||'').trim();
+    siteData.affinity = affinityStr ? affinityStr.split(',').map(function(s){return s.trim();}).filter(Boolean) : [];
+
+    // baseStats : JSON du formulaire
+    var baseStats={};
+    try{baseStats=JSON.parse(document.getElementById('rp-ed-stats').value||'{}');}catch(e){
+      console.warn('[races] JSON baseStats invalide'); baseStats={};
     }
-    try{data.basePowers=JSON.parse(document.getElementById('rp-ed-powers').value||'[]');}catch(e){
-      console.warn('[races] JSON basePowers invalide, réinitialisation à []'); data.basePowers=[];
+    siteData.baseStats = baseStats;
+
+    // basePowers : JSON du formulaire
+    try{siteData.basePowers=JSON.parse(document.getElementById('rp-ed-powers').value||'[]');}catch(e){
+      console.warn('[races] JSON basePowers invalide'); siteData.basePowers=[];
     }
-    saveRaceData(name, data).then(function(){
-      racesData[name] = data; // Mettre à jour le cache local immédiatement
+
+    // ── Écrire aussi les champs bot (strength, agility...) depuis baseStats ──
+    // Ça garantit que le bot peut toujours lire les stats correctement.
+    var STAT_RMAP = {str:'strength',agi:'agility',spd:'speed','int':'intelligence',mana:'mana',res:'resistance',cha:'charisma',aura:'aura'};
+    Object.keys(STAT_RMAP).forEach(function(siteKey) {
+      var botKey = STAT_RMAP[siteKey];
+      siteData[botKey] = parseInt(baseStats[siteKey]) || 0;
+    });
+
+    saveRaceData(name, siteData).then(function(){
+      racesData[name] = siteData;
+      if(window.JCache)window.JCache.invalidate('config','races_data');
       btn.textContent='\u2713 Sauvegardé'; btn.style.color='#44ff88';
       setTimeout(function(){btn.disabled=false;btn.textContent='Sauvegarder';btn.style.color='';}, 2000);
     }).catch(function(e){

@@ -674,6 +674,7 @@ body{background:var(--bg)!important}
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="js/jaharta-cache.js"></script>
 <script>
 // ── CONFIG ──
 const FB={apiKey:"AIzaSyAru7qZX8Gu_b8Y3oNDV-a5PmkrrkRjkcs",authDomain:"jaharta-rp.firebaseapp.com",projectId:"jaharta-rp",storageBucket:"jaharta-rp.firebasestorage.app",messagingSenderId:"217075417489",appId:"1:217075417489:web:4d1e2df422a5cd42411a30"};
@@ -701,6 +702,23 @@ const SI={strength:'⚔️',agility:'💨',speed:'🏃',intelligence:'🧠',mana
 const SL={strength:'Force',agility:'Agilité',speed:'Vitesse',intelligence:'Intel.',mana:'Mana',resistance:'Rés.',charisma:'Charisme',aura:'Aura'};
 const SK=['strength','agility','speed','intelligence','mana','resistance','charisma','aura'];
 const PITY_T={epic:30,leg:150};
+
+// ══════════════════════════════════════════════
+// CACHE — utilise JCache (js/jaharta-cache.js) partagé avec tout le site
+// Wrappers pour compatibilité avec le code hub existant
+// ══════════════════════════════════════════════
+function cacheGet(key){return JCache.peek(key,null);}
+function cacheSet(key,data,ttl){JCache.put(key,null,data,ttl);}
+function cacheInvalidate(key){JCache.invalidate(key,null);}
+function cacheInvalidatePrefix(prefix){JCache.invalidateCollection(prefix);}
+// Raccourci : get un doc Firestore avec cache (compat SDK)
+async function cachedGet(collection,docId,cacheKey,ttl){
+  return JCache.get(db,collection,docId,ttl);
+}
+// Raccourci : get toute une collection avec cache
+async function cachedCollection(collection,cacheKey,ttl){
+  return JCache.getAll(db,collection,ttl);
+}
 
 // ── SESSION (partagée gacha ↔ hub) ──
 function getSess(){try{return JSON.parse(localStorage.getItem('hub_session'))||JSON.parse(localStorage.getItem('gacha_session'))}catch(e){return null}}
@@ -781,37 +799,29 @@ async function loadHub(){
 
 async function loadCharacter(){
   try{
-    const acSnap=await db.collection(C.ACTIVE).doc(UID).get();
-    if(!acSnap.exists){renderNoChar();return}
-    CHAR_ID=acSnap.data().character_id;
+    const acData=await cachedGet(C.ACTIVE,UID,'_active_char',15);
+    if(!acData){renderNoChar();return}
+    CHAR_ID=acData.character_id;
     if(!CHAR_ID){renderNoChar();return}
-    const cSnap=await db.collection(C.CHARS).doc(CHAR_ID).get();
-    if(!cSnap.exists){renderNoChar();return}
-    CHAR={_id:CHAR_ID,...cSnap.data()};
-    // Charger toutes les données nécessaires en parallèle
+    const cData=await cachedGet(C.CHARS,CHAR_ID,'_character',30);
+    if(!cData){renderNoChar();return}
+    CHAR={_id:CHAR_ID,...cData};
     const charKey=`${UID}_${CHAR_ID}`;
-    const[invSnap,cfgSnap,bufSnap,pmSnap]=await Promise.all([
-      db.collection(C.INV).doc(charKey).get(),
-      db.collection(C.CFG).doc('items').get(),
-      db.collection('buffs').doc(UID).get(),
-      db.collection(C.PARTY_MEM).doc(charKey).get()
+    // Charger en parallèle avec cache
+    const[invData,cfgData,bufData,pmData]=await Promise.all([
+      cachedGet(C.INV,charKey,'_inventory',15),
+      cachedGet(C.CFG,'items','config/items',600),
+      cachedGet('buffs',UID,'_buffs',30),
+      cachedGet(C.PARTY_MEM,charKey,'_party_mem',60)
     ]);
-    // Inventaire
-    INV_DATA=invSnap.exists?invSnap.data():{items:{},equipped_assets:[]};
-    // Items config
-    if(cfgSnap.exists){
-      const d=cfgSnap.data();
-      ALL_ITEMS_DATA={...d.items||{},...d.equipment||{},...d.food_items||{},...d.consumable_items||{}};
+    INV_DATA=invData||{items:{},equipped_assets:[]};
+    if(cfgData){
+      ALL_ITEMS_DATA={...cfgData.items||{},...cfgData.equipment||{},...cfgData.food_items||{},...cfgData.consumable_items||{}};
     }
-    // Buffs
-    BUFFS_DATA=bufSnap.exists?(bufSnap.data().buffs||[]):[];
-    // Party
-    if(pmSnap.exists){
-      const pid=pmSnap.data().party_id;
-      if(pid){
-        const pSnap=await db.collection(C.PARTIES).doc(pid).get();
-        PARTY_DATA=pSnap.exists?pSnap.data():null;
-      }
+    BUFFS_DATA=bufData?(bufData.buffs||[]):[];
+    if(pmData&&pmData.party_id){
+      const pData=await cachedGet(C.PARTIES,pmData.party_id,'_party',60);
+      PARTY_DATA=pData||null;
     }
     renderDashChar();renderFullChar();renderProgression();initAlloc();
   }catch(e){console.error('[CHAR]',e);renderNoChar()}
@@ -819,9 +829,12 @@ async function loadCharacter(){
 
 async function loadPlayer(){
   try{
-    const[pSnap,pSnap2]=await Promise.all([db.collection(C.PLAYERS).doc(UID).get(),db.collection(C.PITY).doc(UID).get()]);
-    PLAYER=pSnap.exists?pSnap.data():{};
-    PITY=pSnap2.exists?pSnap2.data():{};
+    const[pData,pityData]=await Promise.all([
+      cachedGet(C.PLAYERS,UID,'_player',30),
+      cachedGet(C.PITY,UID,'_pity',30)
+    ]);
+    PLAYER=pData||{};
+    PITY=pityData||{};
     renderPlayerWidgets();renderGacha();renderSettings();
   }catch(e){console.error('[PLAYER]',e);}
 }
@@ -831,13 +844,12 @@ async function loadInventory(){
   if(!CHAR_ID){document.getElementById('inv-grid').innerHTML='<div class="empty">Aucun personnage actif</div>';return}
   try{
     const key=`${UID}_${CHAR_ID}`;
-    const[invSnap,cfgSnap]=await Promise.all([
-      db.collection(C.INV).doc(key).get(),
-      db.collection(C.CFG).doc('items').get()
+    const[invData,cfgData]=await Promise.all([
+      cachedGet(C.INV,key,'_inventory',15),
+      cachedGet(C.CFG,'items','config/items',600)
     ]);
-    INV_DATA=invSnap.exists?invSnap.data():{items:{},equipped_assets:[]};
-    const cfg=cfgSnap.exists?cfgSnap.data():{};
-    ALL_ITEMS_DATA={...cfg.items||{},...cfg.equipment||{},...cfg.food_items||{},...cfg.consumable_items||{}};
+    INV_DATA=invData||{items:{},equipped_assets:[]};
+    if(cfgData) ALL_ITEMS_DATA={...cfgData.items||{},...cfgData.equipment||{},...cfgData.food_items||{},...cfgData.consumable_items||{}};
     renderInventory();
   }catch(e){console.error('[INV]',e);document.getElementById('inv-grid').innerHTML='<div class="empty">Erreur de chargement</div>'}
 }
@@ -846,12 +858,11 @@ async function loadParty(){
   if(!CHAR_ID){document.getElementById('party-content').innerHTML='<div class="empty">Aucun personnage actif</div>';return}
   try{
     const key=`${UID}_${CHAR_ID}`;
-    const mSnap=await db.collection(C.PARTY_MEM).doc(key).get();
-    if(!mSnap.exists){document.getElementById('party-content').innerHTML='<div class="empty">Tu n\'es dans aucune party.</div>';return}
-    const pid=mSnap.data().party_id;
-    const pSnap=await db.collection(C.PARTIES).doc(String(pid)).get();
-    if(!pSnap.exists){document.getElementById('party-content').innerHTML='<div class="empty">Party introuvable.</div>';return}
-    renderParty(pSnap.data());
+    const mData=await cachedGet(C.PARTY_MEM,key,'_party_mem',60);
+    if(!mData||!mData.party_id){document.getElementById('party-content').innerHTML='<div class="empty">Tu n\'es dans aucune party.</div>';return}
+    const pData=await cachedGet(C.PARTIES,String(mData.party_id),'_party',60);
+    if(!pData){document.getElementById('party-content').innerHTML='<div class="empty">Party introuvable.</div>';return}
+    renderParty(pData);
   }catch(e){document.getElementById('party-content').innerHTML='<div class="empty">Erreur de chargement</div>'}
 }
 
@@ -860,14 +871,12 @@ async function loadTitles(){
   if(!UID){el.innerHTML='<div class="empty">Non connecté — utilise /link</div>';return;}
   el.innerHTML='<div class="empty">Chargement...</div>';
   try{
-    console.log('[TITLES] querying',C.TITLES,'/',UID);
-    const[snap,cfgSnap]=await Promise.all([
-      db.collection(C.TITLES).doc(UID).get(),
-      db.collection(C.CFG).doc('titles').get()
+    const[tData,cfgData]=await Promise.all([
+      cachedGet(C.TITLES,UID,'_titles',60),
+      cachedGet(C.CFG,'titles_data','config/titles_data',600)
     ]);
-    console.log('[TITLES] exists=',snap.exists,'data=',JSON.stringify(snap.exists?snap.data():null).slice(0,100));
-    const defs=cfgSnap.exists?(cfgSnap.data().titles||cfgSnap.data()||{}):{};
-    TITLES_DATA=snap.exists?snap.data():{};
+    const defs=cfgData?(cfgData.titles||cfgData||{}):{};
+    TITLES_DATA=tData||{};
     TITLES_DEF=defs;
     renderTitles(TITLES_DATA,defs);
   }catch(e){console.error('[TITLES]',e);el.innerHTML='<div class="empty">Erreur: '+e.message+'</div>'}
@@ -877,10 +886,11 @@ async function loadCompanions(){
   if(!CHAR_ID){document.getElementById('comp-content').innerHTML='<div class="empty">Aucun personnage actif</div>';return}
   try{
     const key=`${UID}_${CHAR_ID}`;
-    console.log('[COMP] querying',key);
-    const[cSnap,cfgSnap]=await Promise.all([db.collection(C.COMP).doc(key).get(),db.collection(C.CFG).doc('companions_data').get()]);
-    console.log('[COMP] exists=',cSnap.exists);
-    renderCompanions(cSnap.exists?cSnap.data():{},cfgSnap.exists?cfgSnap.data():{companions:{},evolutions:{}});
+    const[cData,cfgData]=await Promise.all([
+      cachedGet(C.COMP,key,'_companions',60),
+      cachedGet(C.CFG,'companions_data','config/companions_data',600)
+    ]);
+    renderCompanions(cData||{},cfgData||{companions:{},evolutions:{}});
   }catch(e){console.error('[COMP]',e);document.getElementById('comp-content').innerHTML=`<div class="empty">Erreur: ${e.message}</div>`}
 }
 
@@ -1264,6 +1274,7 @@ async function toggleEquip(itemId){
       INV_DATA.items=newItems;
       showEquipToast(`✓ ${it.name||itemId} équipé`);
     }
+    cacheInvalidate('_inventory');
     renderInventory();
   }catch(err){
     console.error('[EQUIP]',err);
@@ -1419,7 +1430,7 @@ function renderSettings(){
 async function setTheme(theme){
   try{
     await db.collection(C.PLAYERS).doc(UID).set({display_theme:theme},{merge:true});
-    PLAYER.display_theme=theme;renderSettings();
+    PLAYER.display_theme=theme;cacheInvalidate('_player');renderSettings();
     showToast('Thème mis à jour','success');
   }catch(err){showToast('Erreur lors de la mise à jour','error')}
 }
@@ -1497,8 +1508,7 @@ async function loadMonShop(){
   if(!UID || !CHAR_ID){ el.innerHTML='<div class="empty">Aucun personnage actif</div>'; return; }
   el.innerHTML='<div class="empty">Chargement...</div>';
   try{
-    const snap = await db.collection(C.SHOPS).doc(`${UID}_${CHAR_ID}`).get();
-    MY_SHOP_DATA = snap.exists ? snap.data() : null;
+    MY_SHOP_DATA = await cachedGet(C.SHOPS,`${UID}_${CHAR_ID}`,'_monshop',60);
     renderMonShop();
   }catch(err){ console.error('[MONSHOP]',err); el.innerHTML='<div class="empty">Erreur de chargement</div>'; }
 }
@@ -1518,10 +1528,24 @@ function renderMonShop(){
   }
 
   const s = MY_SHOP_DATA;
-  const items = s.items || {};
-  const entries = Object.entries(items);
+  const shopItems = s.items || {};
+  const entries = Object.entries(shopItems);
   const statusColor = s.open ? 'var(--green)' : 'var(--red)';
   const statusLabel = s.open ? '● OUVERT' : '● FERMÉ';
+  const toggleLabel = s.open ? 'Fermer la boutique' : 'Ouvrir la boutique';
+  const toggleColor = s.open ? 'var(--red)' : 'var(--green)';
+
+  // Items dans l'inventaire qui ne sont PAS déjà en vente
+  const invItems = (INV_DATA && INV_DATA.items) || {};
+  const sellable = Object.entries(invItems).filter(([id, qty]) => {
+    if(qty <= 0) return false;
+    if(shopItems[id]) return false; // déjà en vente
+    const it = ALL_ITEMS_DATA[id] || {};
+    // Ne pas vendre les items équipés
+    const equipped = (INV_DATA && INV_DATA.equipped_assets) || [];
+    if(equipped.includes(id)) return false;
+    return true;
+  });
 
   el.innerHTML=`
     <div class="card" style="margin-bottom:20px"><div class="card-body">
@@ -1530,25 +1554,24 @@ function renderMonShop(){
         <span style="font-family:var(--font-m);font-size:.48rem;letter-spacing:.1em;color:${statusColor}">${statusLabel}</span>
       </div>
       <div style="font-family:var(--font-m);font-size:.52rem;letter-spacing:.06em;color:var(--text3);margin-bottom:16px">${e(s.tagline||'Aucune accroche')}</div>
-      <div style="display:flex;gap:24px;flex-wrap:wrap">
+      <div style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:16px">
         <div><div style="font-family:var(--font-h);font-weight:800;font-size:1.4rem;color:var(--blue)">${entries.length}</div><div style="font-family:var(--font-m);font-size:.42rem;letter-spacing:.1em;color:var(--text3)">ARTICLES EN VENTE</div></div>
         <div><div style="font-family:var(--font-h);font-weight:800;font-size:1.4rem;color:var(--gold)">${(s.sales_log||[]).length}</div><div style="font-family:var(--font-m);font-size:.42rem;letter-spacing:.1em;color:var(--text3)">VENTES RÉCENTES</div></div>
       </div>
-      <div style="margin-top:12px;font-family:var(--font-m);font-size:.44rem;letter-spacing:.06em;color:var(--text3)">Pour modifier ton shop (ajouter/retirer des articles, ouvrir/fermer) utilise les commandes Discord : <span style="color:var(--blue)">/char_shop_add</span>, <span style="color:var(--blue)">/char_shop_remove</span>, <span style="color:var(--blue)">/char_shop_open</span></div>
+      <button onclick="toggleShopOpen()" style="padding:8px 20px;border-radius:8px;border:1px solid ${toggleColor};background:transparent;color:${toggleColor};font-family:var(--font-b);font-size:.72rem;font-weight:600;cursor:pointer;transition:all .2s">${toggleLabel}</button>
     </div></div>
 
     ${entries.length ? `
-    <div class="card"><div class="card-body">
+    <div class="card" style="margin-bottom:20px"><div class="card-body">
       <div class="sh" style="margin-bottom:14px"><span class="sh-num">—</span><span class="sh-title">Articles en vente</span><div class="sh-line"></div></div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px">
         ${entries.map(([item_id, si])=>{
           const it = ALL_ITEMS_DATA[item_id] || {};
-          const price = si.price || {};
-          const effects = it.stat_effects || it.stats || {};
-          const effStr = Object.entries(effects).slice(0,2).map(([s,v])=>`+${v} ${STAT_ICONS_INV[s]||s}`).join(' ');
           const rarity = (it.rarity||'common').toLowerCase();
           const rc = RARITY_COLORS[rarity]||'#6b7280';
-          return `<div class="shop-item-card rarity-${rarity}">
+          const effects = it.stat_effects || it.stats || {};
+          const effStr = Object.entries(effects).slice(0,2).map(([s,v])=>`+${v} ${STAT_ICONS_INV[s]||s}`).join(' ');
+          return `<div class="shop-item-card rarity-${rarity}" style="position:relative">
             <div class="shop-item-top">
               <span class="shop-item-icon">${it.emoji||'📦'}</span>
               <div class="shop-item-info">
@@ -1557,22 +1580,151 @@ function renderMonShop(){
                 <div class="shop-item-qty">${si.qty===-1||si.qty===undefined?'∞':'×'+si.qty} en stock</div>
               </div>
             </div>
-            <div class="shop-item-price">${formatShopPrice(price)}</div>
+            <div class="shop-item-price">${formatShopPrice(si.price||{})}</div>
+            <button onclick="removeFromShop('${item_id}')" style="margin-top:8px;width:100%;padding:6px;border-radius:6px;border:1px solid var(--red);background:rgba(255,71,87,0.08);color:var(--red);font-family:var(--font-b);font-size:.65rem;font-weight:600;cursor:pointer;transition:all .2s">✕ Retirer de la vente</button>
           </div>`;
         }).join('')}
       </div>
-    </div></div>` : '<div class="empty">Aucun article en vente — utilise <code>/char_shop_add</code></div>'}
+    </div></div>` : '<div class="empty" style="margin-bottom:20px">Aucun article en vente</div>'}
+
+    <div class="card"><div class="card-body">
+      <div class="sh" style="margin-bottom:14px"><span class="sh-num">—</span><span class="sh-title">Mettre en vente depuis l'inventaire</span><div class="sh-line"></div></div>
+      ${sellable.length ? `
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px">
+        ${sellable.map(([item_id, qty])=>{
+          const it = ALL_ITEMS_DATA[item_id] || {};
+          const rarity = (it.rarity||'common').toLowerCase();
+          const rc = RARITY_COLORS[rarity]||'#6b7280';
+          return `<div class="shop-item-card rarity-${rarity}">
+            <div class="shop-item-top">
+              <span class="shop-item-icon">${it.emoji||'📦'}</span>
+              <div class="shop-item-info">
+                <div class="shop-item-name" style="color:${rc}">${e(it.name||item_id)}</div>
+                <div class="shop-item-qty">×${qty} en inventaire</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:6px;margin-top:8px;align-items:center">
+              <input type="number" id="sell-qty-${item_id}" min="1" max="${qty}" value="1" style="width:50px;padding:4px 6px;border-radius:4px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-family:var(--font-m);font-size:.55rem;text-align:center">
+              <input type="number" id="sell-price-${item_id}" min="1" value="100" placeholder="Prix" style="flex:1;padding:4px 6px;border-radius:4px;border:1px solid var(--border);background:var(--bg);color:var(--gold);font-family:var(--font-m);font-size:.55rem;text-align:center">
+              <select id="sell-cur-${item_id}" style="padding:4px;border-radius:4px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-family:var(--font-m);font-size:.5rem">
+                <option value="bronze_kanite">Bronze</option>
+                <option value="silver_kanite">Silver</option>
+                <option value="gold_kanite">Gold</option>
+                <option value="platinum_kanite">Plat.</option>
+              </select>
+            </div>
+            <button onclick="addToShop('${item_id}',${qty})" style="margin-top:6px;width:100%;padding:6px;border-radius:6px;border:1px solid var(--green);background:rgba(52,211,153,0.08);color:var(--green);font-family:var(--font-b);font-size:.65rem;font-weight:600;cursor:pointer;transition:all .2s">🏷️ Mettre en vente</button>
+          </div>`;
+        }).join('')}
+      </div>` : '<div class="empty">Aucun item disponible à la vente — équipe tes items ou obtiens-en via le gacha</div>'}
+    </div></div>
 
     ${s.sales_log && s.sales_log.length ? `
     <div class="card" style="margin-top:16px"><div class="card-body">
       <div class="sh" style="margin-bottom:14px"><span class="sh-num">—</span><span class="sh-title">Dernières ventes</span><div class="sh-line"></div></div>
       ${s.sales_log.slice(-5).reverse().map(log=>`
         <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(77,163,255,0.06);font-family:var(--font-m);font-size:.48rem">
-          <span style="color:var(--text2)">${e(log.item_name||log.item_id||'Item')}</span>
-          <span style="color:var(--gold)">${formatShopPrice(log.price||{})}</span>
+          <span style="color:var(--text2)">${e(log.item_name||log.item_id||log.item||'Item')}</span>
+          <span style="color:var(--gold)">${typeof log.price==='object'?formatShopPrice(log.price):e(log.price||'')}</span>
         </div>`).join('')}
     </div></div>` : ''}
   `;
+}
+
+// ── Shop management actions ──
+
+async function toggleShopOpen(){
+  if(!UID||!CHAR_ID||!MY_SHOP_DATA) return;
+  const newState = !MY_SHOP_DATA.open;
+  try{
+    await db.collection(C.SHOPS).doc(`${UID}_${CHAR_ID}`).set({open:newState},{merge:true});
+    MY_SHOP_DATA.open = newState;
+    cacheInvalidate('_monshop');cacheInvalidate('_shops');
+    renderMonShop();
+    showToast(newState ? '✓ Boutique ouverte !' : '✓ Boutique fermée', 'success');
+  }catch(err){
+    console.error('[SHOP_TOGGLE]',err);
+    showToast('❌ Erreur — vérifie les permissions','error');
+  }
+}
+
+async function addToShop(itemId, maxQty){
+  if(!UID||!CHAR_ID||!MY_SHOP_DATA) return;
+  const qtyEl = document.getElementById('sell-qty-'+itemId);
+  const priceEl = document.getElementById('sell-price-'+itemId);
+  const curEl = document.getElementById('sell-cur-'+itemId);
+  if(!qtyEl||!priceEl||!curEl) return;
+
+  const qty = Math.max(1, Math.min(maxQty, parseInt(qtyEl.value)||1));
+  const price = Math.max(1, parseInt(priceEl.value)||100);
+  const currency = curEl.value || 'bronze_kanite';
+
+  const charKey = `${UID}_${CHAR_ID}`;
+  try{
+    // Retirer de l'inventaire
+    const invItems = {...(INV_DATA.items||{})};
+    const current = invItems[itemId] || 0;
+    if(current < qty){ showToast('❌ Pas assez en stock','error'); return; }
+    invItems[itemId] = current - qty;
+    if(invItems[itemId] <= 0) delete invItems[itemId];
+
+    // Ajouter au shop
+    const shopItems = {...(MY_SHOP_DATA.items||{})};
+    if(shopItems[itemId]){
+      shopItems[itemId].qty = (shopItems[itemId].qty||0) + qty;
+    } else {
+      shopItems[itemId] = { price: { [currency]: price }, qty: qty };
+    }
+
+    // Écrire les deux en parallèle
+    await Promise.all([
+      db.collection(C.INV).doc(charKey).set({items:invItems},{merge:true}),
+      db.collection(C.SHOPS).doc(charKey).set({items:shopItems},{merge:true}),
+    ]);
+
+    INV_DATA.items = invItems;
+    MY_SHOP_DATA.items = shopItems;
+    cacheInvalidate('_inventory');cacheInvalidate('_monshop');cacheInvalidate('_shops');
+    renderMonShop();
+    showToast('✓ Article mis en vente !','success');
+  }catch(err){
+    console.error('[SHOP_ADD]',err);
+    showToast('❌ Erreur lors de la mise en vente','error');
+  }
+}
+
+async function removeFromShop(itemId){
+  if(!UID||!CHAR_ID||!MY_SHOP_DATA) return;
+  const shopItems = {...(MY_SHOP_DATA.items||{})};
+  const si = shopItems[itemId];
+  if(!si) return;
+
+  const qty = si.qty || 0;
+  const charKey = `${UID}_${CHAR_ID}`;
+  try{
+    // Retirer du shop
+    delete shopItems[itemId];
+
+    // Remettre dans l'inventaire
+    const invItems = {...(INV_DATA.items||{})};
+    if(qty > 0 && qty !== -1){
+      invItems[itemId] = (invItems[itemId]||0) + qty;
+    }
+
+    await Promise.all([
+      db.collection(C.SHOPS).doc(charKey).set({items:shopItems},{merge:true}),
+      db.collection(C.INV).doc(charKey).set({items:invItems},{merge:true}),
+    ]);
+
+    MY_SHOP_DATA.items = shopItems;
+    INV_DATA.items = invItems;
+    cacheInvalidate('_inventory');cacheInvalidate('_monshop');cacheInvalidate('_shops');
+    renderMonShop();
+    showToast('✓ Article retiré de la vente','success');
+  }catch(err){
+    console.error('[SHOP_REMOVE]',err);
+    showToast('❌ Erreur lors du retrait','error');
+  }
 }
 
 // ══════════════════════════════════════════════
@@ -1684,6 +1836,7 @@ async function confirmAlloc(){
     renderFullChar();
     renderProgression();
     showEquipToast('✓ Stats allouées avec succès !');
+    cacheInvalidate('_character');
     setTimeout(()=>{
       const b=document.getElementById('alloc-confirm-btn');
       if(b){b.style.background='';b.style.color='';b.textContent="Confirmer l'allocation";b.disabled=true;}
@@ -1706,9 +1859,8 @@ async function loadShops(){
   const listEl=document.getElementById('shops-list');
   if(!listEl)return;
   try{
-    const snap=await db.collection(C.SHOPS).get();
-    ALL_SHOPS_DATA=[];
-    snap.forEach(doc=>{const d=doc.data();if(d.open&&Object.keys(d.items||{}).length>0)ALL_SHOPS_DATA.push({key:doc.id,...d});});
+    const docs=await cachedCollection(C.SHOPS,'_shops',60);
+    ALL_SHOPS_DATA=docs.filter(d=>d.open&&Object.keys(d.items||{}).length>0).map(d=>({key:d._key,...d}));
     renderShopsList();
   }catch(err){console.error('[SHOPS]',err);listEl.innerHTML='<div class="empty">Erreur de chargement</div>';}
 }
@@ -1785,6 +1937,7 @@ async function buyFromPlayerShop(shopKey,itemId){
     ]);
     shop.items=newShopItems;
     if(!newShopItems||!Object.keys(newShopItems).length)ALL_SHOPS_DATA=ALL_SHOPS_DATA.filter(s=>s.key!==shopKey);
+    cacheInvalidate('_inventory');cacheInvalidate('_economy');cacheInvalidate('_shops');cacheInvalidate('_monshop');
     renderShopsList();selectShop(shopKey);
     showEquipToast(`✓ ${it.name||itemId} acheté !`);
   }catch(err){console.error('[BUY_SHOP]',err);showEquipToast('❌ Erreur achat',true);}
@@ -1806,9 +1959,8 @@ async function loadUshop(){
   if(Object.keys(USHOP_ITEMS).length)return;
   const gridEl=document.getElementById('ushop-grid');if(!gridEl)return;
   try{
-    const snap=await db.collection(C.CFG).doc('items').get();
-    if(!snap.exists){gridEl.innerHTML='<div class="empty">Shop indisponible</div>';return;}
-    const d=snap.data();
+    const d=await cachedGet(C.CFG,'items','config/items',600);
+    if(!d){gridEl.innerHTML='<div class="empty">Shop indisponible</div>';return;}
     USHOP_ITEMS={};
     for(const sec of['items','equipment','food_items','consumable_items']){
       if(d[sec]&&typeof d[sec]==='object'){
@@ -1883,6 +2035,7 @@ async function buyFromUshop(itemId){
       db.collection(C.ECONOMY).doc(charKey).set({personal},{merge:true}),
       db.collection(C.INV).doc(charKey).set({items:invItems},{merge:true}),
     ]);
+    cacheInvalidate('_inventory');cacheInvalidate('_economy');
     renderUshopBalance();showEquipToast(`✓ ${it.name||itemId} acheté !`);
   }catch(err){console.error('[USHOP_BUY]',err);showEquipToast('❌ Erreur achat',true);}
 }

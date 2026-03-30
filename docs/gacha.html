@@ -600,6 +600,9 @@ initBlob();
 const firebaseConfig={apiKey:"AIzaSyAru7qZX8Gu_b8Y3oNDV-a5PmkrrkRjkcs",authDomain:"jaharta-rp.firebaseapp.com",projectId:"jaharta-rp",storageBucket:"jaharta-rp.firebasestorage.app",messagingSenderId:"217075417489",appId:"1:217075417489:web:4d1e2df422a5cd42411a30"};
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
+</script>
+<script src="js/jaharta-cache.js"></script>
+<script>
 
 // ═══ CONSTANTS ═══
 const RCSS={'Common':'r-c','Uncommon':'r-u','Rare':'r-r','Epic':'r-e','Legendary':'r-l','Mythic':'r-m','Unique':'r-q','Artifact':'r-a'};
@@ -697,28 +700,24 @@ async function loadUser(){
   const s=getSession();
   if(!s||!s.id)return null;
   try{
-    // Lire players/ (bot Firestore)
-    const [pSnap,pitySnap]=await Promise.all([
-      db.collection('players').doc(s.id).get(),
-      db.collection('gacha_pity').doc(s.id).get(),
+    const[d,pity]=await Promise.all([
+      JCache.get(db,'players',s.id,30),
+      JCache.get(db,'gacha_pity',s.id,30),
     ]);
-    const d=pSnap.exists?pSnap.data():{};
-    const pity=pitySnap.exists?pitySnap.data():{};
-    // Convertir la structure pity bot → structure attendue par le UI
     U={
       id:s.id,
-      username:d.username||s.username||'—',
-      avatar:d.avatar_url||s.avatar||'',
-      navarites:d.navarites||0,
-      booster:d.booster||false,
+      username:(d&&d.username)||s.username||'—',
+      avatar:(d&&d.avatar_url)||s.avatar||'',
+      navarites:(d&&d.navarites)||0,
+      booster:(d&&d.booster)||false,
       pity:{
-        spent_epic:pity.navarites_spent_epic||0,
+        spent_epic:(pity&&pity.navarites_spent_epic)||0,
         threshold_epic:30,
-        spent_leg:pity.navarites_spent_leg||0,
+        spent_leg:(pity&&pity.navarites_spent_leg)||0,
         threshold_leg:150,
       },
       streak:{
-        days_in_cycle:(d.consecutive_days||0)%3,
+        days_in_cycle:((d&&d.consecutive_days)||0)%3,
       },
     };
     return U;
@@ -727,9 +726,8 @@ async function loadUser(){
 
 async function loadBanners(){
   try{
-    const snap=await db.collection('gacha_config').doc('banners').get();
-    if(!snap.exists)return;
-    const d=snap.data();
+    const d=await JCache.get(db,'gacha_config','banners',120);
+    if(!d)return;
     BANNERS=d.banners||[];
     renderBanners(BANNERS);
     const rot=d.rotation||{};
@@ -920,18 +918,20 @@ async function doPull(count){
     await showPullResults(res,count);
 
     // Reload fresh user data
+    JCache.invalidate('players',U.id);JCache.invalidate('gacha_pity',U.id);
     await loadUser();
     showMainUI();
   }catch(e){
     console.error('[PULL]',e);
     dismiss();
     alert(e.message||'Erreur lors du pull');
+    JCache.invalidate('players',U?U.id:'');JCache.invalidate('gacha_pity',U?U.id:'');
     await loadUser();
     showMainUI();
   }finally{
     _pullBusy=false;
-    // Clean up the pull document
-    try{pullRef.delete()}catch(e){}
+    // Clean up the pull document (may fail if rules deny — that's fine, bot cleans up)
+    try{await pullRef.delete().catch(()=>{})}catch(e){}
   }
 }
 
