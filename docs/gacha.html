@@ -541,7 +541,7 @@ function bUpdateOrbitals(dt){
       o.orbGroup.position.y+=o.explVel.y*dt;
       o.orbGroup.position.z+=o.explVel.z*dt;
       o.explFade=Math.max(0,o.explFade-.015);
-      o.orbGroup.children.forEach(c=>{c.material.opacity=o.explFade*(c.material.wireframe?.3:.9)});
+      o.orbGroup.children.forEach(c=>{c.material.opacity=o.explFade*(c.material.wireframe ? 0.3 : 0.9)});
       o.trail.material.uniforms.uColor.value.multiplyScalar(.98);
       // Still update trail with current position
       o.histQ.push({x:o.orbGroup.position.x,y:o.orbGroup.position.y,z:o.orbGroup.position.z});
@@ -608,6 +608,23 @@ firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
 </script>
 <script src="js/jaharta-cache.js"></script>
+<script>
+/* ═══ GACHA MUSIC: Black Ops 2 default, 1/1000 chance SPECIALZ ═══ */
+(function(){
+  var SPECIALZ_INDEX = 3; // SPECIALZ in ALL_TRACKS
+  var BO2_INDEX = 2;      // Black Ops 2 in ALL_TRACKS
+  var roll = Math.floor(Math.random() * 1000); // 0..999
+  var isSpecialRoll = (roll === 0);
+  window.GACHA_SPECIALZ_ACTIVE = isSpecialRoll;
+  window.GACHA_SPECIALZ_FIRST_PULL_USED = false;
+  if (isSpecialRoll) {
+    console.log('%c[GACHA] ⚡ SPECIALZ ACTIVATED — LEG+ guaranteed on first x10!', 'color:#ffd60a;font-size:14px;font-weight:bold');
+    window.JMP_CONFIG = { tracks: [SPECIALZ_INDEX], autoTrack: 0 };
+  } else {
+    window.JMP_CONFIG = { tracks: [BO2_INDEX], autoTrack: 0 };
+  }
+})();
+</script>
 <script>
 
 // ═══ CONSTANTS ═══
@@ -1095,24 +1112,6 @@ async function loadAndShow(){
 
 // Scroll line
 window.addEventListener('scroll',()=>{const p=window.scrollY/(document.documentElement.scrollHeight-window.innerHeight)*100;document.getElementById('scroll-line').style.width=p+'%'});
-</script>
-<script>
-/* ═══ GACHA MUSIC: Black Ops 2 default, 1/1000 chance SPECIALZ ═══ */
-(function(){
-  var SPECIALZ_INDEX = 3; // SPECIALZ in ALL_TRACKS
-  var BO2_INDEX = 2;      // Black Ops 2 in ALL_TRACKS
-  var roll = Math.floor(Math.random() * 1000); // 0..999
-  var isSpecialRoll = (roll === 0);
-  // Store the roll result globally so gacha pull logic can check it
-  window.GACHA_SPECIALZ_ACTIVE = isSpecialRoll;
-  window.GACHA_SPECIALZ_FIRST_PULL_USED = false; // tracks if LEG+ bonus was consumed
-  if (isSpecialRoll) {
-    console.log('%c[GACHA] ⚡ SPECIALZ ACTIVATED — LEG+ guaranteed on first x10!', 'color:#ffd60a;font-size:14px;font-weight:bold');
-    window.JMP_CONFIG = { tracks: [SPECIALZ_INDEX], autoTrack: 0 };
-  } else {
-    window.JMP_CONFIG = { tracks: [BO2_INDEX], autoTrack: 0 };
-  }
-})();
 </script>
 <script src="js/music-player.js"></script>
 <script src="js/page-transition.js"></script>
