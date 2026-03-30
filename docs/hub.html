@@ -17,7 +17,7 @@
   --font-body:'Exo 2',sans-serif;--font-m:'Share Tech Mono',monospace;
   --blue:#4DA3FF;--violet:#8B5CF6;--gold:#ffd60a;
   --magenta:#ff006e;--green:#44ff88;--red:#FF4757;--orange:#ff9800;
-  --text:#e2e6f0;--text2:#7c84a0;--text3:#3a4060;
+  --text:#e2e6f0;--text2:#c8cde0;--text3:#9aa0b8;
   --bg:#020713;--surface:#0c1228;--border:rgba(77,163,255,0.1);
 }
 body{background:var(--bg)!important}
@@ -144,7 +144,13 @@ body{background:var(--bg)!important}
 .power-card-qual.rare{color:var(--violet)}
 .power-card-qual.common{color:var(--text3)}
 /* INVENTAIRE */
-.inv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.inv-grid{display:flex;flex-direction:column;gap:4px}
+.inv-grid-sub{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:12px}
+.inv-group-header{font-family:var(--font-m);font-size:.48rem;letter-spacing:.18em;color:var(--blue);padding:10px 0 6px;border-bottom:1px solid rgba(77,163,255,0.1);margin-bottom:8px;text-transform:uppercase}
+.inv-group-count{color:var(--text3);font-weight:400}
+.ushop-group-header{font-family:var(--font-m);font-size:.48rem;letter-spacing:.18em;color:var(--blue);padding:10px 0 6px;border-bottom:1px solid rgba(77,163,255,0.1);margin-bottom:8px;text-transform:uppercase}
+.ushop-group-header .ushop-group-count{color:var(--text3);font-weight:400}
+.ushop-grid-sub{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:16px}
 .item-card{background:rgba(12,18,40,0.6);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;position:relative}
 .item-icon{font-size:1.8rem;margin-bottom:8px;display:block}
 .item-name{font-family:var(--font-b);font-weight:600;font-size:.75rem;color:var(--text);margin-bottom:4px}
@@ -348,11 +354,92 @@ body{background:var(--bg)!important}
 .ushop-cats{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:16px;flex-wrap:wrap}
 .ushop-cat{font-family:var(--font-b);font-size:.65rem;font-weight:600;letter-spacing:.06em;color:var(--text3);background:none;border:none;border-bottom:2px solid transparent;padding:10px 14px;cursor:pointer;transition:all .2s}
 .ushop-cat.active{color:var(--blue);border-bottom-color:var(--blue)}
-.ushop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+.ushop-grid{display:flex;flex-direction:column;gap:4px}
 .ushop-card{background:rgba(12,18,40,0.6);border:1px solid var(--border);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:8px;transition:all .2s}
 .ushop-card:hover{border-color:rgba(77,163,255,0.25)}
 .ushop-balance{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
 .ushop-bal-chip{font-family:var(--font-m);font-size:.48rem;letter-spacing:.08em;padding:5px 12px;border-radius:20px;background:rgba(255,214,10,0.08);border:1px solid rgba(255,214,10,0.2);color:var(--gold)}
+
+/* ═══════════════════════════════════════════════════════
+   OVERHAUL — Body text +75%, grey→white, neon breathing
+   ═══════════════════════════════════════════════════════ */
+
+/* ── Body text size boost (+75%) — targeting content text classes ── */
+/* Mono labels: .42→.74, .4→.7, .44→.77, .46→.81, .48→.84, .5→.88, .52→.91 */
+.stat-name,.char-meta,.char-fullmeta,.xp-labels,.char-lvl-label,
+.slot-name,.item-slot-tag,.item-effects,.item-qty,
+.power-qual-tag,.power-card-qual,.set-thresh,.set-bonus,.set-piece,
+.equip-bonus-name,.shop-list-owner,.shop-detail-tagline,
+.shop-item-effects,.shop-item-qty,.shop-item-price,
+.ushop-bal-chip,.code-label,.gate-note,
+.inv-group-header,.inv-group-count,.ushop-group-header,
+.pity-label,.nav-streak,.nav-unit,.gacha-bal-label,
+.code-error,.sp-banner{font-size:.77rem}
+
+/* Body text: .65→1.14, .68→1.19, .72→1.26, .75→1.31, .76→1.33, .78→1.37, .8→1.4, .82→1.44, .85→1.49, .88→1.54, .9→1.58 */
+.tab-btn,.inv-tab,.ushop-cat{font-size:1.14rem}
+.nav-links a{font-size:1.26rem}
+.slot-item .slot-label{font-size:.81rem}
+.power-name,.power-card-name{font-size:1.37rem}
+.item-name,.item-name-sm{font-size:1.26rem}
+.shop-item-name,.shop-list-name{font-size:1.44rem}
+.set-name{font-size:1.54rem}
+.gate-desc{font-size:1.58rem}
+.gate-sub{font-size:.96rem}
+.widget-title{font-size:1.02rem}
+.badge{font-size:.77rem}
+.stat-val{font-size:1.23rem}
+.stat-icon{font-size:1.4rem}
+.shop-buy-btn{font-size:1.23rem}
+.char-name{font-size:1.75rem}
+.empty{font-size:.91rem}
+.set-count{font-size:.84rem}
+.nav-username{font-size:.91rem}
+.nav-logout{font-size:.88rem}
+.item-icon-big{font-size:2.2rem}
+.shop-item-icon{font-size:2.8rem}
+.slot-count{font-size:.96rem}
+.equip-bonus-val{font-size:1.93rem}
+
+/* ── Breathing neon border animation for Epic+ items ── */
+@keyframes neonBreatheEpic{
+  0%,100%{border-color:rgba(139,92,246,0.25);box-shadow:0 0 4px rgba(139,92,246,0.1)}
+  50%{border-color:rgba(139,92,246,0.7);box-shadow:0 0 14px rgba(139,92,246,0.25),inset 0 0 8px rgba(139,92,246,0.05)}
+}
+@keyframes neonBreatheLeg{
+  0%,100%{border-color:rgba(251,191,36,0.25);box-shadow:0 0 4px rgba(251,191,36,0.1)}
+  50%{border-color:rgba(251,191,36,0.7);box-shadow:0 0 14px rgba(251,191,36,0.25),inset 0 0 8px rgba(251,191,36,0.05)}
+}
+@keyframes neonBreatheMythic{
+  0%,100%{border-color:rgba(249,115,22,0.25);box-shadow:0 0 4px rgba(249,115,22,0.1)}
+  50%{border-color:rgba(249,115,22,0.7);box-shadow:0 0 14px rgba(249,115,22,0.25),inset 0 0 8px rgba(249,115,22,0.05)}
+}
+@keyframes neonBreatheUnique{
+  0%,100%{border-color:rgba(255,214,10,0.25);box-shadow:0 0 4px rgba(255,214,10,0.1)}
+  50%{border-color:rgba(255,214,10,0.7);box-shadow:0 0 16px rgba(255,214,10,0.3),inset 0 0 8px rgba(255,214,10,0.05)}
+}
+@keyframes neonBreatheArtifact{
+  0%,100%{border-color:rgba(239,68,68,0.25);box-shadow:0 0 4px rgba(239,68,68,0.1)}
+  50%{border-color:rgba(239,68,68,0.7);box-shadow:0 0 16px rgba(239,68,68,0.3),inset 0 0 8px rgba(239,68,68,0.05)}
+}
+@keyframes neonBreatheMaster{
+  0%,100%{border-color:rgba(255,0,110,0.25);box-shadow:0 0 4px rgba(255,0,110,0.1)}
+  50%{border-color:rgba(255,0,110,0.8);box-shadow:0 0 18px rgba(255,0,110,0.35),inset 0 0 10px rgba(255,0,110,0.06)}
+}
+
+/* Apply to item-card AND ushop-card */
+.item-card.rarity-epic,.ushop-card.rarity-epic{
+  animation:neonBreatheEpic 3s ease-in-out infinite;border:1px solid rgba(139,92,246,0.25)}
+.item-card.rarity-legendary,.ushop-card.rarity-legendary{
+  animation:neonBreatheLeg 2.8s ease-in-out infinite;border:1px solid rgba(251,191,36,0.25)}
+.item-card.rarity-mythic,.ushop-card.rarity-mythic{
+  animation:neonBreatheMythic 2.6s ease-in-out infinite;border:1px solid rgba(249,115,22,0.25)}
+.item-card.rarity-unique,.ushop-card.rarity-unique,.item-card.rarity-signature,.ushop-card.rarity-signature{
+  animation:neonBreatheUnique 2.4s ease-in-out infinite;border:1px solid rgba(255,214,10,0.25)}
+.item-card.rarity-artifact,.ushop-card.rarity-artifact{
+  animation:neonBreatheArtifact 2.2s ease-in-out infinite;border:1px solid rgba(239,68,68,0.25)}
+.item-card.rarity-mastercraft,.ushop-card.rarity-mastercraft{
+  animation:neonBreatheMaster 2s ease-in-out infinite;border:1px solid rgba(255,0,110,0.25)}
 </style>
 </head>
 <body>
@@ -1086,31 +1173,27 @@ function renderSlotsPanel(){
 function renderItemsGrid(){
   const items=INV_DATA.items||{};
   const equipped=new Set(INV_DATA.equipped_assets||[]);
-
-  // Construire la liste complète : items en stock + items équipés (sans doublon)
   const allEntries=new Map(Object.entries(items));
   equipped.forEach(id=>{if(!allEntries.has(id))allEntries.set(id,0);});
-
   let entries=Array.from(allEntries.entries());
 
   if(INV_TAB==='equipped'){
     entries=Array.from(equipped).map(id=>[id,0]);
   } else if(INV_TAB==='equipment'){
-    entries=entries.filter(([id])=>{const it=ALL_ITEMS_DATA[id]||{};return it.slot;});
+    entries=entries.filter(([id])=>(ALL_ITEMS_DATA[id]||{}).slot);
   } else if(INV_TAB==='consumable'){
-    entries=entries.filter(([id])=>{const it=ALL_ITEMS_DATA[id]||{};return ['consumable','food','usable'].includes(it.type);});
+    entries=entries.filter(([id])=>['consumable','food','usable'].includes((ALL_ITEMS_DATA[id]||{}).type));
   } else if(INV_TAB==='other'){
     entries=entries.filter(([id])=>{const it=ALL_ITEMS_DATA[id]||{};return !it.slot&&!['consumable','food','usable'].includes(it.type);});
   }
 
   if(!entries.length){document.getElementById('inv-grid').innerHTML='<div class="empty">Aucun item</div>';return;}
 
-  document.getElementById('inv-grid').innerHTML=entries.map(([id,qty])=>{
-    const it=ALL_ITEMS_DATA[id]||{};
-    const isEq=equipped.has(id);
-    const hasSlot=!!it.slot;
-    const rarity=(it.rarity||'common').toLowerCase();
-    const rc=RARITY_COLORS[rarity]||'#6b7280';
+  const RORD={common:0,uncommon:1,rare:2,epic:3,legendary:4,mythic:5,unique:6,artifact:7,mastercraft:8,signature:9};
+  function sortByRarity(a,b){return(RORD[(ALL_ITEMS_DATA[b[0]]||{}).rarity?.toLowerCase()]||0)-(RORD[(ALL_ITEMS_DATA[a[0]]||{}).rarity?.toLowerCase()]||0);}
+  function cardHtml(id,qty){
+    const it=ALL_ITEMS_DATA[id]||{};const isEq=equipped.has(id);const hasSlot=!!it.slot;
+    const rarity=(it.rarity||'common').toLowerCase();const rc=RARITY_COLORS[rarity]||'#6b7280';
     const effects=it.stat_effects||it.stats||{};
     const effStr=Object.entries(effects).slice(0,3).map(([s,v])=>`+${v} ${STAT_ICONS_INV[s]||s}`).join(' ');
     return`<div class="item-card rarity-${rarity}${isEq?' equipped':''}" onclick="${hasSlot?`toggleEquip('${id}')`:''}" style="${hasSlot?'cursor:pointer':''}">
@@ -1121,7 +1204,37 @@ function renderItemsGrid(){
       ${effStr?`<div class="item-effects">${effStr}</div>`:''}
       ${qty>0?`<div class="item-qty">×${qty}</div>`:''}
     </div>`;
-  }).join('');
+  }
+
+  // Group by category + slot when on 'all' or 'equipment' tabs
+  const useGroups=(INV_TAB==='all'||INV_TAB==='equipment');
+  if(!useGroups){entries.sort(sortByRarity);document.getElementById('inv-grid').innerHTML=`<div class="inv-grid-sub">${entries.map(([id,q])=>cardHtml(id,q)).join('')}</div>`;return;}
+
+  const slotOrder=['tete','visage','cou','oreilles','torse','dos','bras','mains','poignets','doigts','jambes','pieds','armes_h','armes_l','special'];
+  const groups=[];
+  // 1) Equipped items
+  const eqEntries=entries.filter(([id])=>equipped.has(id));
+  if(eqEntries.length)groups.push({label:'ÉQUIPÉ',entries:eqEntries});
+  // 2) Equipment by slot (non-equipped)
+  const used=new Set(eqEntries.map(([id])=>id));
+  for(const s of slotOrder){
+    const slotEntries=entries.filter(([id])=>!used.has(id)&&(ALL_ITEMS_DATA[id]||{}).slot===s);
+    if(slotEntries.length){groups.push({label:(SLOT_LIMITS[s]?.label||s).toUpperCase(),entries:slotEntries});slotEntries.forEach(([id])=>used.add(id));}
+  }
+  // 3) Consumables
+  const consEntries=entries.filter(([id])=>!used.has(id)&&['consumable','food','usable'].includes((ALL_ITEMS_DATA[id]||{}).type));
+  if(consEntries.length){groups.push({label:'CONSOMMABLES',entries:consEntries});consEntries.forEach(([id])=>used.add(id));}
+  // 4) Other
+  const otherEntries=entries.filter(([id])=>!used.has(id));
+  if(otherEntries.length)groups.push({label:'AUTRES',entries:otherEntries});
+
+  let html='';
+  for(const g of groups){
+    g.entries.sort(sortByRarity);
+    html+=`<div class="inv-group-header">${g.label} <span class="inv-group-count">(${g.entries.length})</span></div>`;
+    html+=`<div class="inv-grid-sub">${g.entries.map(([id,q])=>cardHtml(id,q)).join('')}</div>`;
+  }
+  document.getElementById('inv-grid').innerHTML=html;
 }
 
 function renderEquipBonuses(){
@@ -1259,6 +1372,23 @@ async function toggleEquip(itemId){
           const inSlot=equipped.filter(id=>(ALL_ITEMS_DATA[id]||{}).slot===slot).length;
           if(inSlot>=def.max){
             showEquipToast(`❌ Slot ${def.label} plein (${inSlot}/${def.max})`,true);
+            return;
+          }
+        }
+      }
+      // Vérifier restriction high-tier par niveau (miroir du bot)
+      const HIGH_TIER=new Set(['legendary','mythic','unique','signature','artifact','mastercraft']);
+      const itemRarity=(it.rarity||'common').toLowerCase();
+      if(HIGH_TIER.has(itemRarity)){
+        const charLvl=CHAR?(levelFromXp(CHAR.xp||0).level):1;
+        const RARITY_LIMITS=[[300,null],[100,15],[50,5],[10,1],[0,0]];
+        let htLimit=0;
+        for(const[thr,lim] of RARITY_LIMITS){if(charLvl>=thr){htLimit=lim;break;}}
+        if(htLimit!==null){
+          const htCount=equipped.filter(id=>{const r=(ALL_ITEMS_DATA[id]||{}).rarity||'';return HIGH_TIER.has(r.toLowerCase());}).length;
+          if(htCount>=htLimit){
+            if(htLimit===0) showEquipToast(`❌ Niveau ${charLvl} : aucun item Legendary+ autorisé`,true);
+            else showEquipToast(`❌ Limite Legendary+ atteinte (${htCount}/${htLimit}) — niveau ${charLvl}`,true);
             return;
           }
         }
@@ -1996,7 +2126,11 @@ function renderUshop(){
   const allowed=USHOP_CAT==='all'?null:CAT_SECTIONS[USHOP_CAT]||null;
   const entries=Object.entries(USHOP_ITEMS).filter(([,it])=>!allowed||allowed.includes(it._section));
   if(!entries.length){gridEl.innerHTML='<div class="empty">Aucun item</div>';return;}
-  gridEl.innerHTML=entries.map(([id,it])=>{
+
+  const RORD={common:0,uncommon:1,rare:2,epic:3,legendary:4,mythic:5,unique:6,artifact:7,mastercraft:8,signature:9};
+  function sortByRarity(a,b){return(RORD[(a[1].rarity||'').toLowerCase()]||0)-(RORD[(b[1].rarity||'').toLowerCase()]||0);}
+
+  function shopCard(id,it){
     const rawPrice=it.price||{};
     let priceStr='—';
     if(rawPrice.amount&&rawPrice.currency){priceStr=`${rawPrice.amount} ${formatCurLabel(rawPrice.currency)}`;}
@@ -2013,7 +2147,43 @@ function renderUshop(){
       <div style="font-family:var(--font-h);font-weight:700;font-size:.9rem;color:var(--gold);margin:8px 0">${priceStr}</div>
       <button class="shop-buy-btn" onclick="buyFromUshop('${id}')">Acheter</button>
     </div>`;
-  }).join('');
+  }
+
+  // Group by category + slot when viewing 'all' or 'equipment'
+  const useGroups=(USHOP_CAT==='all'||USHOP_CAT==='equipment');
+  if(!useGroups){
+    entries.sort(sortByRarity);
+    gridEl.innerHTML=`<div class="ushop-grid-sub">${entries.map(([id,it])=>shopCard(id,it)).join('')}</div>`;
+    return;
+  }
+
+  const slotOrder=['tete','visage','cou','oreilles','torse','dos','bras','mains','poignets','doigts','jambes','pieds','armes_h','armes_l','special'];
+  const groups=[];const used=new Set();
+  // Equipment by slot
+  for(const s of slotOrder){
+    const slotEntries=entries.filter(([id,it])=>!used.has(id)&&it._section==='equipment'&&(it.slot||'').toLowerCase()===s);
+    if(slotEntries.length){groups.push({label:(SLOT_LIMITS[s]?.label||s).toUpperCase(),entries:slotEntries});slotEntries.forEach(([id])=>used.add(id));}
+  }
+  // Equipment without recognized slot
+  const eqNoSlot=entries.filter(([id,it])=>!used.has(id)&&it._section==='equipment');
+  if(eqNoSlot.length){groups.push({label:'ÉQUIPEMENT DIVERS',entries:eqNoSlot});eqNoSlot.forEach(([id])=>used.add(id));}
+  // Consumables
+  const cons=entries.filter(([id,it])=>!used.has(id)&&it._section==='consumable_items');
+  if(cons.length){groups.push({label:'CONSOMMABLES',entries:cons});cons.forEach(([id])=>used.add(id));}
+  // Food
+  const food=entries.filter(([id,it])=>!used.has(id)&&it._section==='food_items');
+  if(food.length){groups.push({label:'NOURRITURE',entries:food});food.forEach(([id])=>used.add(id));}
+  // Other
+  const other=entries.filter(([id])=>!used.has(id));
+  if(other.length)groups.push({label:'AUTRES',entries:other});
+
+  let html='';
+  for(const g of groups){
+    g.entries.sort(sortByRarity);
+    html+=`<div class="ushop-group-header">${g.label} <span class="ushop-group-count">(${g.entries.length})</span></div>`;
+    html+=`<div class="ushop-grid-sub">${g.entries.map(([id,it])=>shopCard(id,it)).join('')}</div>`;
+  }
+  gridEl.innerHTML=html;
 }
 
 async function buyFromUshop(itemId){
