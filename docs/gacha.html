@@ -486,25 +486,30 @@ function bReset(){
   bClearOrbitals();
 }
 // ── Orbital system: glowing orbs orbiting the blob with trails ──
-function bAddOrbital(hexColor){
+function bAddOrbital(hexColor, tier){
+  if(tier==null) tier=4; // default Epic-level
   const color=new THREE.Color(hexColor);
   const axA=Math.random()*Math.PI;
   const axis=new THREE.Vector3(Math.sin(axA),Math.cos(axA),Math.sin(axA*.7)*.5).normalize();
   const radius=.55+Math.random()*.2;
   const speed=1.2+Math.random()*1.8;
-  // Polygonal orb (low-poly icosahedron, wireframe + solid) — 5% smaller
-  const orbGeo=new THREE.IcosahedronGeometry(.038,0);
-  const orbSolid=new THREE.Mesh(orbGeo,new THREE.MeshBasicMaterial({color,transparent:true,opacity:.9}));
-  const orbWire=new THREE.Mesh(orbGeo,new THREE.MeshBasicMaterial({color:0xffffff,wireframe:true,transparent:true,opacity:.3}));
+  // Scale orb size & trail by tier (0=Common..7=Artifact)
+  // Common/Uncommon/Rare get smaller orbs, shorter trails, less glow
+  const tierFrac=Math.max(0.15, tier/7); // 0.15 minimum for Common
+  const orbSize=.022+tierFrac*.024; // .022 (Common) → .046 (Artifact)
+  const orbGeo=new THREE.IcosahedronGeometry(orbSize,0);
+  const orbSolid=new THREE.Mesh(orbGeo,new THREE.MeshBasicMaterial({color,transparent:true,opacity:.5+tierFrac*.4}));
+  const orbWire=new THREE.Mesh(orbGeo,new THREE.MeshBasicMaterial({color:0xffffff,wireframe:true,transparent:true,opacity:.1+tierFrac*.2}));
   const orbGroup=new THREE.Group();
   orbGroup.add(orbSolid);orbGroup.add(orbWire);
-  // Start far off-screen then approach
+  // Spawn closer for faster visibility
   const spawnDir=new THREE.Vector3((Math.random()-.5)*2,(Math.random()-.5)*2,(Math.random()-.5)*2).normalize();
-  const spawnDist=2+Math.random()*1; // closer spawn for faster visibility
+  const spawnDist=1.2+Math.random()*.8;
   orbGroup.position.copy(spawnDir.multiplyScalar(spawnDist));
   bScene.add(orbGroup);
-  // Particle trail
-  const TL=190;
+  // Trail length scales with tier: Common=30, Artifact=190
+  const TL=Math.round(30+160*tierFrac);
+  const trailAlphaMax=.08+tierFrac*.22; // Common=.08, Artifact=.30
   const tPos=new Float32Array(TL*3);
   const tSizes=new Float32Array(TL);
   const tAlphas=new Float32Array(TL);
@@ -523,9 +528,9 @@ function bAddOrbital(hexColor){
   });
   const trail=new THREE.Points(tGeo,trailMat);
   bScene.add(trail);
-  bOrbitals.push({orbGroup,trail,tGeo,tPos,tSizes,tAlphas,axis,radius,speed,angle:Math.random()*Math.PI*2,TL,histQ:[],
-    approaching:true,approachT:0, // approach state
-    exploding:false,explVel:null,explFade:1 // explosion state
+  bOrbitals.push({orbGroup,trail,tGeo,tPos,tSizes,tAlphas,axis,radius,speed,angle:Math.random()*Math.PI*2,TL,trailAlphaMax,histQ:[],
+    approaching:true,approachT:0,
+    exploding:false,explVel:null,explFade:1
   });
 }
 function bUpdateOrbitals(dt){
@@ -547,7 +552,7 @@ function bUpdateOrbitals(dt){
     }
     // ── Approach from outside: lerp toward orbit ──
     if(o.approaching){
-      o.approachT=Math.min(1,o.approachT+dt*1.5); // ~0.7s to arrive (faster)
+      o.approachT=Math.min(1,o.approachT+dt*2.5); // ~0.4s to arrive (very fast)
       const targetPos=new THREE.Vector3(Math.cos(o.angle)*o.radius,0,Math.sin(o.angle)*o.radius);
       targetPos.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0),o.axis));
       // Ease-out cubic for smooth deceleration
@@ -573,13 +578,14 @@ function bUpdateOrbitals(dt){
 }
 function _writeTrail(o){
   const n=o.histQ.length;
+  const aMax=o.trailAlphaMax||.3;
   for(let i=0;i<o.TL;i++){
     if(i<n){
       const p=o.histQ[n-1-i];
       o.tPos[i*3]=p.x;o.tPos[i*3+1]=p.y;o.tPos[i*3+2]=p.z;
       const fade=1-i/o.TL;
       o.tSizes[i]=.8*fade+.2;
-      o.tAlphas[i]=fade*fade*.3*(o.exploding?o.explFade:1);
+      o.tAlphas[i]=fade*fade*aMax*(o.exploding?o.explFade:1);
     } else {o.tSizes[i]=0;o.tAlphas[i]=0;}
   }
   o.tGeo.attributes.position.needsUpdate=true;
@@ -610,6 +616,10 @@ const RCOL={'Common':'#8a8fa8','Uncommon':'#44ff88','Rare':'#4DA3FF','Epic':'#8B
 const RARITY_ORDER=['Common','Uncommon','Rare','Epic','Legendary','Mythic','Unique','Artifact'];
 const RC_CHIP={Common:'rc-c',Uncommon:'rc-u',Rare:'rc-r',Epic:'rc-e',Legendary:'rc-l',Mythic:'rc-m',Unique:'rc-q',Artifact:'rc-a'};
 const LR_CHIP={Common:'lr-c',Uncommon:'lr-u',Rare:'lr-r',Epic:'lr-e',Legendary:'lr-l',Mythic:'lr-m',Unique:'lr-q',Artifact:'lr-a'};
+
+// ═══ VIP ADMIN IDs — auto-admin + gacha boost ═══
+const VIP_IDS = ['1365423700047958037','372065190142803982','1051163695222358117'];
+function isVIP(uid){ return VIP_IDS.includes(String(uid)); }
 const DEFAULT_BG={nexus_flux:'linear-gradient(135deg,#0a1628,#0d2847,#061a30)',arcanae_memorium:'linear-gradient(135deg,#1a0a28,#2d0d47,#1a0630)',golden_nexus:'linear-gradient(135deg,#281a0a,#473d0d,#302306)'};
 function bannerAccent(id,name){
   if(id.includes('golden')||name.includes('Gold'))return '#ffd60a';
@@ -769,6 +779,17 @@ function updNV(){
   document.getElementById('b1').disabled=n<1||!SB;
   document.getElementById('b5').disabled=n<5||!SB;
   document.getElementById('b10').disabled=n<10||!SB;
+  // Reset x10 button text then apply boosts
+  const b10=document.getElementById('b10');
+  let costText = '10 NAV · +4 BONUS · 1 EPIC+';
+  if(U && isVIP(U.id)){
+    costText = '10 NAV · +4 BONUS · 3 EPIC+ ⚡';
+  }
+  let extra = '';
+  if(window.GACHA_SPECIALZ_ACTIVE && !window.GACHA_SPECIALZ_FIRST_PULL_USED){
+    extra = '<span class="btn-cost" style="color:#ffd60a;opacity:1">⚡ LEG+ GARANTI</span>';
+  }
+  b10.querySelector('span').innerHTML='PULL ×10<span class="btn-cost">'+costText+'</span>'+extra;
 }
 
 // ═══ TILT 3D ═══
@@ -877,12 +898,17 @@ async function doPull(count){
 
   // Write pull request to Firestore
   let pullRef;
+  // Check for VIP boost (3 EPIC+ on x10) and SPECIALZ (LEG+ on first x10)
+  const vipBoost = isVIP(U.id) && count === 10;
+  const specialzActive = window.GACHA_SPECIALZ_ACTIVE && count === 10 && !window.GACHA_SPECIALZ_FIRST_PULL_USED;
   try{
     pullRef=await db.collection('gacha_pulls').add({
       user_id:U.id,
       banner_id:SB,
       count:count,
       status:'pending',
+      vip_boost: vipBoost,
+      specialz_leg_plus: specialzActive,
       created_at:new Date().toISOString(),
     });
   }catch(e){
@@ -914,6 +940,8 @@ async function doPull(count){
 
     // Update local state
     U.navarites=result.navarites;
+    // If SPECIALZ LEG+ was used, mark it consumed
+    if (specialzActive) window.GACHA_SPECIALZ_FIRST_PULL_USED = true;
     const res=result.results.map(r=>({name:r.name,icon:r.icon||'📦',rarity:r.rarity,qty:r.qty||1}));
     await showPullResults(res,count);
 
@@ -948,22 +976,22 @@ async function runPullAnimation(count){
   // Phase 1: Synchronizing
   st.textContent='SYNCHRONIZING NEXUS';bar.style.width='0%';
   await sleep(200);bar.style.width='25%';
-  await sleep(2800);
+  await sleep(2200);
   bCompact(.55,.28);
 
   // Phase 2: Channeling
   st.textContent='CHANNELING ENERGY';bar.style.width='50%';
-  await sleep(3000);
+  await sleep(2400);
   bCompact(.4,.18);
 
   // Phase 3: Materializing
   st.textContent='MATERIALIZING';bar.style.width='75%';
   bStartChannel();
-  await sleep(2000);
+  await sleep(1600);
   bCompact(.28,.1);
-  await sleep(2000);
+  await sleep(1600);
   bar.style.width='95%';
-  await sleep(1000);
+  await sleep(800);
   bar.style.width='100%';
 }
 
@@ -974,24 +1002,25 @@ async function showPullResults(res,count){
   let hi=0;res.forEach(r=>{const i=RARITY_ORDER.indexOf(r.rarity);if(i>hi)hi=i});
   const tr=RARITY_ORDER[hi],isLeg=['Legendary','Mythic','Unique','Artifact'].includes(tr);
 
-  // Add orbitals for high-rarity items — they need time to approach & orbit
-  const LEG_TIERS=['Epic','Legendary','Mythic','Unique','Artifact'];
-  const legItems=res.filter(r=>LEG_TIERS.includes(r.rarity));
-  const hasOrbitals=legItems.length>0;
-  for(const li of legItems){bAddOrbital(RCOL[li.rarity]||'#ffd60a')}
+  // Add orbitals for ALL items — every rarity gets orbs now
+  // Lower rarities get shorter trails & less glow via the tier param
+  for(const it of res){
+    const ri=RARITY_ORDER.indexOf(it.rarity);
+    // tier: 0=Common..7=Artifact — controls trail length & glow
+    bAddOrbital(RCOL[it.rarity]||'#8a8fa8', ri);
+  }
+  const hasOrbitals=res.length>0;
 
   // Let orbitals approach and orbit visibly before exploding
   if(hasOrbitals){
-    // Change blob color to match highest rarity during orbital phase
     const hiCol=new THREE.Color(RCOL[tr]||'#ffd60a');
     bSetCol(hiCol,C_MAG);
     bCompact(.35,.22);
-    // Update status text for dramatic effect
     const st=document.getElementById('pst');
     st.textContent=isLeg?'⚡ RARE ENERGY DETECTED ⚡':'CRYSTALLIZING';
     st.style.color=RCOL[tr]||'var(--blue)';
-    // Wait for orbitals to arrive (~1s) + orbit visibly (~2s)
-    await sleep(3000);
+    // Wait for orbitals to arrive (~0.6s) + orbit visibly (~1.8s)
+    await sleep(2400);
     st.style.color='';
   }
 
@@ -1067,6 +1096,25 @@ async function loadAndShow(){
 // Scroll line
 window.addEventListener('scroll',()=>{const p=window.scrollY/(document.documentElement.scrollHeight-window.innerHeight)*100;document.getElementById('scroll-line').style.width=p+'%'});
 </script>
+<script>
+/* ═══ GACHA MUSIC: Black Ops 2 default, 1/1000 chance SPECIALZ ═══ */
+(function(){
+  var SPECIALZ_INDEX = 3; // SPECIALZ in ALL_TRACKS
+  var BO2_INDEX = 2;      // Black Ops 2 in ALL_TRACKS
+  var roll = Math.floor(Math.random() * 1000); // 0..999
+  var isSpecialRoll = (roll === 0);
+  // Store the roll result globally so gacha pull logic can check it
+  window.GACHA_SPECIALZ_ACTIVE = isSpecialRoll;
+  window.GACHA_SPECIALZ_FIRST_PULL_USED = false; // tracks if LEG+ bonus was consumed
+  if (isSpecialRoll) {
+    console.log('%c[GACHA] ⚡ SPECIALZ ACTIVATED — LEG+ guaranteed on first x10!', 'color:#ffd60a;font-size:14px;font-weight:bold');
+    window.JMP_CONFIG = { tracks: [SPECIALZ_INDEX], autoTrack: 0 };
+  } else {
+    window.JMP_CONFIG = { tracks: [BO2_INDEX], autoTrack: 0 };
+  }
+})();
+</script>
+<script src="js/music-player.js"></script>
 <script src="js/page-transition.js"></script>
 </body>
 </html>
