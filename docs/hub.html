@@ -607,12 +607,6 @@ body{background:var(--bg)!important}
   </div>
 
   <!-- MON SHOP -->
-  <div class="tab-panel" id="panel-shop">
-    <div class="sh"><span class="sh-num">09</span><span class="sh-title">Ma Boutique</span><div class="sh-line"></div></div>
-    <div id="shop-content"><div class="empty">Chargement...</div></div>
-  </div>
-
-  <!-- MON SHOP -->
   <div class="tab-panel" id="panel-monshop">
     <div class="sh"><span class="sh-num">—</span><span class="sh-title">Mon Shop</span><div class="sh-line"></div></div>
     <div id="monshop-content"><div class="empty">Chargement...</div></div>
@@ -698,6 +692,7 @@ const C={
   PARTY_MEM:'party_membership', // {discord_id}_{char_uuid} → {party_id}
   PITY:'gacha_pity',            // {discord_id} → {navarites_spent_epic, navarites_spent_leg}
   SHOPS:'shops',                // {discord_id}_{char_uuid} → {name, open, items{}}
+  ECONOMY:'economy',             // {discord_id}_{char_uuid} → {personal:{}}
   LINK:'gacha_link_codes',      // {code} → {discord_id, username, avatar_url, expires_at}
   CFG:'config',                 // items, companions_data, etc.
 };
@@ -736,6 +731,7 @@ document.addEventListener('DOMContentLoaded',function(){
   const vb=document.getElementById('verify-btn');
   if(lc)lc.addEventListener('keydown',e=>{if(e.key==='Enter')verifyCode();});
   if(vb)vb.addEventListener('click',verifyCode);
+  init();
 });
 
 function logout(){
@@ -865,9 +861,15 @@ async function loadTitles(){
   el.innerHTML='<div class="empty">Chargement...</div>';
   try{
     console.log('[TITLES] querying',C.TITLES,'/',UID);
-    const snap=await db.collection(C.TITLES).doc(UID).get();
+    const[snap,cfgSnap]=await Promise.all([
+      db.collection(C.TITLES).doc(UID).get(),
+      db.collection(C.CFG).doc('titles').get()
+    ]);
     console.log('[TITLES] exists=',snap.exists,'data=',JSON.stringify(snap.exists?snap.data():null).slice(0,100));
-    renderTitles(snap.exists?snap.data():{});
+    const defs=cfgSnap.exists?(cfgSnap.data().titles||cfgSnap.data()||{}):{};
+    TITLES_DATA=snap.exists?snap.data():{};
+    TITLES_DEF=defs;
+    renderTitles(TITLES_DATA,defs);
   }catch(e){console.error('[TITLES]',e);el.innerHTML='<div class="empty">Erreur: '+e.message+'</div>'}
 }
 
@@ -955,7 +957,7 @@ function renderFullChar(){
       ${(c.affinity||[]).slice(0,3).map(a=>`<span class="badge badge-gold">${e(a)}</span>`).join('')}
     </div>
     <div style="display:flex;gap:20px;align-items:center;margin-top:16px">
-      <div><div class="csb-val">${c.level||1}</div><div class="csb-label">NIVEAU</div></div>
+      <div><div class="csb-val">${levelFromXp(c.xp||0).level}</div><div class="csb-label">NIVEAU</div></div>
       <div><div class="csb-val">${(c.xp||0).toLocaleString()}</div><div class="csb-label">XP</div></div>
       ${c.available_stat_points?`<div><div class="csb-val" style="color:var(--gold)">${c.available_stat_points}</div><div class="csb-label">STAT PTS</div></div>`:''}
     </div>`;
@@ -973,11 +975,14 @@ function renderFullChar(){
   Object.values(ITEM_SETS).forEach(sd=>{
     const cnt=sd.items.filter(i=>eqSet.has(i)).length;
     if(cnt<2)return;
-    const best=Object.keys(sd.bonuses).map(Number).sort((a,b)=>b-a).find(t=>cnt>=t);
-    if(best==null)return;
-    const b=sd.bonuses[String(best)]||sd.bonuses[best]||{};
-    if(b.stats)Object.entries(b.stats).forEach(([s,v])=>{bonuses[s]=(bonuses[s]||0)+v;});
-    if(b.stats_all)SK.forEach(s=>{bonuses[s]=(bonuses[s]||0)+b.stats_all;});
+    const thresholds=Object.keys(sd.bonuses).map(Number).sort((a,b)=>a-b);
+    for(const t of thresholds){
+      if(cnt>=t){
+        const b=sd.bonuses[String(t)]||sd.bonuses[t]||{};
+        if(b.stats)Object.entries(b.stats).forEach(([s,v])=>{bonuses[s]=(bonuses[s]||0)+v;});
+        if(b.stats_all)SK.forEach(s=>{bonuses[s]=(bonuses[s]||0)+b.stats_all;});
+      }
+    }
   });
   if(PARTY_DATA&&PARTY_DATA.members){
     const me=(PARTY_DATA.members||[]).find(m=>m.char_key===UID+'_'+CHAR_ID);
@@ -1112,7 +1117,7 @@ function renderItemsGrid(){
 function renderEquipBonuses(){
   const equipped=INV_DATA.equipped_assets||[];
   const totals={};
-  const ALL_STAT_KEYS=['strength','agility','speed','intelligence','mana','resistance','charisma'];
+  const ALL_STAT_KEYS=['strength','agility','speed','intelligence','mana','resistance','charisma','aura'];
 
   // Bonus directs items
   equipped.forEach(id=>{
@@ -1134,7 +1139,6 @@ function renderEquipBonuses(){
         const bonus=setDef.bonuses[String(t)]||setDef.bonuses[t];
         if(bonus.stats)Object.entries(bonus.stats).forEach(([s,v])=>{totals[s]=(totals[s]||0)+v;});
         if(bonus.stats_all)ALL_STAT_KEYS.forEach(s=>{totals[s]=(totals[s]||0)+bonus.stats_all;});
-        break;
       }
     }
   });
@@ -1423,7 +1427,7 @@ async function setTheme(theme){
 // ── TABS ──
 const LAZY={
   personnage:()=>{if(CHAR)renderFullChar();},
-  inventaire:()=>{if(!INV_DATA)loadInventory();},
+  inventaire:()=>{if(INV_DATA&&Object.keys(ALL_ITEMS_DATA).length){renderInventory();}else{loadInventory();}},
   gacha:()=>{if(PLAYER)renderGacha();},
   party:loadParty,
   progression:()=>{if(CHAR)renderProgression();initAlloc();},
@@ -1479,7 +1483,7 @@ function showToast(msg,type='success',dur=3500){
   t.textContent=msg;t.className=`toast ${type} show`;
   clearTimeout(t._t);t._t=setTimeout(()=>{t.className='toast'},dur);
 }
-window.addEventListener('scroll',()=>{document.getElementById('scroll-line').style.width=(window.scrollY/(document.body.scrollHeight-window.innerHeight)*100)+'%'});
+window.addEventListener('scroll',()=>{const max=document.body.scrollHeight-window.innerHeight;document.getElementById('scroll-line').style.width=(max>0?(window.scrollY/max*100):0)+'%'});
 
 
 // ══════════════════════════════════════════════
@@ -1883,7 +1887,7 @@ async function buyFromUshop(itemId){
   }catch(err){console.error('[USHOP_BUY]',err);showEquipToast('❌ Erreur achat',true);}
 }
 
-document.addEventListener('DOMContentLoaded', init);
+
 </script>
 <script src="js/page-transition.js"></script>
 </body>
