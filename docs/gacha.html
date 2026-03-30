@@ -613,8 +613,8 @@ const db=firebase.firestore();
 (function(){
   var SPECIALZ_INDEX = 3; // SPECIALZ in ALL_TRACKS
   var BO2_INDEX = 2;      // Black Ops 2 in ALL_TRACKS
-  var roll = Math.floor(Math.random() * 1000); // 0..999
-  var isSpecialRoll = (roll === 0);
+var roll = Math.floor(Math.random() * 2); // 0..1
+var isSpecialRoll = (roll === 0);
   window.GACHA_SPECIALZ_ACTIVE = isSpecialRoll;
   window.GACHA_SPECIALZ_FIRST_PULL_USED = false;
   if (isSpecialRoll) {
