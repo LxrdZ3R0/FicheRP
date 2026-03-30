@@ -4,7 +4,7 @@
    ═══════════════════════════════════════════════════════════════ */
 (function () {
   var TRACKS = [
-    'https://firebasestorage.googleapis.com/v0/b/jaharta-rp.firebasestorage.app/o/audio%2FThe%20Rebel%20Path.mp3?alt=media&token=3401b5b9-6c2e-47e7-a982-5fd0e8dff5bc',
+    'https://firebasestorage.googleapis.com/v0/b/jaharta-rp.firebasestorage.app/o/audio%2FTVアニメ『呪術廻戦』第2期「渋谷事変」ノンクレジットOPムービー／OPテーマ：King%20Gnu「SPECIALZ」｜毎週木曜夜11時56分～MBSTBS系列全国28局にて放送中!!.mp3?alt=media&token=578e6bec-3183-4369-afb6-b46b543ef718',
     'https://firebasestorage.googleapis.com/v0/b/jaharta-rp.firebasestorage.app/o/audio%2F%C3%B8fdream%20-%20thelema%20(slowed%20%26%20bass%20boosted).mp3?alt=media&token=e42405d3-bcd9-4ff5-974e-622d79215bce',
   ];
 
