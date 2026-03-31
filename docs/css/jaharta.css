@@ -2415,3 +2415,8 @@ a.admin-badge:hover { border-color: rgba(0,255,136,0.6); box-shadow: 0 0 12px rg
 
 /* PNJ card hover shows scanlines */
 .pnj-card:hover .hpx-ov{opacity:1!important;}
+
+/* ═══ BURGER NAV GLOBAL OVERRIDE ═══ */
+.nav-links{display:none!important}
+.nav-toggle{display:none!important}
+.nav-backdrop{display:none!important}
