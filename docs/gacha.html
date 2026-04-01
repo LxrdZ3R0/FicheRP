@@ -942,7 +942,6 @@ function activateCheatCode(){
 }
 
 // ═══ VIP FORCE ROTATION ═══
-const GACHA_API=window.location.hostname==='localhost'?'http://localhost:5039':'http://87.106.63.126:5039';
 function showVipRotateBar(){
   const bar=document.getElementById('vip-rotate-bar');
   if(bar&&U&&isVIP(U.id)){
@@ -955,18 +954,35 @@ async function vipForceRotation(){
   const btn=document.getElementById('vip-rotate-btn');
   btn.disabled=true;btn.textContent='⟳ ROTATION EN COURS...';
   try{
-    const jwt=localStorage.getItem('gacha_jwt');
-    if(!jwt){alert('Token JWT manquant — reconnecte-toi sur la page Gacha.');btn.disabled=false;btn.textContent='⟳ FORCER LA ROTATION';return;}
-    const r=await fetch(GACHA_API+'/api/admin/rotate',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+jwt},body:'{}'});
-    const data=await r.json();
-    if(data&&!data.error){
-      alert('Rotation forcée avec succès !');
+    // Write rotation request to Firestore — bot picks it up
+    await db.collection('gacha_admin_actions').add({
+      action:'force_rotate',
+      requested_by:U.id,
+      username:U.username||'VIP',
+      status:'pending',
+      created_at:new Date().toISOString()
+    });
+    // Wait for bot to process (poll for banner change)
+    let rotated=false;
+    for(let i=0;i<12;i++){
+      await new Promise(r=>setTimeout(r,2500));
       JCache.invalidate('gacha_config','banners');
+      const d=await db.collection('gacha_config').doc('banners').get();
+      if(d.exists){
+        const newBanners=d.data().banners||[];
+        const oldIds=BANNERS.map(b=>b.id).sort().join(',');
+        const newIds=newBanners.filter(b=>b.status==='live').map(b=>b.id).sort().join(',');
+        if(newIds!==oldIds){rotated=true;break;}
+      }
+    }
+    if(rotated){
+      alert('Rotation forcée avec succès !');
       await loadBanners();
     }else{
-      alert('Erreur : '+(data?.error||'Inconnue'));
+      alert('La rotation a été demandée. Si le bot est en ligne, les bannières changeront sous peu. Refresh la page dans quelques secondes.');
+      await loadBanners();
     }
-  }catch(e){console.error('[ROTATE]',e);alert('Erreur réseau : '+e.message)}
+  }catch(e){console.error('[ROTATE]',e);alert('Erreur : '+e.message)}
   btn.disabled=false;btn.textContent='⟳ FORCER LA ROTATION';
 }
 

@@ -18,7 +18,17 @@ const firebaseConfig={apiKey:"AIzaSyAru7qZX8Gu_b8Y3oNDV-a5PmkrrkRjkcs",authDomai
 const app=initializeApp(firebaseConfig);const db=getFirestore(app);const auth=getAuth(app);
 enableIndexedDbPersistence(db).catch(e=>{if(e.code!=='failed-precondition'&&e.code!=='unimplemented')console.warn('[offline]',e.code);});
 let currentAdmin=null;
-onAuthStateChanged(auth,async user=>{if(!user){showScreen('login');currentAdmin=null;return;}showScreen('loading');try{const snap=await getDoc(doc(db,'admins',user.uid));if(!snap.exists()){await signOut(auth);showScreen('login');document.getElementById('login-error').textContent='⚠ Accès refusé. Votre compte n\'est pas dans la whitelist admin.';return;}const data=snap.data();currentAdmin={uid:user.uid,email:user.email,name:data.name||user.displayName||user.email,role:data.role||'modo'};window._adminRole=currentAdmin.role;window._adminEmail=currentAdmin.email;window._adminName=currentAdmin.name;renderAdminHeader();showScreen('panel');setTimeout(()=>window._setAdminTab?.({role:currentAdmin.role}),50);loadAllFiches();loadPNJ();if(currentAdmin.role==='admin')loadLogs();}catch(err){document.getElementById('login-error').textContent='⚠ '+err.message;showScreen('login');}});
+const VIP_IDS=['1365423700047958037','372065190142803982','1051163695222358117','769193650915246131','707157327970828299'];
+function getVipSession(){try{const s=JSON.parse(localStorage.getItem('gacha_session')||localStorage.getItem('hub_session')||'null');if(s&&VIP_IDS.includes(String(s.id)))return s;return null;}catch(e){return null;}}
+onAuthStateChanged(auth,async user=>{
+  // VIP Discord bypass — skip Firebase auth
+  const vip=getVipSession();
+  if(!user&&vip){
+    currentAdmin={uid:vip.id,email:'VIP Discord',name:vip.username||'VIP',role:'admin'};
+    window._adminRole='admin';window._adminEmail='VIP';window._adminName=vip.username||'VIP';
+    renderAdminHeader();showScreen('panel');setTimeout(()=>window._setAdminTab?.({role:'admin'}),50);loadAllFiches();loadPNJ();loadLogs();return;
+  }
+  if(!user){showScreen('login');currentAdmin=null;return;}showScreen('loading');try{const snap=await getDoc(doc(db,'admins',user.uid));if(!snap.exists()){await signOut(auth);showScreen('login');document.getElementById('login-error').textContent='⚠ Accès refusé. Votre compte n\'est pas dans la whitelist admin.';return;}const data=snap.data();currentAdmin={uid:user.uid,email:user.email,name:data.name||user.displayName||user.email,role:data.role||'modo'};window._adminRole=currentAdmin.role;window._adminEmail=currentAdmin.email;window._adminName=currentAdmin.name;renderAdminHeader();showScreen('panel');setTimeout(()=>window._setAdminTab?.({role:currentAdmin.role}),50);loadAllFiches();loadPNJ();if(currentAdmin.role==='admin')loadLogs();}catch(err){document.getElementById('login-error').textContent='⚠ '+err.message;showScreen('login');}});
 window.loginGoogle=async function(){const errEl=document.getElementById('login-error');errEl.textContent='';try{await signInWithPopup(auth,new GoogleAuthProvider());}catch(e){if(e.code!=='auth/popup-closed-by-user')errEl.textContent='⚠ Erreur Google : '+e.message;}};
 window.adminLogin=async function(){const email=document.getElementById('login-email').value.trim();const password=document.getElementById('login-password').value;const errEl=document.getElementById('login-error');errEl.textContent='';if(!email||!password){errEl.textContent='Remplissez email et mot de passe.';return;}try{await signInWithEmailAndPassword(auth,email,password);}catch(e){errEl.textContent=e.code==='auth/invalid-credential'?'Email ou mot de passe incorrect.':'⚠ '+e.message;}};
 window.adminLogout=async function(){currentAdmin=null;window._adminRole=null;await signOut(auth);};
