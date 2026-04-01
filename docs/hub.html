@@ -195,6 +195,22 @@ body::after{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;o
 .nav-streak{font-family:var(--font-m);font-size:.52rem;letter-spacing:.08em;color:var(--text3)}
 .nav-streak span{color:var(--green);text-shadow:0 0 8px rgba(68,255,136,0.3)}
 
+/* Wallet */
+.wallet-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+.wallet-item{display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(4,8,20,0.8);border:1px solid rgba(0,229,255,0.06);border-radius:4px;position:relative;overflow:hidden;transition:all .3s}
+.wallet-item::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;opacity:.4}
+.wallet-item:hover{border-color:rgba(0,229,255,0.2);transform:translateX(2px)}
+.wallet-item .wi-icon{font-size:1.1rem;filter:drop-shadow(0 0 4px rgba(255,214,10,0.3))}
+.wallet-item .wi-val{font-family:var(--font-h);font-size:1rem;font-weight:700;color:var(--text)}
+.wallet-item .wi-label{font-family:var(--font-m);font-size:.42rem;letter-spacing:.12em;color:var(--text3);text-transform:uppercase}
+.wallet-item.wi-bronze::before{background:var(--orange)}.wallet-item.wi-bronze .wi-val{color:#cd7f32}
+.wallet-item.wi-silver::before{background:#c0c0c0}.wallet-item.wi-silver .wi-val{color:#c0c0c0}
+.wallet-item.wi-gold::before{background:var(--gold)}.wallet-item.wi-gold .wi-val{color:var(--gold)}
+.wallet-item.wi-platinum::before{background:var(--cyan)}.wallet-item.wi-platinum .wi-val{color:var(--cyan)}
+.wallet-item.wi-navarite::before{background:var(--violet)}.wallet-item.wi-navarite .wi-val{color:var(--violet)}
+.wallet-item.wi-golden-egg::before{background:#ffd60a;box-shadow:0 0 8px rgba(255,214,10,0.4)}.wallet-item.wi-golden-egg .wi-val{color:var(--gold);text-shadow:0 0 10px rgba(255,214,10,0.3)}
+.wallet-item.wi-notoriety::before{background:var(--magenta)}.wallet-item.wi-notoriety .wi-val{color:var(--magenta)}
+
 /* Stats mini — CYBERPUNK */
 .stats-mini{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
 .stat-row{display:flex;align-items:center;gap:10px;padding:12px 14px;background:rgba(4,8,20,0.8);border:1px solid rgba(0,229,255,0.06);border-radius:4px;transition:all .3s;position:relative;overflow:hidden}
@@ -672,6 +688,13 @@ body::after{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;o
           <div class="powers-list" id="dash-powers-list">
             <div class="sk" style="height:36px;border-radius:7px"></div>
             <div class="sk" style="height:36px;border-radius:7px;animation-delay:.1s"></div>
+          </div>
+        </div></div>
+        <div class="card"><div class="card-body">
+          <div class="widget-title">Portefeuille</div>
+          <div class="wallet-grid" id="dash-wallet">
+            <div class="sk" style="height:36px;border-radius:6px"></div>
+            <div class="sk" style="height:36px;border-radius:6px;animation-delay:.08s"></div>
           </div>
         </div></div>
       </div>
@@ -1209,6 +1232,52 @@ function renderPlayerWidgets(){
   const nav=PLAYER.navarites||0,streak=PLAYER.consecutive_days||0;
   document.getElementById('dash-nav-val').innerHTML=`<span>${nav.toLocaleString()}</span><span class="nav-unit">NAV</span>`;
   document.getElementById('dash-nav-streak').innerHTML=streak?`<span>${streak}</span> jour${streak>1?'s':''} consécutifs`:'Pas encore de série active';
+  // Load wallet after player data is ready
+  loadWallet();
+}
+
+async function loadWallet(){
+  const walletEl=document.getElementById('dash-wallet');
+  if(!walletEl)return;
+  // Gather all currency data
+  const nav=PLAYER.navarites||0;
+  const notoriety=PLAYER.notoriety||0;
+  const goldenEggs=PLAYER.golden_eggs||0;
+  // Load economy data for kanite currencies
+  let bronze=0,silver=0,gold=0,platinum=0;
+  if(UID&&CHAR_ID){
+    try{
+      const charKey=`${UID}_${CHAR_ID}`;
+      const snap=await db.collection(C.ECONOMY).doc(charKey).get();
+      if(snap.exists){
+        const personal=snap.data().personal||{};
+        bronze=personal.bronze_kanite||0;
+        silver=personal.silver_kanite||0;
+        gold=personal.gold_kanite||0;
+        platinum=personal.platinum_kanite||0;
+      }
+    }catch(e){console.error('[WALLET]',e)}
+  }
+  // Build wallet items — always show navarites and golden eggs, show kanites if > 0
+  let html='';
+  // Currency icon URLs
+  const IC={
+    nav:'https://firebasestorage.googleapis.com/v0/b/jaharta-rp.firebasestorage.app/o/icons%2FNavarite.png?alt=media&token=4b19c26d-c28e-426e-89ca-0fe381708ece',
+    egg:'https://firebasestorage.googleapis.com/v0/b/jaharta-rp.firebasestorage.app/o/icons%2FGolden%20Egg.png?alt=media&token=f2758281-8c47-428d-b071-d934cf7b1df6',
+    bronze:'https://firebasestorage.googleapis.com/v0/b/jaharta-rp.firebasestorage.app/o/icons%2Fbronze%20Kanite.png?alt=media&token=8caf5762-a623-4edc-9e06-50438996569b',
+    silver:'https://firebasestorage.googleapis.com/v0/b/jaharta-rp.firebasestorage.app/o/icons%2FSilver%20Kanite.png?alt=media&token=2ee7b03c-930e-4108-b633-b358eb166b07',
+    gold:'https://firebasestorage.googleapis.com/v0/b/jaharta-rp.firebasestorage.app/o/icons%2Fbronze%20Kanite.png?alt=media&token=8caf5762-a623-4edc-9e06-50438996569b',
+    platinum:'https://firebasestorage.googleapis.com/v0/b/jaharta-rp.firebasestorage.app/o/icons%2FPlatinum%20Kanite.png?alt=media&token=aceec5d7-9971-4bb5-ab1c-10162c697f00'
+  };
+  function wimg(url){return `<img src="${url}" alt="" style="width:28px;height:28px;object-fit:contain;filter:drop-shadow(0 0 4px rgba(255,214,10,0.3))">`;}
+  html+=`<div class="wallet-item wi-navarite"><span class="wi-icon">${wimg(IC.nav)}</span><div><div class="wi-val">${nav.toLocaleString()}</div><div class="wi-label">Navarites</div></div></div>`;
+  html+=`<div class="wallet-item wi-golden-egg"><span class="wi-icon">${wimg(IC.egg)}</span><div><div class="wi-val">${goldenEggs.toLocaleString()}</div><div class="wi-label">Golden Egg</div></div></div>`;
+  if(platinum>0)html+=`<div class="wallet-item wi-platinum"><span class="wi-icon">${wimg(IC.platinum)}</span><div><div class="wi-val">${platinum.toLocaleString()}</div><div class="wi-label">Platinum K</div></div></div>`;
+  if(gold>0)html+=`<div class="wallet-item wi-gold"><span class="wi-icon">${wimg(IC.gold)}</span><div><div class="wi-val">${gold.toLocaleString()}</div><div class="wi-label">Gold K</div></div></div>`;
+  if(silver>0)html+=`<div class="wallet-item wi-silver"><span class="wi-icon">${wimg(IC.silver)}</span><div><div class="wi-val">${silver.toLocaleString()}</div><div class="wi-label">Silver K</div></div></div>`;
+  if(bronze>0)html+=`<div class="wallet-item wi-bronze"><span class="wi-icon">${wimg(IC.bronze)}</span><div><div class="wi-val">${bronze.toLocaleString()}</div><div class="wi-label">Bronze K</div></div></div>`;
+  if(notoriety>0)html+=`<div class="wallet-item wi-notoriety"><span class="wi-icon">⚡</span><div><div class="wi-val">${notoriety.toLocaleString()}</div><div class="wi-label">Notoriété</div></div></div>`;
+  walletEl.innerHTML=html||'<div class="empty">Portefeuille vide</div>';
 }
 
 // ── RENDER PERSONNAGE ──

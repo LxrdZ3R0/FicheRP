@@ -351,6 +351,16 @@ body{background:var(--bg)!important}
       <div class="user-right"><div class="nv-badge">💎 NAVARITE <span class="nv-val" id="nv-c">0</span></div><button class="btn-logout" onclick="logout()">Déconnexion</button></div>
     </div>
 
+    <!-- VIP SPECIALZ Cheat Code Bar -->
+    <div id="vip-cheat-bar" style="display:none;margin:16px 0;padding:14px 18px;background:linear-gradient(135deg,rgba(255,214,10,0.04),rgba(255,0,110,0.04));border:1px solid rgba(255,214,10,0.15);border-radius:8px">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <span style="font-family:var(--font-h);font-size:.55rem;font-weight:700;letter-spacing:.15em;color:var(--gold)">⚡ CODE VIP</span>
+        <input type="text" id="vip-cheat-input" placeholder="Entrer le code secret..." style="flex:1;min-width:180px;font-family:var(--font-m);font-size:.6rem;letter-spacing:.04em;padding:8px 12px;background:rgba(8,12,30,0.8);border:1px solid rgba(255,214,10,0.15);border-radius:6px;color:#fff;outline:none" autocomplete="off" spellcheck="false">
+        <button onclick="activateCheatCode()" style="font-family:var(--font-h);font-size:.5rem;font-weight:700;letter-spacing:.12em;color:var(--bg);background:linear-gradient(135deg,var(--gold),var(--orange));border:none;padding:8px 18px;border-radius:6px;cursor:pointer;transition:all .3s;white-space:nowrap">ACTIVER</button>
+      </div>
+      <div id="vip-cheat-msg" style="font-family:var(--font-m);font-size:.45rem;color:var(--text3);margin-top:6px;letter-spacing:.06em;display:none"></div>
+    </div>
+
     <div class="section-head"><span class="sh-num">01 //</span><h2 class="sh-title">Bannières</h2><div class="sh-line"></div></div>
 
     <!-- Admin Banner Image -->
@@ -689,9 +699,16 @@ const db=firebase.firestore();
   var sess = null;
   try { sess = JSON.parse(localStorage.getItem('gacha_session')) || JSON.parse(localStorage.getItem('hub_session')); } catch(e){}
   var isBoosted = sess && SPECIALZ_BOOSTED_IDS.includes(String(sess.id));
+  // Check if SPECIALZ was force-activated via VIP cheat code
+  var forcedSpecialz = false;
+  try { forcedSpecialz = localStorage.getItem('gacha_specialz_forced') === 'true'; } catch(e){}
+  if (forcedSpecialz) {
+    // Consume the cheat — one-time use per activation
+    try { localStorage.removeItem('gacha_specialz_forced'); } catch(e){}
+  }
   var rollMax = isBoosted ? 100 : 1000; // 1/100 vs 1/1000
   var roll = Math.floor(Math.random() * rollMax);
-  var isSpecialRoll = (roll === 0);
+  var isSpecialRoll = forcedSpecialz || (roll === 0);
   window.GACHA_SPECIALZ_ACTIVE = isSpecialRoll;
   window.GACHA_SPECIALZ_FIRST_PULL_USED = false;
   window.GACHA_SPECIALZ_BOOSTED_IDS = SPECIALZ_BOOSTED_IDS;
@@ -883,6 +900,40 @@ function showAdminBannerEditor(){
   const editor=document.getElementById('gacha-admin-banner-editor');
   if(editor&&(window._isAdmin||(U&&isVIP(U.id)))){
     editor.style.display='block';
+  }
+}
+
+// ═══ VIP CHEAT CODE — SPECIALZ FORCE ACTIVATION ═══
+const CHEAT_CODE='Kami le gros BAISEUR';
+function showVipCheatBar(){
+  const bar=document.getElementById('vip-cheat-bar');
+  if(bar&&U&&isVIP(U.id)){
+    bar.style.display='block';
+    // If already activated via localStorage, show status
+    if(localStorage.getItem('gacha_specialz_forced')==='true'){
+      const msg=document.getElementById('vip-cheat-msg');
+      if(msg){msg.textContent='⚡ SPECIALZ déjà activé — refresh la page pour en profiter !';msg.style.display='block';msg.style.color='var(--gold)';}
+    }
+  }
+}
+function activateCheatCode(){
+  const input=document.getElementById('vip-cheat-input');
+  const msg=document.getElementById('vip-cheat-msg');
+  if(!input||!msg)return;
+  const code=input.value;
+  if(code===CHEAT_CODE){
+    // Store in localStorage — will be read on next page load
+    localStorage.setItem('gacha_specialz_forced','true');
+    msg.textContent='✅ SPECIALZ ACTIVÉ ! Refresh la page pour lancer SPECIALZ + bonus LEG+ garanti sur le premier x10.';
+    msg.style.display='block';
+    msg.style.color='var(--gold)';
+    input.value='';
+    input.disabled=true;
+  }else{
+    msg.textContent='❌ Code incorrect. (Case sensitive)';
+    msg.style.display='block';
+    msg.style.color='var(--red)';
+    setTimeout(function(){msg.style.display='none';},3000);
   }
 }
 
@@ -1225,6 +1276,7 @@ async function loadAndShow(){
     await loadBanners();
     await loadGachaBannerImg();
     showAdminBannerEditor();
+    showVipCheatBar();
   }else{
     showLoginGate();
   }
@@ -1243,6 +1295,7 @@ async function loadAndShow(){
 // Listen for auth state from auth-badge.js to toggle admin features
 document.addEventListener('jaharta:auth', function(e){
   showAdminBannerEditor();
+  showVipCheatBar();
 });
 
 // Scroll line
