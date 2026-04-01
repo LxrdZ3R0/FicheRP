@@ -37,7 +37,7 @@ const auth = getAuth(app);
 onAuthStateChanged(auth, user => {
 
   /* ── VIP Discord IDs — always treated as admin ── */
-  const VIP_IDS = ['1365423700047958037','372065190142803982','1051163695222358117','769193650915246131','707157327970828299'];
+  const VIP_IDS = ['1365423700047958037','372065190142803982','1051163695222358117','769193650915246131','707157327970828299','397519434895327259'];
   let isVipSession = false;
   try {
     const gs = JSON.parse(localStorage.getItem('gacha_session') || localStorage.getItem('hub_session') || 'null');
