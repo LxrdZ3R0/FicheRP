@@ -1531,12 +1531,25 @@ function cacheSet(key,data,ttl){JCache.put(key,null,data,ttl);}
 function cacheInvalidate(key){JCache.invalidate(key,null);}
 function cacheInvalidatePrefix(prefix){JCache.invalidateCollection(prefix);}
 // Raccourci : get un doc Firestore avec cache (compat SDK)
+// Utilise cacheKey comme clé de cache (au lieu de collection/docId)
+// pour que cacheInvalidate(cacheKey) fonctionne correctement
 async function cachedGet(collection,docId,cacheKey,ttl){
-  return JCache.get(db,collection,docId,ttl);
+  var cached=JCache.peek(cacheKey,null);
+  if(cached!==null) return cached;
+  var snap=await db.collection(collection).doc(docId).get();
+  var data=snap.exists?snap.data():null;
+  JCache.put(cacheKey,null,data,ttl);
+  return data;
 }
 // Raccourci : get toute une collection avec cache
 async function cachedCollection(collection,cacheKey,ttl){
-  return JCache.getAll(db,collection,ttl);
+  var cached=JCache.peek(cacheKey,null);
+  if(cached!==null) return cached;
+  var snap=await db.collection(collection).get();
+  var docs=[];
+  snap.forEach(function(d){docs.push({_key:d.id,...d.data()});});
+  JCache.put(cacheKey,null,docs,ttl);
+  return docs;
 }
 
 // ── SESSION (partagée gacha ↔ hub) ──
@@ -2780,7 +2793,7 @@ const LAZY={
   progression:()=>{if(CHAR)renderProgression();initAlloc();},
   titres:loadTitles,
   compagnons:loadCompanions,
-  monshop:loadMonShop,
+  monshop:()=>{if(_monshopLoaded){renderMonShop();}else{loadMonShop();}},
   shops:loadShops,
   ushop:loadUshop,
   parametres:renderSettings,
@@ -2837,6 +2850,7 @@ window.addEventListener('scroll',()=>{const max=document.body.scrollHeight-windo
 // MON SHOP (shop personnel du joueur)
 // ══════════════════════════════════════════════
 let MY_SHOP_DATA = null;
+let _monshopLoaded = false;
 
 async function loadMonShop(){
   const el = document.getElementById('monshop-content');
@@ -2845,6 +2859,7 @@ async function loadMonShop(){
   el.innerHTML='<div class="empty">Chargement...</div>';
   try{
     MY_SHOP_DATA = await cachedGet(C.SHOPS,`${UID}_${CHAR_ID}`,'_monshop',60);
+    _monshopLoaded = true;
     renderMonShop();
   }catch(err){ console.error('[MONSHOP]',err); el.innerHTML='<div class="empty">Erreur de chargement</div>'; }
 }

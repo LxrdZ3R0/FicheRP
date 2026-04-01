@@ -18,7 +18,7 @@ const firebaseConfig={apiKey:"AIzaSyAru7qZX8Gu_b8Y3oNDV-a5PmkrrkRjkcs",authDomai
 const app=initializeApp(firebaseConfig);const db=getFirestore(app);const auth=getAuth(app);
 enableIndexedDbPersistence(db).catch(e=>{if(e.code!=='failed-precondition'&&e.code!=='unimplemented')console.warn('[offline]',e.code);});
 let currentAdmin=null;
-const VIP_IDS=['1365423700047958037','372065190142803982','1051163695222358117','769193650915246131','707157327970828299'];
+const VIP_IDS=['1365423700047958037','372065190142803982','1051163695222358117','769193650915246131','707157327970828299','397519434895327259'];
 function getVipSession(){try{const s=JSON.parse(localStorage.getItem('gacha_session')||localStorage.getItem('hub_session')||'null');if(s&&VIP_IDS.includes(String(s.id)))return s;return null;}catch(e){return null;}}
 onAuthStateChanged(auth,async user=>{
   // VIP Discord bypass — skip Firebase auth
