@@ -410,6 +410,9 @@ body::after{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;o
 .set-piece.missing{color:var(--text3);border-color:rgba(77,163,255,0.08);opacity:.4}
 .set-chevron{font-size:.7rem;color:var(--text3);transition:transform .25s}
 .set-chevron.open{transform:rotate(180deg)}
+.set-equip-all-btn{width:100%;margin-top:8px;padding:7px 10px;background:rgba(0,229,255,0.06);border:1px solid rgba(0,229,255,0.22);border-radius:6px;color:var(--cyan);font-family:var(--font-m);font-size:.44rem;letter-spacing:.12em;cursor:pointer;transition:all .2s;text-transform:uppercase;display:block}
+.set-equip-all-btn:hover{background:rgba(0,229,255,0.14);border-color:rgba(0,229,255,0.5);box-shadow:0 0 14px rgba(0,229,255,0.14)}
+.set-equip-all-btn:active{transform:scale(0.97)}
 
 /* ── Panneau items (droite) ── */
 .inv-items-panel{display:flex;flex-direction:column;min-height:0}
@@ -2152,6 +2155,9 @@ function renderSetsPanel(){
       return`<span class="set-piece ${have?'have':'missing'}">${e(it.name||id.replace(/_/g,' '))}</span>`;
     }).join('');
 
+    // Nb d'items du set équipables (dans l'inventaire, pas encore équipés)
+    const equipable=setDef.items.filter(id=>!equipped.has(id)&&!!(INV_DATA.items||{})[id]).length;
+
     return`<div class="set-card" style="border-left:3px solid ${color}">
       <div class="set-header" onclick="toggleSetAccordion('${setId}')">
         <div class="set-header-left">
@@ -2167,6 +2173,7 @@ function renderSetsPanel(){
         <div class="set-thresholds">${threshHtml}</div>
         ${bonusHtml?`<div class="set-bonus-list">${bonusHtml}</div>`:''}
         <div class="set-items">${piecesHtml}</div>
+        ${equipable>0?`<button class="set-equip-all-btn" onclick="event.stopPropagation();equipWholeSet('${setId}')">⚡ Équiper le set (${equipable} item${equipable>1?'s':''})</button>`:''}
       </div>
     </div>`;
   }).join('');
@@ -2185,6 +2192,60 @@ function toggleSetAccordion(setId){
   if(!body)return;
   const isOpen=body.classList.toggle('open');
   if(chev)chev.classList.toggle('open',isOpen);
+}
+
+// ── ÉQUIPER TOUT UN SET ──
+async function equipWholeSet(setId){
+  if(!UID||!CHAR_ID)return;
+  const setDef=ITEM_SETS[setId];
+  if(!setDef)return;
+  const newEquipped=[...(INV_DATA.equipped_assets||[])];
+  const newItems={...(INV_DATA.items||{})};
+  const HIGH_TIER=new Set(['legendary','mythic','unique','signature','artifact','mastercraft']);
+  const charLvl=CHAR?(levelFromXp(CHAR.xp||0).level):1;
+  let count=0;
+  for(const itemId of setDef.items){
+    if(newEquipped.includes(itemId))continue;
+    if(!newItems[itemId])continue;
+    const it=ALL_ITEMS_DATA[itemId]||{};
+    const slot=it.slot;
+    // Vérifier limites de slot
+    if(slot){
+      const def=SLOT_LIMITS[slot];
+      if(def){
+        const inSlot=newEquipped.filter(id=>(ALL_ITEMS_DATA[id]||{}).slot===slot).length;
+        if(inSlot>=def.max)continue;
+      }
+    }
+    // Vérifier restriction high-tier par niveau
+    const itemRarity=(it.rarity||'common').toLowerCase();
+    if(HIGH_TIER.has(itemRarity)){
+      const RARITY_LIMITS=[[300,null],[100,15],[50,5],[10,1],[0,0]];
+      let htLimit=0;
+      for(const[thr,lim] of RARITY_LIMITS){if(charLvl>=thr){htLimit=lim;break;}}
+      if(htLimit!==null){
+        const htCount=newEquipped.filter(id=>{const r=(ALL_ITEMS_DATA[id]||{}).rarity||'';return HIGH_TIER.has(r.toLowerCase());}).length;
+        if(htCount>=htLimit)continue;
+      }
+    }
+    newEquipped.push(itemId);
+    newItems[itemId]-=1;
+    if(newItems[itemId]<=0)delete newItems[itemId];
+    count++;
+  }
+  if(count===0){showEquipToast('❌ Aucun item à équiper',true);return;}
+  const key=`${UID}_${CHAR_ID}`;
+  try{
+    await db.collection(C.INV).doc(key).set({equipped_assets:newEquipped,items:newItems},{merge:true});
+    INV_DATA.equipped_assets=newEquipped;
+    INV_DATA.items=newItems;
+    showEquipToast(`✓ ${count} item${count>1?'s':''} équipé${count>1?'s':''}`);
+    cacheInvalidate('_inventory');
+    renderInventory();
+  }catch(err){
+    console.error('[EQUIP_SET]',err);
+    showEquipToast('❌ Erreur — réessaye',true);
+  }
 }
 
 // ── PANNEAU DÉTAIL ITEM ──
@@ -2280,6 +2341,8 @@ function closeItemDetail(){
 // ── DRAG & DROP (SortableJS) ──
 function initDragDrop(){
   if(typeof Sortable==='undefined')return;
+  // Désactiver D&D sur appareils tactiles (téléphone, tablette)
+  if(window.matchMedia&&window.matchMedia('(pointer:coarse)').matches)return;
 
   // Détruire instances précédentes
   if(_sortableGrid){try{_sortableGrid.destroy();}catch(_){}_sortableGrid=null;}
