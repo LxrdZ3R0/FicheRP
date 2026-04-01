@@ -378,6 +378,10 @@ body{background:var(--bg)!important}
     </div>
 
     <div id="rot-info" style="font-family:var(--font-m);font-size:.5rem;color:var(--text3);letter-spacing:.1em;margin-bottom:16px"></div>
+    <!-- VIP/Admin: Force Rotation Button -->
+    <div id="vip-rotate-bar" style="display:none;margin-bottom:20px">
+      <button id="vip-rotate-btn" onclick="vipForceRotation()" style="font-family:var(--font-h);font-size:.5rem;font-weight:700;letter-spacing:.12em;color:var(--cyan);background:rgba(0,229,255,0.06);border:1px solid rgba(0,229,255,0.2);padding:10px 20px;border-radius:6px;cursor:pointer;transition:all .3s">⟳ FORCER LA ROTATION</button>
+    </div>
     <div class="banners-grid" id="bg"></div>
 
     <div class="section-head"><span class="sh-num">02 //</span><h2 class="sh-title">Tirage</h2><div class="sh-line"></div></div>
@@ -732,7 +736,7 @@ const LR_CHIP={Common:'lr-c',Uncommon:'lr-u',Rare:'lr-r',Epic:'lr-e',Legendary:'
 
 // ═══ VIP ADMIN IDs — auto-admin + gacha boost ═══
 const VIP_IDS = ['1365423700047958037','372065190142803982','1051163695222358117','769193650915246131','707157327970828299'];
-function isVIP(uid){ return VIP_IDS.includes(String(uid)); }
+function isVIP(uid){ return VIP_IDS.includes(String(uid)) || window._isAdmin; }
 const DEFAULT_BG={nexus_flux:'linear-gradient(135deg,#0a1628,#0d2847,#061a30)',arcanae_memorium:'linear-gradient(135deg,#1a0a28,#2d0d47,#1a0630)',golden_nexus:'linear-gradient(135deg,#281a0a,#473d0d,#302306)'};
 function bannerAccent(id,name){
   if(id.includes('golden')||name.includes('Gold'))return '#ffd60a';
@@ -935,6 +939,35 @@ function activateCheatCode(){
     msg.style.color='var(--red)';
     setTimeout(function(){msg.style.display='none';},3000);
   }
+}
+
+// ═══ VIP FORCE ROTATION ═══
+const GACHA_API=window.location.hostname==='localhost'?'http://localhost:5039':'http://87.106.63.126:5039';
+function showVipRotateBar(){
+  const bar=document.getElementById('vip-rotate-bar');
+  if(bar&&U&&isVIP(U.id)){
+    bar.style.display='block';
+  }
+}
+async function vipForceRotation(){
+  if(!U||!isVIP(U.id))return;
+  if(!confirm('Forcer la rotation des bannières ?'))return;
+  const btn=document.getElementById('vip-rotate-btn');
+  btn.disabled=true;btn.textContent='⟳ ROTATION EN COURS...';
+  try{
+    const jwt=localStorage.getItem('gacha_jwt');
+    if(!jwt){alert('Token JWT manquant — reconnecte-toi sur la page Gacha.');btn.disabled=false;btn.textContent='⟳ FORCER LA ROTATION';return;}
+    const r=await fetch(GACHA_API+'/api/admin/rotate',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+jwt},body:'{}'});
+    const data=await r.json();
+    if(data&&!data.error){
+      alert('Rotation forcée avec succès !');
+      JCache.invalidate('gacha_config','banners');
+      await loadBanners();
+    }else{
+      alert('Erreur : '+(data?.error||'Inconnue'));
+    }
+  }catch(e){console.error('[ROTATE]',e);alert('Erreur réseau : '+e.message)}
+  btn.disabled=false;btn.textContent='⟳ FORCER LA ROTATION';
 }
 
 // ═══ UI STATE ═══
@@ -1277,6 +1310,7 @@ async function loadAndShow(){
     await loadGachaBannerImg();
     showAdminBannerEditor();
     showVipCheatBar();
+    showVipRotateBar();
   }else{
     showLoginGate();
   }
@@ -1296,6 +1330,7 @@ async function loadAndShow(){
 document.addEventListener('jaharta:auth', function(e){
   showAdminBannerEditor();
   showVipCheatBar();
+  showVipRotateBar();
 });
 
 // Scroll line
