@@ -11,6 +11,11 @@
 <link rel="apple-touch-icon" sizes="180x180" href="img/favicon-180.png">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Exo+2:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/jaharta.css">
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+<script src="https://unpkg.com/@popperjs/core@2/dist/umd/popper.min.js"></script>
+<script src="https://unpkg.com/tippy.js@6/dist/tippy-bundle.umd.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/tippy.js@6/dist/tippy.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <style>
 :root{
   --font-h:'Orbitron',sans-serif;--font-b:'Rajdhani',sans-serif;
@@ -254,76 +259,311 @@ body::after{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;o
 .power-card-qual{font-family:var(--font-m);font-size:.42rem;letter-spacing:.1em;margin-top:2px}
 .power-card-qual.common{color:#6b7280}.power-card-qual.uncommon{color:#60a5fa}.power-card-qual.rare{color:#a78bfa}.power-card-qual.epic{color:var(--violet)}.power-card-qual.legendary{color:var(--gold)}.power-card-qual.mythic{color:var(--orange)}.power-card-qual.unique{color:var(--gold)}.power-card-qual.artifact{color:var(--red)}.power-card-qual.mastercraft{color:var(--magenta)}
 
-/* ═══ INVENTAIRE ═══ */
-.inv-layout{display:grid;grid-template-columns:280px 1fr;gap:20px;align-items:start}
-.slot-group{background:rgba(12,18,40,0.6);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:8px}
-.slot-group-title{font-family:var(--font-m);font-size:.5rem;letter-spacing:.15em;color:var(--text3);padding:8px 14px;background:rgba(77,163,255,0.04);border-bottom:1px solid var(--border);text-transform:uppercase}
-.slot-item{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid rgba(77,163,255,0.05);cursor:pointer;transition:background .2s}
-.slot-item:last-child{border-bottom:none}
-.slot-item:hover{background:rgba(77,163,255,0.05)}
-.slot-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.slot-dot.filled{background:var(--blue);box-shadow:0 0 6px var(--blue)}
-.slot-dot.empty{background:rgba(77,163,255,0.15);border:1px solid rgba(77,163,255,0.2)}
-.slot-label{font-family:var(--font-m);font-size:.5rem;letter-spacing:.08em;color:var(--text3);flex:1}
-.slot-count{font-family:var(--font-h);font-size:.65rem;font-weight:700;color:var(--text)}
-.inv-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:16px;flex-wrap:wrap}
-.inv-tab{font-family:var(--font-b);font-size:.72rem;font-weight:600;letter-spacing:.06em;color:var(--text3);background:none;border:none;border-bottom:2px solid transparent;padding:10px 14px;cursor:pointer;transition:all .2s}
-.inv-tab.active{color:var(--blue);border-bottom-color:var(--blue)}
-.inv-grid,.inv-grid-sub{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
-.inv-group-header{font-family:var(--font-m);font-size:.52rem;letter-spacing:.18em;color:var(--blue);padding:12px 0 6px;border-bottom:1px solid rgba(77,163,255,0.1);margin-bottom:8px;text-transform:uppercase}
-.inv-group-count{color:var(--text3);font-weight:400}
-.filter-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
-.filter-select{font-family:var(--font-m);font-size:.55rem;letter-spacing:.06em;color:var(--text);background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 10px;cursor:pointer;transition:border-color .2s}
-.filter-select:focus{border-color:var(--blue)}
-.filter-select option{background:#0c1228;color:var(--text)}
+/* ═══ INVENTAIRE CYBERPUNK ═══ */
 
-/* Item cards — 3D flip on click — CYBERPUNK */
-.item-card-wrap{perspective:600px;cursor:pointer}
-.item-card{position:relative;transform-style:preserve-3d;transition:transform .6s cubic-bezier(0.4,0,0.2,1);border-radius:4px}
-.item-card.flipped{transform:rotateY(180deg)}
-.item-card-front,.item-card-back{backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:4px;background:linear-gradient(135deg,rgba(8,14,32,0.85),rgba(4,8,20,0.7));border:1px solid rgba(0,229,255,0.06);overflow:hidden;position:relative}
-.item-card-front{padding:14px;display:flex;flex-direction:column;gap:4px;transition:border-color .3s,box-shadow .3s}
-.item-card-front::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,229,255,0.25),transparent)}
-.item-card-wrap:hover .item-card-front{border-color:rgba(0,229,255,0.25);box-shadow:0 0 20px rgba(0,229,255,0.06),0 4px 30px rgba(0,0,0,0.3)}
-.item-card-back{position:absolute;inset:0;transform:rotateY(180deg);padding:14px;display:flex;flex-direction:column;gap:6px;justify-content:center}
-.item-card-back::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(139,92,246,0.4),transparent)}
-.item-card-back::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,229,255,0.01) 2px,rgba(0,229,255,0.01) 4px);pointer-events:none}
-.item-back-title{font-family:var(--font-h);font-size:.52rem;font-weight:700;letter-spacing:.15em;color:var(--text);margin-bottom:4px}
-.item-back-stat{display:flex;justify-content:space-between;padding:3px 0;font-family:var(--font-m);font-size:.48rem;border-bottom:1px solid rgba(77,163,255,0.04)}
-.item-back-stat-name{color:var(--text3)}
-.item-back-stat-val{color:var(--green);font-weight:600}
-.item-back-slot{font-family:var(--font-m);font-size:.42rem;letter-spacing:.1em;color:var(--text3);margin-top:4px}
-.item-back-hint{font-family:var(--font-m);font-size:.38rem;letter-spacing:.08em;color:var(--violet);margin-top:auto;text-align:center;opacity:.7}
-/* Equipped state */
-.item-card-wrap.equipped .item-card-front{border-color:rgba(68,255,136,0.3);background:linear-gradient(135deg,rgba(12,18,40,0.7),rgba(8,20,15,0.5))}
-.item-card-wrap.equipped .item-card-front::after{content:'';position:absolute;top:0;left:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--green),rgba(68,255,136,0.2));border-radius:0 3px 3px 0}
-.item-equip-badge{position:absolute;top:8px;right:8px;font-family:var(--font-m);font-size:.38rem;letter-spacing:.1em;padding:3px 8px;border-radius:4px;z-index:2}
-.item-equip-badge.on{background:rgba(68,255,136,0.12);color:var(--green);border:1px solid rgba(68,255,136,0.3);box-shadow:0 0 8px rgba(68,255,136,0.1)}
-.item-equip-badge.off{background:rgba(77,163,255,0.06);color:var(--text3);border:1px solid rgba(77,163,255,0.15)}
-.item-icon-big{font-size:1.8rem;filter:drop-shadow(0 0 6px rgba(77,163,255,0.2))}
-.item-name,.item-name-sm{font-family:var(--font-b);font-weight:700;font-size:.82rem}
-.item-slot-tag{font-family:var(--font-m);font-size:.42rem;letter-spacing:.08em;color:var(--text3)}
-.item-effects{font-family:var(--font-m);font-size:.46rem;color:var(--green);font-weight:500}
-.item-qty{font-family:var(--font-m);font-size:.44rem;color:var(--text3);letter-spacing:.08em}
-.equip-bonus-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px}
-.equip-bonus-block{padding:12px;background:rgba(8,12,28,0.5);border:1px solid rgba(68,255,136,0.08);border-radius:8px;text-align:center}
-.equip-bonus-val{font-family:var(--font-h);font-weight:800;font-size:1.3rem;color:var(--green)}
-.equip-bonus-name{font-family:var(--font-m);font-size:.44rem;letter-spacing:.08em;color:var(--text3);margin-top:4px}
+/* Layout principal split-view */
+.inv-cyberpunk{display:grid;grid-template-columns:520px 1fr;gap:0;min-height:72vh;border:1px solid rgba(0,229,255,0.07);border-radius:12px;overflow:hidden;background:rgba(2,5,14,0.6)}
 
-/* Sets */
-.set-card{background:rgba(12,18,40,0.6);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:10px;position:relative}
-.set-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-.set-name{font-family:var(--font-h);font-size:.72rem;font-weight:700;letter-spacing:.08em}
-.set-count{font-family:var(--font-m);font-size:.52rem;letter-spacing:.1em}
-.set-thresholds{display:flex;gap:6px;margin-bottom:8px}
-.set-thresh{font-family:var(--font-m);font-size:.42rem;letter-spacing:.08em;padding:2px 6px;border-radius:3px;border:1px solid rgba(77,163,255,0.15)}
-.set-thresh.active{border-color:rgba(68,255,136,0.3);color:var(--green);background:rgba(68,255,136,0.06)}
-.set-thresh.inactive{color:var(--text3);opacity:.5}
-.set-bonus{margin-bottom:8px}
-.set-items{display:flex;flex-wrap:wrap;gap:4px}
-.set-piece{font-family:var(--font-m);font-size:.42rem;letter-spacing:.06em;padding:2px 6px;border-radius:3px;border:1px solid rgba(77,163,255,0.1)}
-.set-piece.have{color:var(--green);border-color:rgba(68,255,136,0.2);background:rgba(68,255,136,0.04)}
-.set-piece.missing{color:var(--text3);opacity:.45}
+/* ── Panneau personnage — Cyberpunk 2077 3 colonnes ── */
+.inv-character-panel{
+  background:rgba(2,4,16,0.98);
+  border-right:1px solid rgba(0,229,255,0.12);
+  display:flex;flex-direction:column;gap:0;
+  position:relative;overflow-y:auto;max-height:85vh;
+}
+.inv-character-panel::before{
+  content:'';position:absolute;inset:0;pointer-events:none;z-index:0;
+  background-image:
+    linear-gradient(rgba(0,229,255,0.03) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,229,255,0.03) 1px,transparent 1px);
+  background-size:28px 28px;
+}
+.inv-character-panel::after{
+  content:'';position:absolute;inset:0;pointer-events:none;z-index:0;
+  background:linear-gradient(180deg,rgba(0,229,255,0.02) 0%,transparent 40%,rgba(255,30,20,0.014) 100%);
+}
+.inv-char-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 16px 10px;border-bottom:1px solid rgba(0,229,255,0.1);
+  position:relative;z-index:1;background:rgba(0,229,255,0.018);flex-shrink:0;
+}
+.inv-char-title{
+  font-family:var(--font-m);font-size:.5rem;letter-spacing:.22em;
+  color:var(--cyan);text-shadow:0 0 14px rgba(0,229,255,0.7),0 0 28px rgba(0,229,255,0.3);
+}
+.inv-char-count{
+  font-family:var(--font-m);font-size:.44rem;letter-spacing:.1em;
+  color:var(--orange);text-shadow:0 0 8px rgba(255,152,0,0.5);
+}
+
+/* ── Layout 3 colonnes ── */
+.cyb-panel{
+  display:grid;grid-template-columns:168px 1fr 168px;
+  min-height:540px;position:relative;z-index:1;flex:1;
+}
+.cyb-col{display:flex;flex-direction:column;justify-content:space-around;padding:14px 6px}
+.cyb-col-left{padding-left:10px;padding-right:4px}
+.cyb-col-right{padding-right:10px;padding-left:4px}
+
+/* Groupes de slots — maintenant en flux (plus d'absolute) */
+.slot-zone{
+  position:relative;cursor:default;
+  display:flex;flex-direction:column;gap:5px;
+}
+.cyb-col-left  .slot-zone{align-items:flex-end}
+.cyb-col-right .slot-zone{align-items:flex-start}
+
+/* Labels de groupe */
+.slot-zone-label{
+  font-family:var(--font-m);font-size:.34rem;letter-spacing:.16em;
+  color:var(--cyan);text-shadow:0 0 10px rgba(0,229,255,0.55);
+  text-transform:uppercase;white-space:nowrap;
+}
+/* Rangées de cellules */
+.slot-cells{display:flex;flex-wrap:wrap;gap:3px;justify-content:flex-end}
+.cyb-col-right .slot-cells{justify-content:flex-start}
+
+/* Centre SVG */
+.cyb-center{position:relative;display:flex;align-items:stretch;justify-content:center}
+#cyb-figure-svg{width:100%;height:540px;display:block;overflow:visible}
+
+/* Placeholder SANGUIN (aucun slot Firebase) */
+.cyb-slot-placeholder{
+  font-family:var(--font-m);font-size:.35rem;letter-spacing:.08em;
+  color:rgba(0,229,255,0.18);padding:4px 0;
+}
+
+/* ── Cellules de slot ── */
+.slot-cell{
+  width:28px;height:28px;border-radius:4px;
+  border:1.5px solid rgba(0,229,255,0.18);
+  background:rgba(0,229,255,0.03);
+  display:flex;align-items:center;justify-content:center;
+  font-size:.85rem;cursor:pointer;flex-shrink:0;
+  position:relative;transition:border-color .25s,box-shadow .25s;
+}
+.slot-cell.empty-cell{
+  border:1.5px dashed rgba(0,229,255,0.22);background:transparent;
+  animation:emptySlotPulse 3.2s ease-in-out infinite;
+}
+@keyframes emptySlotPulse{
+  0%,100%{border-color:rgba(0,229,255,0.15);box-shadow:none}
+  50%{border-color:rgba(0,229,255,0.4);box-shadow:0 0 7px rgba(0,229,255,0.14)}
+}
+.slot-cell.occupied{
+  border:1.5px solid rgba(255,214,10,0.65);background:rgba(255,214,10,0.06);
+  animation:goldPulse 2.6s ease-in-out infinite;
+}
+@keyframes goldPulse{
+  0%,100%{box-shadow:inset 0 0 8px rgba(255,214,10,0.08),0 0 10px rgba(255,214,10,0.2)}
+  50%{box-shadow:inset 0 0 14px rgba(255,214,10,0.16),0 0 20px rgba(255,214,10,0.38),0 0 36px rgba(255,214,10,0.12)}
+}
+.slot-cell.occupied:hover{
+  border-color:rgba(255,71,87,0.7);background:rgba(255,71,87,0.09);
+  box-shadow:0 0 14px rgba(255,71,87,0.3);animation:none;
+}
+/* Armes — accent orange */
+.slot-zone[data-slot="armes_h"] .slot-cell{border-color:rgba(255,152,0,0.22)}
+.slot-zone[data-slot="armes_h"] .slot-cell.occupied{
+  border-color:rgba(255,152,0,0.75);background:rgba(255,152,0,0.07);
+  box-shadow:inset 0 0 10px rgba(255,152,0,0.1),0 0 14px rgba(255,152,0,0.3);animation:none;
+}
+/* Drag-over */
+.slot-zone.drag-over .slot-cell.empty-cell{
+  border-color:rgba(0,229,255,0.75);background:rgba(0,229,255,0.1);
+  box-shadow:0 0 18px rgba(0,229,255,0.28);animation:none;
+}
+
+/* Stats summary */
+.inv-stats-summary{padding:14px 16px;border-top:1px solid rgba(0,229,255,0.07);position:relative;z-index:1}
+.inv-stats-title{font-family:var(--font-m);font-size:.44rem;letter-spacing:.2em;color:rgba(0,229,255,0.5);margin-bottom:10px}
+.equip-bonus-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.equip-bonus-block{padding:7px 4px;background:rgba(8,12,28,0.6);border:1px solid rgba(68,255,136,0.08);border-radius:6px;text-align:center;transition:border-color .3s}
+.equip-bonus-block:hover{border-color:rgba(68,255,136,0.2)}
+.equip-bonus-val{font-family:var(--font-h);font-weight:800;font-size:.9rem;color:var(--green)}
+.equip-bonus-name{font-family:var(--font-m);font-size:.36rem;letter-spacing:.06em;color:var(--text3);margin-top:2px}
+
+/* Sets accordion */
+.inv-sets-accordion{border-top:1px solid rgba(0,229,255,0.07);position:relative;z-index:1;flex:1}
+.inv-sets-title{font-family:var(--font-m);font-size:.44rem;letter-spacing:.2em;color:rgba(0,229,255,0.5);padding:14px 16px 10px}
+#sets-grid{padding:0 12px 12px}
+.set-card{background:rgba(8,12,28,0.6);border:1px solid rgba(77,163,255,0.08);border-radius:8px;margin-bottom:8px;overflow:hidden}
+.set-header{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;cursor:pointer;transition:background .2s}
+.set-header:hover{background:rgba(0,229,255,0.03)}
+.set-header-left{display:flex;flex-direction:column;gap:2px}
+.set-name{font-family:var(--font-h);font-size:.6rem;font-weight:700;letter-spacing:.08em}
+.set-rarity-tag{font-family:var(--font-m);font-size:.38rem;letter-spacing:.1em;opacity:.7}
+.set-count{font-family:var(--font-m);font-size:.55rem;letter-spacing:.1em;padding:3px 8px;border-radius:4px;border:1px solid;flex-shrink:0}
+.set-count.active{color:var(--green);border-color:rgba(68,255,136,0.3);background:rgba(68,255,136,0.08)}
+.set-count.inactive{color:var(--text3);border-color:rgba(77,163,255,0.12)}
+.set-body{padding:0 12px 10px;display:none}
+.set-body.open{display:block}
+.set-thresholds{display:flex;gap:5px;margin-bottom:7px;flex-wrap:wrap}
+.set-thresh{font-family:var(--font-m);font-size:.4rem;letter-spacing:.08em;padding:2px 6px;border-radius:3px;border:1px solid}
+.set-thresh.active{border-color:rgba(68,255,136,0.35);color:var(--green);background:rgba(68,255,136,0.07)}
+.set-thresh.inactive{border-color:rgba(77,163,255,0.12);color:var(--text3);opacity:.5}
+.set-bonus-list{margin-bottom:8px;display:flex;flex-direction:column;gap:3px}
+.set-bonus-line{font-family:var(--font-m);font-size:.42rem;color:var(--green)}
+.set-items{display:flex;flex-wrap:wrap;gap:3px}
+.set-piece{font-family:var(--font-m);font-size:.38rem;letter-spacing:.04em;padding:2px 5px;border-radius:3px;border:1px solid}
+.set-piece.have{color:var(--green);border-color:rgba(68,255,136,0.2);background:rgba(68,255,136,0.05)}
+.set-piece.missing{color:var(--text3);border-color:rgba(77,163,255,0.08);opacity:.4}
+.set-chevron{font-size:.7rem;color:var(--text3);transition:transform .25s}
+.set-chevron.open{transform:rotate(180deg)}
+
+/* ── Panneau items (droite) ── */
+.inv-items-panel{display:flex;flex-direction:column;min-height:0}
+
+/* Toolbar */
+.inv-toolbar{padding:14px 18px 12px;border-bottom:1px solid rgba(0,229,255,0.07);display:flex;flex-direction:column;gap:10px;background:rgba(4,7,18,0.5)}
+.inv-search-wrap{position:relative;display:flex;align-items:center}
+.inv-search-icon{position:absolute;left:12px;color:rgba(0,229,255,0.4);font-size:1rem;pointer-events:none}
+.inv-search{width:100%;padding:9px 12px 9px 36px;background:rgba(4,8,20,0.8);border:1px solid rgba(0,229,255,0.1);border-radius:6px;color:var(--text);font-family:var(--font-m);font-size:.6rem;letter-spacing:.05em;outline:none;transition:border-color .25s,box-shadow .25s}
+.inv-search:focus{border-color:rgba(0,229,255,0.35);box-shadow:0 0 0 3px rgba(0,229,255,0.06)}
+.inv-search::placeholder{color:var(--text3)}
+.inv-categories{display:flex;gap:4px;flex-wrap:wrap}
+.inv-cat{font-family:var(--font-m);font-size:.48rem;letter-spacing:.1em;color:var(--text3);background:rgba(4,8,20,0.6);border:1px solid rgba(77,163,255,0.1);border-radius:4px;padding:6px 12px;cursor:pointer;transition:all .2s;text-transform:uppercase}
+.inv-cat:hover{border-color:rgba(0,229,255,0.25);color:var(--text)}
+.inv-cat.active{color:var(--cyan);border-color:rgba(0,229,255,0.4);background:rgba(0,229,255,0.07);box-shadow:0 0 10px rgba(0,229,255,0.08)}
+.inv-filters-row{display:flex;gap:8px;flex-wrap:wrap}
+.inv-filter-select{font-family:var(--font-m);font-size:.5rem;letter-spacing:.05em;color:var(--text);background:rgba(4,8,20,0.8);border:1px solid rgba(0,229,255,0.1);border-radius:5px;padding:6px 10px;cursor:pointer;transition:border-color .2s;outline:none}
+.inv-filter-select:focus{border-color:rgba(0,229,255,0.3)}
+.inv-filter-select option{background:#080d1a;color:var(--text)}
+
+/* Grille items */
+.inv-grid-wrap{flex:1;overflow-y:auto;padding:16px 18px;max-height:calc(85vh - 200px)}
+.inv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+
+/* Item card Cyberpunk */
+.inv-item{border-radius:6px;border:1px solid;background:linear-gradient(135deg,rgba(8,14,32,0.9),rgba(4,8,20,0.8));cursor:pointer;position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s,border-color .2s;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:10px 8px;user-select:none}
+.inv-item::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,currentColor,transparent);opacity:.15;pointer-events:none}
+.inv-item:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,0.4)}
+.inv-item.selected{transform:translateY(-2px) scale(1.02)}
+.inv-item.dragging{opacity:.4;transform:scale(0.95)}
+/* Raretés — bordures */
+.inv-item.rarity-common{border-color:rgba(107,114,128,0.3);color:#6b7280}
+.inv-item.rarity-uncommon{border-color:rgba(96,165,250,0.35);color:#60a5fa}
+.inv-item.rarity-rare{border-color:rgba(167,139,250,0.35);color:#a78bfa}
+.inv-item.rarity-epic{border-color:rgba(139,92,246,0.4);color:#8B5CF6}
+.inv-item.rarity-legendary{border-color:rgba(251,191,36,0.45);color:#fbbf24}
+.inv-item.rarity-mythic{border-color:rgba(249,115,22,0.45);color:#f97316}
+.inv-item.rarity-unique{border-color:rgba(255,214,10,0.45);color:#ffd60a}
+.inv-item.rarity-artifact{border-color:rgba(239,68,68,0.45);color:#ef4444}
+.inv-item.rarity-mastercraft{border-color:rgba(255,0,110,0.45);color:#ff006e}
+.inv-item.rarity-signature{border-color:rgba(255,214,10,0.5);color:#ffd60a}
+/* State équipé */
+.inv-item.equipped{border-color:rgba(0,229,255,0.5);box-shadow:0 0 14px rgba(0,229,255,0.12),inset 0 0 20px rgba(0,229,255,0.04)}
+.inv-item.equipped::after{content:'';position:absolute;top:0;left:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--cyan),rgba(0,229,255,0.2));border-radius:0 2px 2px 0}
+/* Badges */
+.inv-item-emoji{font-size:2rem;line-height:1;filter:drop-shadow(0 0 4px currentColor)}
+.inv-item-name{font-family:var(--font-b);font-weight:700;font-size:.6rem;color:#fff;text-align:center;line-height:1.2;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 2px}
+.inv-item-slot{font-family:var(--font-m);font-size:.38rem;letter-spacing:.08em;color:var(--text3);text-align:center}
+.inv-badge-equipped{position:absolute;top:5px;right:5px;width:8px;height:8px;border-radius:50%;background:var(--cyan);box-shadow:0 0 6px var(--cyan);animation:inv-pulse 2s ease-in-out infinite}
+.inv-badge-qty{position:absolute;bottom:4px;right:5px;font-family:var(--font-m);font-size:.38rem;color:var(--text3);letter-spacing:.05em}
+@keyframes inv-pulse{0%,100%{opacity:1;box-shadow:0 0 6px var(--cyan)}50%{opacity:.6;box-shadow:0 0 3px var(--cyan)}}
+/* État vide */
+.inv-empty-msg{grid-column:1/-1;text-align:center;padding:40px 20px;font-family:var(--font-m);font-size:.55rem;letter-spacing:.12em;color:var(--text3)}
+
+/* ── Bouton supprimer item (hover card) ── */
+.inv-item-delete{position:absolute;top:5px;left:5px;width:22px;height:22px;background:rgba(255,71,87,0.1);border:1px solid rgba(255,71,87,0.25);border-radius:5px;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s,background .2s,border-color .2s;z-index:5;color:var(--red);padding:0;line-height:1}
+.inv-item:hover .inv-item-delete{opacity:1}
+.inv-item-delete:hover{background:rgba(255,71,87,0.28);border-color:var(--red);box-shadow:0 0 10px rgba(255,71,87,0.2)}
+.inv-item-delete svg{pointer-events:none}
+
+/* ── Modal suppression item ── */
+#inv-delete-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.72);z-index:3000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(6px)}
+#inv-delete-overlay.open{display:flex}
+#inv-delete-modal{background:var(--surface);border:1px solid rgba(255,71,87,0.35);border-radius:14px;padding:30px 28px 24px;max-width:360px;width:92%;position:relative;box-shadow:0 0 0 1px rgba(255,71,87,0.08),0 0 60px rgba(255,71,87,0.12),0 24px 64px rgba(0,0,0,0.6)}
+#inv-delete-modal::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(255,71,87,0.6),transparent);border-radius:14px 14px 0 0}
+.inv-del-title{font-family:var(--font-h);font-size:.75rem;font-weight:700;letter-spacing:.18em;color:var(--red);text-transform:uppercase;margin-bottom:18px;display:flex;align-items:center;gap:10px}
+.inv-del-title svg{flex-shrink:0}
+.inv-del-item-preview{display:flex;align-items:center;gap:14px;background:rgba(255,71,87,0.05);border:1px solid rgba(255,71,87,0.15);border-radius:10px;padding:12px 14px;margin-bottom:16px}
+#inv-del-emoji{font-size:2rem;line-height:1;filter:drop-shadow(0 0 4px currentColor)}
+#inv-del-name{font-family:var(--font-b);font-weight:700;font-size:.7rem;line-height:1.3}
+#inv-del-meta{font-family:var(--font-m);font-size:.4rem;color:var(--text3);margin-top:3px;letter-spacing:.06em}
+.inv-del-warn{font-family:var(--font-m);font-size:.43rem;color:rgba(255,71,87,0.75);letter-spacing:.06em;line-height:1.5;margin-bottom:16px;padding:8px 12px;background:rgba(255,71,87,0.06);border-radius:6px;border-left:2px solid rgba(255,71,87,0.4)}
+/* Contrôle quantité */
+.inv-del-qty-wrap{display:none;align-items:center;gap:12px;margin-bottom:20px;justify-content:space-between}
+.inv-del-qty-wrap.visible{display:flex}
+.inv-del-qty-label{font-family:var(--font-m);font-size:.44rem;letter-spacing:.08em;color:var(--text2)}
+.inv-del-qty-ctrl{display:flex;align-items:center;gap:8px}
+.inv-del-qty-btn{width:30px;height:30px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:var(--text);font-size:.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;line-height:1;padding:0}
+.inv-del-qty-btn:hover{background:rgba(255,71,87,0.12);border-color:rgba(255,71,87,0.4);color:var(--red)}
+#inv-del-qty{width:56px;text-align:center;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:var(--text);font-family:var(--font-m);font-size:.6rem;padding:6px;appearance:textfield;-moz-appearance:textfield}
+#inv-del-qty::-webkit-inner-spin-button,#inv-del-qty::-webkit-outer-spin-button{appearance:none;-webkit-appearance:none}
+/* Boutons action modal */
+.inv-del-actions{display:flex;gap:10px;margin-top:4px}
+.inv-del-cancel{flex:1;padding:11px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:var(--text2);font-family:var(--font-h);font-size:.52rem;font-weight:600;letter-spacing:.12em;cursor:pointer;transition:all .2s;text-transform:uppercase}
+.inv-del-cancel:hover{background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.2)}
+.inv-del-confirm{flex:1;padding:11px;background:rgba(255,71,87,0.15);border:1px solid rgba(255,71,87,0.45);border-radius:8px;color:var(--red);font-family:var(--font-h);font-size:.52rem;font-weight:700;letter-spacing:.12em;cursor:pointer;transition:all .2s;text-transform:uppercase}
+.inv-del-confirm:hover{background:rgba(255,71,87,0.28);border-color:var(--red);box-shadow:0 0 16px rgba(255,71,87,0.2)}
+/* Bouton supprimer dans le panneau détail */
+.inv-detail-btn.delete{background:rgba(255,71,87,0.1);border-color:rgba(255,71,87,0.35);color:var(--red);margin-top:6px}
+.inv-detail-btn.delete:hover{background:rgba(255,71,87,0.22);border-color:var(--red)}
+
+/* Panneau détail (slide depuis droite) */
+.inv-detail-panel{position:fixed;top:64px;right:0;bottom:0;width:340px;background:rgba(4,7,18,0.98);border-left:1px solid rgba(0,229,255,0.12);z-index:600;transform:translateX(100%);overflow-y:auto;backdrop-filter:blur(24px)}
+.inv-detail-panel.open{transform:translateX(0)}
+.inv-detail-overlay{position:fixed;inset:0;z-index:599;background:rgba(0,0,0,0);pointer-events:none;transition:background .3s}
+.inv-detail-overlay.open{pointer-events:auto;background:rgba(0,0,0,0.4)}
+.inv-detail-close{position:absolute;top:12px;right:14px;background:rgba(255,71,87,0.1);border:1px solid rgba(255,71,87,0.25);color:var(--red);border-radius:4px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.8rem;transition:all .2s;z-index:1}
+.inv-detail-close:hover{background:rgba(255,71,87,0.2)}
+.inv-detail-content{padding:20px 18px 24px}
+.inv-detail-emoji{font-size:3.5rem;text-align:center;display:block;margin-bottom:10px;filter:drop-shadow(0 0 12px currentColor)}
+.inv-detail-name{font-family:var(--font-h);font-weight:800;font-size:.9rem;letter-spacing:.08em;text-align:center;margin-bottom:4px;line-height:1.3}
+.inv-detail-rarity{font-family:var(--font-m);font-size:.45rem;letter-spacing:.15em;text-align:center;margin-bottom:14px;text-transform:uppercase}
+.inv-detail-slot-tag{display:inline-flex;align-items:center;gap:4px;font-family:var(--font-m);font-size:.44rem;letter-spacing:.1em;color:var(--text3);background:rgba(77,163,255,0.08);border:1px solid rgba(77,163,255,0.15);border-radius:4px;padding:4px 10px;margin:0 auto 16px;display:table;margin-bottom:16px}
+.inv-detail-sep{height:1px;background:rgba(0,229,255,0.08);margin:14px 0}
+.inv-detail-stats-title{font-family:var(--font-m);font-size:.42rem;letter-spacing:.18em;color:var(--text3);margin-bottom:10px;text-transform:uppercase}
+.inv-detail-stat-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.inv-detail-stat-icon{font-size:.9rem;width:20px;text-align:center;flex-shrink:0}
+.inv-detail-stat-name{font-family:var(--font-m);font-size:.45rem;color:var(--text3);flex:1}
+.inv-detail-stat-bar{flex:2;height:4px;background:rgba(0,229,255,0.08);border-radius:2px;overflow:hidden}
+.inv-detail-stat-fill{height:100%;border-radius:2px;background:var(--green);transition:width .8s ease}
+.inv-detail-stat-val{font-family:var(--font-m);font-size:.5rem;color:var(--green);font-weight:700;width:28px;text-align:right;flex-shrink:0}
+.inv-detail-actions{margin-top:18px;display:flex;flex-direction:column;gap:8px}
+.inv-detail-btn{width:100%;padding:12px;border-radius:6px;font-family:var(--font-m);font-size:.55rem;letter-spacing:.12em;cursor:pointer;transition:all .25s;border:1px solid;text-transform:uppercase}
+.inv-detail-btn.equip{background:rgba(0,229,255,0.08);border-color:rgba(0,229,255,0.35);color:var(--cyan)}
+.inv-detail-btn.equip:hover{background:rgba(0,229,255,0.15);box-shadow:0 0 20px rgba(0,229,255,0.15)}
+.inv-detail-btn.unequip{background:rgba(255,71,87,0.08);border-color:rgba(255,71,87,0.35);color:var(--red)}
+.inv-detail-btn.unequip:hover{background:rgba(255,71,87,0.15)}
+.inv-detail-btn.sell{background:rgba(255,214,10,0.06);border-color:rgba(255,214,10,0.25);color:var(--gold)}
+.inv-detail-btn.sell:hover{background:rgba(255,214,10,0.12)}
+.inv-detail-no-stats{font-family:var(--font-m);font-size:.48rem;color:var(--text3);text-align:center;padding:12px 0;letter-spacing:.08em}
+.inv-detail-qty-info{font-family:var(--font-m);font-size:.46rem;color:var(--text3);text-align:center;margin-top:6px;letter-spacing:.08em}
+
+/* Tippy theme cyberpunk */
+.tippy-box[data-theme~='cy']{background:rgba(4,7,18,0.97);border:1px solid rgba(0,229,255,0.2);color:var(--text);font-family:var(--font-m);font-size:.48rem;letter-spacing:.06em;box-shadow:0 0 20px rgba(0,229,255,0.1),0 8px 32px rgba(0,0,0,0.6);border-radius:6px}
+.tippy-box[data-theme~='cy'] .tippy-arrow{color:rgba(0,229,255,0.2)}
+.tippy-box[data-theme~='cy'] .tippy-content{padding:10px 12px}
+.inv-tip-name{font-family:var(--font-h);font-size:.55rem;font-weight:700;margin-bottom:4px}
+.inv-tip-rarity{font-size:.4rem;letter-spacing:.1em;margin-bottom:6px;text-transform:uppercase}
+.inv-tip-slot{font-size:.4rem;color:var(--text3);margin-bottom:5px}
+.inv-tip-stat{display:flex;justify-content:space-between;gap:10px;font-size:.42rem;color:var(--text2)}
+.inv-tip-val{color:var(--green);font-weight:600}
+
+/* Équipement toast */
+.equip-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:rgba(4,8,20,0.97);border:1px solid rgba(0,229,255,0.2);color:var(--text);font-family:var(--font-m);font-size:.55rem;letter-spacing:.1em;padding:12px 24px;border-radius:6px;z-index:9999;pointer-events:none;opacity:0;transition:all .3s cubic-bezier(0.34,1.56,0.64,1);white-space:nowrap;box-shadow:0 0 30px rgba(0,0,0,0.5)}
+.equip-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.equip-toast.error{border-color:rgba(255,71,87,0.4);color:var(--red)}
+
+/* Responsive */
+@media(max-width:900px){
+  .inv-cyberpunk{grid-template-columns:1fr;grid-template-rows:auto 1fr}
+  .inv-character-panel{border-right:none;border-bottom:1px solid rgba(0,229,255,0.07);max-height:none}
+  .cyb-panel{grid-template-columns:140px 1fr 140px;min-height:480px}
+  #cyb-figure-svg{height:480px}
+  .inv-detail-panel{width:100%;top:0;border-left:none;border-top:1px solid rgba(0,229,255,0.12)}
+  .inv-grid-wrap{max-height:50vh}
+}
+@media(max-width:600px){
+  .cyb-panel{grid-template-columns:110px 1fr 110px;min-height:420px}
+  #cyb-figure-svg{height:420px}
+  .slot-cell{width:24px;height:24px;font-size:.75rem}
+  .inv-grid{grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px}
+  .inv-toolbar{padding:10px 12px}
+  .inv-grid-wrap{padding:12px}
+}
 
 /* ═══ GACHA — CYBERPUNK ═══ */
 .gacha-balance{text-align:center;padding:24px;margin-bottom:20px}
@@ -460,9 +700,7 @@ body::after{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;o
 .toast.success{border-color:rgba(68,255,136,0.3);color:var(--green);box-shadow:0 0 20px rgba(68,255,136,0.1)}
 .toast.error{border-color:rgba(255,71,87,0.3);color:var(--red);box-shadow:0 0 20px rgba(255,71,87,0.1)}
 .toast.info{border-color:rgba(0,229,255,0.3);color:var(--cyan);box-shadow:0 0 20px rgba(0,229,255,0.1)}
-.equip-toast{position:fixed;top:-60px;left:50%;transform:translateX(-50%);font-family:var(--font-m);font-size:.52rem;letter-spacing:.08em;padding:10px 24px;border-radius:4px;background:rgba(4,8,20,0.95);border:1px solid rgba(68,255,136,0.3);color:var(--green);z-index:10000;transition:top .3s ease;white-space:nowrap;backdrop-filter:blur(12px);box-shadow:0 0 20px rgba(68,255,136,0.1)}
-.equip-toast.show{top:80px}
-.equip-toast.error{border-color:rgba(255,71,87,0.3);color:var(--red);box-shadow:0 0 20px rgba(255,71,87,0.1)}
+/* equip-toast défini dans la section inventaire */
 
 /* ═══ RARITY BREATHING BORDERS ═══ */
 @keyframes neonBreatheEpic{0%,100%{border-color:rgba(139,92,246,0.25);box-shadow:0 0 4px rgba(139,92,246,0.1)}50%{border-color:rgba(139,92,246,0.7);box-shadow:0 0 14px rgba(139,92,246,0.25),inset 0 0 8px rgba(139,92,246,0.05)}}
@@ -505,9 +743,7 @@ body::after{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;o
 .tab-btn.active::after{animation:tabGlow 2s ease-in-out infinite}
 @keyframes tabGlow{0%,100%{box-shadow:0 0 8px rgba(0,229,255,0.4)}50%{box-shadow:0 0 20px rgba(0,229,255,0.6),0 0 40px rgba(0,229,255,0.15)}}
 
-/* Holographic shimmer on item cards */
-@keyframes holoShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
-.item-card-front::after{content:'';position:absolute;inset:0;background:linear-gradient(105deg,transparent 40%,rgba(0,229,255,0.03) 45%,rgba(139,92,246,0.04) 50%,transparent 55%);background-size:200% 100%;animation:holoShimmer 5s ease-in-out infinite;pointer-events:none;border-radius:4px}
+/* Holographic shimmer sur les items Cyberpunk — appliqué via inv-item::before */
 
 /* Hex grid pattern overlay for panels */
 .tab-panel::before{content:'';position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;opacity:.012;z-index:-1;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49' viewBox='0 0 28 49'%3E%3Cg fill-rule='evenodd'%3E%3Cg fill='%2300e5ff'%3E%3Cpath d='M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM3 17.9v12.7l10.99 6.34 11-6.35V17.9l-11-6.34L3 17.9zM0 15l12.98-7.5V0h-2v6.35L0 12.69v2.3zm0 18.5L12.98 41v8h-2v-6.85L0 35.81v-2.3zM15 0v7.5L27.99 15H28v-2.31h-.01L17 6.35V0h-2zm0 49v-8l12.99-7.5H28v2.31h-.01L17 42.15V49h-2z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")}
@@ -528,18 +764,7 @@ body::after{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;o
 /* Additional data flow lines */
 .login-gate .code-wrap::before{content:'';position:absolute;top:-30px;left:50%;width:1px;height:20px;background:linear-gradient(180deg,transparent,rgba(0,229,255,0.2),transparent);transform:translateX(-50%)}
 
-/* Inventory grid-sub — subtle stagger */
-.inv-grid-sub .item-card-wrap{opacity:0;animation:itemReveal .3s ease forwards}
-@keyframes itemReveal{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-.inv-grid-sub .item-card-wrap:nth-child(1){animation-delay:.02s}
-.inv-grid-sub .item-card-wrap:nth-child(2){animation-delay:.04s}
-.inv-grid-sub .item-card-wrap:nth-child(3){animation-delay:.06s}
-.inv-grid-sub .item-card-wrap:nth-child(4){animation-delay:.08s}
-.inv-grid-sub .item-card-wrap:nth-child(5){animation-delay:.10s}
-.inv-grid-sub .item-card-wrap:nth-child(6){animation-delay:.12s}
-.inv-grid-sub .item-card-wrap:nth-child(7){animation-delay:.14s}
-.inv-grid-sub .item-card-wrap:nth-child(8){animation-delay:.16s}
-.inv-grid-sub .item-card-wrap:nth-child(n+9){animation-delay:.18s}
+/* Stagger géré par GSAP dans renderItemsGrid() */
 
 /* Enhanced power items */
 .power-item{position:relative}
@@ -734,57 +959,355 @@ body::after{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;o
   <!-- INVENTAIRE -->
   <div class="tab-panel" id="panel-inventaire">
     <div class="sh"><span class="sh-num">03</span><span class="sh-title">Inventaire</span><div class="sh-line"></div></div>
-    <div class="inv-layout">
-      <!-- Panneau gauche : slots -->
-      <div>
-        <div class="card" style="margin-bottom:14px"><div class="card-body">
-          <div class="widget-title">Slots d'équipement</div>
-          <div id="slots-panel"><div class="empty">Chargement...</div></div>
-        </div></div>
+    <div class="inv-cyberpunk">
+
+      <!-- ═══ PANNEAU PERSONNAGE (gauche) ═══ -->
+      <div class="inv-character-panel">
+        <!-- ─── HEADER ─── -->
+        <div class="inv-char-header">
+          <span class="inv-char-title">ÉQUIPEMENT</span>
+          <span class="inv-char-count" id="inv-equip-count">0 items</span>
+        </div>
+
+        <!-- ─── 3 COLONNES : SLOTS ← SILHOUETTE → SLOTS ─── -->
+        <div class="cyb-panel">
+
+          <!-- ══ COLONNE GAUCHE ══ -->
+          <div class="cyb-col cyb-col-left">
+
+            <!-- TÊTE — niveau crâne -->
+            <div class="slot-zone" data-slot="tete">
+              <div class="slot-zone-label">TÊTE</div>
+              <div class="slot-cells" id="sz-tete"></div>
+            </div>
+
+            <!-- COU ET OREILLES — niveau cou -->
+            <div class="slot-zone" data-slot="cou">
+              <div class="slot-zone-label">COU ET OREILLES</div>
+              <div class="slot-cells" id="sz-cou"></div>
+              <div class="slot-cells" id="sz-oreilles"></div>
+            </div>
+
+            <!-- ARMURE & CAPE — niveau torse + bras -->
+            <div class="slot-zone" data-slot="torse">
+              <div class="slot-zone-label">ARMURE & CAPE</div>
+              <div class="slot-cells" id="sz-torse"></div>
+              <div class="slot-cells" id="sz-dos"></div>
+              <div class="slot-cells" id="sz-bras"></div>
+              <div class="slot-cells" id="sz-poignets"></div>
+            </div>
+
+            <!-- MAINS & DOIGTS — niveau avant-bras -->
+            <div class="slot-zone" data-slot="mains">
+              <div class="slot-zone-label">MAINS & DOIGTS</div>
+              <div class="slot-cells" id="sz-mains"></div>
+              <div class="slot-cells" id="sz-doigts"></div>
+            </div>
+
+            <!-- SPÉCIAUX — divers -->
+            <div class="slot-zone" data-slot="special">
+              <div class="slot-zone-label">SPÉCIAUX</div>
+              <div class="slot-cells" id="sz-special"></div>
+            </div>
+
+          </div><!-- /cyb-col-left -->
+
+          <!-- ══ CENTRE : SILHOUETTE HOLOGRAPHIQUE ══ -->
+          <div class="cyb-center">
+            <svg id="cyb-figure-svg" viewBox="0 0 280 540" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <!-- Lueur cyan -->
+                <filter id="glowCyan" x="-40%" y="-40%" width="180%" height="180%">
+                  <feGaussianBlur stdDeviation="2.5" result="blur"/>
+                  <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+                <!-- Lueur orange articulations -->
+                <filter id="glowOrange" x="-50%" y="-50%" width="200%" height="200%">
+                  <feGaussianBlur stdDeviation="2" result="blur"/>
+                  <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+                <!-- Lueur rouge réacteur -->
+                <filter id="glowRed" x="-60%" y="-60%" width="220%" height="220%">
+                  <feGaussianBlur stdDeviation="4" result="blur"/>
+                  <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+                <!-- Scan beam rouge : transparent → rouge → transparent -->
+                <linearGradient id="scanRed" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%"   stop-color="#ff2020" stop-opacity="0"/>
+                  <stop offset="35%"  stop-color="#ff4040" stop-opacity="0.45"/>
+                  <stop offset="50%"  stop-color="#ff6060" stop-opacity="0.9"/>
+                  <stop offset="65%"  stop-color="#ff4040" stop-opacity="0.45"/>
+                  <stop offset="100%" stop-color="#ff2020" stop-opacity="0"/>
+                </linearGradient>
+                <!-- Clip corps pour le scan beam -->
+                <clipPath id="bodyClip">
+                  <ellipse cx="140" cy="54"  rx="28" ry="30"/>
+                  <rect x="126" y="82"  width="28"  height="22"/>
+                  <polygon points="90,104 190,104 196,252 84,252"/>
+                  <rect x="36"  y="104" width="56"  height="148" rx="8"/>
+                  <rect x="188" y="104" width="56"  height="148" rx="8"/>
+                  <rect x="28"  y="250" width="34"  height="96"  rx="7"/>
+                  <rect x="218" y="250" width="34"  height="96"  rx="7"/>
+                  <rect x="88"  y="252" width="42"  height="130" rx="8"/>
+                  <rect x="150" y="252" width="42"  height="130" rx="8"/>
+                  <rect x="90"  y="380" width="38"  height="132" rx="7"/>
+                  <rect x="152" y="380" width="38"  height="132" rx="7"/>
+                </clipPath>
+              </defs>
+
+              <!-- ── LIGNES DE CONNEXION GAUCHE → CORPS (5 groupes) ── -->
+              <!-- TÊTE y=54 — niveau crâne -->
+              <line x1="0" y1="54"  x2="112" y2="54"  stroke="rgba(0,229,255,0.38)" stroke-width="1" stroke-dasharray="5,3"/>
+              <!-- COU ET OREILLES y=162 — épaule gauche / dessus torse -->
+              <line x1="0" y1="162" x2="90"  y2="162" stroke="rgba(0,229,255,0.3)"  stroke-width="1" stroke-dasharray="5,3"/>
+              <!-- ARMURE & CAPE y=270 — avant-bras gauche -->
+              <line x1="0" y1="270" x2="28"  y2="270" stroke="rgba(0,229,255,0.3)"  stroke-width="1" stroke-dasharray="5,3"/>
+              <!-- MAINS & DOIGTS y=378 — cuisse gauche -->
+              <line x1="0" y1="378" x2="88"  y2="378" stroke="rgba(0,229,255,0.28)" stroke-width="1" stroke-dasharray="5,3"/>
+              <!-- SPÉCIAUX y=486 — mollet gauche -->
+              <line x1="0" y1="486" x2="90"  y2="486" stroke="rgba(0,229,255,0.24)" stroke-width="1" stroke-dasharray="5,3"/>
+              <!-- Points d'ancrage gauche -->
+              <circle cx="0" cy="54"  r="2.5" fill="#00e5ff" filter="url(#glowCyan)" opacity="0.7"/>
+              <circle cx="0" cy="162" r="2.5" fill="#00e5ff" filter="url(#glowCyan)" opacity="0.55"/>
+              <circle cx="0" cy="270" r="2.5" fill="#00e5ff" filter="url(#glowCyan)" opacity="0.55"/>
+              <circle cx="0" cy="378" r="2.5" fill="#00e5ff" filter="url(#glowCyan)" opacity="0.5"/>
+              <circle cx="0" cy="486" r="2.5" fill="#00e5ff" filter="url(#glowCyan)" opacity="0.45"/>
+
+              <!-- ── LIGNES DE CONNEXION CORPS → DROITE (4 groupes) ── -->
+              <!-- VISAGE y≈68 — niveau tête droite -->
+              <line x1="164" y1="68"  x2="280" y2="68"  stroke="rgba(0,229,255,0.38)" stroke-width="1" stroke-dasharray="5,3"/>
+              <!-- ARMES y≈202 — niveau torse droit -->
+              <line x1="244" y1="202" x2="280" y2="202" stroke="rgba(0,229,255,0.3)"  stroke-width="1" stroke-dasharray="5,3"/>
+              <!-- JAMBES y≈338 — niveau cuisses droite -->
+              <line x1="192" y1="338" x2="280" y2="338" stroke="rgba(0,229,255,0.28)" stroke-width="1" stroke-dasharray="5,3"/>
+              <!-- PIEDS y≈472 — niveau mollets/pieds -->
+              <line x1="190" y1="472" x2="280" y2="472" stroke="rgba(0,229,255,0.24)" stroke-width="1" stroke-dasharray="5,3"/>
+              <!-- Points d'ancrage droite -->
+              <circle cx="280" cy="68"  r="2.5" fill="#00e5ff" filter="url(#glowCyan)" opacity="0.7"/>
+              <circle cx="280" cy="202" r="2.5" fill="#00e5ff" filter="url(#glowCyan)" opacity="0.55"/>
+              <circle cx="280" cy="338" r="2.5" fill="#00e5ff" filter="url(#glowCyan)" opacity="0.5"/>
+              <circle cx="280" cy="472" r="2.5" fill="#00e5ff" filter="url(#glowCyan)" opacity="0.45"/>
+
+              <!-- ── SILHOUETTE HOLOGRAPHIQUE ROUGE/CYAN ── -->
+              <!-- Tête -->
+              <ellipse cx="140" cy="54" rx="28" ry="30"
+                fill="rgba(160,25,20,0.18)" stroke="rgba(0,229,255,0.52)" stroke-width="1.5"
+                filter="url(#glowCyan)"/>
+              <!-- Croix HUD -->
+              <line x1="140" y1="30" x2="140" y2="78" stroke="rgba(0,229,255,0.1)" stroke-width="0.8"/>
+              <line x1="116" y1="54" x2="164" y2="54" stroke="rgba(0,229,255,0.1)" stroke-width="0.8"/>
+              <!-- Yeux lumineux -->
+              <ellipse cx="130" cy="48" rx="5" ry="3" fill="rgba(0,229,255,0.12)" stroke="rgba(0,229,255,0.55)" stroke-width="0.8"/>
+              <ellipse cx="150" cy="48" rx="5" ry="3" fill="rgba(0,229,255,0.12)" stroke="rgba(0,229,255,0.55)" stroke-width="0.8"/>
+              <circle cx="130" cy="48" r="2" fill="#00e5ff" filter="url(#glowCyan)"/>
+              <circle cx="150" cy="48" r="2" fill="#00e5ff" filter="url(#glowCyan)"/>
+
+              <!-- Cou -->
+              <rect x="126" y="82" width="28" height="22" rx="4"
+                fill="rgba(160,25,20,0.15)" stroke="rgba(0,229,255,0.34)" stroke-width="1.2"/>
+
+              <!-- Torse -->
+              <polygon points="90,104 190,104 196,252 84,252"
+                fill="rgba(160,25,20,0.18)" stroke="rgba(0,229,255,0.5)" stroke-width="1.5"
+                filter="url(#glowCyan)"/>
+              <!-- Lignes internes torse -->
+              <line x1="140" y1="116" x2="140" y2="240" stroke="rgba(0,229,255,0.09)" stroke-width="0.8"/>
+              <line x1="108" y1="140" x2="172" y2="140" stroke="rgba(0,229,255,0.08)" stroke-width="0.8"/>
+              <line x1="104" y1="180" x2="176" y2="180" stroke="rgba(0,229,255,0.08)" stroke-width="0.8"/>
+              <line x1="102" y1="220" x2="178" y2="220" stroke="rgba(0,229,255,0.07)" stroke-width="0.8"/>
+              <!-- Réacteur thoracique -->
+              <circle cx="140" cy="152" r="14" fill="none" stroke="rgba(0,229,255,0.2)" stroke-width="1" stroke-dasharray="4,3"/>
+              <circle cx="140" cy="152" r="7" fill="rgba(160,25,20,0.3)" stroke="rgba(0,229,255,0.6)" stroke-width="1" filter="url(#glowCyan)"/>
+              <circle cx="140" cy="152" r="3" fill="#ff4040" filter="url(#glowRed)"/>
+
+              <!-- Bras gauche -->
+              <rect x="36" y="104" width="56" height="148" rx="8"
+                fill="rgba(160,25,20,0.14)" stroke="rgba(0,229,255,0.38)" stroke-width="1.3"/>
+              <!-- Bras droit -->
+              <rect x="188" y="104" width="56" height="148" rx="8"
+                fill="rgba(160,25,20,0.14)" stroke="rgba(0,229,255,0.38)" stroke-width="1.3"/>
+
+              <!-- Avant-bras gauche -->
+              <rect x="28" y="250" width="34" height="96" rx="7"
+                fill="rgba(160,25,20,0.12)" stroke="rgba(0,229,255,0.28)" stroke-width="1.2"/>
+              <!-- Avant-bras droit -->
+              <rect x="218" y="250" width="34" height="96" rx="7"
+                fill="rgba(160,25,20,0.12)" stroke="rgba(0,229,255,0.28)" stroke-width="1.2"/>
+
+              <!-- Cuisses -->
+              <rect x="88"  y="252" width="42" height="130" rx="8"
+                fill="rgba(160,25,20,0.15)" stroke="rgba(0,229,255,0.42)" stroke-width="1.4"/>
+              <rect x="150" y="252" width="42" height="130" rx="8"
+                fill="rgba(160,25,20,0.15)" stroke="rgba(0,229,255,0.42)" stroke-width="1.4"/>
+
+              <!-- Mollets -->
+              <rect x="90"  y="380" width="38" height="132" rx="7"
+                fill="rgba(160,25,20,0.12)" stroke="rgba(0,229,255,0.3)" stroke-width="1.2"/>
+              <rect x="152" y="380" width="38" height="132" rx="7"
+                fill="rgba(160,25,20,0.12)" stroke="rgba(0,229,255,0.3)" stroke-width="1.2"/>
+
+              <!-- ── NŒUDS D'ARTICULATION (orange) ── -->
+              <circle cx="140" cy="82"  r="5"   fill="rgba(255,152,0,0.2)"  stroke="#ff9800" stroke-width="1.3" filter="url(#glowOrange)"/>
+              <circle cx="90"  cy="106" r="6.5" fill="rgba(255,152,0,0.15)" stroke="#ff9800" stroke-width="1.5" filter="url(#glowOrange)"/>
+              <circle cx="190" cy="106" r="6.5" fill="rgba(255,152,0,0.15)" stroke="#ff9800" stroke-width="1.5" filter="url(#glowOrange)"/>
+              <circle cx="44"  cy="250" r="5"   fill="rgba(255,152,0,0.15)" stroke="#ff9800" stroke-width="1.2" filter="url(#glowOrange)"/>
+              <circle cx="236" cy="250" r="5"   fill="rgba(255,152,0,0.15)" stroke="#ff9800" stroke-width="1.2" filter="url(#glowOrange)"/>
+              <circle cx="96"  cy="252" r="5.5" fill="rgba(255,152,0,0.15)" stroke="#ff9800" stroke-width="1.3" filter="url(#glowOrange)"/>
+              <circle cx="184" cy="252" r="5.5" fill="rgba(255,152,0,0.15)" stroke="#ff9800" stroke-width="1.3" filter="url(#glowOrange)"/>
+              <circle cx="100" cy="380" r="5"   fill="rgba(255,152,0,0.15)" stroke="#ff9800" stroke-width="1.2" filter="url(#glowOrange)"/>
+              <circle cx="180" cy="380" r="5"   fill="rgba(255,152,0,0.15)" stroke="#ff9800" stroke-width="1.2" filter="url(#glowOrange)"/>
+
+              <!-- ── SCAN BEAM ROUGE (animé GSAP) ── -->
+              <rect id="cyb-scan-beam" x="28" y="-26" width="224" height="28"
+                fill="url(#scanRed)" opacity="0.9" clip-path="url(#bodyClip)"/>
+            </svg>
+          </div><!-- /cyb-center -->
+
+          <!-- ══ COLONNE DROITE ══ -->
+          <div class="cyb-col cyb-col-right">
+
+            <!-- VISAGE — niveau tête -->
+            <div class="slot-zone" data-slot="visage">
+              <div class="slot-zone-label">VISAGE</div>
+              <div class="slot-cells" id="sz-visage"></div>
+            </div>
+
+            <!-- ARMES — niveau torse / bras armés -->
+            <div class="slot-zone" data-slot="armes_h">
+              <div class="slot-zone-label">ARMES</div>
+              <div class="slot-cells" id="sz-armes_h"></div>
+              <div class="slot-cells" id="sz-armes_l"></div>
+            </div>
+
+            <!-- JAMBES — niveau cuisses -->
+            <div class="slot-zone" data-slot="jambes">
+              <div class="slot-zone-label">JAMBES</div>
+              <div class="slot-cells" id="sz-jambes"></div>
+            </div>
+
+            <!-- PIEDS — niveau pieds -->
+            <div class="slot-zone" data-slot="pieds">
+              <div class="slot-zone-label">PIEDS</div>
+              <div class="slot-cells" id="sz-pieds"></div>
+            </div>
+
+          </div><!-- /cyb-col-right -->
+
+        </div><!-- /cyb-panel -->
+
         <!-- Bonus totaux équipement -->
-        <div class="card"><div class="card-body">
-          <div class="widget-title">Bonus équipement total</div>
-          <div class="equip-bonus-grid" id="equip-bonus-grid"><div class="sk" style="height:50px;border-radius:8px;grid-column:1/-1"></div></div>
-        </div></div>
-      </div>
-      <!-- Panneau droit : items + sets -->
-      <div>
-        <div class="card" style="margin-bottom:16px"><div class="card-body">
-          <div class="inv-tabs">
-            <button class="inv-tab active" onclick="showInvTab('all')" id="invtab-all">Tout</button>
-            <button class="inv-tab" onclick="showInvTab('equipped')" id="invtab-equipped">Équipé</button>
-            <button class="inv-tab" onclick="showInvTab('equipment')" id="invtab-equipment">Équipement</button>
-            <button class="inv-tab" onclick="showInvTab('consumable')" id="invtab-consumable">Consommables</button>
-            <button class="inv-tab" onclick="showInvTab('other')" id="invtab-other">Autre</button>
+        <div class="inv-stats-summary" id="inv-stats-summary">
+          <div class="inv-stats-title">BONUS ÉQUIPEMENT</div>
+          <div class="inv-stats-grid" id="equip-bonus-grid"><div class="empty" style="grid-column:1/-1;font-size:.48rem">Aucun bonus</div></div>
+        </div>
+
+        <!-- Sets actifs — accordéon -->
+        <div class="inv-sets-accordion" id="inv-sets-panel">
+          <div class="inv-sets-title">SETS ACTIFS</div>
+          <div id="sets-grid"><div class="empty" style="font-size:.48rem">Aucun set actif</div></div>
+        </div>
+
+      </div><!-- /inv-character-panel -->
+
+
+      <!-- ═══ PANNEAU ITEMS (droite) ═══ -->
+      <div class="inv-items-panel">
+        <!-- Toolbar -->
+        <div class="inv-toolbar">
+          <div class="inv-search-wrap">
+            <span class="inv-search-icon">⌕</span>
+            <input class="inv-search" type="text" id="inv-search" placeholder="Rechercher un item..." oninput="invSearchDebounce()">
           </div>
-          <div class="filter-bar" id="inv-filters">
-            <select class="filter-select" id="inv-filter-rarity" onchange="renderItemsGrid()">
+          <div class="inv-categories" id="inv-categories">
+            <button class="inv-cat active" data-cat="all" onclick="setInvFilter('all')">Tout</button>
+            <button class="inv-cat" data-cat="equipped" onclick="setInvFilter('equipped')">Équipé</button>
+            <button class="inv-cat" data-cat="equipment" onclick="setInvFilter('equipment')">Équipement</button>
+            <button class="inv-cat" data-cat="consumable" onclick="setInvFilter('consumable')">Consommables</button>
+            <button class="inv-cat" data-cat="other" onclick="setInvFilter('other')">Autre</button>
+          </div>
+          <div class="inv-filters-row">
+            <select class="inv-filter-select" id="inv-filter-rarity" onchange="renderItemsGrid()">
               <option value="">Toutes raretés</option>
-              <option value="common">Common</option><option value="uncommon">Uncommon</option>
-              <option value="rare">Rare</option><option value="epic">Epic</option>
-              <option value="legendary">Legendary</option><option value="mythic">Mythic</option>
-              <option value="unique">Unique</option><option value="artifact">Artifact</option>
+              <option value="common">Common</option>
+              <option value="uncommon">Uncommon</option>
+              <option value="rare">Rare</option>
+              <option value="epic">Epic</option>
+              <option value="legendary">Legendary</option>
+              <option value="mythic">Mythic</option>
+              <option value="unique">Unique</option>
+              <option value="artifact">Artifact</option>
               <option value="mastercraft">Mastercraft</option>
             </select>
-            <select class="filter-select" id="inv-filter-slot" onchange="renderItemsGrid()">
+            <select class="inv-filter-select" id="inv-filter-slot" onchange="renderItemsGrid()">
               <option value="">Tous slots</option>
-              <option value="tete">Tête</option><option value="visage">Visage</option>
-              <option value="cou">Cou</option><option value="oreilles">Oreilles</option>
-              <option value="torse">Torse</option><option value="dos">Dos</option>
-              <option value="bras">Bras</option><option value="mains">Mains</option>
-              <option value="poignets">Poignets</option><option value="doigts">Doigts</option>
-              <option value="jambes">Jambes</option><option value="pieds">Pieds</option>
-              <option value="armes_h">Armes H</option><option value="armes_l">Armes L</option>
+              <option value="tete">Tête</option>
+              <option value="visage">Visage</option>
+              <option value="cou">Cou</option>
+              <option value="oreilles">Oreilles</option>
+              <option value="torse">Torse</option>
+              <option value="dos">Dos</option>
+              <option value="bras">Bras</option>
+              <option value="mains">Mains</option>
+              <option value="poignets">Poignets</option>
+              <option value="doigts">Doigts</option>
+              <option value="jambes">Jambes</option>
+              <option value="pieds">Pieds</option>
+              <option value="armes_h">Armes H</option>
+              <option value="armes_l">Armes L</option>
               <option value="special">Spécial</option>
             </select>
+            <select class="inv-filter-select" id="inv-sort" onchange="renderItemsGrid()">
+              <option value="rarity">Par rareté</option>
+              <option value="name">Par nom</option>
+              <option value="slot">Par slot</option>
+            </select>
           </div>
+        </div>
+        <!-- Grille items -->
+        <div class="inv-grid-wrap">
           <div class="inv-grid" id="inv-grid"><div class="empty">Chargement...</div></div>
-        </div></div>
-        <!-- Sets actifs -->
-        <div class="card"><div class="card-body">
-          <div class="sh" style="margin-bottom:14px"><span class="sh-num">—</span><span class="sh-title">Sets actifs</span><div class="sh-line"></div></div>
-          <div id="sets-grid"><div class="empty">Aucun set actif</div></div>
-        </div></div>
+        </div>
+      </div>
+
+    </div><!-- /.inv-cyberpunk -->
+
+    <!-- Panneau détail item (fixe à droite) -->
+    <div class="inv-detail-panel" id="inv-detail-panel">
+      <button class="inv-detail-close" onclick="closeItemDetail()">✕</button>
+      <div class="inv-detail-content" id="inv-detail-content"></div>
+    </div>
+    <div class="inv-detail-overlay" id="inv-detail-overlay" onclick="closeItemDetail()"></div>
+
+  </div>
+
+  <!-- ═══ MODAL SUPPRESSION ITEM ═══ -->
+  <div id="inv-delete-overlay" onclick="if(event.target===this)closeDeleteModal()">
+    <div id="inv-delete-modal">
+      <div class="inv-del-title">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18">
+          <path d="M3 5h14M8 5V3h4v2M6 5l1 12h6l1-12"/>
+        </svg>
+        Supprimer l'item
+      </div>
+      <div class="inv-del-item-preview">
+        <span id="inv-del-emoji">📦</span>
+        <div>
+          <div id="inv-del-name">—</div>
+          <div id="inv-del-meta">—</div>
+        </div>
+      </div>
+      <div class="inv-del-warn">⚠ Cette action est irréversible. L'item sera définitivement retiré de ton inventaire.</div>
+      <div class="inv-del-qty-wrap" id="inv-del-qty-wrap">
+        <span class="inv-del-qty-label">Quantité à supprimer</span>
+        <div class="inv-del-qty-ctrl">
+          <button class="inv-del-qty-btn" onclick="adjustDeleteQty(-1)">−</button>
+          <input id="inv-del-qty" type="number" min="1" value="1" oninput="clampDeleteQty()">
+          <button class="inv-del-qty-btn" onclick="adjustDeleteQty(1)">+</button>
+        </div>
+      </div>
+      <div class="inv-del-actions">
+        <button class="inv-del-cancel" onclick="closeDeleteModal()">Annuler</button>
+        <button class="inv-del-confirm" onclick="confirmDelete()">Supprimer</button>
       </div>
     </div>
   </div>
@@ -1242,7 +1765,8 @@ async function loadWallet(){
   // Gather all currency data
   const nav=PLAYER.navarites||0;
   const notoriety=PLAYER.notoriety||0;
-  const goldenEggs=PLAYER.golden_eggs||0;
+  const _ge=PLAYER.golden_eggs;
+  const goldenEggs=typeof _ge==='number'?_ge:(typeof _ge==='object'&&_ge!==null?(Object.values(_ge).find(v=>typeof v==='number')||0):(parseInt(_ge)||0));
   // Load economy data for kanite currencies
   let bronze=0,silver=0,gold=0,platinum=0;
   if(UID&&CHAR_ID){
@@ -1376,59 +1900,105 @@ const RARITY_COLORS={
 
 const STAT_ICONS_INV={strength:'⚔️',agility:'💨',speed:'🏃',intelligence:'🧠',mana:'✨',resistance:'🛡️',charisma:'👑',aura:'🌟'};
 let INV_TAB='all';
+let _invSearchTimer=null;
+let _invDetailOpen=null; // itemId actuellement affiché dans le panneau détail
+let _tippyInstances=[];
+let _sortableGrid=null;
+let _sortableSlots={};
 
-function showInvTab(tab){
-  INV_TAB=tab;
-  document.querySelectorAll('.inv-tab').forEach(b=>b.classList.toggle('active',b.id==='invtab-'+tab));
+// ── FILTRE CATÉGORIE ──
+function setInvFilter(cat){
+  INV_TAB=cat;
+  document.querySelectorAll('.inv-cat').forEach(b=>b.classList.toggle('active',b.dataset.cat===cat));
   renderItemsGrid();
+}
+
+// Recherche avec debounce 200ms
+function invSearchDebounce(){
+  clearTimeout(_invSearchTimer);
+  _invSearchTimer=setTimeout(()=>renderItemsGrid(),200);
 }
 
 // ── RENDER INVENTAIRE COMPLET ──
 function renderInventory(){
   if(!INV_DATA)return;
-  renderSlotsPanel();
+  renderCharacterPanel();
   renderItemsGrid();
-  renderEquipBonuses();
-  renderSets();
+  renderStatsSummary();
+  renderSetsPanel();
+  // Mise à jour compteur équipés
+  const eqCount=(INV_DATA.equipped_assets||[]).length;
+  const el=document.getElementById('inv-equip-count');
+  if(el) el.textContent=`${eqCount} item${eqCount!==1?'s':''} équipé${eqCount!==1?'s':''}`;
+  // Réinitialiser drag & drop et tooltips après rendu
+  requestAnimationFrame(()=>{
+    initDragDrop();
+    initTooltips();
+    // Ré-afficher le panneau détail si un item était sélectionné
+    if(_invDetailOpen) showItemDetail(_invDetailOpen,false);
+  });
 }
 
-function renderSlotsPanel(){
+// ── RENDER PANNEAU PERSONNAGE (silhouette + slots) ──
+function renderCharacterPanel(){
   const equipped=INV_DATA.equipped_assets||[];
   const bySlot={};
   equipped.forEach(id=>{
     const it=ALL_ITEMS_DATA[id]||{};
-    const slot=it.slot||'other';
-    bySlot[slot]=(bySlot[slot]||[]);
-    bySlot[slot].push({id,it});
+    const slot=it.slot;
+    if(!slot)return;
+    if(!bySlot[slot])bySlot[slot]=[];
+    bySlot[slot].push(id);
   });
 
-  let html='';
   const slotOrder=['tete','visage','cou','oreilles','torse','dos','bras','mains','poignets','doigts','jambes','pieds','armes_h','armes_l','special'];
   slotOrder.forEach(slotId=>{
+    const cellsCont=document.getElementById('sz-'+slotId);
+    if(!cellsCont)return;
     const def=SLOT_LIMITS[slotId];if(!def)return;
-    const items=bySlot[slotId]||[];
-    const isFull=items.length>=def.max;
-    html+=`<div class="slot-group">
-      <div class="slot-group-title">${def.label} (${items.length}/${def.max})</div>
-      ${items.map(({id,it})=>`
-        <div class="slot-item" onclick="toggleEquip('${id}')" title="Déséquiper">
-          <div class="slot-dot filled"></div>
-          <span class="slot-label">${e(it.name||id)}</span>
-          ${it.stat_effects?`<span style="font-family:var(--font-m);font-size:.38rem;color:var(--green)">${formatEffects(it.stat_effects)}</span>`:''}
-        </div>`).join('')}
-      ${items.length===0?`<div class="slot-item" style="opacity:.35"><div class="slot-dot empty"></div><span class="slot-label">Vide</span></div>`:''}
-    </div>`;
+    const occupants=bySlot[slotId]||[];
+    let html='';
+    for(let i=0;i<def.max;i++){
+      const itemId=occupants[i]||null;
+      const it=itemId?ALL_ITEMS_DATA[itemId]||{}:{};
+      if(itemId){
+        html+=`<div class="slot-cell occupied" data-item-id="${itemId}" data-slot="${slotId}" onclick="showItemDetail('${itemId}')" title="${e(it.name||itemId)}">${it.emoji||'📦'}</div>`;
+      } else {
+        html+=`<div class="slot-cell empty-cell" data-slot="${slotId}" data-index="${i}"></div>`;
+      }
+    }
+    cellsCont.innerHTML=html;
   });
-  document.getElementById('slots-panel').innerHTML=html||'<div class="empty">Aucun équipement</div>';
+  // Lancer l'animation de scan si GSAP est disponible
+  initCharScanAnimation();
 }
 
+// ── ANIMATION SCAN SILHOUETTE (GSAP) ──
+function initCharScanAnimation(){
+  if(typeof gsap==='undefined')return;
+  const beam=document.getElementById('cyb-scan-beam');
+  if(!beam)return;
+  // Tuer l'animation précédente si elle existe
+  if(beam._scanTween){beam._scanTween.kill();}
+  // Départ au-dessus du viewBox (y=-26), fin en bas (y=542)
+  beam._scanTween=gsap.fromTo(beam,
+    {attr:{y:-26}},
+    {attr:{y:542},duration:4,repeat:-1,ease:'none',repeatDelay:0.5}
+  );
+}
+
+// ── RENDER GRILLE ITEMS ──
 function renderItemsGrid(){
+  if(!INV_DATA)return;
   const items=INV_DATA.items||{};
   const equipped=new Set(INV_DATA.equipped_assets||[]);
+
+  // Construire liste unifiée (inventaire + équipés)
   const allEntries=new Map(Object.entries(items));
   equipped.forEach(id=>{if(!allEntries.has(id))allEntries.set(id,0);});
   let entries=Array.from(allEntries.entries());
 
+  // Filtre catégorie
   if(INV_TAB==='equipped'){
     entries=Array.from(equipped).map(id=>[id,0]);
   } else if(INV_TAB==='equipment'){
@@ -1439,86 +2009,73 @@ function renderItemsGrid(){
     entries=entries.filter(([id])=>{const it=ALL_ITEMS_DATA[id]||{};return !it.slot&&!['consumable','food','usable'].includes(it.type);});
   }
 
-  // Apply rarity + slot filters
+  // Filtre rareté
   const fRarity=(document.getElementById('inv-filter-rarity')||{}).value||'';
-  const fSlot=(document.getElementById('inv-filter-slot')||{}).value||'';
   if(fRarity) entries=entries.filter(([id])=>(ALL_ITEMS_DATA[id]||{}).rarity?.toLowerCase()===fRarity);
+  // Filtre slot
+  const fSlot=(document.getElementById('inv-filter-slot')||{}).value||'';
   if(fSlot) entries=entries.filter(([id])=>(ALL_ITEMS_DATA[id]||{}).slot===fSlot);
+  // Filtre texte
+  const fText=((document.getElementById('inv-search')||{}).value||'').toLowerCase().trim();
+  if(fText) entries=entries.filter(([id])=>(ALL_ITEMS_DATA[id]||{}).name?.toLowerCase().includes(fText)||id.toLowerCase().includes(fText));
 
-  if(!entries.length){document.getElementById('inv-grid').innerHTML='<div class="empty">Aucun item</div>';return;}
-
+  // Tri
+  const sortMode=(document.getElementById('inv-sort')||{}).value||'rarity';
   const RORD={common:0,uncommon:1,rare:2,epic:3,legendary:4,mythic:5,unique:6,artifact:7,mastercraft:8,signature:9};
-  function sortByRarity(a,b){return(RORD[(ALL_ITEMS_DATA[b[0]]||{}).rarity?.toLowerCase()]||0)-(RORD[(ALL_ITEMS_DATA[a[0]]||{}).rarity?.toLowerCase()]||0);}
-  function cardHtml(id,qty){
-    const it=ALL_ITEMS_DATA[id]||{};const isEq=equipped.has(id);const hasSlot=!!it.slot;
-    const rarity=(it.rarity||'common').toLowerCase();const rc=RARITY_COLORS[rarity]||'#6b7280';
-    const effects=it.stat_effects||it.stats||{};
-    const effEntries=Object.entries(effects);
-    const effStr=effEntries.slice(0,3).map(([s,v])=>`+${v} ${STAT_ICONS_INV[s]||s}`).join(' ');
-    // Back face: detailed buffs
-    const backStats=effEntries.map(([s,v])=>`<div class="item-back-stat"><span class="item-back-stat-name">${STAT_ICONS_INV[s]||s} ${SL[s]||s}</span><span class="item-back-stat-val">+${v}</span></div>`).join('');
-    return`<div class="item-card-wrap${isEq?' equipped':''} rarity-${rarity}" onclick="flipCard(this)" ondblclick="${hasSlot?`event.stopPropagation();toggleEquip('${id}')`:''}" data-item-id="${id}">
-      <div class="item-card rarity-${rarity}">
-        <div class="item-card-front">
-          ${isEq?'<div class="item-equip-badge on">⚡ ÉQUIPÉ</div>':hasSlot?'<div class="item-equip-badge off">ÉQUIPER</div>':''}
-          <span class="item-icon-big">${it.emoji||'📦'}</span>
-          <div class="item-name-sm" style="color:${rc}">${e(it.name||id)}</div>
-          ${it.slot?`<div class="item-slot-tag">${SLOT_LIMITS[it.slot]?.label||it.slot}</div>`:''}
-          ${effStr?`<div class="item-effects">${effStr}</div>`:''}
-          ${qty>0?`<div class="item-qty">×${qty}</div>`:''}
-        </div>
-        <div class="item-card-back">
-          <div class="item-back-title">${e(it.name||id)}</div>
-          ${backStats||'<div style="color:var(--text3);font-family:var(--font-m);font-size:.44rem">Aucun buff</div>'}
-          ${it.slot?`<div class="item-back-slot">Slot : ${SLOT_LIMITS[it.slot]?.label||it.slot}</div>`:''}
-          ${hasSlot?'<div class="item-back-hint">Double-clic pour '+(isEq?'déséquiper':'équiper')+'</div>':''}
-        </div>
-      </div>
+  entries.sort((a,b)=>{
+    if(sortMode==='name'){
+      return (ALL_ITEMS_DATA[a[0]]?.name||a[0]).localeCompare(ALL_ITEMS_DATA[b[0]]?.name||b[0]);
+    } else if(sortMode==='slot'){
+      const sa=ALL_ITEMS_DATA[a[0]]?.slot||'zzz';
+      const sb=ALL_ITEMS_DATA[b[0]]?.slot||'zzz';
+      return sa.localeCompare(sb);
+    }
+    // default: rareté décroissante
+    return (RORD[(ALL_ITEMS_DATA[b[0]]||{}).rarity?.toLowerCase()]||0)-(RORD[(ALL_ITEMS_DATA[a[0]]||{}).rarity?.toLowerCase()]||0);
+  });
+
+  const grid=document.getElementById('inv-grid');
+  if(!entries.length){grid.innerHTML='<div class="inv-empty-msg">Aucun item trouvé</div>';return;}
+
+  // Détruire anciens tooltips avant de reconstruire le DOM
+  _destroyTooltips();
+
+  grid.innerHTML=entries.map(([id,qty])=>{
+    const it=ALL_ITEMS_DATA[id]||{};
+    const isEq=equipped.has(id);
+    const rarity=(it.rarity||'common').toLowerCase();
+    const rc=RARITY_COLORS[rarity]||'#6b7280';
+    const slotLabel=it.slot?SLOT_LIMITS[it.slot]?.label||it.slot:'';
+    return `<div class="inv-item rarity-${rarity}${isEq?' equipped':''}${_invDetailOpen===id?' selected':''}"
+      data-item-id="${id}" data-rarity="${rarity}" data-slot="${it.slot||''}"
+      onclick="showItemDetail('${id}')"
+      draggable="true">
+      ${isEq?'<span class="inv-badge-equipped"></span>':''}
+      ${qty>0?`<button class="inv-item-delete" onclick="openDeleteModal('${id}',event)" title="Supprimer de l'inventaire" aria-label="Supprimer ${e(it.name||id)}"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" width="10" height="10"><path d="M2 4h12M6 4V2h4v2M5 4l1 9h4l1-9"/></svg></button>`:''}
+      <span class="inv-item-emoji">${it.emoji||'📦'}</span>
+      <div class="inv-item-name" style="color:${rc}">${e(it.name||id)}</div>
+      ${slotLabel?`<div class="inv-item-slot">${slotLabel}</div>`:''}
+      ${qty>1?`<span class="inv-badge-qty">×${qty}</span>`:''}
     </div>`;
-  }
+  }).join('');
 
-  // Group by category + slot when on 'all' or 'equipment' tabs
-  const useGroups=(INV_TAB==='all'||INV_TAB==='equipment');
-  if(!useGroups){entries.sort(sortByRarity);document.getElementById('inv-grid').innerHTML=`<div class="inv-grid-sub">${entries.map(([id,q])=>cardHtml(id,q)).join('')}</div>`;return;}
-
-  const slotOrder=['tete','visage','cou','oreilles','torse','dos','bras','mains','poignets','doigts','jambes','pieds','armes_h','armes_l','special'];
-  const groups=[];
-  // 1) Equipped items
-  const eqEntries=entries.filter(([id])=>equipped.has(id));
-  if(eqEntries.length)groups.push({label:'ÉQUIPÉ',entries:eqEntries});
-  // 2) Equipment by slot (non-equipped)
-  const used=new Set(eqEntries.map(([id])=>id));
-  for(const s of slotOrder){
-    const slotEntries=entries.filter(([id])=>!used.has(id)&&(ALL_ITEMS_DATA[id]||{}).slot===s);
-    if(slotEntries.length){groups.push({label:(SLOT_LIMITS[s]?.label||s).toUpperCase(),entries:slotEntries});slotEntries.forEach(([id])=>used.add(id));}
+  // Animation GSAP entrée items
+  if(typeof gsap!=='undefined'){
+    gsap.from('#inv-grid .inv-item',{opacity:0,y:16,duration:0.28,stagger:{each:0.025,from:'start',amount:0.4},ease:'power2.out',clearProps:'opacity,transform'});
   }
-  // 3) Consumables
-  const consEntries=entries.filter(([id])=>!used.has(id)&&['consumable','food','usable'].includes((ALL_ITEMS_DATA[id]||{}).type));
-  if(consEntries.length){groups.push({label:'CONSOMMABLES',entries:consEntries});consEntries.forEach(([id])=>used.add(id));}
-  // 4) Other
-  const otherEntries=entries.filter(([id])=>!used.has(id));
-  if(otherEntries.length)groups.push({label:'AUTRES',entries:otherEntries});
-
-  let html='';
-  for(const g of groups){
-    g.entries.sort(sortByRarity);
-    html+=`<div class="inv-group-header">${g.label} <span class="inv-group-count">(${g.entries.length})</span></div>`;
-    html+=`<div class="inv-grid-sub">${g.entries.map(([id,q])=>cardHtml(id,q)).join('')}</div>`;
-  }
-  document.getElementById('inv-grid').innerHTML=html;
 }
 
-function renderEquipBonuses(){
+// ── RENDER STATS SUMMARY ──
+function renderStatsSummary(){
   const equipped=INV_DATA.equipped_assets||[];
   const totals={};
   const ALL_STAT_KEYS=['strength','agility','speed','intelligence','mana','resistance','charisma','aura'];
 
-  // Bonus directs items
   equipped.forEach(id=>{
     const it=ALL_ITEMS_DATA[id]||{};
     const effects=it.stat_effects||it.stats||{};
     Object.entries(effects).forEach(([s,v])=>{
-      try{totals[s]=(totals[s]||0)+parseInt(String(v).replace('+',''));}catch(e){}
+      try{totals[s]=(totals[s]||0)+parseInt(String(v).replace('+',''));}catch(_){}
     });
   });
 
@@ -1538,53 +2095,45 @@ function renderEquipBonuses(){
   });
 
   const entries=Object.entries(totals).filter(([,v])=>v>0);
-  if(!entries.length){
-    document.getElementById('equip-bonus-grid').innerHTML='<div class="empty" style="grid-column:1/-1">Aucun bonus</div>';
-    return;
-  }
-  document.getElementById('equip-bonus-grid').innerHTML=entries.map(([s,v])=>`
+  const el=document.getElementById('equip-bonus-grid');
+  if(!el)return;
+  if(!entries.length){el.innerHTML='<div class="empty" style="grid-column:1/-1;font-size:.44rem">Aucun bonus</div>';return;}
+  el.innerHTML=entries.map(([s,v])=>`
     <div class="equip-bonus-block">
       <div class="equip-bonus-val">+${v}</div>
       <div class="equip-bonus-name">${STAT_ICONS_INV[s]||''} ${SL[s]||s}</div>
     </div>`).join('');
 }
 
-function renderSets(){
+// ── RENDER SETS (accordéon) ──
+function renderSetsPanel(){
   const equipped=new Set(INV_DATA.equipped_assets||[]);
   const activeSets=[];
-
-  Object.entries(ITEM_SETS).forEach(([setId,setDef])=>{
-    const count=setDef.items.filter(i=>equipped.has(i)).length;
-    if(count<1)return; // Afficher même avec 1 pièce si le joueur l'a
-    const thresholds=Object.keys(setDef.bonuses).map(Number).sort((a,b)=>a-b);
-    const activeThresh=thresholds.filter(t=>count>=t);
-    if(count>0){
-      activeSets.push({setId,setDef,count,thresholds,activeThresh});
-    }
-  });
-
-  // Trier : sets actifs (≥2 pièces) en premier
-  activeSets.sort((a,b)=>{
-    const aActive=a.count>=2?1:0,bActive=b.count>=2?1:0;
-    return bActive-aActive||(b.count-a.count);
-  });
-
-  if(!activeSets.length){
-    document.getElementById('sets-grid').innerHTML=`<div class='empty'>Aucune pièce de set dans l'inventaire</div>`;
-    return;
-  }
-
   const rc={common:'#6b7280',uncommon:'#60a5fa',rare:'#a78bfa',epic:'#8B5CF6',legendary:'#fbbf24',mythic:'#f97316',unique:'#ffd60a',artifact:'#ef4444',mastercraft:'#ff006e'};
 
-  document.getElementById('sets-grid').innerHTML=activeSets.map(({setId,setDef,count,thresholds,activeThresh})=>{
-    const color=rc[setDef.rarity]||'#6b7280';
-    const isActive=count>=2;
+  Object.entries(ITEM_SETS).forEach(([setId,setDef])=>{
+    const count=setDef.items.filter(i=>equipped.has(i)||(INV_DATA.items||{})[i]).length;
+    if(count<1)return;
+    const thresholds=Object.keys(setDef.bonuses).map(Number).sort((a,b)=>a-b);
+    const equippedCount=setDef.items.filter(i=>equipped.has(i)).length;
+    const activeThresh=thresholds.filter(t=>equippedCount>=t);
+    activeSets.push({setId,setDef,count,thresholds,activeThresh,equippedCount});
+  });
 
-    const threshHtml=thresholds.map(t=>`
-      <span class="set-thresh ${activeThresh.includes(t)?'active':'inactive'}">${t}pc</span>`).join('');
+  activeSets.sort((a,b)=>(b.equippedCount-a.equippedCount)||(b.count-a.count));
+
+  const el=document.getElementById('sets-grid');if(!el)return;
+  if(!activeSets.length){el.innerHTML='<div class="empty" style="font-size:.44rem">Aucune pièce de set</div>';return;}
+
+  el.innerHTML=activeSets.map(({setId,setDef,count,thresholds,activeThresh,equippedCount})=>{
+    const color=rc[setDef.rarity]||'#6b7280';
+    const isActive=equippedCount>=2;
+    const total=setDef.items.length;
+
+    const threshHtml=thresholds.map(t=>`<span class="set-thresh ${activeThresh.includes(t)?'active':'inactive'}">${t}pc</span>`).join('');
 
     const bonusHtml=activeThresh.map(t=>{
-      const b=setDef.bonuses[t]||setDef.bonuses[String(t)];
+      const b=setDef.bonuses[String(t)]||setDef.bonuses[t];
       const parts=[];
       if(b.stats)Object.entries(b.stats).forEach(([s,v])=>parts.push(`+${v} ${STAT_ICONS_INV[s]||s}`));
       if(b.stats_all)parts.push(`+${b.stats_all} tous stats`);
@@ -1592,32 +2141,259 @@ function renderSets(){
       if(b.buff_mult_all)parts.push(`buffs ×${b.buff_mult_all}`);
       if(b.nerf_reduction)parts.push(`-${Math.round(b.nerf_reduction*100)}% nerfs`);
       if(b.special)parts.push(`✦ Effet spécial`);
-      return parts.length?`<div style="color:var(--green);font-size:.42rem">${t}pc : ${parts.join(' · ')}</div>`:'';
+      return parts.length?`<div class="set-bonus-line">${t}pc : ${parts.join(' · ')}</div>`:'';
     }).join('');
 
     const piecesHtml=setDef.items.map(id=>{
-      const have=equipped.has(id)||!!(INV_DATA.items||{})[id];
+      const hasEquipped=equipped.has(id);
+      const hasInInv=!!(INV_DATA.items||{})[id];
+      const have=hasEquipped||hasInInv;
       const it=ALL_ITEMS_DATA[id]||{};
       return`<span class="set-piece ${have?'have':'missing'}">${e(it.name||id.replace(/_/g,' '))}</span>`;
     }).join('');
 
-    return`<div class="set-card" style="border-left:3px solid ${color}${isActive?'':';opacity:.65'}">
-      <div class="set-header">
-        <span class="set-name" style="color:${color}">${e(setDef.name)}</span>
-        <span class="set-count" style="color:${isActive?'var(--green)':'var(--text3)'}">${count}/${setDef.items.length}</span>
+    return`<div class="set-card" style="border-left:3px solid ${color}">
+      <div class="set-header" onclick="toggleSetAccordion('${setId}')">
+        <div class="set-header-left">
+          <span class="set-name" style="color:${color}">${e(setDef.name)}</span>
+          <span class="set-rarity-tag" style="color:${color}">${setDef.rarity.toUpperCase()}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span class="set-count ${isActive?'active':'inactive'}">${equippedCount}/${total}</span>
+          <span class="set-chevron" id="chev-${setId}">▾</span>
+        </div>
       </div>
-      <div class="set-thresholds">${threshHtml}</div>
-      <div class="set-bonus">${bonusHtml||'<span style="color:var(--text3)">Pas encore actif</span>'}</div>
-      <div class="set-items">${piecesHtml}</div>
+      <div class="set-body" id="setbody-${setId}">
+        <div class="set-thresholds">${threshHtml}</div>
+        ${bonusHtml?`<div class="set-bonus-list">${bonusHtml}</div>`:''}
+        <div class="set-items">${piecesHtml}</div>
+      </div>
     </div>`;
   }).join('');
+
+  // Ouvrir automatiquement les sets actifs (≥2 pièces équipées)
+  activeSets.filter(s=>s.equippedCount>=2).forEach(s=>{
+    const body=document.getElementById('setbody-'+s.setId);
+    const chev=document.getElementById('chev-'+s.setId);
+    if(body){body.classList.add('open');if(chev)chev.classList.add('open');}
+  });
 }
 
+function toggleSetAccordion(setId){
+  const body=document.getElementById('setbody-'+setId);
+  const chev=document.getElementById('chev-'+setId);
+  if(!body)return;
+  const isOpen=body.classList.toggle('open');
+  if(chev)chev.classList.toggle('open',isOpen);
+}
 
-// ── FLIP CARD ──
-function flipCard(wrap){
-  const card=wrap.querySelector('.item-card');
-  if(card) card.classList.toggle('flipped');
+// ── PANNEAU DÉTAIL ITEM ──
+function showItemDetail(itemId,animate=true){
+  _invDetailOpen=itemId;
+  const it=ALL_ITEMS_DATA[itemId]||{};
+  const equipped=INV_DATA.equipped_assets||[];
+  const items=INV_DATA.items||{};
+  const isEq=equipped.includes(itemId);
+  const rarity=(it.rarity||'common').toLowerCase();
+  const rc=RARITY_COLORS[rarity]||'#6b7280';
+  const effects=it.stat_effects||it.stats||{};
+  const effEntries=Object.entries(effects);
+  const maxStatVal=effEntries.length?Math.max(...effEntries.map(([,v])=>parseInt(v)||0)):1;
+  const slotLabel=it.slot?SLOT_LIMITS[it.slot]?.label||it.slot:'';
+  const qty=items[itemId]||0;
+  const hasSlot=!!it.slot;
+
+  const statsHtml=effEntries.length?`
+    <div class="inv-detail-stats-title">Statistiques</div>
+    ${effEntries.map(([s,v])=>{
+      const pct=Math.min(100,Math.round((parseInt(v)||0)/Math.max(maxStatVal,1)*100));
+      return`<div class="inv-detail-stat-row">
+        <span class="inv-detail-stat-icon">${STAT_ICONS_INV[s]||'•'}</span>
+        <span class="inv-detail-stat-name">${SL[s]||s}</span>
+        <div class="inv-detail-stat-bar"><div class="inv-detail-stat-fill" data-pct="${pct}" style="width:0%"></div></div>
+        <span class="inv-detail-stat-val">+${v}</span>
+      </div>`;
+    }).join('')}`:'<div class="inv-detail-no-stats">Aucune statistique</div>';
+
+  const actionsHtml=(hasSlot?`
+    <button class="inv-detail-btn ${isEq?'unequip':'equip'}" onclick="toggleEquip('${itemId}')">
+      ${isEq?'⊖ Déséquiper':'⊕ Équiper'}
+    </button>
+  `:(qty>0?`<div class="inv-detail-no-stats" style="margin-top:4px">Gérable depuis l'onglet Mon Shop</div>`:''))
+  +(qty>0?`<button class="inv-detail-btn delete" onclick="openDeleteModal('${itemId}',event)">⊗ Supprimer</button>`:'');
+
+  document.getElementById('inv-detail-content').innerHTML=`
+    <span class="inv-detail-emoji" style="color:${rc}">${it.emoji||'📦'}</span>
+    <div class="inv-detail-name" style="color:${rc}">${e(it.name||itemId)}</div>
+    <div class="inv-detail-rarity" style="color:${rc}">${rarity}</div>
+    ${slotLabel?`<div class="inv-detail-slot-tag">📍 ${slotLabel}</div>`:''}
+    <div class="inv-detail-sep"></div>
+    ${statsHtml}
+    ${qty>0?`<div class="inv-detail-qty-info">Quantité en inventaire : ×${qty}</div>`:''}
+    ${isEq?'<div class="inv-detail-qty-info" style="color:var(--cyan)">⚡ Actuellement équipé</div>':''}
+    <div class="inv-detail-actions">${actionsHtml}</div>
+  `;
+
+  // Ouvrir panneau
+  const panel=document.getElementById('inv-detail-panel');
+  const overlay=document.getElementById('inv-detail-overlay');
+  panel.classList.add('open');
+  overlay.classList.add('open');
+
+  // Surbrillance item sélectionné dans la grille
+  document.querySelectorAll('#inv-grid .inv-item').forEach(el=>{
+    el.classList.toggle('selected',el.dataset.itemId===itemId);
+  });
+
+  // GSAP : animation barres de stats
+  if(animate&&typeof gsap!=='undefined'){
+    gsap.set(panel,{x:60,opacity:0.6});
+    gsap.to(panel,{x:0,opacity:1,duration:0.35,ease:'power3.out',overwrite:true});
+    requestAnimationFrame(()=>{
+      document.querySelectorAll('.inv-detail-stat-fill').forEach(bar=>{
+        gsap.to(bar,{width:bar.dataset.pct+'%',duration:0.7,ease:'power2.out',delay:0.15});
+      });
+    });
+  } else {
+    document.querySelectorAll('.inv-detail-stat-fill').forEach(bar=>{
+      bar.style.width=bar.dataset.pct+'%';
+    });
+  }
+}
+
+function closeItemDetail(){
+  _invDetailOpen=null;
+  const panel=document.getElementById('inv-detail-panel');
+  const overlay=document.getElementById('inv-detail-overlay');
+  if(typeof gsap!=='undefined'){
+    gsap.to(panel,{x:60,opacity:0,duration:0.28,ease:'power2.in',overwrite:true,onComplete:()=>{
+      panel.classList.remove('open');
+      gsap.set(panel,{clearProps:'transform,opacity'});
+    }});
+  } else {
+    panel.classList.remove('open');
+  }
+  overlay.classList.remove('open');
+  document.querySelectorAll('#inv-grid .inv-item.selected').forEach(el=>el.classList.remove('selected'));
+}
+
+// ── DRAG & DROP (SortableJS) ──
+function initDragDrop(){
+  if(typeof Sortable==='undefined')return;
+
+  // Détruire instances précédentes
+  if(_sortableGrid){try{_sortableGrid.destroy();}catch(_){}_sortableGrid=null;}
+  Object.values(_sortableSlots).forEach(s=>{try{s.destroy();}catch(_){}});
+  _sortableSlots={};
+
+  const grid=document.getElementById('inv-grid');
+  if(!grid)return;
+
+  // SortableJS sur la grille (source)
+  _sortableGrid=Sortable.create(grid,{
+    group:{name:'jaharta-inv',pull:'clone',put:false},
+    animation:150,
+    distance:12, // min 12px pour distinguer clic de drag
+    sort:false,
+    ghostClass:'dragging',
+    onStart(evt){
+      const itemId=evt.item.dataset.itemId;
+      if(!itemId)return;
+      const it=ALL_ITEMS_DATA[itemId]||{};
+      // Mettre en surbrillance les zones compatibles
+      document.querySelectorAll('.slot-zone').forEach(zone=>{
+        zone.classList.toggle('drag-over',zone.dataset.slot===it.slot);
+      });
+    },
+    onEnd(){
+      document.querySelectorAll('.slot-zone').forEach(z=>z.classList.remove('drag-over'));
+    }
+  });
+
+  // SortableJS sur chaque zone de slot (cible)
+  const slotOrder=['tete','visage','cou','oreilles','torse','dos','bras','mains','poignets','doigts','jambes','pieds','armes_h','armes_l','special'];
+  slotOrder.forEach(slotId=>{
+    const cells=document.getElementById('sz-'+slotId);
+    if(!cells)return;
+    _sortableSlots[slotId]=Sortable.create(cells,{
+      group:{name:'jaharta-inv',pull:false,put:['jaharta-inv']},
+      animation:150,
+      onAdd(evt){
+        // Récupérer l'itemId depuis l'élément draggué
+        const itemId=evt.item.dataset.itemId;
+        // Supprimer l'élément ajouté par SortableJS (on gère le DOM via renderInventory)
+        evt.item.remove();
+        if(!itemId)return;
+        const it=ALL_ITEMS_DATA[itemId]||{};
+        // Vérifier que le slot correspond
+        if(it.slot!==slotId){
+          showEquipToast(`❌ Slot incompatible (${SLOT_LIMITS[it.slot]?.label||it.slot||'?'} ≠ ${SLOT_LIMITS[slotId]?.label||slotId})`,true);
+          return;
+        }
+        // Déléguer à toggleEquip (qui vérifie limites et écrit Firestore)
+        toggleEquip(itemId);
+      }
+    });
+  });
+}
+
+// ── TOOLTIPS (Tippy.js) ──
+function _destroyTooltips(){
+  _tippyInstances.forEach(t=>{try{t.destroy();}catch(_){}});
+  _tippyInstances=[];
+}
+
+function initTooltips(){
+  if(typeof tippy==='undefined')return;
+  _destroyTooltips();
+
+  const items=document.querySelectorAll('#inv-grid .inv-item');
+  if(!items.length)return;
+
+  const instances=tippy(Array.from(items),{
+    theme:'cy',
+    placement:'top',
+    delay:[220,0],
+    arrow:true,
+    allowHTML:true,
+    content(el){
+      const id=el.dataset.itemId;
+      const it=ALL_ITEMS_DATA[id]||{};
+      const rarity=(it.rarity||'common').toLowerCase();
+      const rc=RARITY_COLORS[rarity]||'#6b7280';
+      const effects=it.stat_effects||it.stats||{};
+      const effHtml=Object.entries(effects).slice(0,4).map(([s,v])=>`
+        <div class="inv-tip-stat"><span>${STAT_ICONS_INV[s]||''} ${SL[s]||s}</span><span class="inv-tip-val">+${v}</span></div>`).join('');
+      const slotLabel=it.slot?SLOT_LIMITS[it.slot]?.label||it.slot:'';
+      return`<div>
+        <div class="inv-tip-name" style="color:${rc}">${e(it.name||id)}</div>
+        <div class="inv-tip-rarity" style="color:${rc}">${rarity}</div>
+        ${slotLabel?`<div class="inv-tip-slot">📍 ${slotLabel}</div>`:''}
+        ${effHtml?`<div style="margin-top:5px;border-top:1px solid rgba(0,229,255,0.1);padding-top:5px">${effHtml}</div>`:''}
+      </div>`;
+    }
+  });
+  _tippyInstances=Array.isArray(instances)?instances:[instances];
+
+  // Tooltips sur les cellules de slots occupées
+  const cells=document.querySelectorAll('.slot-cell.occupied');
+  if(cells.length){
+    const cellInst=tippy(Array.from(cells),{
+      theme:'cy',
+      placement:'right',
+      delay:[150,0],
+      arrow:true,
+      allowHTML:true,
+      content(el){
+        const id=el.dataset.itemId;
+        const it=ALL_ITEMS_DATA[id]||{};
+        const rc=RARITY_COLORS[(it.rarity||'common').toLowerCase()]||'#6b7280';
+        return`<div><div class="inv-tip-name" style="color:${rc}">${e(it.name||id)}</div><div style="font-size:.4rem;color:var(--text3);margin-top:3px">Clic pour voir / déséquiper</div></div>`;
+      }
+    });
+    const arr=Array.isArray(cellInst)?cellInst:[cellInst];
+    _tippyInstances.push(...arr);
+  }
 }
 
 // ── EQUIP / UNEQUIP via Firestore ──
@@ -1628,6 +2404,12 @@ async function toggleEquip(itemId){
   const it=ALL_ITEMS_DATA[itemId]||{};
   const isEq=equipped.includes(itemId);
   const key=`${UID}_${CHAR_ID}`;
+
+  // Feedback visuel immédiat sur l'item dans la grille
+  const itemEl=document.querySelector(`#inv-grid .inv-item[data-item-id="${itemId}"]`);
+  if(itemEl&&typeof gsap!=='undefined'){
+    gsap.to(itemEl,{scale:0.88,opacity:0.5,duration:0.15,yoyo:true,repeat:1,ease:'power2.inOut'});
+  }
 
   try{
     let newEquipped=[...equipped];
@@ -1642,19 +2424,16 @@ async function toggleEquip(itemId){
       INV_DATA.items=newItems;
       showEquipToast(`✓ ${it.name||itemId} déséquipé`);
     } else {
-      // Équiper — vérifier les limites de slot
+      // Vérifier limites de slot
       const slot=it.slot;
       if(slot){
         const def=SLOT_LIMITS[slot];
         if(def){
           const inSlot=equipped.filter(id=>(ALL_ITEMS_DATA[id]||{}).slot===slot).length;
-          if(inSlot>=def.max){
-            showEquipToast(`❌ Slot ${def.label} plein (${inSlot}/${def.max})`,true);
-            return;
-          }
+          if(inSlot>=def.max){showEquipToast(`❌ Slot ${def.label} plein (${inSlot}/${def.max})`,true);return;}
         }
       }
-      // Vérifier restriction high-tier par niveau (miroir du bot)
+      // Vérifier restriction high-tier par niveau
       const HIGH_TIER=new Set(['legendary','mythic','unique','signature','artifact','mastercraft']);
       const itemRarity=(it.rarity||'common').toLowerCase();
       if(HIGH_TIER.has(itemRarity)){
@@ -1665,8 +2444,7 @@ async function toggleEquip(itemId){
         if(htLimit!==null){
           const htCount=equipped.filter(id=>{const r=(ALL_ITEMS_DATA[id]||{}).rarity||'';return HIGH_TIER.has(r.toLowerCase());}).length;
           if(htCount>=htLimit){
-            if(htLimit===0) showEquipToast(`❌ Niveau ${charLvl} : aucun item Legendary+ autorisé`,true);
-            else showEquipToast(`❌ Limite Legendary+ atteinte (${htCount}/${htLimit}) — niveau ${charLvl}`,true);
+            showEquipToast(htLimit===0?`❌ Niveau ${charLvl} : aucun item Legendary+ autorisé`:`❌ Limite Legendary+ atteinte (${htCount}/${htLimit}) — niveau ${charLvl}`,true);
             return;
           }
         }
@@ -1681,12 +2459,20 @@ async function toggleEquip(itemId){
       INV_DATA.equipped_assets=newEquipped;
       INV_DATA.items=newItems;
       showEquipToast(`✓ ${it.name||itemId} équipé`);
+
+      // Flash sur la cellule de slot
+      if(typeof gsap!=='undefined'){
+        const slotEl=document.getElementById('sz-'+it.slot);
+        if(slotEl)gsap.fromTo(slotEl,{boxShadow:'0 0 0 rgba(0,229,255,0)'},{boxShadow:'0 0 20px rgba(0,229,255,0.35)',duration:0.3,yoyo:true,repeat:1,ease:'power2.out'});
+      }
     }
     cacheInvalidate('_inventory');
     renderInventory();
   }catch(err){
     console.error('[EQUIP]',err);
     showEquipToast('❌ Erreur — réessaye',true);
+    // Forcer re-render pour resynchroniser le DOM
+    renderInventory();
   }
 }
 
@@ -1701,6 +2487,85 @@ function showEquipToast(msg,isError=false){
   t.textContent=msg;
   t.className='equip-toast show'+(isError?' error':'');
   clearTimeout(t._t);t._t=setTimeout(()=>{t.className='equip-toast';},2500);
+}
+
+// ── SUPPRESSION ITEM ──
+let _deleteTarget=null; // { itemId, maxQty }
+
+function openDeleteModal(itemId,event){
+  if(event){event.stopPropagation();}
+  const items=INV_DATA.items||{};
+  const qty=items[itemId]||0;
+  if(qty<=0){showEquipToast('❌ Cet item n\'est pas dans l\'inventaire',true);return;}
+  const it=ALL_ITEMS_DATA[itemId]||{};
+  const rarity=(it.rarity||'common').toLowerCase();
+  const rc=RARITY_COLORS[rarity]||'#6b7280';
+  _deleteTarget={itemId,maxQty:qty};
+  // Populer le modal
+  const emojiEl=document.getElementById('inv-del-emoji');
+  const nameEl=document.getElementById('inv-del-name');
+  const metaEl=document.getElementById('inv-del-meta');
+  if(emojiEl)emojiEl.textContent=it.emoji||'📦';
+  if(nameEl){nameEl.textContent=it.name||itemId;nameEl.style.color=rc;}
+  if(metaEl)metaEl.textContent=`${rarity.toUpperCase()} · En inventaire : ×${qty}`;
+  // Quantité
+  const qtyInput=document.getElementById('inv-del-qty');
+  const qtyWrap=document.getElementById('inv-del-qty-wrap');
+  if(qtyInput){qtyInput.min=1;qtyInput.max=qty;qtyInput.value=1;}
+  if(qtyWrap)qtyWrap.classList.toggle('visible',qty>1);
+  // Ouvrir
+  const overlay=document.getElementById('inv-delete-overlay');
+  if(overlay)overlay.classList.add('open');
+}
+
+function closeDeleteModal(){
+  const overlay=document.getElementById('inv-delete-overlay');
+  if(overlay)overlay.classList.remove('open');
+  _deleteTarget=null;
+}
+
+function adjustDeleteQty(delta){
+  if(!_deleteTarget)return;
+  const input=document.getElementById('inv-del-qty');
+  if(!input)return;
+  const newVal=Math.max(1,Math.min(_deleteTarget.maxQty,parseInt(input.value||1)+delta));
+  input.value=newVal;
+}
+
+function clampDeleteQty(){
+  if(!_deleteTarget)return;
+  const input=document.getElementById('inv-del-qty');
+  if(!input)return;
+  let v=parseInt(input.value)||1;
+  if(v<1)v=1;
+  if(v>_deleteTarget.maxQty)v=_deleteTarget.maxQty;
+  input.value=v;
+}
+
+async function confirmDelete(){
+  if(!_deleteTarget||!UID||!CHAR_ID)return;
+  const{itemId,maxQty}=_deleteTarget;
+  const qtyInput=document.getElementById('inv-del-qty');
+  const qtyToDelete=Math.max(1,Math.min(maxQty,parseInt((qtyInput&&qtyInput.value)||1)));
+  closeDeleteModal();
+  const it=ALL_ITEMS_DATA[itemId]||{};
+  try{
+    const newItems={...(INV_DATA.items||{})};
+    const current=newItems[itemId]||0;
+    const remaining=Math.max(0,current-qtyToDelete);
+    if(remaining<=0){delete newItems[itemId];}
+    else{newItems[itemId]=remaining;}
+    const key=`${UID}_${CHAR_ID}`;
+    await db.collection(C.INV).doc(key).set({items:newItems},{merge:true});
+    INV_DATA.items=newItems;
+    showEquipToast(`✓ ×${qtyToDelete} ${it.name||itemId} supprimé${qtyToDelete>1?'s':''}`);
+    if(_invDetailOpen===itemId)closeItemDetail();
+    cacheInvalidate('_inventory');
+    renderInventory();
+  }catch(err){
+    console.error('[DELETE]',err);
+    showEquipToast('❌ Erreur lors de la suppression',true);
+  }
 }
 
 // ── RENDER GACHA ──

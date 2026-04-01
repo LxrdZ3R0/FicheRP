@@ -9,15 +9,18 @@ Visible par tous, modifiable uniquement par les membres du staff.
 
 ## Vision du projet
 
-Le site permet à tout visiteur de consulter les informations de l'univers Jaharta :
+Le site permet à tout visiteur de consulter les informations de l'univers Jaharta, et offre aux joueurs authentifiés deux systèmes premium gamifiés.
 
-| Page | Contenu | Qui peut modifier |
-|------|---------|-------------------|
-| **Accueil** | Navigation vers les sections + lien Discord | Staff (HTML) |
-| **Fiches RP** | Cartes des personnages joueurs validés par le staff | Staff via admin.html |
-| **PNJ** | Personnages non-joueurs importants | Staff via admin.html |
-| **Portail** | Liens vers le Lore et la Carte du monde (à venir) | Staff (HTML) |
-| **Admin** | Panel de gestion (connexion requise) | Staff whitelist |
+| Page | Contenu | Accès |
+|------|---------|-------|
+| **Accueil** | Navigation vers les sections + lien Discord | Public |
+| **Fiches RP** | Cartes des personnages joueurs validés | Public (lecture) |
+| **PNJ** | Personnages non-joueurs importants | Public (lecture) |
+| **Portail** | Liens Lore + Carte du monde | Public |
+| **Races jouables** | Encyclopédie des 42 races (7 groupes) | Public |
+| **Gacha Nexus** | Système de tirages avec Navarites | Auth Discord `/link` |
+| **Hub joueur** | 12 onglets de progression personnalisée | Auth Discord `/link` |
+| **Admin** | Panel de gestion staff | Whitelist Firestore |
 
 ---
 
@@ -27,10 +30,11 @@ Le site permet à tout visiteur de consulter les informations de l'univers Jahar
 |---------|-------------|---------|
 | Hébergement | GitHub Pages (`/docs`) | — |
 | Base de données | Firebase Firestore (temps réel) | config inline |
-| Stockage images | Firebase Storage | config inline |
-| Authentification | Firebase Auth (Google + email/password) | admin.html |
-| Frontend | HTML / CSS / JS vanilla | — |
+| Stockage images | Firebase Cloud Storage | config inline |
+| Authentification | Firebase Auth (Google + email/password + code Discord) | admin.html, gacha.html, hub.html |
+| Frontend | HTML / CSS / JS vanilla — aucun bundler | — |
 | UI réactive | Alpine.js 3.14 (onglets admin) | admin.html |
+| 3D / Animation | Three.js (blob gacha) + GSAP (flip cartes + scan silhouette hub) | js/kanji-blob.js, gacha.html, hub.html |
 | Composant carte | Web Component `<jaharta-card>` | js/jaharta-card.js |
 | Constantes | RACES, RANKS, RACES_SPECIFIC | js/constants.js |
 | Utilitaires | sanitize, compressImage, AntiSpam, Skeleton, showToast | js/utils.js |
@@ -48,7 +52,9 @@ JahartaRP/
 │   ├── fiches.html                ← Personnages joueurs (PC)
 │   ├── pnj.html                   ← Personnages non-joueurs
 │   ├── portail.html               ← Portail ressources (Lore + Carte)
-│   ├── racesjouables.html         ← Encyclopédie des 42 races
+│   ├── racesjouables.html         ← Encyclopédie des 42 races (7 groupes)
+│   ├── gacha.html                 ← Gacha Nexus — tirages + pity (auth Discord)
+│   ├── hub.html                   ← Hub joueur — 12 onglets (auth Discord)
 │   ├── admin.html                 ← Panel d'administration (login requis)
 │   │
 │   ├── css/
@@ -58,6 +64,8 @@ JahartaRP/
 │   │   ├── constants.js           ← RACES, RANKS, RACES_SPECIFIC (partagé)
 │   │   ├── utils.js               ← sanitize, compressImage, AntiSpam, Skeleton, showToast
 │   │   ├── jaharta-card.js        ← Web Component <jaharta-card> (cartes personnages)
+│   │   ├── kanji-blob.js          ← Blob Three.js pour gacha (morphing 3D)
+│   │   ├── page-transition.js     ← Overlay de chargement entre pages
 │   │   └── debug.js               ← Logger d'erreurs flottant (dev)
 │   │
 │   └── img/
@@ -66,6 +74,7 @@ JahartaRP/
 │       ├── favicon-32.png
 │       └── favicon-180.png
 │
+├── CLAUDE.md                      ← Guide pour Claude Code (IA)
 ├── .gitignore
 └── README.md
 ```
@@ -139,6 +148,62 @@ L'accès admin utilise une **whitelist Firestore** (pas juste Firebase Auth).
 
 ---
 
+## Système d'authentification joueur (Gacha + Hub)
+
+Les pages `gacha.html` et `hub.html` utilisent un système d'auth distinct via le bot Discord.
+
+### Étapes de connexion
+
+1. Le joueur tape `/link` sur le serveur Discord
+2. Le bot génère un code à 12 caractères valable **10 minutes**
+3. Le joueur colle ce code dans le champ de connexion du site
+4. Le frontend vérifie le document `users/{discordId}/linkCodes/{code}` en Firestore
+5. La session est stockée en `localStorage` : `{ discordId, uid, userName }`
+
+---
+
+## Système Gacha Nexus (`gacha.html`)
+
+| Élément | Détail |
+|---------|--------|
+| Monnaie | **Navarites** (NAV) — gérées par le bot Discord |
+| Tirages | ×1 (1 NAV) / ×5 (5 NAV + 1 bonus) / ×10 (10 NAV + 4 bonus + 1 Epic garanti) |
+| Pity soft | Compteur de pulls depuis le dernier Epic |
+| Pity hard | Compteur de pulls depuis le dernier Légendaire |
+| Animations | Blob Three.js (`kanji-blob.js`) + canvas particles + GSAP flip cartes |
+
+**API globale du blob** (utilisable depuis gacha.html) :
+```js
+bSetCol(color1, color2)       // changer les couleurs
+bExplode()                    // animation d'explosion
+bAddOrbital(hexColor, tier)   // ajouter une sphère orbitale
+```
+
+---
+
+## Hub joueur (`hub.html`)
+
+12 onglets de progression personnalisée par joueur :
+
+| # | Onglet | Contenu |
+|---|--------|---------|
+| 1 | Dashboard | Niveau, XP, Navarites, stats, pouvoirs |
+| 2 | Personnage | Fiche complète (stats, bio, relations) |
+| 3 | Inventaire | UI Cyberpunk 2077 — panneau 3 colonnes (slots ← silhouette SVG → slots), 15 types d'emplacements, grille items drag & drop, suppression d'items avec confirmation |
+| 4 | Gacha | Historique des tirages |
+| 5 | Party | Gestion d'équipe (6 membres, rôles) |
+| 6 | Progression | Jalons, système battle pass |
+| 7 | Titres | Badges cosmétiques débloqués |
+| 8 | Compagnons | Familiers et invocations |
+| 9 | Mon Shop | Étal de marché personnel |
+| 10 | Shops | Marchés de tous les joueurs |
+| 11 | Universal Shop | Boutique admin (prix fixes) |
+| 12 | Paramètres | Notifications, confidentialité, profil |
+
+Toutes les données sont chargées en temps réel via `onSnapshot()`.
+
+---
+
 ## Schéma Firestore
 
 ### Collection `fiches` — Personnages joueurs (PC)
@@ -196,6 +261,33 @@ L'accès admin utilise une **whitelist Firestore** (pas juste Firebase Auth).
 
 ```
 { action, targetId, targetName, byEmail, byUid, byName, role, at }
+```
+
+### Collection `users` — Données joueurs (gacha + hub)
+
+```
+{
+  navarites:    number        // solde de monnaie principale
+  golden_eggs:  number|Object // œufs dorés (peut être un map Firestore — extraction sécurisée côté client)
+  notoriety:    number        // points de notoriété
+  gacha_pulls:  Array         // historique des tirages
+  pity_state:   Object        // { soft_pity, hard_pity, streak }
+  party:        Object        // équipe de 6 membres
+  titles:       Array         // titres débloqués
+  companions:   Array         // compagnons actifs
+  shop_data:    Object        // étal de marché du joueur
+  // Sous-collection linkCodes/{code} : { expiresAt, used }
+}
+```
+
+### Collection `inventaires` — Inventaire joueur (hub.html, onglet 3)
+
+```
+{
+  // doc ID : {discordId}_{charId}
+  equipped_assets: Array    // IDs des items actuellement équipés
+  items:           Object   // { [itemId]: quantity } — items en stock (non équipés)
+}
 ```
 
 ---
