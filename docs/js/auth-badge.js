@@ -37,7 +37,7 @@ const auth = getAuth(app);
 onAuthStateChanged(auth, user => {
 
   /* ── VIP Discord IDs — always treated as admin ── */
-  const VIP_IDS = ['1365423700047958037','372065190142803982','1051163695222358117'];
+  const VIP_IDS = ['1365423700047958037','372065190142803982','1051163695222358117','769193650915246131','707157327970828299'];
   let isVipSession = false;
   try {
     const gs = JSON.parse(localStorage.getItem('gacha_session') || localStorage.getItem('hub_session') || 'null');
@@ -70,6 +70,10 @@ onAuthStateChanged(auth, user => {
   /* ── Bouton "+ Ajouter une fiche" (fiches.html) ── */
   const addBtn = document.getElementById('add-char-btn');
   if (addBtn) addBtn.style.display = (user || isVipSession) ? 'inline-flex' : 'none';
+
+  /* ── Lien Admin dans le menu mobile ── */
+  const menuAdminLink = document.getElementById('menu-admin-link');
+  if (menuAdminLink) menuAdminLink.style.display = (user || isVipSession) ? '' : 'none';
 
   /* ── Dispatch un event custom pour les scripts non-module ──
      Permet à n'importe quelle page d'écouter : 

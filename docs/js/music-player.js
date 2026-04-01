@@ -154,12 +154,46 @@
     saveSt();
   });
 
-  if (st.playing && forceStart < 0) {
+  if (st.playing) {
     audio.addEventListener('canplay', function() {
       muted = false; syncMute();
       audio.play().then(function(){ setPlaying(true); }).catch(function(){});
     }, { once: true });
   }
+
+  /* ── Auto-start music on first user interaction ──
+     Browsers block autoplay without user gesture. We listen for
+     click, mousemove, touchstart — the first one triggers playback.
+     Always registers, on every page. */
+  var _autoTriggered = false;
+  function _autoStart() {
+    if (_autoTriggered || playing) return;
+    _autoTriggered = true;
+    document.removeEventListener('click', _autoStart, true);
+    document.removeEventListener('mousemove', _autoStart, true);
+    document.removeEventListener('touchstart', _autoStart, true);
+    setTimeout(function() {
+      if (playing) return;
+      // Force reload track to ensure fresh request with user gesture context
+      loadTrack(idx);
+      var _waited = 0;
+      function _tryPlay() {
+        if (playing) return;
+        if (audio.readyState >= 2) {
+          doPlay();
+        } else if (_waited < 8000) {
+          _waited += 500;
+          setTimeout(_tryPlay, 500);
+        }
+      }
+      audio.addEventListener('canplay', function() { if (!playing) doPlay(); }, { once: true });
+      // Also poll in case canplay already fired or won't fire
+      setTimeout(_tryPlay, 600);
+    }, 200);
+  }
+  document.addEventListener('click', _autoStart, true);
+  document.addEventListener('mousemove', _autoStart, true);
+  document.addEventListener('touchstart', _autoStart, true);
 
   /* ── Expose API for Gacha special music ── */
   window.JMP = {

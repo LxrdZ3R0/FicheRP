@@ -299,8 +299,8 @@ body{background:var(--bg)!important}
     <a href="racesjouables.html">Races</a>
     <a href="gacha.html" class="active">Gacha</a>
     <a href="admin.html" class="nav-admin-link">Admin</a>
-    <a href="admin.html" class="admin-badge" id="admin-badge">ADMIN</a>
   </div>
+  <a href="admin.html" class="admin-badge" id="admin-badge">ADMIN</a>
   <button class="burger" id="burger" aria-label="Menu" aria-expanded="false"><span class="burger-line"></span><span class="burger-line"></span><span class="burger-line"></span></button>
 </nav>
 <!-- MOBILE MENU -->
@@ -314,6 +314,7 @@ body{background:var(--bg)!important}
     <a href="racesjouables.html" class="menu-link"><span class="menu-link-index">05</span><span class="menu-link-text">Races</span><span class="menu-link-arrow">→</span></a>
     <a href="gacha.html" class="menu-link active"><span class="menu-link-index">06</span><span class="menu-link-text">Gacha</span><span class="menu-link-arrow">→</span></a>
     <a href="hub.html" class="menu-link"><span class="menu-link-index">07</span><span class="menu-link-text">Hub</span><span class="menu-link-arrow">→</span></a>
+    <a href="admin.html" class="menu-link" id="menu-admin-link"><span class="menu-link-index">08</span><span class="menu-link-text">Admin</span><span class="menu-link-arrow">→</span></a>
   </div>
   <div class="menu-deco"></div>
 </div>
@@ -351,6 +352,21 @@ body{background:var(--bg)!important}
     </div>
 
     <div class="section-head"><span class="sh-num">01 //</span><h2 class="sh-title">Bannières</h2><div class="sh-line"></div></div>
+
+    <!-- Admin Banner Image -->
+    <div id="gacha-banner-img-wrap" style="display:none;margin-bottom:24px;text-align:center">
+      <img id="gacha-banner-img" src="" alt="Banner" style="max-width:100%;border-radius:10px;border:1px solid rgba(77,163,255,0.12);box-shadow:0 4px 30px rgba(0,0,0,0.4);display:none">
+    </div>
+    <!-- Admin: set banner image (visible only for admins) -->
+    <div id="gacha-admin-banner-editor" style="display:none;margin-bottom:20px;padding:16px;background:rgba(139,92,246,0.06);border:1px solid rgba(139,92,246,0.2);border-radius:8px">
+      <div style="font-family:var(--font-h);font-size:.55rem;font-weight:700;letter-spacing:.15em;color:var(--violet);margin-bottom:10px">⚙ IMAGE BANNIÈRE (ADMIN)</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <input type="text" id="gacha-banner-img-url" placeholder="URL de l'image (laisser vide pour supprimer)" style="flex:1;min-width:200px;font-family:var(--font-m);font-size:.6rem;letter-spacing:.04em;padding:10px 14px;background:rgba(8,12,30,0.8);border:1px solid rgba(139,92,246,0.2);border-radius:6px;color:#fff;outline:none">
+        <button onclick="saveGachaBannerImg()" style="font-family:var(--font-h);font-size:.5rem;font-weight:700;letter-spacing:.12em;color:#fff;background:linear-gradient(135deg,var(--violet),var(--magenta));border:none;padding:10px 20px;border-radius:6px;cursor:pointer;transition:all .3s;white-space:nowrap">SAUVEGARDER</button>
+      </div>
+      <div style="font-family:var(--font-m);font-size:.42rem;color:var(--text3);margin-top:6px;letter-spacing:.06em">L'image apparaîtra en haut de la section Bannières pour tous les utilisateurs.</div>
+    </div>
+
     <div id="rot-info" style="font-family:var(--font-m);font-size:.5rem;color:var(--text3);letter-spacing:.1em;margin-bottom:16px"></div>
     <div class="banners-grid" id="bg"></div>
 
@@ -663,16 +679,25 @@ const db=firebase.firestore();
 </script>
 <script src="js/jaharta-cache.js"></script>
 <script>
-/* ═══ GACHA MUSIC: Black Ops 2 default, 1/1000 chance SPECIALZ ═══ */
+/* ═══ GACHA MUSIC: Black Ops 2 default, 1/1000 chance SPECIALZ (1/100 for BOOSTED IDs) ═══ */
 (function(){
   var SPECIALZ_INDEX = 3; // SPECIALZ in ALL_TRACKS
   var BO2_INDEX = 2;      // Black Ops 2 in ALL_TRACKS
-  var roll = Math.floor(Math.random() * 1000); // 0..999
+  // Boosted IDs: 1/100 chance instead of 1/1000 + first x10 full LEG+
+  var SPECIALZ_BOOSTED_IDS = ['769193650915246131','707157327970828299'];
+  // Check session to see if user is boosted
+  var sess = null;
+  try { sess = JSON.parse(localStorage.getItem('gacha_session')) || JSON.parse(localStorage.getItem('hub_session')); } catch(e){}
+  var isBoosted = sess && SPECIALZ_BOOSTED_IDS.includes(String(sess.id));
+  var rollMax = isBoosted ? 100 : 1000; // 1/100 vs 1/1000
+  var roll = Math.floor(Math.random() * rollMax);
   var isSpecialRoll = (roll === 0);
   window.GACHA_SPECIALZ_ACTIVE = isSpecialRoll;
   window.GACHA_SPECIALZ_FIRST_PULL_USED = false;
+  window.GACHA_SPECIALZ_BOOSTED_IDS = SPECIALZ_BOOSTED_IDS;
   if (isSpecialRoll) {
     console.log('%c[GACHA] ⚡ SPECIALZ ACTIVATED — LEG+ guaranteed on first x10!', 'color:#ffd60a;font-size:14px;font-weight:bold');
+    if (isBoosted) console.log('%c[GACHA] 🔥 BOOSTED USER — first x10 = FULL LEG+ !', 'color:#ff006e;font-size:14px;font-weight:bold');
     window.JMP_CONFIG = { tracks: [SPECIALZ_INDEX], autoTrack: 0 };
   } else {
     window.JMP_CONFIG = { tracks: [BO2_INDEX], autoTrack: 0 };
@@ -689,7 +714,7 @@ const RC_CHIP={Common:'rc-c',Uncommon:'rc-u',Rare:'rc-r',Epic:'rc-e',Legendary:'
 const LR_CHIP={Common:'lr-c',Uncommon:'lr-u',Rare:'lr-r',Epic:'lr-e',Legendary:'lr-l',Mythic:'lr-m',Unique:'lr-q',Artifact:'lr-a'};
 
 // ═══ VIP ADMIN IDs — auto-admin + gacha boost ═══
-const VIP_IDS = ['1365423700047958037','372065190142803982','1051163695222358117'];
+const VIP_IDS = ['1365423700047958037','372065190142803982','1051163695222358117','769193650915246131','707157327970828299'];
 function isVIP(uid){ return VIP_IDS.includes(String(uid)); }
 const DEFAULT_BG={nexus_flux:'linear-gradient(135deg,#0a1628,#0d2847,#061a30)',arcanae_memorium:'linear-gradient(135deg,#1a0a28,#2d0d47,#1a0630)',golden_nexus:'linear-gradient(135deg,#281a0a,#473d0d,#302306)'};
 function bannerAccent(id,name){
@@ -820,6 +845,47 @@ async function loadBanners(){
   }catch(e){console.error('[LOAD_BANNERS]',e)}
 }
 
+// ═══ GACHA BANNER IMAGE (admin-managed, stored in Firestore) ═══
+async function loadGachaBannerImg(){
+  try{
+    const snap=await db.collection('gacha_config').doc('banner_image').get();
+    const d=snap.exists?snap.data():null;
+    const wrap=document.getElementById('gacha-banner-img-wrap');
+    const img=document.getElementById('gacha-banner-img');
+    if(d&&d.url&&d.url.trim()){
+      img.src=d.url;
+      img.style.display='block';
+      wrap.style.display='block';
+      const urlInput=document.getElementById('gacha-banner-img-url');
+      if(urlInput)urlInput.value=d.url;
+    }else{
+      img.style.display='none';
+      wrap.style.display='none';
+    }
+  }catch(e){console.error('[BANNER_IMG]',e)}
+}
+async function saveGachaBannerImg(){
+  const url=(document.getElementById('gacha-banner-img-url').value||'').trim();
+  try{
+    await db.collection('gacha_config').doc('banner_image').set({url:url,updated_at:new Date().toISOString()});
+    const wrap=document.getElementById('gacha-banner-img-wrap');
+    const img=document.getElementById('gacha-banner-img');
+    if(url){
+      img.src=url;img.style.display='block';wrap.style.display='block';
+    }else{
+      img.style.display='none';wrap.style.display='none';
+    }
+    JCache.invalidate('gacha_config','banner_image');
+    alert('Image de bannière mise à jour !');
+  }catch(e){console.error('[SAVE_BANNER_IMG]',e);alert('Erreur : '+e.message)}
+}
+function showAdminBannerEditor(){
+  const editor=document.getElementById('gacha-admin-banner-editor');
+  if(editor&&(window._isAdmin||(U&&isVIP(U.id)))){
+    editor.style.display='block';
+  }
+}
+
 // ═══ UI STATE ═══
 function showLoginGate(){
   document.getElementById('login-gate').style.display='flex';
@@ -833,10 +899,10 @@ function showMainUI(){
   document.getElementById('u-name').textContent=U.username||'—';
   document.getElementById('u-id').textContent='ID: '+(U.id||'—');
   const p=U.pity||{};
-  document.getElementById('psr').textContent=(p.spent_epic||0)+'/'+(p.threshold_epic||30);
-  document.getElementById('pleg').textContent=(p.spent_leg||0)+'/'+(p.threshold_leg||150);
-  document.getElementById('psr-b').style.width=Math.min(100,(p.spent_epic||0)/(p.threshold_epic||30)*100)+'%';
-  document.getElementById('pleg-b').style.width=Math.min(100,(p.spent_leg||0)/(p.threshold_leg||150)*100)+'%';
+  document.getElementById('psr').textContent=Math.floor(p.spent_epic||0)+'/'+Math.floor(p.threshold_epic||30);
+  document.getElementById('pleg').textContent=Math.floor(p.spent_leg||0)+'/'+Math.floor(p.threshold_leg||150);
+  document.getElementById('psr-b').style.width=Math.min(100,Math.floor((p.spent_epic||0))/Math.floor(p.threshold_epic||30)*100)+'%';
+  document.getElementById('pleg-b').style.width=Math.min(100,Math.floor((p.spent_leg||0))/Math.floor(p.threshold_leg||150)*100)+'%';
   const s=U.streak||{};
   document.getElementById('pstr').textContent=(s.days_in_cycle||0)+'/3';
   document.getElementById('pstr-b').style.width=((s.days_in_cycle||0)/3*100)+'%';
@@ -858,7 +924,12 @@ function updNV(){
   }
   let extra = '';
   if(window.GACHA_SPECIALZ_ACTIVE && !window.GACHA_SPECIALZ_FIRST_PULL_USED){
-    extra = '<span class="btn-cost" style="color:#ffd60a;opacity:1">⚡ LEG+ GARANTI</span>';
+    const isBoostedUser = window.GACHA_SPECIALZ_BOOSTED_IDS && U && window.GACHA_SPECIALZ_BOOSTED_IDS.includes(String(U.id));
+    if(isBoostedUser){
+      extra = '<span class="btn-cost" style="color:#ff006e;opacity:1">🔥 FULL LEG+ GARANTI</span>';
+    } else {
+      extra = '<span class="btn-cost" style="color:#ffd60a;opacity:1">⚡ LEG+ GARANTI</span>';
+    }
   }
   b10.querySelector('span').innerHTML='PULL ×10<span class="btn-cost">'+costText+'</span>'+extra;
 }
@@ -972,6 +1043,8 @@ async function doPull(count){
   // Check for VIP boost (3 EPIC+ on x10) and SPECIALZ (LEG+ on first x10)
   const vipBoost = isVIP(U.id) && count === 10;
   const specialzActive = window.GACHA_SPECIALZ_ACTIVE && count === 10 && !window.GACHA_SPECIALZ_FIRST_PULL_USED;
+  const isBoostedUser = window.GACHA_SPECIALZ_BOOSTED_IDS && window.GACHA_SPECIALZ_BOOSTED_IDS.includes(String(U.id));
+  const specialzFullLeg = specialzActive && isBoostedUser; // full LEG+ on first x10 for boosted users
   try{
     pullRef=await db.collection('gacha_pulls').add({
       user_id:U.id,
@@ -980,6 +1053,7 @@ async function doPull(count){
       status:'pending',
       vip_boost: vipBoost,
       specialz_leg_plus: specialzActive,
+      specialz_full_leg: specialzFullLeg,
       created_at:new Date().toISOString(),
     });
   }catch(e){
@@ -1149,6 +1223,8 @@ async function loadAndShow(){
   if(user){
     showMainUI();
     await loadBanners();
+    await loadGachaBannerImg();
+    showAdminBannerEditor();
   }else{
     showLoginGate();
   }
@@ -1163,6 +1239,11 @@ async function loadAndShow(){
     showLoginGate();
   }
 })();
+
+// Listen for auth state from auth-badge.js to toggle admin features
+document.addEventListener('jaharta:auth', function(e){
+  showAdminBannerEditor();
+});
 
 // Scroll line
 window.addEventListener('scroll',()=>{const p=window.scrollY/(document.documentElement.scrollHeight-window.innerHeight)*100;document.getElementById('scroll-line').style.width=p+'%'});

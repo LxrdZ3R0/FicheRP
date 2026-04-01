@@ -780,7 +780,7 @@ body::before {
 
 /* Admin badge */
 .admin-badge {
-  display: none;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
   font-family: var(--font-heading);
@@ -1658,7 +1658,7 @@ footer .f-copy {
 
 /* Admin badge in sub-pages */
 .admin-badge {
-  display: none;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
   font-family: var(--font-heading);
