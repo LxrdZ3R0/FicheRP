@@ -323,9 +323,30 @@ body::after{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;o
 .slot-cells{display:flex;flex-wrap:wrap;gap:3px;justify-content:flex-end}
 .cyb-col-right .slot-cells{justify-content:flex-start}
 
-/* Centre SVG */
-.cyb-center{position:relative;display:flex;align-items:stretch;justify-content:center}
-#cyb-figure-svg{width:100%;height:540px;display:block;overflow:visible}
+/* Centre — Human Body */
+.cyb-center{position:relative;display:flex;align-items:flex-start;justify-content:center;min-height:540px}
+/* ── Human Body (exact copy from Human-Body-Rendering-HTML, scaled to fit) ── */
+.human-body{width:207px;position:relative;padding-top:0;height:500px;display:block;margin:60px auto 0;transform:scale(0.92);transform-origin:top center}
+.human-body svg:hover{cursor:pointer}
+.human-body svg:hover path{fill:rgba(255,125,22,0.4);stroke:rgba(255,152,0,0.9);filter:drop-shadow(0 0 6px rgba(255,152,0,0.5))}
+.human-body svg{position:absolute;left:50%;fill:rgba(160,25,20,0.22);stroke:rgba(0,229,255,0.5);stroke-width:0.8;filter:drop-shadow(0 0 4px rgba(0,229,255,0.25));transition:fill .25s,stroke .25s,filter .25s}
+.human-body svg path{transition:fill .25s,stroke .25s,filter .25s}
+.human-body svg#head{margin-left:-28.5px;top:-6px}
+.human-body svg#left-shoulder{margin-left:-53.5px;top:69px}
+.human-body svg#right-shoulder{margin-left:13.5px;top:69px}
+.human-body svg#left-arm{margin-left:-78px;top:112px}
+.human-body svg#right-arm{margin-left:38px;top:112px;z-index:10001}
+.human-body svg#chest{margin-left:-43.5px;top:88px}
+.human-body svg#stomach{margin-left:-37.5px;top:130px}
+.human-body svg#left-leg{margin-left:-46.5px;top:205px;z-index:9999}
+.human-body svg#right-leg{margin-left:1.5px;top:205px;z-index:9999}
+.human-body svg#left-hand{margin-left:-102.5px;top:224px}
+.human-body svg#right-hand{margin-left:66.5px;top:224px;z-index:10000}
+.human-body svg#left-foot{margin-left:-35.5px;top:455px}
+.human-body svg#right-foot{margin-left:5.5px;top:455px}
+.cyb-body-label{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);font-family:var(--font-m);font-size:.42rem;letter-spacing:.12em;color:var(--cyan);text-shadow:0 0 10px rgba(0,229,255,0.5);pointer-events:none;z-index:10002;white-space:nowrap;opacity:0;transition:opacity .25s}
+@media(max-width:900px){.human-body{transform:scale(0.82);transform-origin:top center}.cyb-center{min-height:460px}}
+@media(max-width:600px){.human-body{transform:scale(0.7);transform-origin:top center}.cyb-center{min-height:380px}}
 
 /* Placeholder SANGUIN (aucun slot Firebase) */
 .cyb-slot-placeholder{
@@ -555,13 +576,11 @@ body::after{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;o
   .inv-cyberpunk{grid-template-columns:1fr;grid-template-rows:auto 1fr}
   .inv-character-panel{border-right:none;border-bottom:1px solid rgba(0,229,255,0.07);max-height:none}
   .cyb-panel{grid-template-columns:140px 1fr 140px;min-height:480px}
-  #cyb-figure-svg{height:480px}
   .inv-detail-panel{width:100%;top:0;border-left:none;border-top:1px solid rgba(0,229,255,0.12)}
   .inv-grid-wrap{max-height:50vh}
 }
 @media(max-width:600px){
   .cyb-panel{grid-template-columns:110px 1fr 110px;min-height:420px}
-  #cyb-figure-svg{height:420px}
   .slot-cell{width:24px;height:24px;font-size:.75rem}
   .inv-grid{grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px}
   .inv-toolbar{padding:10px 12px}
@@ -792,6 +811,68 @@ body::after{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;o
 /* ═══ GLITCH OVERLAY ON LOGIN ═══ */
 @keyframes loginGlitch{0%,94%,96%,98%,100%{clip-path:inset(0 0 0 0)}95%{clip-path:inset(10% 0 80% 0)}97%{clip-path:inset(60% 0 10% 0)}99%{clip-path:inset(30% 0 50% 0)}}
 .gate-logo{animation:loginGlitch 8s ease-in-out infinite}
+
+/* ═══ HUMAN BODY HOVER LABEL ═══ */
+.cyb-body-label{
+  position:absolute;bottom:6px;left:50%;transform:translateX(-50%);
+  font-family:var(--font-m);font-size:.4rem;letter-spacing:.12em;color:var(--cyan);
+  text-shadow:0 0 10px rgba(0,229,255,0.5);pointer-events:none;z-index:5;white-space:nowrap;
+  opacity:0;transition:opacity .2s;
+}
+.cyb-center:hover .cyb-body-label{opacity:1}
+/* Enlarge body */
+@media(max-width:900px){.human-body{transform:scale(0.82)}.cyb-center{min-height:460px}}
+@media(max-width:600px){.human-body{transform:scale(0.7)}.cyb-center{min-height:380px}}
+
+/* ═══ PARTY TAB ENHANCED ═══ */
+.party-header-card{background:rgba(4,8,20,0.6);border:1px solid rgba(0,85,255,0.2);border-radius:12px;padding:20px;margin-bottom:16px;position:relative;overflow:hidden}
+.party-header-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(0,85,255,0.6),transparent)}
+.party-name{font-family:var(--font-h);font-weight:800;font-size:1.3rem;color:#fff;margin-bottom:4px}
+.party-meta{font-family:var(--font-m);font-size:.48rem;letter-spacing:.1em;color:var(--text3);margin-bottom:12px}
+.party-stats-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.party-stat-chip{background:rgba(0,85,255,0.06);border:1px solid rgba(0,85,255,0.15);border-radius:6px;padding:8px 14px;display:flex;flex-direction:column;gap:2px;min-width:80px}
+.party-stat-val{font-family:var(--font-h);font-weight:700;font-size:.9rem;color:var(--blue)}
+.party-stat-label{font-family:var(--font-m);font-size:.38rem;letter-spacing:.1em;color:var(--text3)}
+.party-member-card{background:rgba(8,12,28,0.6);border:1px solid rgba(77,163,255,0.1);border-radius:10px;padding:14px;margin-bottom:10px;transition:border-color .3s}
+.party-member-card:hover{border-color:rgba(77,163,255,0.3)}
+.party-member-card.leader{border-color:rgba(255,214,10,0.3)}
+.party-member-name{font-family:var(--font-h);font-weight:700;font-size:.7rem;letter-spacing:.05em;color:#fff;margin-bottom:2px}
+.party-member-role{font-family:var(--font-m);font-size:.4rem;letter-spacing:.1em;margin-bottom:6px}
+.party-member-info{font-family:var(--font-m);font-size:.42rem;color:var(--text2);line-height:1.7}
+.party-member-info .stat-line{display:flex;gap:8px;flex-wrap:wrap}
+.party-member-info .stat-tag{padding:2px 6px;border-radius:3px;border:1px solid rgba(68,255,136,0.15);color:var(--green);background:rgba(68,255,136,0.04);font-size:.38rem}
+.party-private-tag{font-family:var(--font-m);font-size:.38rem;color:var(--red);letter-spacing:.08em}
+.pp-shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.pp-shop-item{background:rgba(8,12,28,0.6);border:1px solid rgba(255,195,40,0.12);border-radius:10px;padding:16px;transition:all .3s;position:relative}
+.pp-shop-item:hover{border-color:rgba(255,195,40,0.35);box-shadow:0 0 20px rgba(255,195,40,0.08)}
+.pp-shop-item.maxed{opacity:.5}
+.pp-shop-item-title{font-family:var(--font-h);font-weight:700;font-size:.6rem;letter-spacing:.06em;color:var(--gold);margin-bottom:4px}
+.pp-shop-item-desc{font-family:var(--font-m);font-size:.4rem;color:var(--text3);margin-bottom:8px;line-height:1.5}
+.pp-shop-item-cost{font-family:var(--font-h);font-weight:700;font-size:.8rem;color:var(--orange);margin-bottom:10px}
+.pp-shop-buy-btn{width:100%;padding:9px;border-radius:6px;border:1px solid rgba(255,195,40,0.35);background:rgba(255,195,40,0.08);color:var(--gold);font-family:var(--font-h);font-size:.52rem;font-weight:700;letter-spacing:.12em;cursor:pointer;transition:all .25s}
+.pp-shop-buy-btn:hover{background:rgba(255,195,40,0.18);box-shadow:0 0 14px rgba(255,195,40,0.15)}
+.pp-shop-buy-btn:disabled{opacity:.35;cursor:not-allowed}
+.party-log-entry{font-family:var(--font-m);font-size:.44rem;letter-spacing:.06em;color:var(--text3);padding:7px 12px;background:rgba(77,163,255,.02);border-radius:5px;border:1px solid rgba(77,163,255,.05)}
+
+/* ═══ COMPANIONS TAB ENHANCED ═══ */
+.comp-section-title{font-family:var(--font-h);font-weight:700;font-size:.75rem;letter-spacing:.15em;color:var(--cyan);margin:20px 0 12px;text-transform:uppercase;text-shadow:0 0 12px rgba(0,229,255,0.4)}
+.comp-card-enhanced{background:rgba(8,12,28,0.6);border:1px solid rgba(0,229,255,0.1);border-radius:12px;overflow:hidden;transition:all .3s}
+.comp-card-enhanced:hover{border-color:rgba(0,229,255,0.3);box-shadow:0 0 24px rgba(0,229,255,0.06)}
+.comp-card-enhanced.active{border-color:rgba(68,255,136,0.35)}
+.comp-card-img{width:100%;height:160px;object-fit:cover;background:rgba(0,0,0,0.3)}
+.comp-card-img-placeholder{width:100%;height:160px;display:flex;align-items:center;justify-content:center;background:rgba(0,10,20,0.5);font-size:3rem;color:rgba(0,229,255,0.15)}
+.comp-card-body{padding:14px}
+.comp-card-name{font-family:var(--font-h);font-weight:700;font-size:.75rem;letter-spacing:.05em;color:#fff;margin-bottom:4px}
+.comp-card-ability{font-family:var(--font-m);font-size:.42rem;color:var(--text3);margin-bottom:8px}
+.comp-card-stats-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.comp-card-stat{font-family:var(--font-m);font-size:.4rem;color:var(--text2);padding:3px 6px;border-radius:3px;background:rgba(0,229,255,0.04);border:1px solid rgba(0,229,255,0.08)}
+.comp-card-sync{display:flex;align-items:center;gap:6px;font-family:var(--font-m);font-size:.42rem;padding:4px 8px;border-radius:4px;margin-bottom:8px}
+.comp-card-sync.synced{color:var(--green);background:rgba(68,255,136,0.06);border:1px solid rgba(68,255,136,0.15)}
+.comp-card-sync.unsynced{color:var(--text3);background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05)}
+.comp-shop-price{font-family:var(--font-h);font-weight:700;font-size:.7rem;color:var(--gold);margin:8px 0;display:flex;align-items:center;gap:6px}
+.comp-shop-buy-btn{width:100%;padding:9px;border-radius:6px;border:1px solid rgba(0,229,255,0.3);background:rgba(0,229,255,0.06);color:var(--cyan);font-family:var(--font-h);font-size:.52rem;font-weight:700;letter-spacing:.12em;cursor:pointer;transition:all .25s}
+.comp-shop-buy-btn:hover{background:rgba(0,229,255,0.15);box-shadow:0 0 14px rgba(0,229,255,0.15)}
+.comp-shop-buy-btn:disabled{opacity:.35;cursor:not-allowed}
 </style>
 </head>
 <body>
@@ -1015,155 +1096,24 @@ body::after{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;o
 
           </div><!-- /cyb-col-left -->
 
-          <!-- ══ CENTRE : SILHOUETTE HOLOGRAPHIQUE ══ -->
+          <!-- ══ CENTRE : HUMAN BODY (exact copy) ══ -->
           <div class="cyb-center">
-            <svg id="cyb-figure-svg" viewBox="0 0 280 540" xmlns="http://www.w3.org/2000/svg">
-              <defs>
-                <!-- Lueur cyan -->
-                <filter id="glowCyan" x="-40%" y="-40%" width="180%" height="180%">
-                  <feGaussianBlur stdDeviation="2.5" result="blur"/>
-                  <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-                </filter>
-                <!-- Lueur orange articulations -->
-                <filter id="glowOrange" x="-50%" y="-50%" width="200%" height="200%">
-                  <feGaussianBlur stdDeviation="2" result="blur"/>
-                  <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-                </filter>
-                <!-- Lueur rouge réacteur -->
-                <filter id="glowRed" x="-60%" y="-60%" width="220%" height="220%">
-                  <feGaussianBlur stdDeviation="4" result="blur"/>
-                  <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-                </filter>
-                <!-- Scan beam rouge : transparent → rouge → transparent -->
-                <linearGradient id="scanRed" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%"   stop-color="#ff2020" stop-opacity="0"/>
-                  <stop offset="35%"  stop-color="#ff4040" stop-opacity="0.45"/>
-                  <stop offset="50%"  stop-color="#ff6060" stop-opacity="0.9"/>
-                  <stop offset="65%"  stop-color="#ff4040" stop-opacity="0.45"/>
-                  <stop offset="100%" stop-color="#ff2020" stop-opacity="0"/>
-                </linearGradient>
-                <!-- Clip corps pour le scan beam -->
-                <clipPath id="bodyClip">
-                  <ellipse cx="140" cy="54"  rx="28" ry="30"/>
-                  <rect x="126" y="82"  width="28"  height="22"/>
-                  <polygon points="90,104 190,104 196,252 84,252"/>
-                  <rect x="36"  y="104" width="56"  height="148" rx="8"/>
-                  <rect x="188" y="104" width="56"  height="148" rx="8"/>
-                  <rect x="28"  y="250" width="34"  height="96"  rx="7"/>
-                  <rect x="218" y="250" width="34"  height="96"  rx="7"/>
-                  <rect x="88"  y="252" width="42"  height="130" rx="8"/>
-                  <rect x="150" y="252" width="42"  height="130" rx="8"/>
-                  <rect x="90"  y="380" width="38"  height="132" rx="7"/>
-                  <rect x="152" y="380" width="38"  height="132" rx="7"/>
-                </clipPath>
-              </defs>
-
-              <!-- ── LIGNES DE CONNEXION GAUCHE → CORPS (5 groupes) ── -->
-              <!-- TÊTE y=54 — niveau crâne -->
-              <line x1="0" y1="54"  x2="112" y2="54"  stroke="rgba(0,229,255,0.38)" stroke-width="1" stroke-dasharray="5,3"/>
-              <!-- COU ET OREILLES y=162 — épaule gauche / dessus torse -->
-              <line x1="0" y1="162" x2="90"  y2="162" stroke="rgba(0,229,255,0.3)"  stroke-width="1" stroke-dasharray="5,3"/>
-              <!-- ARMURE & CAPE y=270 — avant-bras gauche -->
-              <line x1="0" y1="270" x2="28"  y2="270" stroke="rgba(0,229,255,0.3)"  stroke-width="1" stroke-dasharray="5,3"/>
-              <!-- MAINS & DOIGTS y=378 — cuisse gauche -->
-              <line x1="0" y1="378" x2="88"  y2="378" stroke="rgba(0,229,255,0.28)" stroke-width="1" stroke-dasharray="5,3"/>
-              <!-- SPÉCIAUX y=486 — mollet gauche -->
-              <line x1="0" y1="486" x2="90"  y2="486" stroke="rgba(0,229,255,0.24)" stroke-width="1" stroke-dasharray="5,3"/>
-              <!-- Points d'ancrage gauche -->
-              <circle cx="0" cy="54"  r="2.5" fill="#00e5ff" filter="url(#glowCyan)" opacity="0.7"/>
-              <circle cx="0" cy="162" r="2.5" fill="#00e5ff" filter="url(#glowCyan)" opacity="0.55"/>
-              <circle cx="0" cy="270" r="2.5" fill="#00e5ff" filter="url(#glowCyan)" opacity="0.55"/>
-              <circle cx="0" cy="378" r="2.5" fill="#00e5ff" filter="url(#glowCyan)" opacity="0.5"/>
-              <circle cx="0" cy="486" r="2.5" fill="#00e5ff" filter="url(#glowCyan)" opacity="0.45"/>
-
-              <!-- ── LIGNES DE CONNEXION CORPS → DROITE (4 groupes) ── -->
-              <!-- VISAGE y≈68 — niveau tête droite -->
-              <line x1="164" y1="68"  x2="280" y2="68"  stroke="rgba(0,229,255,0.38)" stroke-width="1" stroke-dasharray="5,3"/>
-              <!-- ARMES y≈202 — niveau torse droit -->
-              <line x1="244" y1="202" x2="280" y2="202" stroke="rgba(0,229,255,0.3)"  stroke-width="1" stroke-dasharray="5,3"/>
-              <!-- JAMBES y≈338 — niveau cuisses droite -->
-              <line x1="192" y1="338" x2="280" y2="338" stroke="rgba(0,229,255,0.28)" stroke-width="1" stroke-dasharray="5,3"/>
-              <!-- PIEDS y≈472 — niveau mollets/pieds -->
-              <line x1="190" y1="472" x2="280" y2="472" stroke="rgba(0,229,255,0.24)" stroke-width="1" stroke-dasharray="5,3"/>
-              <!-- Points d'ancrage droite -->
-              <circle cx="280" cy="68"  r="2.5" fill="#00e5ff" filter="url(#glowCyan)" opacity="0.7"/>
-              <circle cx="280" cy="202" r="2.5" fill="#00e5ff" filter="url(#glowCyan)" opacity="0.55"/>
-              <circle cx="280" cy="338" r="2.5" fill="#00e5ff" filter="url(#glowCyan)" opacity="0.5"/>
-              <circle cx="280" cy="472" r="2.5" fill="#00e5ff" filter="url(#glowCyan)" opacity="0.45"/>
-
-              <!-- ── SILHOUETTE HOLOGRAPHIQUE ROUGE/CYAN ── -->
-              <!-- Tête -->
-              <ellipse cx="140" cy="54" rx="28" ry="30"
-                fill="rgba(160,25,20,0.18)" stroke="rgba(0,229,255,0.52)" stroke-width="1.5"
-                filter="url(#glowCyan)"/>
-              <!-- Croix HUD -->
-              <line x1="140" y1="30" x2="140" y2="78" stroke="rgba(0,229,255,0.1)" stroke-width="0.8"/>
-              <line x1="116" y1="54" x2="164" y2="54" stroke="rgba(0,229,255,0.1)" stroke-width="0.8"/>
-              <!-- Yeux lumineux -->
-              <ellipse cx="130" cy="48" rx="5" ry="3" fill="rgba(0,229,255,0.12)" stroke="rgba(0,229,255,0.55)" stroke-width="0.8"/>
-              <ellipse cx="150" cy="48" rx="5" ry="3" fill="rgba(0,229,255,0.12)" stroke="rgba(0,229,255,0.55)" stroke-width="0.8"/>
-              <circle cx="130" cy="48" r="2" fill="#00e5ff" filter="url(#glowCyan)"/>
-              <circle cx="150" cy="48" r="2" fill="#00e5ff" filter="url(#glowCyan)"/>
-
-              <!-- Cou -->
-              <rect x="126" y="82" width="28" height="22" rx="4"
-                fill="rgba(160,25,20,0.15)" stroke="rgba(0,229,255,0.34)" stroke-width="1.2"/>
-
-              <!-- Torse -->
-              <polygon points="90,104 190,104 196,252 84,252"
-                fill="rgba(160,25,20,0.18)" stroke="rgba(0,229,255,0.5)" stroke-width="1.5"
-                filter="url(#glowCyan)"/>
-              <!-- Lignes internes torse -->
-              <line x1="140" y1="116" x2="140" y2="240" stroke="rgba(0,229,255,0.09)" stroke-width="0.8"/>
-              <line x1="108" y1="140" x2="172" y2="140" stroke="rgba(0,229,255,0.08)" stroke-width="0.8"/>
-              <line x1="104" y1="180" x2="176" y2="180" stroke="rgba(0,229,255,0.08)" stroke-width="0.8"/>
-              <line x1="102" y1="220" x2="178" y2="220" stroke="rgba(0,229,255,0.07)" stroke-width="0.8"/>
-              <!-- Réacteur thoracique -->
-              <circle cx="140" cy="152" r="14" fill="none" stroke="rgba(0,229,255,0.2)" stroke-width="1" stroke-dasharray="4,3"/>
-              <circle cx="140" cy="152" r="7" fill="rgba(160,25,20,0.3)" stroke="rgba(0,229,255,0.6)" stroke-width="1" filter="url(#glowCyan)"/>
-              <circle cx="140" cy="152" r="3" fill="#ff4040" filter="url(#glowRed)"/>
-
-              <!-- Bras gauche -->
-              <rect x="36" y="104" width="56" height="148" rx="8"
-                fill="rgba(160,25,20,0.14)" stroke="rgba(0,229,255,0.38)" stroke-width="1.3"/>
-              <!-- Bras droit -->
-              <rect x="188" y="104" width="56" height="148" rx="8"
-                fill="rgba(160,25,20,0.14)" stroke="rgba(0,229,255,0.38)" stroke-width="1.3"/>
-
-              <!-- Avant-bras gauche -->
-              <rect x="28" y="250" width="34" height="96" rx="7"
-                fill="rgba(160,25,20,0.12)" stroke="rgba(0,229,255,0.28)" stroke-width="1.2"/>
-              <!-- Avant-bras droit -->
-              <rect x="218" y="250" width="34" height="96" rx="7"
-                fill="rgba(160,25,20,0.12)" stroke="rgba(0,229,255,0.28)" stroke-width="1.2"/>
-
-              <!-- Cuisses -->
-              <rect x="88"  y="252" width="42" height="130" rx="8"
-                fill="rgba(160,25,20,0.15)" stroke="rgba(0,229,255,0.42)" stroke-width="1.4"/>
-              <rect x="150" y="252" width="42" height="130" rx="8"
-                fill="rgba(160,25,20,0.15)" stroke="rgba(0,229,255,0.42)" stroke-width="1.4"/>
-
-              <!-- Mollets -->
-              <rect x="90"  y="380" width="38" height="132" rx="7"
-                fill="rgba(160,25,20,0.12)" stroke="rgba(0,229,255,0.3)" stroke-width="1.2"/>
-              <rect x="152" y="380" width="38" height="132" rx="7"
-                fill="rgba(160,25,20,0.12)" stroke="rgba(0,229,255,0.3)" stroke-width="1.2"/>
-
-              <!-- ── NŒUDS D'ARTICULATION (orange) ── -->
-              <circle cx="140" cy="82"  r="5"   fill="rgba(255,152,0,0.2)"  stroke="#ff9800" stroke-width="1.3" filter="url(#glowOrange)"/>
-              <circle cx="90"  cy="106" r="6.5" fill="rgba(255,152,0,0.15)" stroke="#ff9800" stroke-width="1.5" filter="url(#glowOrange)"/>
-              <circle cx="190" cy="106" r="6.5" fill="rgba(255,152,0,0.15)" stroke="#ff9800" stroke-width="1.5" filter="url(#glowOrange)"/>
-              <circle cx="44"  cy="250" r="5"   fill="rgba(255,152,0,0.15)" stroke="#ff9800" stroke-width="1.2" filter="url(#glowOrange)"/>
-              <circle cx="236" cy="250" r="5"   fill="rgba(255,152,0,0.15)" stroke="#ff9800" stroke-width="1.2" filter="url(#glowOrange)"/>
-              <circle cx="96"  cy="252" r="5.5" fill="rgba(255,152,0,0.15)" stroke="#ff9800" stroke-width="1.3" filter="url(#glowOrange)"/>
-              <circle cx="184" cy="252" r="5.5" fill="rgba(255,152,0,0.15)" stroke="#ff9800" stroke-width="1.3" filter="url(#glowOrange)"/>
-              <circle cx="100" cy="380" r="5"   fill="rgba(255,152,0,0.15)" stroke="#ff9800" stroke-width="1.2" filter="url(#glowOrange)"/>
-              <circle cx="180" cy="380" r="5"   fill="rgba(255,152,0,0.15)" stroke="#ff9800" stroke-width="1.2" filter="url(#glowOrange)"/>
-
-              <!-- ── SCAN BEAM ROUGE (animé GSAP) ── -->
-              <rect id="cyb-scan-beam" x="28" y="-26" width="224" height="28"
-                fill="url(#scanRed)" opacity="0.9" clip-path="url(#bodyClip)"/>
-            </svg>
+            <span class="cyb-body-label" id="cyb-body-label"></span>
+            <div class="human-body">
+              <svg data-position='head' id='head' class='head' xmlns='http://www.w3.org/2000/svg' width='56.594' height='95.031' viewBox='0 0 56.594 95.031'><path d='M15.92 68.5l8.8 12.546 3.97 13.984-9.254-7.38-4.622-15.848zm27.1 0l-8.8 12.546-3.976 13.988 9.254-7.38 4.622-15.848zm6.11-27.775l.108-11.775-21.16-14.742L8.123 26.133 8.09 40.19l-3.24.215 1.462 9.732 5.208 1.81 2.36 11.63 9.72 11.018 10.856-.324 9.56-10.37 1.918-11.952 5.207-1.81 1.342-9.517zm-43.085-1.84l-.257-13.82L28.226 11.9l23.618 15.755-.216 10.37 4.976-17.085L42.556 2.376 25.49 0 10.803 3.673.002 24.415z'/></svg>
+              <svg data-position='left-shoulder' id='left-shoulder' class='left-shoulder' xmlns='http://www.w3.org/2000/svg' width='109.532' height='46.594' viewBox='0 0 109.532 46.594'><path d='m 38.244,-0.004 1.98,9.232 -11.653,2.857 -7.474,-2.637 z M 17.005,10.536 12.962,8.35 0.306,22.35 0.244,27.675 c 0,0 16.52,-17.015 16.764,-17.14 z m 1.285,0.58 C 18.3,11.396 0.528,30.038 0.528,30.038 L -0.01,46.595 6.147,36.045 18.017,30.989 26.374,15.6 Z'/></svg>
+              <svg data-position='right-shoulder' id='right-shoulder' class='right-shoulder' xmlns='http://www.w3.org/2000/svg' width='109.532' height='46.594' viewBox='0 0 109.532 46.594'><path d='m 3.2759972,-0.004 -1.98,9.232 11.6529998,2.857 7.473999,-2.637 z m 21.2379988,10.54 4.044,-2.187 12.656,14 0.07,5.33 c 0,0 -16.524,-17.019 -16.769,-17.144 z m -1.285,0.58 c -0.008,0.28 17.762,18.922 17.762,18.922 l 0.537,16.557 -6.157,-10.55 -11.871,-5.057 L 15.147997,15.6 Z'/></svg>
+              <svg data-position='left-arm' id='left-arm' class='left-arm' xmlns='http://www.w3.org/2000/svg' width='156.344' height='119.25' viewBox='0 0 156.344 119.25'><path d='m21.12,56.5a1.678,1.678 0 0 1 -0.427,0.33l0.935,8.224l12.977,-13.89l1.2,-8.958a168.2,168.2 0 0 0 -14.685,14.294zm1.387,12.522l-18.07,48.91l5.757,1.333l19.125,-39.44l3.518,-22.047l-10.33,11.244zm-5.278,-18.96l2.638,18.74l-17.2,46.023l-2.657,-1.775l6.644,-35.518l10.575,-27.47zm18.805,-12.323a1.78,1.78 0 0 1 0.407,-0.24l3.666,-27.345l-7.037,-10.139l-7.258,10.58l-6.16,37.04l0.566,4.973a151.447,151.447 0 0 1 15.808,-14.87l0.008,0.001zm-13.742,-28.906l-3.3,35.276l-2.2,-26.238l5.5,-9.038z'/></svg>
+              <svg data-position='right-arm' id='right-arm' class='right-arm' xmlns='http://www.w3.org/2000/svg' width='156.344' height='119.25' viewBox='0 0 156.344 119.25'><path d='m 18.997,56.5 a 1.678,1.678 0 0 0 0.427,0.33 L 18.489,65.054 5.512,51.164 4.312,42.206 A 168.2,168.2 0 0 1 18.997,56.5 Z m -1.387,12.522 18.07,48.91 -5.757,1.333 L 10.798,79.825 7.28,57.778 17.61,69.022 Z m 5.278,-18.96 -2.638,18.74 17.2,46.023 2.657,-1.775 L 33.463,77.532 22.888,50.062 Z M 4.083,37.739 A 1.78,1.78 0 0 0 3.676,37.499 L 0.01,10.154 7.047,0.015 l 7.258,10.58 6.16,37.04 -0.566,4.973 A 151.447,151.447 0 0 0 4.091,37.738 l -0.008,10e-4 z m 13.742,-28.906 3.3,35.276 2.2,-26.238 -5.5,-9.038 z'/></svg>
+              <svg data-position='chest' id='chest' class='chest' xmlns='http://www.w3.org/2000/svg' width='86.594' height='45.063' viewBox='0 0 86.594 45.063'><path d='M19.32 0l-9.225 16.488-10.1 5.056 6.15 4.836 4.832 14.07 11.2 4.616 17.85-8.828-4.452-34.7zm47.934 0l9.225 16.488 10.1 5.056-6.15 4.836-4.833 14.07-11.2 4.616-17.844-8.828 4.45-34.7z'/></svg>
+              <svg data-position='stomach' id='stomach' class='stomach' xmlns='http://www.w3.org/2000/svg' width='75.25' height='107.594' viewBox='0 0 75.25 107.594'><path d='M19.25 7.49l16.6-7.5-.5 12.16-14.943 7.662zm-10.322 8.9l6.9 3.848-.8-9.116zm5.617-8.732L1.32 2.15 6.3 15.6zm-8.17 9.267l9.015 5.514 1.54 11.028-8.795-5.735zm15.53 5.89l.332 8.662 12.286-2.665.664-11.826zm14.61 84.783L33.28 76.062l-.08-20.53-11.654-5.736-1.32 37.5zM22.735 35.64L22.57 46.3l11.787 3.166.166-16.657zm-14.16-5.255L16.49 35.9l1.1 11.25-8.8-7.06zm8.79 22.74l-9.673-7.28-.84 9.78L-.006 68.29l10.564 14.594 5.5.883 1.98-20.735zM56 7.488l-16.6-7.5.5 12.16 14.942 7.66zm10.32 8.9l-6.9 3.847.8-9.116zm-5.617-8.733L73.93 2.148l-4.98 13.447zm8.17 9.267l-9.015 5.514-1.54 11.03 8.8-5.736zm-15.53 5.89l-.332 8.662-12.285-2.665-.664-11.827zm-14.61 84.783l3.234-31.536.082-20.532 11.65-5.735 1.32 37.5zm13.78-71.957l.166 10.66-11.786 3.168-.166-16.657zm14.16-5.256l-7.915 5.514-1.1 11.25 8.794-7.06zm-8.79 22.743l9.673-7.28.84 9.78 6.862 12.66-10.564 14.597-5.5.883-1.975-20.74z'/></svg>
+              <svg data-position='left-leg' id='left-leg' class='left-leg' xmlns='http://www.w3.org/2000/svg' width='93.626' height='250.625' viewBox='0 0 93.626 250.625'><path d='m 18.00179,139.99461 -0.664,5.99 4.647,5.77 1.55,9.1 3.1,1.33 2.655,-13.755 1.77,-4.88 -1.55,-3.107 z m 20.582,0.444 -3.32,9.318 -7.082,13.755 1.77,12.647 5.09,-14.2 4.205,-7.982 z m -26.557,-12.645 5.09,27.29 -3.32,-1.777 -2.656,8.875 z m 22.795,42.374 -1.55,4.88 -3.32,20.634 -0.442,27.51 4.65,26.847 -0.223,-34.39 4.87,-13.754 0.663,-15.087 z m -10.623,12.424 1.106,41.267 c 14.157565,64.57987 -5.846437,10.46082 -16.8199998,-29.07 l 5.5329998,-36.384 z m -9.71,-178.164003 0,22.476 15.71,31.073 9.923,30.850003 -1.033,-21.375 z m 25.49,30.248 0.118,-0.148 -0.793,-2.024 -16.545,-18.16 -1.242,-0.44 10.984,28.378 z m -6.255,10.766 6.812,17.6 2.274,-21.596 -1.344,-3.43 z m -26.4699998,17.82 0.827,25.340003 12.8159998,35.257 -3.928,10.136 -12.6099998,-44.51 z M 31.81879,76.04161 l 0.345,0.826 6.47,15.48 -4.177,38.342 -6.594,-3.526 5.715,-35.7 z m -21.465,-74.697003 0.827,21.373 L 4.1527902,65.02561 0.84679017,30.870607 Z m 2.068,27.323 14.677,32.391 3.307,26.000003 -6.2,36.58 -13.437,-37.241 -0.8269998,-38.342003 z'/></svg>
+              <svg data-position='right-leg' id='right-leg' class='right-leg' xmlns='http://www.w3.org/2000/svg' width='80' height='250.625' viewBox='0 0 80 250.625'><path d='m 26.664979,139.7913 0.663,5.99 -4.647,5.77 -1.55,9.1 -3.1,1.33 -2.655,-13.755 -1.77,-4.88 1.55,-3.107 z m -20.5820002,0.444 3.3200005,9.318 7.0799997,13.755 -1.77,12.647 -5.0899997,-14.2 -4.2000005,-7.987 z m 3.7620005,29.73 1.5499997,4.88 3.32,20.633 0.442,27.51 -4.648,26.847 0.22,-34.39 -4.8670002,-13.754 -0.67,-15.087 z m 10.6229997,12.424 -1.107,41.267 -8.852,33.28 9.627,-4.55 16.046,-57.8 -5.533,-36.384 z m -13.9460002,74.991 c -5.157661,19.45233 -2.5788305,9.72616 0,0 z M 30.177979,4.225305 l 0,22.476 -15.713,31.072 -9.9230002,30.850005 1.033,-21.375005 z m -25.4930002,30.249 -0.118,-0.15 0.793,-2.023 16.5450002,-18.16 1.24,-0.44 -10.98,28.377 z m 6.2550002,10.764 -6.8120002,17.6 -2.274,-21.595 1.344,-3.43 z m 26.47,17.82 -0.827,25.342005 -12.816,35.25599 3.927,10.136 12.61,-44.50999 z m -24.565,12.783005 -0.346,0.825 -6.4700002,15.48 4.1780002,38.34199 6.594,-3.527 -5.715,-35.69999 z m 19.792,51.74999 -5.09,27.29 3.32,-1.776 2.655,8.875 z m 1.671,-126.452995 -0.826,21.375 7.03,42.308 3.306,-34.155 z m -2.066,27.325 -14.677,32.392 -3.308,26.000005 6.2,36.57999 13.436,-37.23999 0.827,-38.340005 z'/></svg>
+              <svg data-position='left-hand' id='left-hand' class='left-hand' xmlns='http://www.w3.org/2000/svg' width='90' height='38.938' viewBox='0 0 90 38.938'><path d='m 21.255,-0.00198191 2.88,6.90000201 8.412,1.335 0.664,12.4579799 -4.427,17.8 -2.878,-0.22 2.8,-11.847 -2.99,-0.084 -4.676,12.6 -3.544,-0.446 4.4,-12.736 -3.072,-0.584 -5.978,13.543 -4.428,-0.445 6.088,-14.1 -2.1,-1.25 L 4.878,34.934 1.114,34.489 12.4,12.9 11.293,11.12 0.665,15.57 0,13.124 8.635,5.3380201 Z' /></svg>
+              <svg data-position='right-hand' id='right-hand' class='right-hand' xmlns='http://www.w3.org/2000/svg' width='90' height='38.938' viewBox='0 0 90 38.938'><path d='m 13.793386,-0.00198533 -2.88,6.90000163 -8.4120002,1.335 -0.664,12.4579837 4.427,17.8 2.878,-0.22 -2.8,-11.847 2.99,-0.084 4.6760002,12.6 3.544,-0.446 -4.4,-12.736 3.072,-0.584 5.978,13.543 4.428,-0.445 -6.088,-14.1 2.1,-1.25 7.528,12.012 3.764,-0.445 -11.286,-21.589 1.107,-1.78 10.628,4.45 0.665,-2.447 -8.635,-7.7859837 z'/></svg>
+              <svg data-position='left-foot' id='left-foot' class='left-foot' xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'><path d='m 19.558357,1.92821 c -22.1993328,20.55867 -11.0996668,10.27933 0,0 z m 5.975,5.989 -0.664,18.415 -1.55,6.435 -4.647,0 -1.327,-4.437 -1.55,-0.222 0.332,4.437 -5.864,-1.778 -1.5499998,-0.887 -6.64,-1.442 -0.22,-5.214 6.418,-10.87 4.4259998,-5.548 c 9.991542,-3.26362 9.41586,-8.41457 12.836,1.111 z'/></svg>
+              <svg data-position='right-foot' id='right-foot' class='right-foot' xmlns='http://www.w3.org/2000/svg' width='90' height='38.938' viewBox='0 0 90 38.938'><path d='m 11.723492,2.35897 c -40.202667,20.558 -20.1013335,10.279 0,0 z m -5.9740005,5.989 0.663,18.415 1.546,6.435 4.6480005,0 1.328,-4.437 1.55,-0.222 -0.333,4.437 5.863,-1.778 1.55,-0.887 6.638,-1.442 0.222,-5.214 -6.418,-10.868 -4.426,-5.547 -10.8440005,-4.437 z'/></svg>
+            </div>
           </div><!-- /cyb-center -->
 
           <!-- ══ COLONNE DROITE ══ -->
@@ -1991,16 +1941,24 @@ function renderCharacterPanel(){
 
 // ── ANIMATION SCAN SILHOUETTE (GSAP) ──
 function initCharScanAnimation(){
-  if(typeof gsap==='undefined')return;
-  const beam=document.getElementById('cyb-scan-beam');
-  if(!beam)return;
-  // Tuer l'animation précédente si elle existe
-  if(beam._scanTween){beam._scanTween.kill();}
-  // Départ au-dessus du viewBox (y=-26), fin en bas (y=542)
-  beam._scanTween=gsap.fromTo(beam,
-    {attr:{y:-26}},
-    {attr:{y:542},duration:4,repeat:-1,ease:'none',repeatDelay:0.5}
-  );
+  // Human body hover label (from Human-Body-Rendering-HTML)
+  const body=document.querySelector('.human-body');
+  const lbl=document.getElementById('cyb-body-label');
+  if(!body||!lbl)return;
+  if(body._hbInit)return; // already initialized
+  body._hbInit=true;
+  const LABELS={head:'TÊTE','left-shoulder':'ÉPAULE GAUCHE','right-shoulder':'ÉPAULE DROITE',
+    'left-arm':'BRAS GAUCHE','right-arm':'BRAS DROIT',chest:'TORSE',stomach:'ABDOMEN',
+    'left-leg':'JAMBE GAUCHE','right-leg':'JAMBE DROITE','left-hand':'MAIN GAUCHE',
+    'right-hand':'MAIN DROITE','left-foot':'PIED GAUCHE','right-foot':'PIED DROIT'};
+  body.querySelectorAll('svg').forEach(svg=>{
+    svg.addEventListener('mouseenter',function(){
+      const pos=this.getAttribute('data-position')||'';
+      lbl.textContent=LABELS[pos]||pos.toUpperCase();
+      lbl.style.opacity='1';
+    });
+    svg.addEventListener('mouseleave',function(){lbl.style.opacity='0';});
+  });
 }
 
 // ── RENDER GRILLE ITEMS ──
@@ -2670,14 +2628,123 @@ function renderGacha(){
 // ── RENDER PARTY ──
 function renderParty(p){
   const members=p.members||[],leader=p.leader_char_key||'';
-  document.getElementById('party-content').innerHTML=`
-    <div class="card"><div class="card-body">
-      <div style="font-family:var(--font-h);font-weight:700;font-size:1.1rem;color:#fff;margin-bottom:4px">${e(p.name||'Party sans nom')}</div>
-      <div style="font-family:var(--font-m);font-size:.48rem;letter-spacing:.1em;color:var(--text3);margin-bottom:16px">${members.length} membre${members.length>1?'s':''} · PP : ${p.pp||0}${p.status==='hidden'?' · 🔒 Cachée':''}</div>
+  const maxSz=parseInt(p.max_size)||3,pp=parseInt(p.pp)||0;
+  const threshold=parseInt(p.msg_threshold)||25,statGain=parseInt(p.stat_gain)||1;
+  const msgCounter=parseInt(p.msg_counter)||0;
+  const purchased=p.purchased_powers||[];
+  const status=p.status||'ACTIVE';
+  const myKey=CHAR_ID?`${UID}_${CHAR_ID}`:'';
+  const isLeader=myKey===leader;
+  const statusColors={ACTIVE:'var(--green)',REPOS:'var(--gold)',MISSION:'var(--violet)'};
+
+  // Build member cards — then fetch char data async to enrich
+  const el=document.getElementById('party-content');
+  let html=`
+    <div class="party-header-card">
+      <div class="party-name">${e(p.name||'Party sans nom')}</div>
+      <div class="party-meta"><span style="color:${statusColors[status]||'var(--text3)'}">${status}</span> · ${members.length}/${maxSz} membres · PP : ${pp}</div>
+      <div class="party-stats-row">
+        <div class="party-stat-chip"><div class="party-stat-val">${pp}</div><div class="party-stat-label">PARTY POINTS</div></div>
+        <div class="party-stat-chip"><div class="party-stat-val">${msgCounter}/${threshold}</div><div class="party-stat-label">MSG COUNTER</div></div>
+        <div class="party-stat-chip"><div class="party-stat-val">+${statGain}</div><div class="party-stat-label">STAT GAIN</div></div>
+        <div class="party-stat-chip"><div class="party-stat-val">${maxSz}</div><div class="party-stat-label">MAX SLOTS</div></div>
+      </div>
+      ${purchased.length?`<div style="display:flex;gap:6px;flex-wrap:wrap">${purchased.map(pid=>`<span style="font-family:var(--font-m);font-size:.42rem;padding:4px 10px;border-radius:4px;border:1px solid rgba(139,92,246,0.3);color:var(--violet);background:rgba(139,92,246,0.06)">⚡ ${pid.replace(/_/g,' ').replace(/\\b\\w/g,c=>c.toUpperCase())}</span>`).join('')}</div>`:''}
+    </div>
+    <div class="card" style="margin-bottom:16px"><div class="card-body">
       <div class="sh" style="margin-bottom:12px"><span class="sh-num">—</span><span class="sh-title">Membres</span><div class="sh-line"></div></div>
-      <div class="party-members">${members.map(m=>`<div class="member-row"><span class="member-name">${e(m.char_name||m.char_key||'—')}</span>${m.char_key===leader?'<span class="member-leader">👑 Leader</span>':''}${m.hidden?'<span style="font-family:var(--font-m);font-size:.4rem;color:var(--text3)">Caché</span>':''}</div>`).join('')}</div>
-      ${p.log&&p.log.length?`<div class="sh" style="margin:16px 0 12px"><span class="sh-num">—</span><span class="sh-title">Journal récent</span><div class="sh-line"></div></div><div style="display:flex;flex-direction:column;gap:6px">${p.log.slice(-5).reverse().map(l=>`<div style="font-family:var(--font-m);font-size:.46rem;letter-spacing:.06em;color:var(--text3);padding:8px 12px;background:rgba(77,163,255,.02);border-radius:6px;border:1px solid rgba(77,163,255,.05)">${e(l)}</div>`).join('')}</div>`:''}
-    </div></div>`;
+      <div id="party-members-list">${members.map(m=>`<div class="party-member-card${m.char_key===leader?' leader':''}" id="pm-${(m.char_key||'').replace(/[^a-zA-Z0-9_]/g,'')}">
+        <div class="party-member-name">${e(m.char_name||'—')}</div>
+        <div class="party-member-role" style="color:${m.char_key===leader?'var(--gold)':'var(--text3)'}">${m.char_key===leader?'👑 LEADER':'MEMBRE'}${m.hidden&&m.char_key!==myKey?' · <span class="party-private-tag">🔒 PRIVÉ</span>':''}</div>
+        <div class="party-member-info" id="pm-info-${(m.char_key||'').replace(/[^a-zA-Z0-9_]/g,'')}"><span class="sk" style="height:12px;width:60%;display:inline-block"></span></div>
+      </div>`).join('')}</div>
+    </div></div>
+    <!-- PP Shop -->
+    <div class="card" style="margin-bottom:16px"><div class="card-body">
+      <div class="sh" style="margin-bottom:12px"><span class="sh-num">—</span><span class="sh-title">🏪 PP Shop</span><div class="sh-line"></div></div>
+      <div style="font-family:var(--font-m);font-size:.48rem;color:var(--gold);margin-bottom:14px">PP disponibles : <strong>${pp}</strong>${!isLeader?' — <span style="color:var(--text3)">Seul le leader peut acheter</span>':''}</div>
+      <div class="pp-shop-grid">
+        <div class="pp-shop-item${maxSz>=12?' maxed':''}"><div class="pp-shop-item-title">⬆️ SLOT</div><div class="pp-shop-item-desc">+1 place (${maxSz}/12)</div><div class="pp-shop-item-cost">${maxSz>=12?'MAX':'30 PP'}</div><button class="pp-shop-buy-btn" ${!isLeader||pp<30||maxSz>=12?'disabled':''} onclick="ppShopBuy('slot')">Acheter</button></div>
+        <div class="pp-shop-item${statGain>=5?' maxed':''}"><div class="pp-shop-item-title">⬆️ STAT GAIN</div><div class="pp-shop-item-desc">+1 stat/tick (+${statGain}/+5)</div><div class="pp-shop-item-cost">${statGain>=5?'MAX':'75 PP'}</div><button class="pp-shop-buy-btn" ${!isLeader||pp<75||statGain>=5?'disabled':''} onclick="ppShopBuy('stat')">Acheter</button></div>
+        <div class="pp-shop-item${threshold<=15?' maxed':''}"><div class="pp-shop-item-title">⬇️ SEUIL MSG</div><div class="pp-shop-item-desc">-1 message (${threshold} → ${Math.max(15,threshold-1)}, min 15)</div><div class="pp-shop-item-cost">${threshold<=15?'MIN':'75 PP'}</div><button class="pp-shop-buy-btn" ${!isLeader||pp<75||threshold<=15?'disabled':''} onclick="ppShopBuy('threshold')">Acheter</button></div>
+        <div class="pp-shop-item${purchased.includes('neural_party_chat')?' maxed':''}"><div class="pp-shop-item-title">⚡ NEURAL PARTY CHAT</div><div class="pp-shop-item-desc">Communication instantanée. +20 INT constant.</div><div class="pp-shop-item-cost">${purchased.includes('neural_party_chat')?'✅ ACQUIS':'150 PP'}</div><button class="pp-shop-buy-btn" ${!isLeader||pp<150||purchased.includes('neural_party_chat')?'disabled':''} onclick="ppShopBuy('neural_party_chat')">Acheter</button></div>
+        <div class="pp-shop-item${purchased.includes('party_recall')?' maxed':''}"><div class="pp-shop-item-title">⚡ PARTY RECALL</div><div class="pp-shop-item-desc">Téléportation. -40% MAN 15 msgs.</div><div class="pp-shop-item-cost">${purchased.includes('party_recall')?'✅ ACQUIS':'150 PP'}</div><button class="pp-shop-buy-btn" ${!isLeader||pp<150||purchased.includes('party_recall')?'disabled':''} onclick="ppShopBuy('party_recall')">Acheter</button></div>
+      </div>
+    </div></div>
+    ${p.log&&p.log.length?`<div class="card"><div class="card-body"><div class="sh" style="margin-bottom:12px"><span class="sh-num">—</span><span class="sh-title">Journal</span><div class="sh-line"></div></div><div style="display:flex;flex-direction:column;gap:6px">${p.log.slice(-5).reverse().map(l=>`<div class="party-log-entry">${e(l)}</div>`).join('')}</div></div></div>`:''}`;
+  el.innerHTML=html;
+
+  // Async: fetch each member's character data to show panels A-E (respecting hidden)
+  members.forEach(async(m)=>{
+    const infoEl=document.getElementById('pm-info-'+(m.char_key||'').replace(/[^a-zA-Z0-9_]/g,''));
+    if(!infoEl)return;
+    const isMe=m.char_key===myKey;
+    const hidden=m.hidden&&!isMe;
+    // Panel A is always shown — need char data from characters collection
+    const uid=m.user_id||'';
+    const charId=(m.char_key||'').includes('_')?(m.char_key.split('_').slice(1).join('_')):'';
+    if(!charId){infoEl.innerHTML='<span style="color:var(--text3)">Données indisponibles</span>';return;}
+    try{
+      const charData=await cachedGet(C.CHARS,charId,'_party_char_'+charId,120);
+      if(!charData){infoEl.innerHTML='<span style="color:var(--text3)">Personnage hors-ligne</span>';return;}
+      const {level:lvl}=levelFromXp(charData.xp||0);
+      const race=charData.race_category||'—';const cls=charData.class||'—';
+      const aff=Array.isArray(charData.affinity)?charData.affinity.join(', '):(charData.affinity||'—');
+      // Panel A — always visible
+      let info=`<div style="margin-bottom:4px"><strong>Rang</strong> Niv.${lvl} · <strong>Race</strong> ${e(race)} · <strong>Classe</strong> ${e(cls)} · <strong>Affinité</strong> ${e(aff)}</div>`;
+      if(hidden){
+        info+=`<div class="party-private-tag" style="margin-top:6px">🔒 Infos masquées par le joueur</div>`;
+        infoEl.innerHTML=info;return;
+      }
+      // Panel B-D — stats, bonuses, etc.
+      const stats=charData.stats||{};
+      const bonuses=m.bonuses||{};
+      const statKeys=['strength','agility','speed','intelligence','mana','resistance','charisma'];
+      const sLabels={strength:'STR',agility:'AGI',speed:'SPD',intelligence:'INT',mana:'MAN',resistance:'RES',charisma:'CHA'};
+      info+=`<div class="stat-line" style="margin-top:6px">${statKeys.filter(k=>stats[k]).map(k=>{
+        const base=parseInt(stats[k])||0;const bonus=parseInt(bonuses[k])||0;
+        return`<span class="stat-tag">${sLabels[k]} ${base}${bonus>0?`<span style="color:var(--gold)">+${bonus}</span>`:''}</span>`;
+      }).join('')}</div>`;
+      // Powers preview
+      const powers=charData.powers||[];
+      if(powers.length){
+        const QCOL={common:'var(--text3)',uncommon:'#22c55e',rare:'#3b82f6',epic:'#a855f7',legendary:'var(--gold)',mythic:'var(--red)',unique:'var(--cyan)'};
+        info+=`<div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap">${powers.slice(0,4).map(p=>{
+          const q=(typeof p==='string'?'common':(p.quality||'common')).toLowerCase();
+          const nm=typeof p==='string'?p.replace(/_/g,' '):(p.name||p.id||'?');
+          return`<span style="font-family:var(--font-m);font-size:.36rem;padding:2px 5px;border-radius:3px;border:1px solid ${QCOL[q]||'var(--text3)'}44;color:${QCOL[q]||'var(--text3)'}">${e(nm)}</span>`;
+        }).join('')}</div>`;
+      }
+      infoEl.innerHTML=info;
+    }catch(err){infoEl.innerHTML='<span style="color:var(--text3)">Erreur chargement</span>';}
+  });
+}
+
+// ── PP SHOP BUY ──
+async function ppShopBuy(type){
+  if(!PARTY_DATA||!UID||!CHAR_ID)return;
+  const myKey=`${UID}_${CHAR_ID}`;
+  if(myKey!==PARTY_DATA.leader_char_key){showToast('Seul le leader peut acheter','error');return;}
+  try{
+    const memSnap=await db.collection(C.PARTY_MEM).doc(myKey).get();
+    if(!memSnap.exists){showToast('Party introuvable','error');return;}
+    const partyId=memSnap.data().party_id;
+    const partySnap=await db.collection(C.PARTIES).doc(partyId).get();
+    if(!partySnap.exists){showToast('Party introuvable','error');return;}
+    const party=partySnap.data();
+    const pp=parseInt(party.pp)||0,maxSz=parseInt(party.max_size)||3;
+    const statGain=parseInt(party.stat_gain)||1,threshold=parseInt(party.msg_threshold)||25;
+    const purchased=party.purchased_powers||[],log=party.log||[];
+    let update={};
+    if(type==='slot'){if(pp<30||maxSz>=12)return;update={pp:pp-30,max_size:maxSz+1,log:[...log,`PP Shop: +1 slot (${maxSz+1})`].slice(-20)};}
+    else if(type==='stat'){if(pp<75||statGain>=5)return;update={pp:pp-75,stat_gain:statGain+1,log:[...log,`PP Shop: stat gain → +${statGain+1}`].slice(-20)};}
+    else if(type==='threshold'){if(pp<75||threshold<=15)return;update={pp:pp-75,msg_threshold:threshold-1,log:[...log,`PP Shop: seuil → ${threshold-1} msgs`].slice(-20)};}
+    else if(type==='neural_party_chat'||type==='party_recall'){if(pp<150||purchased.includes(type))return;update={pp:pp-150,purchased_powers:[...purchased,type],log:[...log,`PP Shop: ${type.replace(/_/g,' ')} débloqué!`].slice(-20)};}
+    else return;
+    await db.collection(C.PARTIES).doc(partyId).update(update);
+    cacheInvalidate('_party');showToast('Achat effectué !','success');
+    const fresh=await cachedGet(C.PARTIES,partyId,'_party',2);PARTY_DATA=fresh;renderParty(fresh);
+  }catch(err){console.error('[PP SHOP]',err);showToast('Erreur: '+err.message,'error');}
 }
 
 // ── RENDER PROGRESSION ──
@@ -2722,28 +2789,71 @@ function tLbl(t){return['Commun','Peu Commun','Rare','Épique','Légendaire'][Ma
 
 // ── RENDER COMPAGNONS ──
 function renderCompanions(cu,cfg){
-  const owned=cu.owned_companions||{},active=cu.active_companion,entries=Object.entries(owned);
-  document.getElementById('comp-content').innerHTML=entries.length
-    ?`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px">
-        ${entries.map(([id,cd])=>{
-          const form=cd.current_form||id,evos=cfg.evolutions||{},comps=cfg.companions||{};
-          const info=evos[form]||comps[form]||{};
-          const lvl=compLvl(cd.xp||0),isAct=id===active;
-          return`<div class="card" style="${isAct?'border-color:rgba(68,255,136,0.3)':''}"><div class="card-body">
-            ${isAct?'<span class="badge badge-green" style="display:inline-block;margin-bottom:10px">ACTIF</span>':''}
-            <div class="comp-name">${e(info.name||form||id)}</div>
-            <div class="comp-form">Forme : ${e(form)}</div>
-            <div class="comp-stats">
-              <div class="comp-stat"><div class="comp-stat-val">${lvl}</div><div class="comp-stat-label">NIVEAU</div></div>
-              <div class="comp-stat"><div class="comp-stat-val">${(cd.xp||0).toLocaleString()}</div><div class="comp-stat-label">XP</div></div>
-              <div class="comp-stat"><div class="comp-stat-val" style="color:${cd.synchronized?'var(--green)':'var(--text3)'}">${cd.synchronized?'✓':'✗'}</div><div class="comp-stat-label">SYNC</div></div>
-            </div>
-          </div></div>`;
-        }).join('')}
-      </div>`
-    :'<div class="empty">Aucun compagnon</div>';
+  const owned=cu.owned_companions||{},active=cu.active_companion;
+  const entries=Object.entries(owned);
+  const allComps=cfg.companions||{},allEvos=cfg.evolutions||{};
+  const el=document.getElementById('comp-content');
+  function resolveInfo(form,baseId){return allEvos[form]||allComps[form]||allComps[baseId]||{};}
+  function compLvlFull(xp){let l=1,t=0;while(l<100&&t+300*l<=xp){t+=300*l;l++;}return{level:l,cur:xp-t,need:l<100?300*l:0};}
+  let html='';
+  if(entries.length){
+    html+=`<div class="comp-section-title">🐾 Mes Compagnons</div>`;
+    html+=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-bottom:24px">`;
+    entries.forEach(([id,cd])=>{
+      const form=cd.current_form||id;
+      const info=resolveInfo(form,id);const baseEntry=allComps[id]||{};
+      const{level:lvl,cur:curXp,need:nextXp}=compLvlFull(cd.xp||0);
+      const isAct=id===active;const pct=nextXp>0?Math.min(100,Math.round(curXp/nextXp*100)):100;
+      const syncBonuses=info.sync_bonuses||baseEntry.sync_bonuses||{};
+      const syncPower=info.sync_power||baseEntry.sync_power||'';
+      const imageUrl=info.image||info.base_image||baseEntry.base_image||'';
+      const evolutions=baseEntry.evolutions||[];
+      let evoHtml='';
+      if(evolutions.length){evoHtml=`<div style="margin-top:8px;display:flex;gap:4px;flex-wrap:wrap">${evolutions.map(evo=>{
+        const reached=lvl>=evo.level;const isCurrent=form===evo.id;
+        return`<span style="font-family:var(--font-m);font-size:.38rem;padding:2px 6px;border-radius:3px;border:1px solid ${isCurrent?'rgba(139,92,246,0.5)':reached?'rgba(68,255,136,0.2)':'rgba(255,255,255,0.06)'};color:${isCurrent?'var(--violet)':reached?'var(--green)':'var(--text3)'}">${e(evo.name)} (Niv.${evo.level})</span>`;
+      }).join('')}</div>`;}
+      html+=`<div class="comp-card-enhanced${isAct?' active':''}">
+        ${imageUrl?`<img src="${e(imageUrl)}" class="comp-card-img" alt="${e(info.name||id)}" onerror="this.outerHTML='<div class=comp-card-img-placeholder>🐾</div>'">`:'<div class="comp-card-img-placeholder">🐾</div>'}
+        <div class="comp-card-body">
+          ${isAct?'<span class="badge badge-green" style="display:inline-block;margin-bottom:8px;font-family:var(--font-m);font-size:.4rem">⭐ ACTIF</span>':''}
+          <div class="comp-card-name">${e(info.name||form||id)}</div>
+          <div class="comp-card-ability">${e(baseEntry.unique_ability||info.unique_ability||'')}</div>
+          <div class="comp-card-stats-row"><div class="comp-card-stat">Niv. ${lvl}</div><div class="comp-card-stat">${(cd.xp||0).toLocaleString()} XP</div></div>
+          <div style="margin:6px 0"><div style="display:flex;justify-content:space-between;font-family:var(--font-m);font-size:.38rem;color:var(--text3);margin-bottom:3px"><span>XP</span><span>${curXp}/${nextXp||'MAX'}</span></div><div style="height:4px;background:rgba(0,229,255,0.08);border-radius:2px;overflow:hidden"><div style="height:100%;width:${pct}%;background:var(--cyan);border-radius:2px;transition:width .5s"></div></div></div>
+          <div class="comp-card-sync ${cd.synchronized?'synced':'unsynced'}">${cd.synchronized?'✅ Synchronisé':'💤 Non synchronisé'}</div>
+          ${Object.keys(syncBonuses).length?`<div style="font-family:var(--font-m);font-size:.4rem;color:var(--text3);margin-bottom:4px">Bonus sync :</div><div class="comp-card-stats-row">${Object.entries(syncBonuses).map(([s,v])=>`<div class="comp-card-stat" style="color:var(--green)">+${v} ${s.substring(0,3).toUpperCase()}</div>`).join('')}</div>`:''}
+          ${syncPower?`<div style="font-family:var(--font-m);font-size:.42rem;color:var(--violet);margin-top:4px">⚡ ${e(syncPower)}</div>`:''}
+          ${evoHtml}
+        </div></div>`;
+    });
+    html+=`</div>`;
+  }else{html+=`<div class="empty" style="margin-bottom:20px">Aucun compagnon possédé</div>`;}
+  // Shop
+  const shopEntries=Object.entries(allComps).filter(([cid])=>!owned[cid]);
+  html+=`<div class="comp-section-title">🏪 Compagnons disponibles</div>`;
+  if(shopEntries.length){
+    html+=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px">`;
+    shopEntries.forEach(([cid,comp])=>{
+      const imageUrl=comp.base_image||'';const syncBonuses=comp.sync_bonuses||{};
+      const eggCost=comp.egg_cost||1;const evolutions=comp.evolutions||[];
+      html+=`<div class="comp-card-enhanced">
+        ${imageUrl?`<img src="${e(imageUrl)}" class="comp-card-img" alt="${e(comp.name||cid)}" onerror="this.outerHTML='<div class=comp-card-img-placeholder>🥚</div>'">`:'<div class="comp-card-img-placeholder">🥚</div>'}
+        <div class="comp-card-body">
+          <div class="comp-card-name">${e(comp.name||cid)}</div>
+          <div class="comp-card-ability">${e(comp.unique_ability||'')}</div>
+          ${Object.keys(syncBonuses).length?`<div class="comp-card-stats-row" style="margin-top:6px">${Object.entries(syncBonuses).map(([s,v])=>`<div class="comp-card-stat" style="color:var(--green)">+${v} ${s.substring(0,3).toUpperCase()}</div>`).join('')}</div>`:''}
+          ${comp.sync_power?`<div style="font-family:var(--font-m);font-size:.42rem;color:var(--violet);margin-top:4px">⚡ ${e(comp.sync_power)}</div>`:''}
+          ${evolutions.length?`<div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap">${evolutions.map(evo=>`<span style="font-family:var(--font-m);font-size:.36rem;padding:2px 5px;border-radius:3px;border:1px solid rgba(139,92,246,0.15);color:var(--text3)">${e(evo.name)} (Niv.${evo.level})</span>`).join('')}</div>`:''}
+          <div class="comp-shop-price">🥚 ${eggCost} Golden Egg${eggCost>1?'s':''}</div>
+          <button class="comp-shop-buy-btn" disabled title="Achats via Discord (/companion)">Acheter via Discord</button>
+        </div></div>`;
+    });
+    html+=`</div>`;
+  }else{html+=`<div class="empty">Tous les compagnons sont possédés !</div>`;}
+  el.innerHTML=html;
 }
-function compLvl(xp){let l=1,t=0;while(t+100*l<=xp){t+=100*l;l++}return l}
+function compLvl(xp){let l=1,t=0;while(t+300*l<=xp){t+=300*l;l++}return l}
 
 // ── RENDER SHOP ──
 function renderShop(shop){
