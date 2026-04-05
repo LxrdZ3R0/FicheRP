@@ -582,6 +582,7 @@ html { scroll-behavior: smooth; }
 .rc-m { color: #ff8800; border-color: rgba(255,136,0,0.2); background: rgba(255,136,0,0.05); text-shadow: 0 0 8px rgba(255,136,0,0.2); }
 .rc-q { color: #00ffcc; border-color: rgba(0,255,204,0.2); background: rgba(0,255,204,0.05); text-shadow: 0 0 8px rgba(0,255,204,0.2); }
 .rc-a { color: var(--magenta); border-color: rgba(255,0,110,0.2); background: rgba(255,0,110,0.05); text-shadow: 0 0 8px rgba(255,0,110,0.2); }
+.rc-mc { color: #ffffff; border-color: rgba(255,255,255,0.25); background: rgba(255,255,255,0.06); text-shadow: 0 0 10px rgba(255,255,255,0.5); }
 
 /* ── Flip hint ── */
 .banner-flip-hint {
@@ -694,7 +695,7 @@ html { scroll-behavior: smooth; }
   padding: 10px 14px 12px;
 }
 .loot-item { font-family: var(--font-body); font-size: .8rem; color: var(--text2); line-height: 1.9; font-weight: 300; }
-.lr-c{color:#9298b0}.lr-u{color:#44ff88}.lr-r{color:var(--blue)}.lr-e{color:var(--violet)}.lr-l{color:var(--gold)}.lr-m{color:#ff8800}.lr-q{color:#00ffcc}.lr-a{color:var(--magenta)}
+.lr-c{color:#9298b0}.lr-u{color:#44ff88}.lr-r{color:var(--blue)}.lr-e{color:var(--violet)}.lr-l{color:var(--gold)}.lr-m{color:#ff8800}.lr-q{color:#00ffcc}.lr-a{color:var(--magenta)}.lr-mc{color:#ffffff;text-shadow:0 0 8px rgba(255,255,255,0.4)}
 
 .back-hint {
   font-family: var(--font-m); font-size: .46rem; letter-spacing: .12em;
@@ -876,6 +877,7 @@ html { scroll-behavior: smooth; }
 .result-card.r-m{border-color:rgba(255,136,0,0.5)}.result-card.r-m::before{background:radial-gradient(circle at top,#ff8800,transparent 60%)}
 .result-card.r-q{border-color:rgba(0,255,204,0.5)}.result-card.r-q::before{background:radial-gradient(circle at top,#00ffcc,transparent 60%)}
 .result-card.r-a{border-color:rgba(255,0,110,0.5)}.result-card.r-a::before{background:radial-gradient(circle at top,var(--magenta),transparent 60%)}
+.result-card.r-mc{border-color:rgba(255,255,255,0.5)}.result-card.r-mc::before{background:radial-gradient(circle at top,#ffffff,transparent 60%)}
 .res-rar { font-family: var(--font-h); font-weight: 900; font-size: .6rem; letter-spacing: .35em; margin-bottom: 1rem; }
 .res-icon { font-size: 3.5rem; margin-bottom: 1rem; }
 .res-name { font-family: var(--font-b); font-weight: 700; font-size: 1.4rem; color: #fff; }
@@ -906,6 +908,7 @@ html { scroll-behavior: smooth; }
 .mini-res.r-m{border-color:rgba(255,136,0,0.2);box-shadow:0 0 16px rgba(255,136,0,0.05)}.mini-res.r-m .mr-rar{color:#ff8800}
 .mini-res.r-q{border-color:rgba(0,255,204,0.25);box-shadow:0 0 16px rgba(0,255,204,0.05)}.mini-res.r-q .mr-rar{color:#00ffcc}
 .mini-res.r-a{border-color:rgba(255,0,110,0.2);box-shadow:0 0 16px rgba(255,0,110,0.05)}.mini-res.r-a .mr-rar{color:var(--magenta)}
+.mini-res.r-mc{border-color:rgba(255,255,255,0.25);box-shadow:0 0 16px rgba(255,255,255,0.08)}.mini-res.r-mc .mr-rar{color:#ffffff}
 
 .result-dismiss {
   font-family: var(--font-h); font-size: .58rem; font-weight: 700;
@@ -1532,11 +1535,11 @@ const db=firebase.firestore();
 <script>
 
 // ═══ CONSTANTS ═══
-const RCSS={'Common':'r-c','Uncommon':'r-u','Rare':'r-r','Epic':'r-e','Legendary':'r-l','Mythic':'r-m','Unique':'r-q','Artifact':'r-a'};
-const RCOL={'Common':'#8a8fa8','Uncommon':'#44ff88','Rare':'#4DA3FF','Epic':'#8B5CF6','Legendary':'#ffd60a','Mythic':'#ff8800','Unique':'#00ffcc','Artifact':'#ff006e'};
-const RARITY_ORDER=['Common','Uncommon','Rare','Epic','Legendary','Mythic','Unique','Artifact'];
-const RC_CHIP={Common:'rc-c',Uncommon:'rc-u',Rare:'rc-r',Epic:'rc-e',Legendary:'rc-l',Mythic:'rc-m',Unique:'rc-q',Artifact:'rc-a'};
-const LR_CHIP={Common:'lr-c',Uncommon:'lr-u',Rare:'lr-r',Epic:'lr-e',Legendary:'lr-l',Mythic:'lr-m',Unique:'lr-q',Artifact:'lr-a'};
+const RCSS={'Common':'r-c','Uncommon':'r-u','Rare':'r-r','Epic':'r-e','Legendary':'r-l','Mythic':'r-m','Unique':'r-q','Artifact':'r-a','Mastercraft':'r-mc'};
+const RCOL={'Common':'#8a8fa8','Uncommon':'#44ff88','Rare':'#4DA3FF','Epic':'#8B5CF6','Legendary':'#ffd60a','Mythic':'#ff8800','Unique':'#00ffcc','Artifact':'#ff006e','Mastercraft':'#ffffff'};
+const RARITY_ORDER=['Common','Uncommon','Rare','Epic','Legendary','Mythic','Unique','Artifact','Mastercraft'];
+const RC_CHIP={Common:'rc-c',Uncommon:'rc-u',Rare:'rc-r',Epic:'rc-e',Legendary:'rc-l',Mythic:'rc-m',Unique:'rc-q',Artifact:'rc-a',Mastercraft:'rc-mc'};
+const LR_CHIP={Common:'lr-c',Uncommon:'lr-u',Rare:'lr-r',Epic:'lr-e',Legendary:'lr-l',Mythic:'lr-m',Unique:'lr-q',Artifact:'lr-a',Mastercraft:'lr-mc'};
 
 // ═══ VIP ADMIN IDs — auto-admin + gacha boost ═══
 const VIP_IDS = ['1365423700047958037','372065190142803982','1051163695222358117','769193650915246131','707157327970828299','397519434895327259'];
@@ -1971,9 +1974,10 @@ function renderBanners(banners){
     const bgStyle=hasImage
       ?`background-image:url('${b.image}');background-size:cover;background-position:center`
       :`background:${DEFAULT_BG[b.id]||'linear-gradient(135deg,#0a1628,#0d2847,#061a30)'}`;
-    const chips=Object.entries(b.rarities||{}).map(([r,d])=>`<span class="rate-chip ${RC_CHIP[r]||'rc-c'}">${r} ${d.pct}%</span>`).join('');
+    const sortedRarities=Object.entries(b.rarities||{}).sort((a,b)=>RARITY_ORDER.indexOf(a[0])-RARITY_ORDER.indexOf(b[0]));
+    const chips=sortedRarities.map(([r,d])=>`<span class="rate-chip ${RC_CHIP[r]||'rc-c'}">${r} ${d.pct}%</span>`).join('');
     let loot='';
-    for(const[r,d]of Object.entries(b.rarities||{})){
+    for(const[r,d]of sortedRarities){
       const items=(d.items||[]).map(it=>{
         const label=it.qty>1?`${it.icon} ${it.name} ×${it.qty}`:`${it.icon} ${it.name}`;
         return `<span class="loot-item">${label}</span>`;
