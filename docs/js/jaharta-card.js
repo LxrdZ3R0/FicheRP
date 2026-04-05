@@ -116,9 +116,13 @@ class JahartaCard extends HTMLElement {
 
     if (ch.photoUrl || ch.photo) {
       const img   = document.createElement("img");
-      img.src     = ch.photoUrl || ch.photo;
       img.alt     = ch.firstname || "";
       img.loading = "lazy";
+      if (window.JImgCache && ch.id) {
+        window.JImgCache.applyTo(img, 'fc_' + ch.id, ch.photoUrl || ch.photo);
+      } else {
+        img.src = ch.photoUrl || ch.photo;
+      }
       photo.appendChild(img);
     } else {
       const ph = document.createElement("div");

@@ -38,6 +38,7 @@ Le site permet à tout visiteur de consulter les informations de l'univers Jahar
 | Composant carte | Web Component `<jaharta-card>` | js/jaharta-card.js |
 | Constantes | RACES, RANKS, RACES_SPECIFIC | js/constants.js |
 | Utilitaires | sanitize, compressImage, AntiSpam, Skeleton, showToast | js/utils.js |
+| Cache images | localStorage URL cache (TTL 24h) — `window.JImgCache` | js/jaharta-img-cache.js |
 | Debug logger | Panneau d'erreurs flottant | js/debug.js |
 
 ---
@@ -64,6 +65,7 @@ JahartaRP/
 │   │   ├── constants.js           ← RACES, RANKS, RACES_SPECIFIC (partagé)
 │   │   ├── utils.js               ← sanitize, compressImage, AntiSpam, Skeleton, showToast
 │   │   ├── jaharta-card.js        ← Web Component <jaharta-card> (cartes personnages)
+│   │   ├── jaharta-img-cache.js   ← Cache localStorage URLs images Firebase (TTL 24h)
 │   │   ├── kanji-blob.js          ← Blob Three.js pour gacha (morphing 3D)
 │   │   ├── page-transition.js     ← Overlay de chargement entre pages
 │   │   └── debug.js               ← Logger d'erreurs flottant (dev)

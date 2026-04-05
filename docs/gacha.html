@@ -1563,6 +1563,7 @@ function bannerAccent(id,name){
   return '#4DA3FF';
 }
 
+const prefersReducedMotion=window.matchMedia('(prefers-reduced-motion:reduce)').matches;
 let U=null,SB=null,BANNERS=[];
 
 // ═══ SESSION (localStorage) ═══
@@ -2560,28 +2561,33 @@ async function showPullResults(res,count){
     ra.innerHTML=`<div class="result-card ${css}" style="color:${col};opacity:0;transform-style:preserve-3d"><div class="res-rar" style="color:${col}">${it.rarity.toUpperCase()}</div><div class="res-icon">${it.icon}</div><div class="res-name">${it.name}${it.qty>1?' ×'+it.qty:''}</div></div><button class="result-dismiss" onclick="dismiss()" style="opacity:0">CONTINUER</button>`;
     const card=ra.querySelector('.result-card');
     const btn=ra.querySelector('.result-dismiss');
-    const tl=gsap.timeline();
-    tl.fromTo(card,
-      {opacity:0,scale:.3,rotateY:180,y:60},
-      {opacity:1,scale:1,rotateY:0,y:0,duration:.9,ease:'cardFlip'}
-    );
-    tl.fromTo(card,
-      {boxShadow:`0 0 80px ${col}, 0 0 160px ${col}44`},
-      {boxShadow:`0 0 20px ${col}44, 0 0 0px transparent`,duration:1.4,ease:'power2.out'},
-      '-=.5'
-    );
-    const icon=card.querySelector('.res-icon');
-    if(icon) tl.fromTo(icon,{scale:0,rotation:-20},{scale:1,rotation:0,duration:.5,ease:'back.out(2.5)'},'-=.7');
-    const rar=card.querySelector('.res-rar');
-    if(rar) tl.fromTo(rar,{opacity:0,y:-12},{opacity:1,y:0,duration:.35,ease:'power2.out'},'-=.4');
-    tl.to(btn,{opacity:1,duration:.4,ease:'power1.out'},'-=.1');
-    if(['Legendary','Mythic','Unique','Artifact'].includes(it.rarity)){
-      tl.fromTo(ov,{x:0},{x:[-5,4,-3,2,0],duration:.35,ease:'none'},'-=.8');
+    if(prefersReducedMotion){
+      card.style.opacity='1';
+      btn.style.opacity='1';
+    }else{
+      const tl=gsap.timeline();
       tl.fromTo(card,
-        {boxShadow:`0 0 120px ${col}, 0 0 240px ${col}`},
-        {boxShadow:`0 0 24px ${col}66`,duration:1.2,ease:'power3.out'},
-        '-=1.2'
+        {opacity:0,scale:.3,rotateY:180,y:60},
+        {opacity:1,scale:1,rotateY:0,y:0,duration:.9,ease:'cardFlip'}
       );
+      tl.fromTo(card,
+        {boxShadow:`0 0 80px ${col}, 0 0 160px ${col}44`},
+        {boxShadow:`0 0 20px ${col}44, 0 0 0px transparent`,duration:1.4,ease:'power2.out'},
+        '-=.5'
+      );
+      const icon=card.querySelector('.res-icon');
+      if(icon) tl.fromTo(icon,{scale:0,rotation:-20},{scale:1,rotation:0,duration:.5,ease:'back.out(2.5)'},'-=.7');
+      const rar=card.querySelector('.res-rar');
+      if(rar) tl.fromTo(rar,{opacity:0,y:-12},{opacity:1,y:0,duration:.35,ease:'power2.out'},'-=.4');
+      tl.to(btn,{opacity:1,duration:.4,ease:'power1.out'},'-=.1');
+      if(['Legendary','Mythic','Unique','Artifact'].includes(it.rarity)){
+        tl.fromTo(ov,{x:0},{x:[-5,4,-3,2,0],duration:.35,ease:'none'},'-=.8');
+        tl.fromTo(card,
+          {boxShadow:`0 0 120px ${col}, 0 0 240px ${col}`},
+          {boxShadow:`0 0 24px ${col}66`,duration:1.2,ease:'power3.out'},
+          '-=1.2'
+        );
+      }
     }
   }else{
     // ── REVEAL multi (x5/x10) : stagger GSAP ─────────────────
@@ -2598,42 +2604,49 @@ async function showPullResults(res,count){
     const cards=[...ra.querySelectorAll('.mini-res')];
     const HIGH_RARITY=['Epic','Legendary','Mythic','Unique','Artifact'];
     const ULTRA=['Legendary','Mythic','Unique','Artifact'];
-    gsap.set(cards,{rotateY:90,scale:.3,y:30,opacity:0});
-
-    let cursor=0;
-    const masterTl=gsap.timeline();
-
-    for(let i=0;i<cards.length;i++){
-      const card=cards[i];
-      const rarity=res[i].rarity;
-      const isHigh=HIGH_RARITY.includes(rarity);
-      const isUltra=ULTRA.includes(rarity);
-      const col=RCOL[rarity]||'#8a8fa8';
-      const gap=isUltra?.38:isHigh?.25:.14;
-      cursor+=gap;
-      const dur=isUltra?.65:isHigh?.55:.42;
-      masterTl.to(card,{
-        opacity:1,rotateY:0,scale:1,y:0,
-        duration:dur,
-        ease:isUltra?'cardFlip':'cardSettle'
-      },cursor);
-      if(isHigh){
-        masterTl.fromTo(card,
-          {boxShadow:`0 0 50px ${col}`},
-          {boxShadow:`0 0 ${isUltra?'20':'10'}px ${col}44`,duration:isUltra?.9:.6,ease:'power2.out'},
-          cursor+'.05'
-        );
-      }
-      if(isUltra){
-        masterTl.fromTo(ov,{x:0},{x:[-4,3,-2,1,0],duration:.28,ease:'none'},cursor+'.1');
-        masterTl.call(()=>FX.burst(col,RARITY_ORDER.indexOf(rarity)),null,cursor+'.15');
-      }
-      cursor+=dur;
-    }
-
     const summary=ra.querySelector('.pull-summary');
     const btn=ra.querySelector('.result-dismiss');
-    masterTl.to([summary,btn],{opacity:1,duration:.5,stagger:.15,ease:'power2.out'},cursor+'.2');
+
+    if(prefersReducedMotion){
+      cards.forEach(c=>{c.style.opacity='1';});
+      if(summary) summary.style.opacity='1';
+      btn.style.opacity='1';
+    }else{
+      gsap.set(cards,{rotateY:90,scale:.3,y:30,opacity:0});
+
+      let cursor=0;
+      const masterTl=gsap.timeline();
+
+      for(let i=0;i<cards.length;i++){
+        const card=cards[i];
+        const rarity=res[i].rarity;
+        const isHigh=HIGH_RARITY.includes(rarity);
+        const isUltra=ULTRA.includes(rarity);
+        const col=RCOL[rarity]||'#8a8fa8';
+        const gap=isUltra?.38:isHigh?.25:.14;
+        cursor+=gap;
+        const dur=isUltra?.65:isHigh?.55:.42;
+        masterTl.to(card,{
+          opacity:1,rotateY:0,scale:1,y:0,
+          duration:dur,
+          ease:isUltra?'cardFlip':'cardSettle'
+        },cursor);
+        if(isHigh){
+          masterTl.fromTo(card,
+            {boxShadow:`0 0 50px ${col}`},
+            {boxShadow:`0 0 ${isUltra?'20':'10'}px ${col}44`,duration:isUltra?.9:.6,ease:'power2.out'},
+            cursor+'.05'
+          );
+        }
+        if(isUltra){
+          masterTl.fromTo(ov,{x:0},{x:[-4,3,-2,1,0],duration:.28,ease:'none'},cursor+'.1');
+          masterTl.call(()=>FX.burst(col,RARITY_ORDER.indexOf(rarity)),null,cursor+'.15');
+        }
+        cursor+=dur;
+      }
+
+      masterTl.to([summary,btn],{opacity:1,duration:.5,stagger:.15,ease:'power2.out'},cursor+'.2');
+    }
   }
 }
 

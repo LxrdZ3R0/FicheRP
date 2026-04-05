@@ -37,12 +37,13 @@ docs/
 │   └── jaharta.css      Thème global partagé (variables CSS)
 │
 └── js/
-    ├── constants.js     window.RACES / window.RANKS / window.RACES_SPECIFIC
-    ├── utils.js         sanitize(), compressImage(), AntiSpam, Skeleton, showToast()
-    ├── jaharta-card.js  Web Component <jaharta-card> (tilt 3D, scramble, sparkle)
-    ├── debug.js         Logger flottant (localStorage, bas-droit)
-    ├── kanji-blob.js    Blob Three.js pour gacha
-    └── page-transition.js  Overlay de chargement
+    ├── constants.js         window.RACES / window.RANKS / window.RACES_SPECIFIC
+    ├── utils.js             sanitize(), compressImage(), AntiSpam, Skeleton, showToast()
+    ├── jaharta-card.js      Web Component <jaharta-card> (tilt 3D, scramble, sparkle)
+    ├── jaharta-img-cache.js Cache localStorage des URLs d'images Firestore (TTL 24h)
+    ├── debug.js             Logger flottant (localStorage, bas-droit)
+    ├── kanji-blob.js        Blob Three.js pour gacha
+    └── page-transition.js   Overlay de chargement
 ```
 
 ---
@@ -86,6 +87,25 @@ const firebaseConfig = {
 
 **Globals window exposés** dans les modules Firebase pour les scripts non-module :
 `window._db`, `window._storage`, `window._isAdmin`, `window._doc`, `window._updateDoc`, `window._deleteDoc`
+
+---
+
+## Cache images (`jaharta-img-cache.js`)
+
+Cache localStorage des URLs d'images Firebase Storage, TTL 24 h.
+
+```js
+window.JImgCache.get(key)               // → url|null (depuis le cache)
+window.JImgCache.set(key, url)          // écrit en cache
+window.JImgCache.applyTo(img, key, url) // affiche en cache-first, rafraîchit si différent
+window.JImgCache.invalidate(key)        // invalide une entrée
+window.JImgCache.stats()                // {total, expired}
+```
+
+**Clés par type de document :**
+- `fc_{id}` — fiches joueurs (fiches.html, jaharta-card.js)
+- `char_{id}` — personnage hub (hub.html)
+- `pnj_{id}` — PNJ (pnj.html)
 
 ---
 

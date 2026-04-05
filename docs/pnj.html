@@ -108,8 +108,14 @@ function _buildPNJCardInner(p) {
   card.dataset.cat = p.category || '';
   card.style.setProperty('--pc', c);
 
-  var photoHTML = p.photo
-    ? '<img src="'+p.photo+'" alt="'+p.prenom+'" loading="lazy">'
+  var _pnjImgUrl = p.photo;
+  if (window.JImgCache && p.id && p.photo) {
+    var _cached = window.JImgCache.get('pnj_' + p.id);
+    _pnjImgUrl = _cached || p.photo;
+    window.JImgCache.set('pnj_' + p.id, p.photo);
+  }
+  var photoHTML = _pnjImgUrl
+    ? '<img src="'+_pnjImgUrl+'" alt="'+p.prenom+'" loading="lazy">'
     : '<div class="pnj-photo-ph" style="color:'+c+'">'+(p.prenom||'?')[0]+'</div>';
 
   var powersHTML = '';
@@ -528,6 +534,7 @@ body::before{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;
 <script src="js/constants.js"></script>
 <script src="js/utils.js"></script>
 <script src="js/jaharta-cache.js"></script>
+<script src="js/jaharta-img-cache.js"></script>
 <script type="module" src="js/auth-badge.js"></script>
 </head>
 <body>
@@ -622,7 +629,7 @@ body::before{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;
       <p class="msub" style="border-left-color:rgba(0,240,255,0.4)">Créez un filtre personnalisé pour la barre de tri.</p>
       <div class="fg"><label class="fl">Nom du filtre <span class="req">*</span></label><input type="text" class="fi" id="new-filter-label" placeholder="Ex: Antagoniste, Gardien..."></div>
       <div class="fg color-row"><div class="fg" style="margin-bottom:0;flex:1"><label class="fl">Couleur</label><input type="text" class="fi" id="new-filter-color-hex" value="#b06eff" oninput="syncColor(this.value)"></div><div class="color-preview" id="color-preview-box" style="background:#b06eff"><input type="color" id="new-filter-color" value="#b06eff" oninput="syncHex(this.value)"></div></div>
-      <div style="margin:16px 0 18px;padding:12px 16px;background:rgba(0,0,0,0.2);border:1px solid var(--border);"><div style="font-family:'Rajdhani',sans-serif;font-size:.54rem;color:var(--muted);letter-spacing:.18em;margin-bottom:10px;text-transform:uppercase;">Aperçu :</div><div id="filter-preview-btn" style="display:inline-flex;align-items:center;gap:6px;font-family:'Rajdhani',sans-serif;font-size:.64rem;letter-spacing:.13em;text-transform:uppercase;padding:7px 14px;border:1px solid;color:#b06eff;border-color:rgba(176,110,255,0.44);"><span id="fp-dot" style="width:6px;height:6px;border-radius:50%;background:#b06eff;box-shadow:0 0 5px #b06eff;display:inline-block"></span><span id="fp-label">Nouveau filtre</span></div></div>
+      <div style="margin:16px 0 18px;padding:12px 16px;background:rgba(0,0,0,0.2);border:1px solid var(--border);"><div style="font-family:'Rajdhani',sans-serif;font-size:.54rem;color:var(--text2);letter-spacing:.18em;margin-bottom:10px;text-transform:uppercase;">Aperçu :</div><div id="filter-preview-btn" style="display:inline-flex;align-items:center;gap:6px;font-family:'Rajdhani',sans-serif;font-size:.64rem;letter-spacing:.13em;text-transform:uppercase;padding:7px 14px;border:1px solid;color:#b06eff;border-color:rgba(176,110,255,0.44);"><span id="fp-dot" style="width:6px;height:6px;border-radius:50%;background:#b06eff;box-shadow:0 0 5px #b06eff;display:inline-block"></span><span id="fp-label">Nouveau filtre</span></div></div>
       <button class="bsub cyan-btn" id="filter-save-btn" onclick="saveFilter()">◈ Créer le filtre</button>
     </div>
   </div>
@@ -632,7 +639,7 @@ body::before{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;
 
 <footer class="footer" style="border-top:1px solid rgba(255,255,255,0.04);padding:3rem clamp(1.5rem,4vw,3rem);display:flex;align-items:center;justify-content:space-between;gap:2rem;flex-wrap:wrap">
   <div style="font-family:var(--font-h);font-size:.7rem;font-weight:700;letter-spacing:.2em;color:var(--text3)">JAHARTA</div>
-  <div style="display:flex;gap:18px"><a href="index.html" style="font-size:.68rem;color:var(--text2);text-decoration:none">Accueil</a><a href="fiches.html" style="font-size:.68rem;color:var(--text2);text-decoration:none">Fiches RP</a><a href="portail.html" style="font-size:.68rem;color:var(--text2);text-decoration:none">Portail</a><a href="admin.html" style="font-size:.68rem;color:var(--text2);text-decoration:none">Admin</a><a href="https://discord.gg/jBMnmeR944" target="_blank" style="font-size:.68rem;color:var(--text2);text-decoration:none">Discord ↗</a></div>
+  <div style="display:flex;gap:18px"><a href="index.html" style="font-size:.68rem;color:var(--text2);text-decoration:none">Accueil</a><a href="fiches.html" style="font-size:.68rem;color:var(--text2);text-decoration:none">Fiches RP</a><a href="portail.html" style="font-size:.68rem;color:var(--text2);text-decoration:none">Portail</a><a href="admin.html" style="font-size:.68rem;color:var(--text2);text-decoration:none">Admin</a><a href="https://discord.gg/Jaharta" target="_blank" style="font-size:.68rem;color:var(--text2);text-decoration:none">Discord ↗</a></div>
   <div style="font-family:var(--font-m);font-size:.45rem;color:var(--text3);letter-spacing:.15em">© 2024 — 2026 JAHARTA</div>
 </footer>
 

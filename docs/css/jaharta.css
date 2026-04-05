@@ -23,7 +23,7 @@
 
   --text-primary: #e8eaf0;
   --text-secondary: #8a8fa8;
-  --text-dim: #4a4e66;
+  --text-dim: #70769a;
 
   --font-display: 'Orbitron', sans-serif;
   --font-heading: 'Rajdhani', sans-serif;
@@ -2420,3 +2420,13 @@ a.admin-badge:hover { border-color: rgba(0,255,136,0.6); box-shadow: 0 0 12px rg
 .nav-links{display:none!important}
 .nav-toggle{display:none!important}
 .nav-backdrop{display:none!important}
+
+/* ═══ ACCESSIBILITÉ — REDUCED MOTION ═══ */
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:.01ms!important;
+    animation-iteration-count:1!important;
+    transition-duration:.01ms!important;
+    scroll-behavior:auto!important;
+  }
+}

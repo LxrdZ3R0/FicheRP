@@ -387,6 +387,7 @@ body::after{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;o
   display:flex;align-items:center;justify-content:center;
   font-size:.85rem;cursor:pointer;flex-shrink:0;
   position:relative;transition:border-color .25s,box-shadow .25s;
+  touch-action:manipulation;
 }
 .slot-cell.empty-cell{
   border:1.5px dashed rgba(0,229,255,0.22);background:transparent;
@@ -484,7 +485,7 @@ body::after{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;o
 .inv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
 
 /* Item card Cyberpunk */
-.inv-item{border-radius:6px;border:1px solid;background:linear-gradient(135deg,rgba(8,14,32,0.9),rgba(4,8,20,0.8));cursor:pointer;position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s,border-color .2s;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:10px 8px;user-select:none}
+.inv-item{border-radius:6px;border:1px solid;background:linear-gradient(135deg,rgba(8,14,32,0.9),rgba(4,8,20,0.8));cursor:pointer;position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s,border-color .2s;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:10px 8px;user-select:none;touch-action:manipulation}
 .inv-item::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,currentColor,transparent);opacity:.15;pointer-events:none}
 .inv-item:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,0.4)}
 .inv-item.selected{transform:translateY(-2px) scale(1.02)}
@@ -514,7 +515,7 @@ body::after{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;o
 .inv-empty-msg{grid-column:1/-1;text-align:center;padding:40px 20px;font-family:var(--font-m);font-size:.55rem;letter-spacing:.12em;color:var(--text3)}
 
 /* ── Bouton supprimer item (hover card) ── */
-.inv-item-delete{position:absolute;top:5px;left:5px;width:22px;height:22px;background:rgba(255,71,87,0.1);border:1px solid rgba(255,71,87,0.25);border-radius:5px;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s,background .2s,border-color .2s;z-index:5;color:var(--red);padding:0;line-height:1}
+.inv-item-delete{position:absolute;top:4px;left:4px;width:32px;height:32px;background:rgba(255,71,87,0.1);border:1px solid rgba(255,71,87,0.25);border-radius:5px;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s,background .2s,border-color .2s;z-index:5;color:var(--red);padding:0;line-height:1;touch-action:manipulation}
 .inv-item:hover .inv-item-delete{opacity:1}
 .inv-item-delete:hover{background:rgba(255,71,87,0.28);border-color:var(--red);box-shadow:0 0 10px rgba(255,71,87,0.2)}
 .inv-item-delete svg{pointer-events:none}
@@ -536,7 +537,7 @@ body::after{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;o
 .inv-del-qty-wrap.visible{display:flex}
 .inv-del-qty-label{font-family:var(--font-m);font-size:.44rem;letter-spacing:.08em;color:var(--text2)}
 .inv-del-qty-ctrl{display:flex;align-items:center;gap:8px}
-.inv-del-qty-btn{width:30px;height:30px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:var(--text);font-size:.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;line-height:1;padding:0}
+.inv-del-qty-btn{width:44px;height:44px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:var(--text);font-size:.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;line-height:1;padding:0;touch-action:manipulation}
 .inv-del-qty-btn:hover{background:rgba(255,71,87,0.12);border-color:rgba(255,71,87,0.4);color:var(--red)}
 #inv-del-qty{width:56px;text-align:center;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:var(--text);font-family:var(--font-m);font-size:.6rem;padding:6px;appearance:textfield;-moz-appearance:textfield}
 #inv-del-qty::-webkit-inner-spin-button,#inv-del-qty::-webkit-outer-spin-button{appearance:none;-webkit-appearance:none}
@@ -1473,7 +1474,9 @@ body::after{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;o
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="js/utils.js"></script>
 <script src="js/jaharta-cache.js"></script>
+<script src="js/jaharta-img-cache.js"></script>
 <script>
 // ── CONFIG ──
 const FB={apiKey:"AIzaSyAru7qZX8Gu_b8Y3oNDV-a5PmkrrkRjkcs",authDomain:"jaharta-rp.firebaseapp.com",projectId:"jaharta-rp",storageBucket:"jaharta-rp.firebasestorage.app",messagingSenderId:"217075417489",appId:"1:217075417489:web:4d1e2df422a5cd42411a30"};
@@ -1506,10 +1509,7 @@ const PITY_T={epic:30,leg:150};
 // CACHE — utilise JCache (js/jaharta-cache.js) partagé avec tout le site
 // Wrappers pour compatibilité avec le code hub existant
 // ══════════════════════════════════════════════
-function cacheGet(key){return JCache.peek(key,null);}
-function cacheSet(key,data,ttl){JCache.put(key,null,data,ttl);}
 function cacheInvalidate(key){JCache.invalidate(key,null);}
-function cacheInvalidatePrefix(prefix){JCache.invalidateCollection(prefix);}
 // Raccourci : get un doc Firestore avec cache (compat SDK)
 // Utilise cacheKey comme clé de cache (au lieu de collection/docId)
 // pour que cacheInvalidate(cacheKey) fonctionne correctement
@@ -1571,6 +1571,9 @@ function logout(){
   document.getElementById('login-gate').style.display='flex';
   showToast('Déconnecté','info');
 }
+
+// ── ACCESSIBILITÉ ──
+const prefersReducedMotion=window.matchMedia('(prefers-reduced-motion:reduce)').matches;
 
 // ── STATE ──
 let CHAR=null,PLAYER=null,PITY=null,INV_DATA=null,CHAR_ID=null,UID=null,ALL_ITEMS_DATA={};
@@ -1725,7 +1728,9 @@ async function loadPlayer(){
 
 // Loaders paresseux (au clic de l'onglet)
 async function loadInventory(){
-  if(!CHAR_ID){document.getElementById('inv-grid').innerHTML='<div class="empty">Aucun personnage actif</div>';return}
+  const grid=document.getElementById('inv-grid');
+  if(!CHAR_ID){grid.innerHTML='<div class="empty">Aucun personnage actif</div>';return}
+  if(window.Skeleton) window.Skeleton.show('inv-grid',6);
   try{
     const key=`${UID}_${CHAR_ID}`;
     const[invData,cfgData]=await Promise.all([
@@ -1734,8 +1739,9 @@ async function loadInventory(){
     ]);
     INV_DATA=invData||{items:{},equipped_assets:[]};
     if(cfgData) ALL_ITEMS_DATA={...cfgData.items||{},...cfgData.equipment||{},...cfgData.food_items||{},...cfgData.consumable_items||{}};
+    if(window.Skeleton) window.Skeleton.hide('inv-grid');
     renderInventory();
-  }catch(e){console.error('[INV]',e);document.getElementById('inv-grid').innerHTML='<div class="empty">Erreur de chargement</div>'}
+  }catch(e){console.error('[INV]',e);if(window.Skeleton) window.Skeleton.hide('inv-grid');grid.innerHTML='<div class="empty">Erreur de chargement</div>'}
 }
 
 async function loadParty(){
@@ -1794,7 +1800,7 @@ function renderDashChar(){
   const xp=c.xp||0;const pct=Math.min(100,nxpDash>0?Math.round(cxpDash/nxpDash*100):100);
   const stats=c.stats||{};
   document.getElementById('dash-char-card').innerHTML=`
-    ${c.profile_image?`<img src="${e(c.profile_image)}" class="char-card-img" alt="${e(name)}" onerror="this.outerHTML='<div class=&quot;char-card-placeholder&quot;>NO IMAGE</div>'">`:`<div class="char-card-placeholder">NO IMAGE</div>`}
+    ${c.profile_image?(()=>{const _cu=window.JImgCache?window.JImgCache.get('char_'+CHAR_ID):null;if(window.JImgCache)window.JImgCache.set('char_'+CHAR_ID,c.profile_image);return `<img src="${e(_cu||c.profile_image)}" class="char-card-img" alt="${e(name)}" onerror="this.outerHTML='<div class=&quot;char-card-placeholder&quot;>NO IMAGE</div>'">`;})():`<div class="char-card-placeholder">NO IMAGE</div>`}
     <div class="card-body">
       <div class="char-name">${e(name)}</div>
       <div class="char-meta">${e(c.race_category||'—')} · ${e(c.class||'—')} · ${c.age||'?'} ans</div>
@@ -1882,7 +1888,9 @@ function renderFullChar(){
   if(imgSlot){
     if(c.profile_image){
       imgSlot.className='char-full-img-wrap';
-      imgSlot.innerHTML=`<img src="${e(c.profile_image)}" class="char-full-img" alt="${e(name)}" onerror="this.parentElement.innerHTML='<div class=\"char-full-placeholder\">NO IMAGE</div>'">`;
+      const _cachedCharUrl=window.JImgCache?window.JImgCache.get('char_'+CHAR_ID):null;
+      imgSlot.innerHTML=`<img src="${e(_cachedCharUrl||c.profile_image)}" class="char-full-img" alt="${e(name)}" onerror="this.parentElement.innerHTML='<div class=\"char-full-placeholder\">NO IMAGE</div>'">`;
+      if(window.JImgCache)window.JImgCache.set('char_'+CHAR_ID,c.profile_image);
     } else {
       imgSlot.className='char-full-placeholder';
       imgSlot.innerHTML='NO IMAGE';
@@ -2036,7 +2044,7 @@ const RARITY_COLORS={
   artifact:'#ef4444',mastercraft:'#ff006e',signature:'#ffd60a'
 };
 
-const STAT_ICONS_INV={strength:'⚔️',agility:'💨',speed:'🏃',intelligence:'🧠',mana:'✨',resistance:'🛡️',charisma:'👑',aura:'🌟'};
+
 let INV_TAB='all';
 let _invSearchTimer=null;
 let _invDetailOpen=null; // itemId actuellement affiché dans le panneau détail
@@ -2206,7 +2214,7 @@ function renderItemsGrid(){
   }).join('');
 
   // Animation GSAP entrée items
-  if(typeof gsap!=='undefined'){
+  if(typeof gsap!=='undefined'&&!prefersReducedMotion){
     gsap.from('#inv-grid .inv-item',{opacity:0,y:16,duration:0.28,stagger:{each:0.025,from:'start',amount:0.4},ease:'power2.out',clearProps:'opacity,transform'});
   }
 }
@@ -2247,7 +2255,7 @@ function renderStatsSummary(){
   el.innerHTML=entries.map(([s,v])=>`
     <div class="equip-bonus-block">
       <div class="equip-bonus-val">+${v}</div>
-      <div class="equip-bonus-name">${STAT_ICONS_INV[s]||''} ${SL[s]||s}</div>
+      <div class="equip-bonus-name">${SI[s]||''} ${SL[s]||s}</div>
     </div>`).join('');
 }
 
@@ -2281,7 +2289,7 @@ function renderSetsPanel(){
     const bonusHtml=activeThresh.map(t=>{
       const b=setDef.bonuses[String(t)]||setDef.bonuses[t];
       const parts=[];
-      if(b.stats)Object.entries(b.stats).forEach(([s,v])=>parts.push(`+${v} ${STAT_ICONS_INV[s]||s}`));
+      if(b.stats)Object.entries(b.stats).forEach(([s,v])=>parts.push(`+${v} ${SI[s]||s}`));
       if(b.stats_all)parts.push(`+${b.stats_all} tous stats`);
       if(b.buff_mult)Object.entries(b.buff_mult).forEach(([s,m])=>parts.push(`buffs ${s} ×${m}`));
       if(b.buff_mult_all)parts.push(`buffs ×${b.buff_mult_all}`);
@@ -2412,7 +2420,7 @@ function showItemDetail(itemId,animate=true){
     ${effEntries.map(([s,v])=>{
       const pct=Math.min(100,Math.round((parseInt(v)||0)/Math.max(maxStatVal,1)*100));
       return`<div class="inv-detail-stat-row">
-        <span class="inv-detail-stat-icon">${STAT_ICONS_INV[s]||'•'}</span>
+        <span class="inv-detail-stat-icon">${SI[s]||'•'}</span>
         <span class="inv-detail-stat-name">${SL[s]||s}</span>
         <div class="inv-detail-stat-bar"><div class="inv-detail-stat-fill" data-pct="${pct}" style="width:0%"></div></div>
         <span class="inv-detail-stat-val">+${v}</span>
@@ -2450,7 +2458,7 @@ function showItemDetail(itemId,animate=true){
   });
 
   // GSAP : animation barres de stats
-  if(animate&&typeof gsap!=='undefined'){
+  if(animate&&typeof gsap!=='undefined'&&!prefersReducedMotion){
     gsap.set(panel,{x:60,opacity:0.6});
     gsap.to(panel,{x:0,opacity:1,duration:0.35,ease:'power3.out',overwrite:true});
     requestAnimationFrame(()=>{
@@ -2469,7 +2477,7 @@ function closeItemDetail(){
   _invDetailOpen=null;
   const panel=document.getElementById('inv-detail-panel');
   const overlay=document.getElementById('inv-detail-overlay');
-  if(typeof gsap!=='undefined'){
+  if(typeof gsap!=='undefined'&&!prefersReducedMotion){
     gsap.to(panel,{x:60,opacity:0,duration:0.28,ease:'power2.in',overwrite:true,onComplete:()=>{
       panel.classList.remove('open');
       gsap.set(panel,{clearProps:'transform,opacity'});
@@ -2569,7 +2577,7 @@ function initTooltips(){
       const rc=RARITY_COLORS[rarity]||'#6b7280';
       const effects=it.stat_effects||it.stats||{};
       const effHtml=Object.entries(effects).slice(0,4).map(([s,v])=>`
-        <div class="inv-tip-stat"><span>${STAT_ICONS_INV[s]||''} ${SL[s]||s}</span><span class="inv-tip-val">+${v}</span></div>`).join('');
+        <div class="inv-tip-stat"><span>${SI[s]||''} ${SL[s]||s}</span><span class="inv-tip-val">+${v}</span></div>`).join('');
       const slotLabel=it.slot?SLOT_LIMITS[it.slot]?.label||it.slot:'';
       return`<div>
         <div class="inv-tip-name" style="color:${rc}">${e(it.name||id)}</div>
@@ -2684,7 +2692,7 @@ async function toggleEquip(itemId){
 
 function formatEffects(effects){
   if(!effects)return'';
-  return Object.entries(effects).slice(0,2).map(([s,v])=>`+${v}${STAT_ICONS_INV[s]||s}`).join(' ');
+  return Object.entries(effects).slice(0,2).map(([s,v])=>`+${v}${SI[s]||s}`).join(' ');
 }
 
 function showEquipToast(msg,isError=false){
@@ -3203,7 +3211,7 @@ function renderMonShop(){
           const rarity = (it.rarity||'common').toLowerCase();
           const rc = RARITY_COLORS[rarity]||'#6b7280';
           const effects = it.stat_effects || it.stats || {};
-          const effStr = Object.entries(effects).slice(0,2).map(([s,v])=>`+${v} ${STAT_ICONS_INV[s]||s}`).join(' ');
+          const effStr = Object.entries(effects).slice(0,2).map(([s,v])=>`+${v} ${SI[s]||s}`).join(' ');
           return `<div class="shop-item-card rarity-${rarity}" style="position:relative">
             <div class="shop-item-top">
               <span class="shop-item-icon">${it.emoji||'📦'}</span>
@@ -3528,7 +3536,7 @@ function renderShopDetail(shop){
         const it=ALL_ITEMS_DATA[item_id]||{};
         const price=si.price||{};
         const effects=it.stat_effects||it.stats||{};
-        const effStr=Object.entries(effects).slice(0,2).map(([s,v])=>`+${v} ${STAT_ICONS_INV[s]||s}`).join(' ');
+        const effStr=Object.entries(effects).slice(0,2).map(([s,v])=>`+${v} ${SI[s]||s}`).join(' ');
         return`<div class="shop-item-card">
           <div class="shop-item-top">
             <span class="shop-item-icon">${it.emoji||'📦'}</span>
@@ -3676,7 +3684,7 @@ function renderUshop(){
     const rarity=(it.rarity||'common').toLowerCase();
     const rc=RARITY_COLORS[rarity]||'#6b7280';
     const effects=it.stat_effects||it.stats||{};
-    const effStr=Object.entries(effects).slice(0,3).map(([s,v])=>`+${v} ${STAT_ICONS_INV[s]||s}`).join(' ');
+    const effStr=Object.entries(effects).slice(0,3).map(([s,v])=>`+${v} ${SI[s]||s}`).join(' ');
     return`<div class="ushop-card rarity-${rarity}">
       <span style="font-size:1.8rem;display:block;margin-bottom:6px">${it.emoji||'📦'}</span>
       <div style="font-family:var(--font-b);font-weight:700;font-size:.82rem;color:${rc};margin-bottom:4px">${e(it.name||id)}</div>
