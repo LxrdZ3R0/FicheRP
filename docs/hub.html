@@ -259,6 +259,31 @@ body::after{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;o
 .power-card-qual{font-family:var(--font-m);font-size:.42rem;letter-spacing:.1em;margin-top:2px}
 .power-card-qual.common{color:#6b7280}.power-card-qual.uncommon{color:#60a5fa}.power-card-qual.rare{color:#a78bfa}.power-card-qual.epic{color:var(--violet)}.power-card-qual.legendary{color:var(--gold)}.power-card-qual.mythic{color:var(--orange)}.power-card-qual.unique{color:var(--gold)}.power-card-qual.artifact{color:var(--red)}.power-card-qual.mastercraft{color:var(--magenta)}
 
+/* ── Bonus breakdown sections (Personnage tab) ── */
+.bonus-breakdown{margin-top:16px}
+.bonus-section{padding:14px 16px;background:rgba(8,12,28,0.5);border:1px solid rgba(77,163,255,0.06);border-radius:10px;margin-bottom:10px}
+.bonus-section-header{display:flex;align-items:center;gap:8px;margin-bottom:10px;cursor:pointer}
+.bonus-section-icon{font-size:1rem}
+.bonus-section-title{font-family:var(--font-h);font-size:.58rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase}
+.bonus-section-title.comp{color:#44ff88}
+.bonus-section-title.sig{color:#ffd60a}
+.bonus-section-title.equip{color:var(--cyan)}
+.bonus-section-title.sets{color:#a78bfa}
+.bonus-section-title.party{color:#f97316}
+.bonus-section-title.titles{color:#e040fb}
+.bonus-section-title.buffs{color:#60a5fa}
+.bonus-section-subtitle{font-family:var(--font-m);font-size:.42rem;color:var(--text3);letter-spacing:.08em;margin-left:auto}
+.bonus-section-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:6px}
+.bonus-mini{text-align:center;padding:6px 4px;background:rgba(255,255,255,0.02);border-radius:6px;border:1px solid rgba(255,255,255,0.03)}
+.bonus-mini-val{font-family:var(--font-h);font-weight:700;font-size:.7rem}
+.bonus-mini-val.positive{color:#44ff88}
+.bonus-mini-val.sig-color{color:#ffd60a}
+.bonus-mini-name{font-family:var(--font-m);font-size:.36rem;color:var(--text3);letter-spacing:.06em;margin-top:2px}
+.bonus-section-empty{font-family:var(--font-m);font-size:.42rem;color:var(--text3);letter-spacing:.08em;opacity:.6}
+.sig-item-tag{display:inline-flex;align-items:center;gap:4px;font-family:var(--font-m);font-size:.42rem;color:#ffd60a;background:rgba(255,214,10,0.06);border:1px solid rgba(255,214,10,0.15);border-radius:4px;padding:2px 8px;margin-bottom:6px}
+.comp-active-tag{display:inline-flex;align-items:center;gap:4px;font-family:var(--font-m);font-size:.42rem;color:#44ff88;background:rgba(68,255,136,0.06);border:1px solid rgba(68,255,136,0.15);border-radius:4px;padding:2px 8px;margin-bottom:6px}
+.stat-block-bonus-detail{font-family:var(--font-m);font-size:.36rem;color:var(--text3);letter-spacing:.04em;margin-top:2px;line-height:1.4}
+
 /* ═══ INVENTAIRE CYBERPUNK ═══ */
 
 /* Layout principal split-view */
@@ -1036,11 +1061,16 @@ body::after{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;o
             <div class="sk" style="height:48px;border-radius:8px;animation-delay:.07s"></div>
           </div>
         </div></div>
+        <!-- ── Détail des bonus (compagnons, signature, équipement…) ── -->
+        <div class="card" style="margin-top:16px"><div class="card-body">
+          <div class="sh" style="margin-bottom:14px"><span class="sh-num">—</span><span class="sh-title">Détail des bonus</span><div class="sh-line"></div></div>
+          <div class="bonus-breakdown" id="char-bonus-breakdown">
+            <div class="sk" style="height:48px;border-radius:8px"></div>
+          </div>
+        </div></div>
       </div>
     </div>
   </div>
-
-  <!-- INVENTAIRE -->
   <div class="tab-panel" id="panel-inventaire">
     <div class="sh"><span class="sh-num">03</span><span class="sh-title">Inventaire</span><div class="sh-line"></div></div>
     <div class="inv-cyberpunk">
@@ -1545,6 +1575,69 @@ function logout(){
 // ── STATE ──
 let CHAR=null,PLAYER=null,PITY=null,INV_DATA=null,CHAR_ID=null,UID=null,ALL_ITEMS_DATA={};
 let PARTY_DATA=null,TITLES_DATA=null,TITLES_DEF=null,BUFFS_DATA=null;
+let COMP_USER=null,COMP_CFG=null; // compagnon data for stats
+
+/* ── SIGNATURE ITEMS (port from signature_items.py) ── */
+const SIGNATURE_ITEMS={
+  cyclo_arcana:{name:"Cyclo-Arcana",icon:"⚔️",slot:"armes_h"},
+  fake_twins:{name:"Fake Twins",icon:"🔫",slot:"armes_h"},
+  kings_jewel:{name:"King's Jewel",icon:"💎",slot:"mains"},
+  real_twins:{name:"Real Twins",icon:"🧤",slot:"armes_h"},
+  diademe_du_nexus:{name:"Diadème du Nexus",icon:"👑",slot:"cou"},
+  faux_modele_0:{name:"Faux, Modèle 0",icon:"🪓",slot:"armes_h"},
+  epee_de_damocles:{name:"Épée de Damoclès",icon:"🗡️",slot:"armes_h"},
+  blitz_runners:{name:"Blitz Runners",icon:"👟",slot:"pieds"},
+  survivai_kit:{name:"Survivai Kit, Premium Edition",icon:"🧰",slot:"mains"},
+  riviere_dopalines:{name:"Rivière d'Opalines",icon:"📿",slot:"cou"},
+  faux_ongles_tisserand:{name:"Faux-Ongles du Tisserand",icon:"💅",slot:"cou"}
+};
+const SIG_ALL_STATS=["strength","agility","speed","intelligence","mana","resistance","charisma"];
+
+function calculateSignatureBonuses(equippedIds,charStats,auraEnabled,existingBuffs){
+  const b={};
+  function add(s,v){b[s]=(b[s]||0)+Math.floor(v);}
+  function base(s){return parseInt((charStats||{})[s]||0)||0;}
+  const sigIds=equippedIds.filter(id=>SIGNATURE_ITEMS[id]);
+  for(const id of sigIds){
+    if(id==='cyclo_arcana'){
+      const spdTotal=base('speed')+(existingBuffs||{}).speed||0;
+      add('speed',spdTotal*0.50);
+    }else if(id==='fake_twins'){
+      add('agility',20);add('charisma',50);
+      if(auraEnabled){SIG_ALL_STATS.forEach(s=>add(s,50));add('aura',100);}
+    }else if(id==='kings_jewel'){
+      add('mana',50);
+      if(auraEnabled){add('mana',50);}
+    }else if(id==='real_twins'){
+      Object.entries(existingBuffs||{}).forEach(([s,v])=>{if(v>0)add(s,v*0.75);});
+    }else if(id==='diademe_du_nexus'){
+      add('agility',50);add('intelligence',50);
+      if(base('mana')>300)add('mana',100);
+    }else if(id==='faux_modele_0'){
+      add('intelligence',75);
+      if(base('mana')>300)add('mana',100);
+    }else if(id==='epee_de_damocles'){
+      add('agility',50);
+    }else if(id==='blitz_runners'){
+      add('agility',75);add('speed',75);add('mana',75);
+    }else if(id==='survivai_kit'){
+      if(charStats){
+        const highest=SIG_ALL_STATS.reduce((a,s)=>base(s)>base(a)?s:a,SIG_ALL_STATS[0]);
+        SIG_ALL_STATS.forEach(s=>add(s,s===highest?75:50));
+      }
+      if(base('agility')>600){
+        Object.entries(existingBuffs||{}).forEach(([s,v])=>{if(v>0)add(s,v*0.5);});
+      }
+    }else if(id==='riviere_dopalines'){
+      SIG_ALL_STATS.forEach(s=>add(s,50));
+      if(base('mana')>300){SIG_ALL_STATS.forEach(s=>add(s,25));add('mana',100);}
+    }else if(id==='faux_ongles_tisserand'){
+      add('mana',150);
+      if(base('mana')>700){SIG_ALL_STATS.forEach(s=>add(s,150));}
+    }
+  }
+  return b;
+}
 
 // ── INIT ──
 async function init(){
@@ -1601,6 +1694,15 @@ async function loadCharacter(){
       ALL_ITEMS_DATA={...cfgData.items||{},...cfgData.equipment||{},...cfgData.food_items||{},...cfgData.consumable_items||{}};
     }
     BUFFS_DATA=bufData?(bufData.buffs||[]):[];
+    // Charger compagnons pour bonus stats (Personnage tab)
+    try{
+      const[compUser,compCfg]=await Promise.all([
+        cachedGet(C.COMP,charKey,'_companions',60),
+        cachedGet(C.CFG,'companions_data','config/companions_data',600)
+      ]);
+      COMP_USER=compUser||{};
+      COMP_CFG=compCfg||{companions:{},evolutions:{}};
+    }catch(_){COMP_USER={};COMP_CFG={companions:{},evolutions:{}};}
     if(pmData&&pmData.party_id){
       const pData=await cachedGet(C.PARTIES,pmData.party_id,'_party',60);
       PARTY_DATA=pData||null;
@@ -1801,15 +1903,21 @@ function renderFullChar(){
       ${c.available_stat_points?`<div><div class="csb-val" style="color:var(--gold)">${c.available_stat_points}</div><div class="csb-label">STAT PTS</div></div>`:''}
     </div>`;
   const sp=parseInt(c.available_stat_points||0);
-  // Calcul bonus cumulés
-  const bonuses={};
+
+  /* ── Calcul bonus par catégorie ── */
+  const bEquip={},bSets={},bParty={},bTitles={},bBuffs={},bComp={},bSig={};
+  const bonuses={}; // total
+  function addTo(cat,s,v){v=parseInt(v)||0;if(!v)return;cat[s]=(cat[s]||0)+v;bonuses[s]=(bonuses[s]||0)+v;}
+
+  // 1) Équipement direct
   const eqList=(INV_DATA&&INV_DATA.equipped_assets)||[];
   eqList.forEach(id=>{
     const it=ALL_ITEMS_DATA[id]||{};
     Object.entries(it.stat_effects||it.stats||{}).forEach(([s,v])=>{
-      try{bonuses[s]=(bonuses[s]||0)+parseInt(String(v).replace('+',''));}catch(_){}
+      try{addTo(bEquip,s,parseInt(String(v).replace('+','')));}catch(_){}
     });
   });
+  // 2) Sets
   const eqSet=new Set(eqList);
   Object.values(ITEM_SETS).forEach(sd=>{
     const cnt=sd.items.filter(i=>eqSet.has(i)).length;
@@ -1818,34 +1926,98 @@ function renderFullChar(){
     for(const t of thresholds){
       if(cnt>=t){
         const b=sd.bonuses[String(t)]||sd.bonuses[t]||{};
-        if(b.stats)Object.entries(b.stats).forEach(([s,v])=>{bonuses[s]=(bonuses[s]||0)+v;});
-        if(b.stats_all)SK.forEach(s=>{bonuses[s]=(bonuses[s]||0)+b.stats_all;});
+        if(b.stats)Object.entries(b.stats).forEach(([s,v])=>{addTo(bSets,s,v);});
+        if(b.stats_all)SK.forEach(s=>{addTo(bSets,s,b.stats_all);});
       }
     }
   });
+  // 3) Party
   if(PARTY_DATA&&PARTY_DATA.members){
     const me=(PARTY_DATA.members||[]).find(m=>m.char_key===UID+'_'+CHAR_ID);
-    if(me&&me.bonuses)Object.entries(me.bonuses).forEach(([s,v])=>{bonuses[s]=(bonuses[s]||0)+parseInt(v||0);});
+    if(me&&me.bonuses)Object.entries(me.bonuses).forEach(([s,v])=>{addTo(bParty,s,v);});
   }
+  // 4) Titres
   if(TITLES_DATA&&TITLES_DEF){
     Object.entries(TITLES_DATA.titles||{}).forEach(([tid,ts])=>{
       const td=TITLES_DEF[tid];if(!td)return;
       const tier=ts.current_tier||ts.tier||1;
       const tierDef=(td.tiers||[]).find(t=>t.tier===tier);
-      if(tierDef&&tierDef.stat_bonuses)Object.entries(tierDef.stat_bonuses).forEach(([s,v])=>{bonuses[s]=(bonuses[s]||0)+parseInt(v||0);});
+      if(tierDef&&tierDef.stat_bonuses)Object.entries(tierDef.stat_bonuses).forEach(([s,v])=>{addTo(bTitles,s,v);});
     });
   }
+  // 5) Buffs
   (BUFFS_DATA||[]).forEach(b=>{
-    if(b.effects)Object.entries(b.effects).forEach(([s,v])=>{bonuses[s]=(bonuses[s]||0)+parseInt(v||0);});
+    if(b.effects)Object.entries(b.effects).forEach(([s,v])=>{addTo(bBuffs,s,v);});
   });
-  console.log('[STATS] eq:'+eqList.length+' items:'+Object.keys(ALL_ITEMS_DATA).length+' bonuses:'+JSON.stringify(bonuses));
+  // 6) Compagnons (sync bonuses du compagnon actif)
+  let activeCompName='';
+  if(COMP_USER&&COMP_CFG){
+    const owned=COMP_USER.owned_companions||{};
+    const activeId=COMP_USER.active_companion;
+    if(activeId&&owned[activeId]){
+      const cd=owned[activeId];
+      const form=cd.current_form||activeId;
+      const allComps=COMP_CFG.companions||{};
+      const allEvos=COMP_CFG.evolutions||{};
+      const info=allEvos[form]||allComps[form]||allComps[activeId]||{};
+      const baseEntry=allComps[activeId]||{};
+      activeCompName=info.name||form||activeId;
+      if(cd.synchronized){
+        const syncBonuses=info.sync_bonuses||baseEntry.sync_bonuses||{};
+        Object.entries(syncBonuses).forEach(([s,v])=>{addTo(bComp,s,v);});
+      }
+    }
+  }
+  // 7) Signature items
+  const auraEnabled=parseInt(stats.aura||0)>0;
+  const existingBuffsForSig={...bonuses}; // all non-sig bonuses accumulated so far
+  const sigBonuses=calculateSignatureBonuses(eqList,stats,auraEnabled,existingBuffsForSig);
+  Object.entries(sigBonuses).forEach(([s,v])=>{addTo(bSig,s,v);});
+
+  console.log('[STATS] eq:'+eqList.length+' comp:'+JSON.stringify(bComp)+' sig:'+JSON.stringify(bSig)+' total:'+JSON.stringify(bonuses));
+
+  // ── Stats display ──
   document.getElementById('char-stats-grid').innerHTML=
     (sp?'<div class="sp-banner" style="grid-column:1/-1">&#9889; '+sp+' pt'+(sp>1?'s':'')+' stat dispo</div>':'')+
     SK.map(k=>{const base=parseInt(stats[k]||0),bon=bonuses[k]||0;return '<div class="stat-block"><div class="stat-block-val">'+(base+bon)+'</div>'+(bon?'<div class="stat-block-bonus">+'+bon+'</div>':'')+'<div class="stat-block-name">'+SI[k]+' '+SL[k]+'</div></div>';}).join('');
-  // Powers
+
+  // ── Powers ──
   document.getElementById('char-powers-grid').innerHTML=powers.length
     ?powers.map(p=>`<div class="power-card"><div class="power-card-dot ${p.quality||'common'}"></div><div><div class="power-card-name">${e(p.name||p.id||'—')}</div><div class="power-card-qual ${p.quality||'common'}">${e((p.quality||'').toUpperCase())}</div></div></div>`).join('')
     :'<div class="empty">Aucun pouvoir</div>';
+
+  // ── Bonus breakdown ──
+  const bbEl=document.getElementById('char-bonus-breakdown');
+  if(bbEl){
+    function renderBonusSection(icon,title,cls,data,subtitle){
+      const entries=Object.entries(data).filter(([,v])=>v>0);
+      if(!entries.length)return '';
+      return `<div class="bonus-section">
+        <div class="bonus-section-header">
+          <span class="bonus-section-icon">${icon}</span>
+          <span class="bonus-section-title ${cls}">${title}</span>
+          ${subtitle?'<span class="bonus-section-subtitle">'+subtitle+'</span>':''}
+        </div>
+        <div class="bonus-section-grid">${entries.map(([s,v])=>
+          `<div class="bonus-mini"><div class="bonus-mini-val ${cls==='sig'?'sig-color':'positive'}">+${v}</div><div class="bonus-mini-name">${SI[s]||''} ${(SL[s]||s).substring(0,5)}</div></div>`
+        ).join('')}</div></div>`;
+    }
+    // Signature items equipped
+    const sigEquipped=eqList.filter(id=>SIGNATURE_ITEMS[id]);
+    const sigTags=sigEquipped.map(id=>`<span class="sig-item-tag">${SIGNATURE_ITEMS[id].icon} ${SIGNATURE_ITEMS[id].name}</span>`).join(' ');
+    const compTag=activeCompName?`<span class="comp-active-tag">🐾 ${e(activeCompName)}</span>`:'';
+
+    let html='';
+    html+=renderBonusSection('🎒','ÉQUIPEMENT','equip',bEquip,eqList.length+' items');
+    html+=renderBonusSection('🧩','SETS','sets',bSets);
+    if(sigEquipped.length) html+=renderBonusSection('⭐','SIGNATURE','sig',bSig,sigTags);
+    if(activeCompName) html+=renderBonusSection('🐾','COMPAGNON','comp',bComp,compTag);
+    html+=renderBonusSection('👥','PARTY','party',bParty);
+    html+=renderBonusSection('🏷️','TITRES','titles',bTitles);
+    html+=renderBonusSection('✨','BUFFS','buffs',bBuffs);
+    if(!html) html='<div class="bonus-section-empty">Aucun bonus actif</div>';
+    bbEl.innerHTML=html;
+  }
 }
 
 // ── CONSTANTES SETS & SLOTS ──

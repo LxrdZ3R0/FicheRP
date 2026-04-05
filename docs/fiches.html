@@ -43,6 +43,144 @@ const GOLD_RANKS=['A','S','SS','SSS','X'];   /* reflet doré */
 const PRISM_RANKS=['T','G','G+','Z'];         /* reflet prismatique */
 const STATS=[{k:'str',l:'STR',c:'sb-str'},{k:'agi',l:'AGI',c:'sb-agi'},{k:'spd',l:'SPD',c:'sb-spd'},{k:'int',l:'INT',c:'sb-int'},{k:'mana',l:'MNA',c:'sb-mana'},{k:'res',l:'RES',c:'sb-res'},{k:'cha',l:'CHA',c:'sb-cha'},{k:'aura',l:'AUR',c:'sb-aura'}];
 
+/* ── Mapping short → long stat keys ── */
+const SMAP={str:'strength',agi:'agility',spd:'speed',int:'intelligence',mana:'mana',res:'resistance',cha:'charisma',aura:'aura'};
+
+/* ── Signature Items (port from signature_items.py) ── */
+const SIGNATURE_ITEMS_F={
+  cyclo_arcana:{name:"Cyclo-Arcana"},fake_twins:{name:"Fake Twins"},kings_jewel:{name:"King's Jewel"},
+  real_twins:{name:"Real Twins"},diademe_du_nexus:{name:"Diadème du Nexus"},faux_modele_0:{name:"Faux, Modèle 0"},
+  epee_de_damocles:{name:"Épée de Damoclès"},blitz_runners:{name:"Blitz Runners"},
+  survivai_kit:{name:"Survivai Kit"},riviere_dopalines:{name:"Rivière d'Opalines"},
+  faux_ongles_tisserand:{name:"Faux-Ongles du Tisserand"}
+};
+const SIG_ALL=["strength","agility","speed","intelligence","mana","resistance","charisma"];
+function calcSigBonuses(eqIds,cs,aura,eb){
+  const b={};
+  function a(s,v){b[s]=(b[s]||0)+Math.floor(v);}
+  function bs(s){return parseInt((cs||{})[s]||0)||0;}
+  for(const id of eqIds.filter(i=>SIGNATURE_ITEMS_F[i])){
+    if(id==='cyclo_arcana'){a('speed',(bs('speed')+(eb.speed||0))*0.5);}
+    else if(id==='fake_twins'){a('agility',20);a('charisma',50);if(aura){SIG_ALL.forEach(s=>a(s,50));a('aura',100);}}
+    else if(id==='kings_jewel'){a('mana',50);if(aura)a('mana',50);}
+    else if(id==='real_twins'){Object.entries(eb).forEach(([s,v])=>{if(v>0)a(s,v*0.75);});}
+    else if(id==='diademe_du_nexus'){a('agility',50);a('intelligence',50);if(bs('mana')>300)a('mana',100);}
+    else if(id==='faux_modele_0'){a('intelligence',75);if(bs('mana')>300)a('mana',100);}
+    else if(id==='epee_de_damocles'){a('agility',50);}
+    else if(id==='blitz_runners'){a('agility',75);a('speed',75);a('mana',75);}
+    else if(id==='survivai_kit'){
+      if(cs){const h=SIG_ALL.reduce((x,s)=>bs(s)>bs(x)?s:x,SIG_ALL[0]);SIG_ALL.forEach(s=>a(s,s===h?75:50));}
+      if(bs('agility')>600)Object.entries(eb).forEach(([s,v])=>{if(v>0)a(s,v*0.5);});
+    }
+    else if(id==='riviere_dopalines'){SIG_ALL.forEach(s=>a(s,50));if(bs('mana')>300){SIG_ALL.forEach(s=>a(s,25));a('mana',100);}}
+    else if(id==='faux_ongles_tisserand'){a('mana',150);if(bs('mana')>700)SIG_ALL.forEach(s=>a(s,150));}
+  }
+  return b;
+}
+
+/* ── Bonus data cache (loaded once) ── */
+let _bonusDataLoaded=false;
+let _allItemsDef={};   // config/items → merged items/equipment/food/consumable
+let _allInvs={};       // inventories/{discordId_charId} → {items,equipped_assets}
+let _allActives={};    // active_characters/{discordId} → {character_id}
+let _allBuffs={};      // buffs/{discordId} → {buffs:[]}
+let _allCompUsers={};  // companions_user/{discordId_charId} → {owned_companions,active_companion}
+let _compCfg={companions:{},evolutions:{}};
+let _itemSets={};
+
+async function loadBonusData(){
+  if(_bonusDataLoaded)return;
+  _bonusDataLoaded=true;
+  try{
+    const [itemsCfgSnap,activesSnap,invsSnap,buffsSnap,compUsersSnap,compCfgSnap,setsCfgSnap]=await Promise.all([
+      getDoc(doc(db,'config','items')),
+      getDocs(collection(db,'active_characters')),
+      getDocs(collection(db,'inventories')),
+      getDocs(collection(db,'buffs')),
+      getDocs(collection(db,'companions_user')),
+      getDoc(doc(db,'config','companions_data')),
+      getDoc(doc(db,'config','item_sets'))
+    ]);
+    if(itemsCfgSnap.exists()){
+      const d=itemsCfgSnap.data();
+      _allItemsDef={...d.items||{},...d.equipment||{},...d.food_items||{},...d.consumable_items||{}};
+    }
+    activesSnap.forEach(d=>{_allActives[d.id]=d.data();});
+    invsSnap.forEach(d=>{_allInvs[d.id]=d.data();});
+    buffsSnap.forEach(d=>{_allBuffs[d.id]=d.data();});
+    compUsersSnap.forEach(d=>{_allCompUsers[d.id]=d.data();});
+    if(compCfgSnap.exists())_compCfg=compCfgSnap.data();
+    if(setsCfgSnap.exists())_itemSets=setsCfgSnap.data();
+  }catch(err){console.warn('[Fiches] bonus data load:',err.message);}
+}
+
+/* ── Compute total bonuses for a character ── */
+function computeCharBonuses(charId,charStats){
+  // Find discord_id for this char
+  let discordId=null;
+  for(const[did,ad] of Object.entries(_allActives)){
+    if(ad.character_id===charId){discordId=did;break;}
+  }
+  if(!discordId)return {};
+  const key=discordId+'_'+charId;
+  const inv=_allInvs[key]||{};
+  const eqList=inv.equipped_assets||[];
+  const bufData=_allBuffs[discordId]||{};
+  const compUser=_allCompUsers[key]||{};
+  const bonuses={};
+  function add(s,v){v=parseInt(v)||0;if(v)bonuses[s]=(bonuses[s]||0)+v;}
+
+  // Equipment stats
+  eqList.forEach(id=>{
+    const it=_allItemsDef[id]||{};
+    Object.entries(it.stat_effects||it.stats||{}).forEach(([s,v])=>{
+      try{add(s,parseInt(String(v).replace('+','')));}catch(_){}
+    });
+  });
+  // Sets (use hub-embedded ITEM_SETS if config not available)
+  const sets=_itemSets&&Object.keys(_itemSets).length?_itemSets:(window._ITEM_SETS_FALLBACK||{});
+  const eqSet=new Set(eqList);
+  const SK8=['strength','agility','speed','intelligence','mana','resistance','charisma','aura'];
+  Object.values(sets).forEach(sd=>{
+    if(!sd||!sd.items||!sd.bonuses)return;
+    const cnt=sd.items.filter(i=>eqSet.has(i)).length;
+    if(cnt<2)return;
+    Object.keys(sd.bonuses).map(Number).sort((a,b)=>a-b).forEach(t=>{
+      if(cnt>=t){
+        const b=sd.bonuses[String(t)]||sd.bonuses[t]||{};
+        if(b.stats)Object.entries(b.stats).forEach(([s,v])=>add(s,v));
+        if(b.stats_all)SK8.forEach(s=>add(s,b.stats_all));
+      }
+    });
+  });
+  // Buffs
+  (bufData.buffs||[]).forEach(b=>{
+    if(b.effects)Object.entries(b.effects).forEach(([s,v])=>add(s,v));
+  });
+  // Companion (active + synchronized)
+  const owned=compUser.owned_companions||{};
+  const activeComp=compUser.active_companion;
+  if(activeComp&&owned[activeComp]){
+    const cd=owned[activeComp];
+    if(cd.synchronized){
+      const form=cd.current_form||activeComp;
+      const allC=_compCfg.companions||{};
+      const allE=_compCfg.evolutions||{};
+      const info=allE[form]||allC[form]||allC[activeComp]||{};
+      const baseE=allC[activeComp]||{};
+      const sync=info.sync_bonuses||baseE.sync_bonuses||{};
+      Object.entries(sync).forEach(([s,v])=>add(s,v));
+    }
+  }
+  // Signature items
+  const aura=parseInt(charStats.aura||0)>0;
+  const existBuf={...bonuses};
+  const sigB=calcSigBonuses(eqList,charStats,aura,existBuf);
+  Object.entries(sigB).forEach(([s,v])=>add(s,v));
+
+  return bonuses;
+}
+
 /* ── Rank from level (mirrors bot stats_common.py) ── */
 function rankFromLevel(lvl){
   lvl=parseInt(lvl)||0;
@@ -56,6 +194,27 @@ function rankFromLevel(lvl){
 /* ── Map bot character → fiche card format ── */
 function charToFiche(id,c){
   const s=c.stats||{};
+  const baseStats={
+    str:s.strength||0,agi:s.agility||0,spd:s.speed||0,
+    int:s.intelligence||0,mana:s.mana||0,res:s.resistance||0,
+    cha:s.charisma||0,aura:s.aura||0
+  };
+  // Compute bonuses from equipment, companions, signature items, buffs
+  const longStats={strength:s.strength||0,agility:s.agility||0,speed:s.speed||0,intelligence:s.intelligence||0,mana:s.mana||0,resistance:s.resistance||0,charisma:s.charisma||0,aura:s.aura||0};
+  const bon=computeCharBonuses(id,longStats);
+  // Merge bonuses into stats (short keys)
+  const totalStats={...baseStats};
+  Object.entries(bon).forEach(([longK,v])=>{
+    // Find short key
+    const sk=Object.entries(SMAP).find(([,lk])=>lk===longK);
+    if(sk)totalStats[sk[0]]=(totalStats[sk[0]]||0)+v;
+  });
+  // Store bonus amounts per short key for display
+  const bonusStats={};
+  Object.entries(bon).forEach(([longK,v])=>{
+    const sk=Object.entries(SMAP).find(([,lk])=>lk===longK);
+    if(sk&&v)bonusStats[sk[0]]=v;
+  });
   return{
     id:id,
     _source:'characters',
@@ -66,11 +225,9 @@ function charToFiche(id,c){
     raceSpecific:c.class||'',
     rank:rankFromLevel(c.level||0),
     level:c.level||0,
-    stats:{
-      str:s.strength||0,agi:s.agility||0,spd:s.speed||0,
-      int:s.intelligence||0,mana:s.mana||0,res:s.resistance||0,
-      cha:s.charisma||0,aura:s.aura||0
-    },
+    stats:totalStats,
+    baseStats:baseStats,
+    bonusStats:bonusStats,
     powers:(c.powers||[]).map(p=>typeof p==='string'?{name:p}:p),
     desc:c.bio||c.description||'',
     photoUrl:c.profile_image||'',
@@ -251,13 +408,17 @@ function buildCard(ch){
 
   /* Stats bar */
   const hasStats=STATS.some(s=>s.k!=='aura'&&(stats[s.k]||0)>0);
+  const bonusStats=ch.bonusStats||{};
+  const hasAnyBonus=Object.values(bonusStats).some(v=>v>0);
   if(hasStats){
     const bar=document.createElement('div');bar.className='stats-bar';
     STATS.forEach(s=>{
       const v=stats[s.k]||0;if(s.k==='aura'&&v===0)return;
+      const bon=bonusStats[s.k]||0;
       const it=document.createElement('div');it.className=`sb-item ${s.c}`;
-      it.innerHTML=`<div class="sb-lbl">${s.l}</div><div class="sb-val">${v}</div>`+
+      it.innerHTML=`<div class="sb-lbl">${s.l}</div><div class="sb-val">${v}${bon>0?'<span style="font-size:.38rem;opacity:.7;color:#44ff88;margin-left:1px">▲</span>':''}</div>`+
         `<div class="sb-bar"><div class="sb-fill" style="width:${Math.min(100,Math.round(v/9999*100))}%"></div></div>`;
+      if(bon>0)it.title=`Base: ${v-bon} + Bonus: ${bon}`;
       bar.appendChild(it);
     });
     photo.appendChild(bar);
@@ -393,8 +554,10 @@ window._loadCards=function(){
     let ficheDocs=[];
     let charLoaded=false, ficheLoaded=false;
 
-    function renderAll(){
+    async function renderAll(){
       if(!charLoaded||!ficheLoaded)return;
+      // Load bonus data (equipment, companions, buffs) once
+      await loadBonusData();
       const ctn=document.getElementById('cards-container');
       const noRes=document.getElementById('no-results');
       const empty=document.getElementById('empty-state');
