@@ -12,33 +12,22 @@
 <!-- FIREBASE MODULE -->
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import{getFirestore,collection,doc,getDoc,addDoc,updateDoc,deleteDoc,query,orderBy,onSnapshot,serverTimestamp,enableIndexedDbPersistence}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import{getAuth,onAuthStateChanged,signOut,GoogleAuthProvider,signInWithPopup,signInWithEmailAndPassword}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import{getFirestore,collection,doc,getDoc,addDoc,deleteDoc,query,orderBy,onSnapshot,serverTimestamp,enableIndexedDbPersistence}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import{getAuth,onAuthStateChanged,signOut,GoogleAuthProvider,signInWithPopup}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 const firebaseConfig={apiKey:"AIzaSyAru7qZX8Gu_b8Y3oNDV-a5PmkrrkRjkcs",authDomain:"jaharta-rp.firebaseapp.com",projectId:"jaharta-rp",storageBucket:"jaharta-rp.firebasestorage.app",messagingSenderId:"217075417489",appId:"1:217075417489:web:4d1e2df422a5cd42411a30"};
 const app=initializeApp(firebaseConfig);const db=getFirestore(app);const auth=getAuth(app);
 enableIndexedDbPersistence(db).catch(e=>{if(e.code!=='failed-precondition'&&e.code!=='unimplemented')console.warn('[offline]',e.code);});
 let currentAdmin=null;
-const VIP_IDS=['1365423700047958037','372065190142803982','1051163695222358117','769193650915246131','707157327970828299','397519434895327259'];
-function getVipSession(){try{const s=JSON.parse(localStorage.getItem('gacha_session')||localStorage.getItem('hub_session')||'null');if(s&&VIP_IDS.includes(String(s.id)))return s;return null;}catch(e){return null;}}
 onAuthStateChanged(auth,async user=>{
-  // VIP Discord bypass — skip Firebase auth
-  const vip=getVipSession();
-  if(!user&&vip){
-    currentAdmin={uid:vip.id,email:'VIP Discord',name:vip.username||'VIP',role:'admin'};
-    window._adminRole='admin';window._adminEmail='VIP';window._adminName=vip.username||'VIP';
-    renderAdminHeader();showScreen('panel');setTimeout(()=>window._setAdminTab?.({role:'admin'}),50);loadAllFiches();loadPNJ();loadLogs();return;
-  }
   if(!user){showScreen('login');currentAdmin=null;return;}showScreen('loading');try{const snap=await getDoc(doc(db,'admins',user.uid));if(!snap.exists()){await signOut(auth);showScreen('login');document.getElementById('login-error').textContent='⚠ Accès refusé. Votre compte n\'est pas dans la whitelist admin.';return;}const data=snap.data();currentAdmin={uid:user.uid,email:user.email,name:data.name||user.displayName||user.email,role:data.role||'modo'};window._adminRole=currentAdmin.role;window._adminEmail=currentAdmin.email;window._adminName=currentAdmin.name;renderAdminHeader();showScreen('panel');setTimeout(()=>window._setAdminTab?.({role:currentAdmin.role}),50);loadAllFiches();loadPNJ();if(currentAdmin.role==='admin')loadLogs();}catch(err){document.getElementById('login-error').textContent='⚠ '+err.message;showScreen('login');}});
 window.loginGoogle=async function(){const errEl=document.getElementById('login-error');errEl.textContent='';try{await signInWithPopup(auth,new GoogleAuthProvider());}catch(e){if(e.code!=='auth/popup-closed-by-user')errEl.textContent='⚠ Erreur Google : '+e.message;}};
-window.adminLogin=async function(){const email=document.getElementById('login-email').value.trim();const password=document.getElementById('login-password').value;const errEl=document.getElementById('login-error');errEl.textContent='';if(!email||!password){errEl.textContent='Remplissez email et mot de passe.';return;}try{await signInWithEmailAndPassword(auth,email,password);}catch(e){errEl.textContent=e.code==='auth/invalid-credential'?'Email ou mot de passe incorrect.':'⚠ '+e.message;}};
 window.adminLogout=async function(){currentAdmin=null;window._adminRole=null;await signOut(auth);};
-function getVipId(){const v=getVipSession();return v?String(v.id):null;}
-async function writeLog(action,targetId,targetName){if(!currentAdmin)return;try{const d={action,targetId,targetName,byEmail:currentAdmin.email,byUid:currentAdmin.uid,byName:currentAdmin.name,role:currentAdmin.role,at:serverTimestamp()};const vid=getVipId();if(vid)d._vip_id=vid;await addDoc(collection(db,'logs'),d);}catch(e){console.warn('[log]',e.message);}}
+async function writeLog(action,targetId,targetName){if(!currentAdmin)return;try{const d={action,targetId,targetName,byEmail:currentAdmin.email,byUid:currentAdmin.uid,byName:currentAdmin.name,role:currentAdmin.role,at:serverTimestamp()};await addDoc(collection(db,'logs'),d);}catch(e){console.warn('[log]',e.message);}}
 function loadLogs(){const q=query(collection(db,'logs'),orderBy('at','desc'));onSnapshot(q,snap=>{const logs=[];snap.forEach(d=>logs.push({id:d.id,...d.data()}));document.getElementById('cnt-logs').textContent=logs.length;renderLogs(logs);},err=>console.warn('[logs]',err.message));}
 function loadAllFiches(){const q=query(collection(db,'fiches'),orderBy('createdAt','desc'));onSnapshot(q,snap=>{const fiches=[];snap.forEach(d=>fiches.push({id:d.id,...d.data()}));document.getElementById('cnt-total').textContent=fiches.length;renderTable('table-fiches',fiches);},err=>console.warn('[fiches]',err.message));}
-window.deleteFiche=async function(id,name){if(!confirm('Supprimer définitivement cette fiche ?'))return;const vid=getVipId();if(vid)try{await updateDoc(doc(db,'fiches',id),{_vip_id:vid});}catch(e){}await deleteDoc(doc(db,'fiches',id));await writeLog('delete',id,name);showToast('Fiche supprimée.','error');};
+window.deleteFiche=async function(id,name){if(!confirm('Supprimer définitivement cette fiche ?'))return;await deleteDoc(doc(db,'fiches',id));await writeLog('delete',id,name);showToast('Fiche supprimée.','error');};
 function loadPNJ(){const q=query(collection(db,'pnj'),orderBy('createdAt','desc'));onSnapshot(q,snap=>{const pnjs=[];snap.forEach(d=>pnjs.push({id:d.id,...d.data()}));document.getElementById('cnt-pnj').textContent=pnjs.length;const bp=document.getElementById('badge-pnj');bp.textContent=pnjs.length||'';bp.style.display=pnjs.length?'inline':'none';renderPNJTable(pnjs);},err=>console.warn('[pnj]',err.message));}
-window.deletePNJ=async function(id,name){if(!confirm('Supprimer définitivement ce PNJ ?'))return;const vid=getVipId();if(vid)try{await updateDoc(doc(db,'pnj',id),{_vip_id:vid});}catch(e){}await deleteDoc(doc(db,'pnj',id));await writeLog('delete_pnj',id,name);showToast('PNJ supprimé.','error');};
+window.deletePNJ=async function(id,name){if(!confirm('Supprimer définitivement ce PNJ ?'))return;await deleteDoc(doc(db,'pnj',id));await writeLog('delete_pnj',id,name);showToast('PNJ supprimé.','error');};
 function showScreen(name){document.getElementById('login-screen').style.display=name==='login'?'flex':'none';document.getElementById('loading-screen').style.display=name==='loading'?'flex':'none';document.getElementById('panel-screen').style.display=name==='panel'?'block':'none';}
 window._setAdminTab=(data)=>{const el=document.getElementById('panel-screen');if(!el)return;function trySet(){if(!el._x_dataStack){return false;}const alpineData=Alpine.$data(el);if(alpineData){alpineData.logsVisible=(data.role==='admin');alpineData.racesVisible=(data.role==='admin');return true;}return false;}if(!trySet()){let attempts=0;const iv=setInterval(()=>{if(trySet()||++attempts>20)clearInterval(iv);},100);}};
 function renderAdminHeader(){if(!currentAdmin)return;document.getElementById('admin-name').textContent=currentAdmin.name;const rb=document.getElementById('role-badge');rb.textContent=currentAdmin.role.toUpperCase();rb.className='role-badge role-'+currentAdmin.role;}
@@ -231,10 +220,6 @@ body::before{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;
       <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18z"/><path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2a4.8 4.8 0 0 1-7.18-2.54H1.83v2.07A8 8 0 0 0 8.98 17z"/><path fill="#FBBC05" d="M4.5 10.52a4.8 4.8 0 0 1 0-3.04V5.41H1.83a8 8 0 0 0 0 7.18l2.67-2.07z"/><path fill="#EA4335" d="M8.98 4.18c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 0 0 1.83 5.4L4.5 7.49a4.77 4.77 0 0 1 4.48-3.3z"/></svg>
       Se connecter avec Google
     </button>
-    <div class="login-sep">ou</div>
-    <input type="email" class="login-input" id="login-email" placeholder="Email administrateur" onkeydown="if(event.key==='Enter')adminLogin()">
-    <input type="password" class="login-input" id="login-password" placeholder="Mot de passe" onkeydown="if(event.key==='Enter')adminLogin()">
-    <button class="login-btn" onclick="adminLogin()">▸ CONNEXION</button>
     <div class="login-error" id="login-error"></div>
     <div style="text-align:center;margin-top:18px;"><a href="index.html" style="font-family:'Rajdhani',sans-serif;font-size:.6rem;letter-spacing:.14em;color:var(--muted);text-decoration:none;border:1px solid var(--border);padding:9px 22px;display:inline-block;transition:color .2s,border-color .2s;" onmouseover="this.style.color='var(--cyan)';this.style.borderColor='rgba(0,240,255,0.35)'" onmouseout="this.style.color='';this.style.borderColor=''">← Retour à l'accueil</a></div>
     <div class="login-hint">▸ Créez les admins dans Firebase Authentication<br>▸ Puis ajoutez dans Firestore : <strong>admins/{uid}</strong><br>&nbsp;&nbsp;avec le champ <strong>role: "admin"</strong> ou <strong>"modo"</strong></div>

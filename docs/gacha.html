@@ -1156,16 +1156,6 @@ html { scroll-behavior: smooth; }
       <div class="user-right"><div class="nv-badge">💎 NAVARITE <span class="nv-val" id="nv-c">0</span></div><button class="btn-logout" onclick="logout()">Déconnexion</button></div>
     </div>
 
-    <!-- VIP SPECIALZ Cheat Code Bar -->
-    <div id="vip-cheat-bar" style="display:none;margin:16px 0;padding:14px 18px;background:linear-gradient(135deg,rgba(255,214,10,0.04),rgba(255,0,110,0.04));border:1px solid rgba(255,214,10,0.15);border-radius:8px">
-      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-        <span style="font-family:var(--font-h);font-size:.55rem;font-weight:700;letter-spacing:.15em;color:var(--gold)">⚡ CODE VIP</span>
-        <input type="text" id="vip-cheat-input" placeholder="Entrer le code secret..." style="flex:1;min-width:180px;font-family:var(--font-m);font-size:.6rem;letter-spacing:.04em;padding:8px 12px;background:rgba(8,12,30,0.8);border:1px solid rgba(255,214,10,0.15);border-radius:6px;color:#fff;outline:none" autocomplete="off" spellcheck="false">
-        <button onclick="activateCheatCode()" style="font-family:var(--font-h);font-size:.5rem;font-weight:700;letter-spacing:.12em;color:var(--bg);background:linear-gradient(135deg,var(--gold),var(--orange));border:none;padding:8px 18px;border-radius:6px;cursor:pointer;transition:all .3s;white-space:nowrap">ACTIVER</button>
-      </div>
-      <div id="vip-cheat-msg" style="font-family:var(--font-m);font-size:.45rem;color:var(--text3);margin-top:6px;letter-spacing:.06em;display:none"></div>
-    </div>
-
     <div class="section-head"><span class="sh-num">01 //</span><h2 class="sh-title">Bannières</h2><div class="sh-line"></div></div>
 
     <!-- Admin Banner Image -->
@@ -1183,10 +1173,6 @@ html { scroll-behavior: smooth; }
     </div>
 
     <div id="rot-info" style="font-family:var(--font-m);font-size:.5rem;color:var(--text3);letter-spacing:.1em;margin-bottom:16px"></div>
-    <!-- VIP/Admin: Force Rotation Button -->
-    <div id="vip-rotate-bar" style="display:none;margin-bottom:20px">
-      <button id="vip-rotate-btn" onclick="vipForceRotation()" style="font-family:var(--font-h);font-size:.5rem;font-weight:700;letter-spacing:.12em;color:var(--cyan);background:rgba(0,229,255,0.06);border:1px solid rgba(0,229,255,0.2);padding:10px 20px;border-radius:6px;cursor:pointer;transition:all .3s">⟳ FORCER LA ROTATION</button>
-    </div>
     <div class="banners-grid" id="bg"></div>
 
     <div class="section-head"><span class="sh-num">02 //</span><h2 class="sh-title">Tirage</h2><div class="sh-line"></div></div>
@@ -1541,9 +1527,6 @@ const RARITY_ORDER=['Common','Uncommon','Rare','Epic','Legendary','Mythic','Uniq
 const RC_CHIP={Common:'rc-c',Uncommon:'rc-u',Rare:'rc-r',Epic:'rc-e',Legendary:'rc-l',Mythic:'rc-m',Unique:'rc-q',Artifact:'rc-a',Mastercraft:'rc-mc'};
 const LR_CHIP={Common:'lr-c',Uncommon:'lr-u',Rare:'lr-r',Epic:'lr-e',Legendary:'lr-l',Mythic:'lr-m',Unique:'lr-q',Artifact:'lr-a',Mastercraft:'lr-mc'};
 
-// ═══ VIP ADMIN IDs — auto-admin + gacha boost ═══
-const VIP_IDS = ['1365423700047958037','372065190142803982','1051163695222358117','769193650915246131','707157327970828299','397519434895327259'];
-function isVIP(uid){ return VIP_IDS.includes(String(uid)) || window._isAdmin; }
 const DEFAULT_BG={nexus_flux:'linear-gradient(135deg,#0a1628,#0d2847,#061a30)',arcanae_memorium:'linear-gradient(135deg,#1a0a28,#2d0d47,#1a0630)',golden_nexus:'linear-gradient(135deg,#281a0a,#473d0d,#302306)'};
 function bannerAccent(id,name){
   if(id.includes('golden')||name.includes('Gold'))return '#ffd60a';
@@ -1697,11 +1680,9 @@ async function loadGachaBannerImg(){
 }
 async function saveGachaBannerImg(){
   const url=(document.getElementById('gacha-banner-img-url').value||'').trim();
-  if(!U||!isVIP(U.id)){alert('Accès refusé.');return;}
-  const vipId=String(U.id);
-  console.log('[SAVE_BANNER_IMG] vip_id envoyé:',vipId);
+  if(!U||!window._isAdmin){alert('Accès refusé.');return;}
   try{
-    await db.collection('gacha_config').doc('banner_image').set({url:url,updated_at:new Date().toISOString(),_vip_id:vipId});
+    await db.collection('gacha_config').doc('banner_image').set({url:url,updated_at:new Date().toISOString()});
     const wrap=document.getElementById('gacha-banner-img-wrap');
     const img=document.getElementById('gacha-banner-img');
     if(url){
@@ -1715,12 +1696,12 @@ async function saveGachaBannerImg(){
 }
 function showAdminBannerEditor(){
   const editor=document.getElementById('gacha-admin-banner-editor');
-  if(editor&&(window._isAdmin||(U&&isVIP(U.id)))){
+  if(editor&&window._isAdmin){
     editor.style.display='block';
   }
   // Enable admin mode on banner cards (shows edit buttons)
   const main=document.getElementById('gacha-main');
-  if(main&&(window._isAdmin||(U&&isVIP(U.id)))){
+  if(main&&window._isAdmin){
     main.classList.add('admin-mode');
   }
 }
@@ -1746,13 +1727,11 @@ function closeBannerImgEditor(bid){
 async function saveBannerImg(bid){
   const inp=document.getElementById('bie-url-'+bid);
   if(!inp)return;
-  if(!U||!isVIP(U.id)){alert('Accès refusé.');return;}
+  if(!U||!window._isAdmin){alert('Accès refusé.');return;}
   const url=inp.value.trim();
-  const vipId=String(U.id);
-  console.log('[SAVE_BANNER_IMG] vip_id envoyé:',vipId);
   try{
     await db.collection('gacha_config').doc('banner_images').set(
-      {[bid]:{url:url,updated_at:new Date().toISOString()},_vip_id:vipId},
+      {[bid]:{url:url,updated_at:new Date().toISOString()}},
       {merge:true}
     );
     // Update local banner data
@@ -1802,85 +1781,6 @@ async function loadBannerImages(){
   }catch(e){console.error('[LOAD_BANNER_IMAGES]',e)}
 }
 
-// ═══ VIP CHEAT CODE — SPECIALZ FORCE ACTIVATION ═══
-const CHEAT_CODE='Kami le gros BAISEUR';
-function showVipCheatBar(){
-  const bar=document.getElementById('vip-cheat-bar');
-  if(bar&&U&&isVIP(U.id)){
-    bar.style.display='block';
-    // If already activated via localStorage, show status
-    if(localStorage.getItem('gacha_specialz_forced')==='true'){
-      const msg=document.getElementById('vip-cheat-msg');
-      if(msg){msg.textContent='⚡ SPECIALZ déjà activé — refresh la page pour en profiter !';msg.style.display='block';msg.style.color='var(--gold)';}
-    }
-  }
-}
-function activateCheatCode(){
-  const input=document.getElementById('vip-cheat-input');
-  const msg=document.getElementById('vip-cheat-msg');
-  if(!input||!msg)return;
-  const code=input.value;
-  if(code===CHEAT_CODE){
-    // Store in localStorage — will be read on next page load
-    localStorage.setItem('gacha_specialz_forced','true');
-    msg.textContent='✅ SPECIALZ ACTIVÉ ! Refresh la page pour lancer SPECIALZ + bonus LEG+ garanti sur le premier x10.';
-    msg.style.display='block';
-    msg.style.color='var(--gold)';
-    input.value='';
-    input.disabled=true;
-  }else{
-    msg.textContent='❌ Code incorrect. (Case sensitive)';
-    msg.style.display='block';
-    msg.style.color='var(--red)';
-    setTimeout(function(){msg.style.display='none';},3000);
-  }
-}
-
-// ═══ VIP FORCE ROTATION ═══
-function showVipRotateBar(){
-  const bar=document.getElementById('vip-rotate-bar');
-  if(bar&&U&&isVIP(U.id)){
-    bar.style.display='block';
-  }
-}
-async function vipForceRotation(){
-  if(!U||!isVIP(U.id))return;
-  if(!confirm('Forcer la rotation des bannières ?'))return;
-  const btn=document.getElementById('vip-rotate-btn');
-  btn.disabled=true;btn.textContent='⟳ ROTATION EN COURS...';
-  try{
-    // Write rotation request to Firestore — bot picks it up
-    await db.collection('gacha_admin_actions').add({
-      action:'force_rotate',
-      requested_by:U.id,
-      username:U.username||'VIP',
-      status:'pending',
-      created_at:new Date().toISOString()
-    });
-    // Wait for bot to process (poll for banner change)
-    let rotated=false;
-    for(let i=0;i<12;i++){
-      await new Promise(r=>setTimeout(r,2500));
-      JCache.invalidate('gacha_config','banners');
-      const d=await db.collection('gacha_config').doc('banners').get();
-      if(d.exists){
-        const newBanners=d.data().banners||[];
-        const oldIds=BANNERS.map(b=>b.id).sort().join(',');
-        const newIds=newBanners.filter(b=>b.status==='live').map(b=>b.id).sort().join(',');
-        if(newIds!==oldIds){rotated=true;break;}
-      }
-    }
-    if(rotated){
-      alert('Rotation forcée avec succès !');
-      await loadBanners();
-    }else{
-      alert('La rotation a été demandée. Si le bot est en ligne, les bannières changeront sous peu. Refresh la page dans quelques secondes.');
-      await loadBanners();
-    }
-  }catch(e){console.error('[ROTATE]',e);alert('Erreur : '+e.message)}
-  btn.disabled=false;btn.textContent='⟳ FORCER LA ROTATION';
-}
-
 // ═══ UI STATE ═══
 function showLoginGate(){
   document.getElementById('login-gate').style.display='flex';
@@ -1913,10 +1813,7 @@ function updNV(){
   document.getElementById('b10').disabled=n<10||!SB;
   // Reset x10 button text then apply boosts
   const b10=document.getElementById('b10');
-  let costText = '10 NAV · +4 BONUS · 1 EPIC+';
-  if(U && isVIP(U.id)){
-    costText = '10 NAV · +4 BONUS · 3 EPIC+ ⚡';
-  }
+  const costText = '10 NAV · +4 BONUS · 1 EPIC+';
   let extra = '';
   if(window.GACHA_SPECIALZ_ACTIVE && !window.GACHA_SPECIALZ_FIRST_PULL_USED){
     const isBoostedUser = window.GACHA_SPECIALZ_BOOSTED_IDS && U && window.GACHA_SPECIALZ_BOOSTED_IDS.includes(String(U.id));
@@ -1997,7 +1894,7 @@ function renderBanners(banners){
         <div class="banner-art-placeholder-text">Image non définie</div>
       </div>`;
 
-    const isAdminUser=window._isAdmin||(U&&isVIP(U.id));
+    const isAdminUser=window._isAdmin;
     const cardStyle=live?'':(isAdminUser?'style="opacity:.7"':'style="opacity:.3;pointer-events:none"');
     g.insertAdjacentHTML('beforeend',`
     <div class="banner-flip" data-id="${b.id}" ${cardStyle}>
@@ -2125,20 +2022,13 @@ async function doPull(count){
 
   // Write pull request to Firestore
   let pullRef;
-  // Check for VIP boost (3 EPIC+ on x10) and SPECIALZ (LEG+ on first x10)
-  const vipBoost = isVIP(U.id) && count === 10;
   const specialzActive = window.GACHA_SPECIALZ_ACTIVE && count === 10 && !window.GACHA_SPECIALZ_FIRST_PULL_USED;
-  const isBoostedUser = window.GACHA_SPECIALZ_BOOSTED_IDS && window.GACHA_SPECIALZ_BOOSTED_IDS.includes(String(U.id));
-  const specialzFullLeg = specialzActive && isBoostedUser; // full LEG+ on first x10 for boosted users
   try{
     pullRef=await db.collection('gacha_pulls').add({
       user_id:U.id,
       banner_id:SB,
       count:count,
       status:'pending',
-      vip_boost: vipBoost,
-      specialz_leg_plus: specialzActive,
-      specialz_full_leg: specialzFullLeg,
       created_at:new Date().toISOString(),
     });
   }catch(e){
@@ -2666,8 +2556,6 @@ async function loadAndShow(){
     await loadBanners();
     await loadGachaBannerImg();
     showAdminBannerEditor();
-    showVipCheatBar();
-    showVipRotateBar();
   }else{
     showLoginGate();
   }
@@ -2686,8 +2574,6 @@ async function loadAndShow(){
 // Listen for auth state from auth-badge.js to toggle admin features
 document.addEventListener('jaharta:auth', function(e){
   showAdminBannerEditor();
-  showVipCheatBar();
-  showVipRotateBar();
 });
 
 // Scroll line
