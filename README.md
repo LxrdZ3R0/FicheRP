@@ -31,7 +31,7 @@ Le site permet à tout visiteur de consulter les informations de l'univers Jahar
 | Hébergement | GitHub Pages (`/docs`) | — |
 | Base de données | Firebase Firestore (temps réel) | config inline |
 | Stockage images | Firebase Cloud Storage | config inline |
-| Authentification | Firebase Auth (Google + email/password + code Discord) | admin.html, gacha.html, hub.html |
+| Authentification | Firebase Auth Google (admin) + code Discord `/link` (joueurs) | admin.html, gacha.html, hub.html |
 | Frontend | HTML / CSS / JS vanilla — aucun bundler | — |
 | UI réactive | Alpine.js 3.14 (onglets admin) | admin.html |
 | 3D / Animation | Three.js (blob gacha) + GSAP (flip cartes + scan silhouette hub) | js/kanji-blob.js, gacha.html, hub.html |
@@ -139,7 +139,7 @@ L'accès admin utilise une **whitelist Firestore** (pas juste Firebase Auth).
    ```json
    { "role": "admin", "name": "PseudoMembre", "email": "membre@mail.com" }
    ```
-4. Se connecter sur `/admin.html` via Google ou email/password
+4. Se connecter sur `/admin.html` via **Google uniquement** (bouton "Se connecter avec Google")
 
 ### Rôles disponibles
 
@@ -264,6 +264,8 @@ Toutes les données sont chargées en temps réel via `onSnapshot()`.
 ```
 { action, targetId, targetName, byEmail, byUid, byName, role, at }
 ```
+
+> **Note sécurité (2026-04-06)** : le champ `_vip_id` a été supprimé de toutes les collections. Ne jamais le réintroduire — voir `UPDATES.md`.
 
 ### Collection `users` — Données joueurs (gacha + hub)
 

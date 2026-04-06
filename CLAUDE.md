@@ -12,7 +12,7 @@ Hébergé sur GitHub Pages (`/docs`), backend Firebase, zéro framework JS.
 | Hébergement | GitHub Pages — dossier `/docs` (auto-deploy sur `main`) |
 | Base de données | Firebase Firestore (temps réel via `onSnapshot`) |
 | Stockage | Firebase Cloud Storage |
-| Auth | Firebase Auth (Google + email/password) |
+| Auth | Firebase Auth (Google uniquement — panel admin) |
 | Frontend | HTML5 / CSS3 / JS vanilla — aucun bundler |
 | Alpine.js 3.14 | **Uniquement** dans `admin.html` (onglets réactifs) |
 | Three.js + GSAP | Blob 3D + animations gacha (`kanji-blob.js`, `gacha.html`) + scan silhouette hub (`hub.html`) |
@@ -117,6 +117,7 @@ window.JImgCache.stats()                // {total, expired}
 - Tirages : ×1 / ×5+bonus / ×10+bonus+Epic garantie
 - Pity : soft (Epic) + hard (Legendary) + streak Navarites
 - Animations : blob Three.js (`bSetCol`, `bExplode`, `bAddOrbital`) + canvas particles + GSAP flip
+- **⚠ SUPPRIMÉ** : champs `vip_boost`, `specialz_leg_plus`, `specialz_full_leg` ne sont **plus** écrits dans `gacha_pulls` — le bot doit calculer ces flags lui-même côté serveur
 
 ### Hub joueur (`hub.html`)
 - Même auth que gacha
@@ -141,10 +142,12 @@ window.JImgCache.stats()                // {total, expired}
 - **Fonctions JS clés** : `renderInventory()`, `renderCharacterPanel()`, `initCharScanAnimation()`, `renderItemsGrid()`, `initDragDrop()`, `initTooltips()`, `toggleEquip()`, `showItemDetail()`, `closeItemDetail()`, `openDeleteModal()`, `closeDeleteModal()`, `confirmDelete()`
 
 ### Panel Admin (`admin.html`)
-- Auth Firebase (Google / email) + check `admins/{uid}` en Firestore
+- Auth Firebase (Google uniquement via `signInWithPopup`) + vérification `admins/{uid}` en Firestore
+- Si l'UID n'existe pas dans `/admins` → `auth.signOut()` immédiat + message "Accès refusé"
 - Rôle `admin` : valider / rejeter / supprimer fiches + voir logs
 - Rôle `modo` : valider / rejeter uniquement
 - Alpine.js pour la réactivité des onglets
+- **⚠ SUPPRIMÉ** : bypass VIP Discord IDs — `window._isAdmin` est exclusivement contrôlé par Firebase Auth
 
 ---
 
