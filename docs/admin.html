@@ -29,99 +29,12 @@ window.deleteFiche=async function(id,name){if(!confirm('Supprimer définitivemen
 function loadPNJ(){const q=query(collection(db,'pnj'),orderBy('createdAt','desc'));onSnapshot(q,snap=>{const pnjs=[];snap.forEach(d=>pnjs.push({id:d.id,...d.data()}));document.getElementById('cnt-pnj').textContent=pnjs.length;const bp=document.getElementById('badge-pnj');bp.textContent=pnjs.length||'';bp.style.display=pnjs.length?'inline':'none';renderPNJTable(pnjs);},err=>console.warn('[pnj]',err.message));}
 window.deletePNJ=async function(id,name){if(!confirm('Supprimer définitivement ce PNJ ?'))return;await deleteDoc(doc(db,'pnj',id));await writeLog('delete_pnj',id,name);showToast('PNJ supprimé.','error');};
 function showScreen(name){document.getElementById('login-screen').style.display=name==='login'?'flex':'none';document.getElementById('loading-screen').style.display=name==='loading'?'flex':'none';document.getElementById('panel-screen').style.display=name==='panel'?'block':'none';}
-window._setAdminTab=(data)=>{const el=document.getElementById('panel-screen');if(!el)return;function trySet(){if(!el._x_dataStack){return false;}const alpineData=Alpine.$data(el);if(alpineData){alpineData.logsVisible=(data.role==='admin');alpineData.racesVisible=(data.role==='admin');return true;}return false;}if(!trySet()){let attempts=0;const iv=setInterval(()=>{if(trySet()||++attempts>20)clearInterval(iv);},100);}};
+window._setAdminTab=(data)=>{const el=document.getElementById('panel-screen');if(!el)return;function trySet(){if(!el._x_dataStack){return false;}const alpineData=Alpine.$data(el);if(alpineData){alpineData.logsVisible=(data.role==='admin');return true;}return false;}if(!trySet()){let attempts=0;const iv=setInterval(()=>{if(trySet()||++attempts>20)clearInterval(iv);},100);}};
 function renderAdminHeader(){if(!currentAdmin)return;document.getElementById('admin-name').textContent=currentAdmin.name;const rb=document.getElementById('role-badge');rb.textContent=currentAdmin.role.toUpperCase();rb.className='role-badge role-'+currentAdmin.role;}
 </script>
 
 <link rel="stylesheet" href="css/jaharta.css">
 <style>
-/* NEW ADMIN DESIGN */
-
-:root{--bg:#020713;--bg2:#070d1e;--blue:#4DA3FF;--violet:#8B5CF6;--red:#FF4757;--green:#44ff88;--gold:#ffd60a;--magenta:#ff006e;--text:#e2e6f0;--text2:#7c84a0;--text3:#3a4060;--font-h:"Orbitron",sans-serif;--font-b:"Rajdhani",sans-serif;--font-body:"Exo 2",sans-serif;--font-m:"Share Tech Mono",monospace}
-*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-weight:300;overflow-x:hidden;-webkit-font-smoothing:antialiased}
-body::before{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;opacity:0.02;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
-
-/* Login screen */
-.login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
-.login-box{background:rgba(8,12,30,0.85);backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,0.06);border-radius:16px;padding:48px 44px;width:90%;max-width:420px;position:relative;overflow:hidden}
-.login-topline{position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--blue),var(--violet),var(--gold));border-radius:16px 16px 0 0;opacity:0.7}
-.login-title{font-family:var(--font-h);font-weight:900;font-size:1rem;letter-spacing:.2em;color:var(--gold);margin-bottom:4px}
-.login-sub{font-family:var(--font-m);font-size:.45rem;color:var(--text3);letter-spacing:.2em;margin-bottom:32px}
-.btn-google{width:100%;display:flex;align-items:center;justify-content:center;gap:12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);color:#e8eaed;font-family:var(--font-b);font-size:.9rem;font-weight:600;padding:13px;cursor:pointer;transition:all .2s;border-radius:10px;letter-spacing:.06em;margin-bottom:20px}
-.btn-google:hover{background:rgba(255,255,255,0.06);border-color:rgba(255,255,255,0.15)}
-.login-sep{display:flex;align-items:center;gap:12px;margin-bottom:18px;font-family:var(--font-m);font-size:.45rem;color:var(--text3);letter-spacing:.15em}
-.login-sep::before,.login-sep::after{content:'';flex:1;height:1px;background:rgba(255,255,255,0.04)}
-.login-input{width:100%;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);color:var(--text);font-family:var(--font-b);font-size:.88rem;padding:12px 14px;outline:none;margin-bottom:12px;border-radius:8px;transition:border-color .2s}
-.login-input:focus{border-color:var(--gold);box-shadow:0 0 12px rgba(255,214,10,0.06)}
-.login-input::placeholder{color:var(--text3)}
-.login-btn{width:100%;font-family:var(--font-h);font-size:.65rem;font-weight:700;letter-spacing:.18em;color:var(--bg);background:linear-gradient(135deg,var(--gold),#ffed4a);border:none;padding:14px;cursor:pointer;margin-top:6px;border-radius:10px;transition:all .3s}
-.login-btn:hover{box-shadow:0 0 28px rgba(255,214,10,0.25);transform:translateY(-1px)}
-.login-hint{font-family:var(--font-m);font-size:.42rem;color:var(--text3);margin-top:24px;line-height:2;padding-top:18px;border-top:1px solid rgba(255,255,255,0.04);letter-spacing:.05em}
-.login-back{display:block;text-align:center;margin-top:20px;font-family:var(--font-b);font-size:.65rem;color:var(--text2);text-decoration:none;padding:10px;border:1px solid rgba(255,255,255,0.04);border-radius:8px;transition:all .2s}
-.login-back:hover{color:var(--blue);border-color:rgba(77,163,255,0.15)}
-
-/* Panel header */
-.admin-header{position:sticky;top:0;z-index:100;padding:0 clamp(1.5rem,4vw,3rem);height:66px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.04);background:rgba(2,7,19,0.92);backdrop-filter:blur(24px)}
-.admin-logo{font-family:var(--font-h);font-weight:900;font-size:1rem;letter-spacing:.25em;color:var(--gold)}
-.admin-logo span{color:var(--text3);font-weight:500}
-.admin-meta{display:flex;align-items:center;gap:14px}
-.role-badge{font-family:var(--font-h);font-size:.45rem;font-weight:700;letter-spacing:.15em;padding:4px 12px;border-radius:5px;border:1px solid}
-.role-admin{color:var(--gold);border-color:rgba(255,214,10,0.3);background:rgba(255,214,10,0.05)}
-.admin-user{font-family:var(--font-b);font-size:.62rem;color:var(--text2)}
-.admin-user strong{color:var(--text)}
-.logout-btn{font-family:var(--font-b);font-size:.6rem;letter-spacing:.1em;color:var(--text2);background:transparent;border:1px solid rgba(255,255,255,0.06);padding:7px 16px;cursor:pointer;border-radius:6px;transition:all .2s}
-.logout-btn:hover{color:var(--red);border-color:rgba(255,71,87,0.3)}
-.back-link{font-family:var(--font-b);font-size:.6rem;color:var(--blue);text-decoration:none;border:1px solid rgba(77,163,255,0.15);padding:7px 16px;border-radius:6px;transition:all .2s}
-.back-link:hover{background:rgba(77,163,255,0.04)}
-
-/* Stats */
-.admin-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;padding:28px clamp(1.5rem,4vw,3rem) 0}
-.stat-card{background:rgba(8,12,30,0.6);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.04);border-radius:12px;padding:22px 20px;position:relative;overflow:hidden;transition:border-color .3s}
-.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--sc,var(--blue)),transparent);opacity:0.5}
-.stat-card:hover{border-color:rgba(255,255,255,0.08)}
-.stat-val{font-family:var(--font-h);font-size:2rem;font-weight:900;line-height:1;margin-bottom:6px;color:var(--sc,var(--blue))}
-.stat-lbl{font-family:var(--font-m);font-size:.42rem;color:var(--text3);letter-spacing:.15em;text-transform:uppercase}
-
-/* Tabs */
-.admin-tabs{display:flex;gap:0;padding:28px clamp(1.5rem,4vw,3rem) 0;border-bottom:1px solid rgba(255,255,255,0.04)}
-.admin-tab{font-family:var(--font-b);font-size:.68rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text2);background:transparent;border:none;padding:12px 22px;cursor:pointer;transition:color .2s;position:relative}
-.admin-tab::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:2px;background:var(--gold);transform:scaleX(0);transition:transform .25s}
-.admin-tab.active{color:var(--gold)}
-.admin-tab.active::after{transform:scaleX(1)}
-.admin-tab:hover{color:var(--text)}
-
-/* Tab content */
-.tab-content{padding:28px clamp(1.5rem,4vw,3rem)}
-.tab-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,0.04)}
-.tab-title{font-family:var(--font-h);font-size:.7rem;font-weight:700;letter-spacing:.18em;color:var(--text);text-transform:uppercase}
-
-/* Fiche rows */
-.fiche-row{background:rgba(8,12,30,0.5);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.04);border-radius:10px;display:grid;grid-template-columns:80px 1fr auto;gap:0;overflow:hidden;margin-bottom:10px;transition:all .3s}
-.fiche-row:hover{border-color:rgba(255,214,10,0.12);transform:translateX(3px)}
-.fiche-thumb{width:80px;height:80px;overflow:hidden}
-.fiche-thumb img{width:100%;height:100%;object-fit:cover;object-position:top}
-.fiche-thumb-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-family:var(--font-h);font-size:1.4rem;font-weight:900}
-.fiche-info{padding:12px 16px}
-.fiche-name{font-family:var(--font-h);font-weight:700;font-size:.82rem;color:#fff;letter-spacing:.06em;margin-bottom:4px}
-.fiche-meta{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px}
-.fiche-tag{font-family:var(--font-b);font-size:.5rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:2px 8px;border:1px solid;border-radius:4px}
-.fiche-desc{font-size:.72rem;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:400px}
-.fiche-actions{padding:12px 16px;display:flex;align-items:center;gap:8px}
-.action-btn{font-family:var(--font-b);font-size:.55rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;border:1px solid;padding:7px 14px;cursor:pointer;background:transparent;border-radius:6px;transition:all .2s;text-decoration:none}
-.action-btn.delete{color:var(--text2);border-color:rgba(255,255,255,0.06)}
-.action-btn.delete:hover{color:var(--red);border-color:rgba(255,71,87,0.3)}
-.action-btn.view{color:var(--blue);border-color:rgba(77,163,255,0.15)}
-.action-btn.view:hover{background:rgba(77,163,255,0.04)}
-
-/* Toggle between login and panel for preview */
-.preview-toggle{position:fixed;bottom:20px;right:20px;z-index:9999;font-family:var(--font-b);font-size:.6rem;padding:10px 18px;background:rgba(255,214,10,0.1);border:1px solid rgba(255,214,10,0.3);color:var(--gold);cursor:pointer;border-radius:8px;backdrop-filter:blur(8px)}
-.preview-toggle:hover{background:rgba(255,214,10,0.15)}
-
-@media(max-width:768px){.admin-meta{gap:8px}.admin-user{display:none}.admin-stats{grid-template-columns:repeat(2,1fr)}.fiche-row{grid-template-columns:60px 1fr}.fiche-actions{grid-column:1/-1;padding:8px 12px}}
-
-/* ORIGINAL ADMIN CSS */
-
 :root{--accent:var(--gold);--accent-rgb:255,214,10;--accent-border:rgba(255,214,10,0.22);--accent-bg:rgba(255,214,10,0.04);--cyan:#4DA3FF;--magenta:#ff006e;--gold:#ffd60a;--dark:#020713;--dark2:#070d1e;--dark3:#0c1228;--panel:rgba(77,163,255,0.035);--border:rgba(255,255,255,0.06);--text:#e2e6f0;--muted:#7c84a0;--green:#44ff88;--red:#FF4757;--orange:#f97316;--violet:#8B5CF6;}
 .noise{position:fixed;inset:0;z-index:9997;pointer-events:none;opacity:.035;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-size:200px;}
 /* Screens */
@@ -248,7 +161,7 @@ body::before{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;
 </div>
 
 <!-- PANEL -->
-<div id="panel-screen" x-data="{ tab: 'fiches', logsVisible: false, racesVisible: false }">
+<div id="panel-screen" x-data="{ tab: 'fiches', logsVisible: false }">
   <div class="admin-header">
     <div class="admin-logo"><img src="img/logo-jaharta.png" alt="" style="width:32px;height:32px;object-fit:contain;vertical-align:middle;margin-right:8px;">JAHARTA <span>// ADMIN</span></div>
     <div class="admin-meta">
@@ -268,9 +181,7 @@ body::before{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;
   <div class="admin-tabs">
     <button class="admin-tab" :class="{active:tab==='fiches'}" @click="tab='fiches'">Fiches</button>
     <button class="admin-tab" :class="{active:tab==='pnj'}" @click="tab='pnj'">PNJ <span class="tab-badge" id="badge-pnj" style="background:#b06eff"></span></button>
-    <button class="admin-tab" x-cloak x-show="racesVisible" :class="{active:tab==='races'}" @click="tab='races'">Races</button>
-    <button class="admin-tab" x-cloak x-show="logsVisible" :class="{active:tab==='gacha'}" @click="tab='gacha'">Gacha <span style="font-family:'Rajdhani',sans-serif;font-size:.5rem;color:var(--gold);padding:2px 6px;border:1px solid rgba(255,214,10,.2)">BOT</span></button>
-    <button class="admin-tab" id="tab-btn-logs" x-cloak x-show="logsVisible" :class="{active:tab==='logs'}" @click="tab='logs'">Logs <span style="font-family:'Rajdhani',sans-serif;font-size:.5rem;color:var(--muted);padding:2px 6px;border:1px solid rgba(0,240,255,.2)">ADMIN</span></button>
+    <button class="admin-tab" id="tab-btn-logs" x-cloak x-show="logsVisible" :class="{active:tab==='logs'}" @click="tab='logs'">Logs</button>
   </div>
 
   <div class="tab-content" id="tab-fiches" x-show="tab==='fiches'" x-cloak>
@@ -281,84 +192,6 @@ body::before{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;
   <div class="tab-content" id="tab-pnj" x-show="tab==='pnj'" x-cloak>
     <div class="tab-header"><div class="tab-title">◈ PNJ</div><a href="pnj.html" target="_blank" class="action-btn view">↗ Page PNJ publique</a></div>
     <div class="fiche-list" id="table-pnj"><div class="empty-list"><span class="empty-list-icon">⟳</span>Chargement...</div></div>
-  </div>
-
-  <div class="tab-content" id="tab-races" x-show="tab==='races' && racesVisible" x-cloak>
-    <div class="tab-header"><div class="tab-title">◈ Races jouables</div><a href="racesjouables.html" target="_blank" class="action-btn view">↗ Page Races publique</a></div>
-    <p style="font-family:'Rajdhani',sans-serif;font-size:.75rem;color:var(--muted);line-height:1.7;margin-bottom:24px;">
-      Les données des races sont éditables directement depuis la <a href="racesjouables.html" target="_blank" style="color:var(--cyan);text-decoration:none;">page Races</a> en étant connecté admin.
-      Cliquez sur une race pour ouvrir le popup de détails, puis modifiez les champs dans la section admin du popup.
-      Les données sont sauvegardées dans la collection Firestore <code style="background:rgba(0,240,255,0.06);padding:2px 6px;border-radius:2px;font-size:.7rem;">races_data</code>.
-    </p>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;" id="admin-races-grid">
-      <div class="empty-list"><span class="empty-list-icon">◈</span>Chargement des races...</div>
-    </div>
-  </div>
-
-  <!-- ═══ GACHA TAB ═══ -->
-  <div class="tab-content" id="tab-gacha" x-show="tab==='gacha'" x-cloak>
-    <div class="tab-header"><div class="tab-title">◈ Gacha — Rotation & Bannières</div><a href="gacha.html" target="_blank" class="action-btn view">↗ Page Gacha publique</a></div>
-
-    <div id="gacha-admin-status" style="font-family:var(--font-m);font-size:.55rem;color:var(--text3);letter-spacing:.1em;margin-bottom:24px">Connexion à l'API bot...</div>
-
-    <!-- Current rotation -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:32px" id="gacha-rotation-grid">
-      <div style="background:rgba(77,163,255,0.03);border:1px solid rgba(77,163,255,0.1);border-radius:8px;padding:20px">
-        <div style="font-family:var(--font-h);font-size:.55rem;font-weight:700;letter-spacing:.15em;color:var(--blue);margin-bottom:12px">● BANNIÈRES ACTIVES</div>
-        <div id="gacha-active-list" style="font-family:var(--font-b);font-size:.8rem;color:var(--text)">—</div>
-      </div>
-      <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);border-radius:8px;padding:20px">
-        <div style="font-family:var(--font-h);font-size:.55rem;font-weight:700;letter-spacing:.15em;color:var(--text3);margin-bottom:12px">○ PROCHAINES</div>
-        <div id="gacha-next-list" style="font-family:var(--font-b);font-size:.8rem;color:var(--text2)">—</div>
-      </div>
-    </div>
-
-    <!-- Actions -->
-    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:32px">
-      <button class="action-btn view" onclick="gachaForceRotation()" style="padding:10px 20px;font-size:.6rem">⟳ Forcer la rotation</button>
-    </div>
-
-    <!-- Manual banner selection -->
-    <div style="background:rgba(255,214,10,0.02);border:1px solid rgba(255,214,10,0.08);border-radius:8px;padding:24px;margin-bottom:32px">
-      <div style="font-family:var(--font-h);font-size:.55rem;font-weight:700;letter-spacing:.15em;color:var(--gold);margin-bottom:16px">SÉLECTION MANUELLE</div>
-      <p style="font-family:var(--font-b);font-size:.7rem;color:var(--text2);margin-bottom:16px">Sélectionne 2 bannières actives et 2 en preview. Cela désactive la rotation automatique.</p>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
-        <div>
-          <label style="font-family:var(--font-m);font-size:.45rem;color:var(--text3);display:block;margin-bottom:6px">ACTIVE 1</label>
-          <select id="gacha-sel-a1" style="width:100%;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.06);color:var(--text);padding:8px 12px;border-radius:6px;font-family:var(--font-b);font-size:.75rem"></select>
-        </div>
-        <div>
-          <label style="font-family:var(--font-m);font-size:.45rem;color:var(--text3);display:block;margin-bottom:6px">ACTIVE 2</label>
-          <select id="gacha-sel-a2" style="width:100%;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.06);color:var(--text);padding:8px 12px;border-radius:6px;font-family:var(--font-b);font-size:.75rem"></select>
-        </div>
-        <div>
-          <label style="font-family:var(--font-m);font-size:.45rem;color:var(--text3);display:block;margin-bottom:6px">PREVIEW 1</label>
-          <select id="gacha-sel-n1" style="width:100%;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.06);color:var(--text);padding:8px 12px;border-radius:6px;font-family:var(--font-b);font-size:.75rem"></select>
-        </div>
-        <div>
-          <label style="font-family:var(--font-m);font-size:.45rem;color:var(--text3);display:block;margin-bottom:6px">PREVIEW 2</label>
-          <select id="gacha-sel-n2" style="width:100%;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.06);color:var(--text);padding:8px 12px;border-radius:6px;font-family:var(--font-b);font-size:.75rem"></select>
-        </div>
-      </div>
-      <button class="action-btn view" onclick="gachaSetBanners()" style="padding:10px 20px;font-size:.6rem;border-color:rgba(255,214,10,.2);color:var(--gold)">✓ Appliquer la sélection</button>
-    </div>
-
-    <!-- Banner images -->
-    <div style="background:rgba(139,92,246,0.02);border:1px solid rgba(139,92,246,0.08);border-radius:8px;padding:24px;margin-bottom:24px">
-      <div style="font-family:var(--font-h);font-size:.55rem;font-weight:700;letter-spacing:.15em;color:var(--violet);margin-bottom:16px">IMAGES BANNIÈRES</div>
-      <p style="font-family:var(--font-b);font-size:.7rem;color:var(--text2);margin-bottom:16px">Assigne une URL d'image à chaque bannière (affichée dans le header de la card).</p>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
-        <div>
-          <label style="font-family:var(--font-m);font-size:.45rem;color:var(--text3);display:block;margin-bottom:6px">BANNIÈRE</label>
-          <select id="gacha-img-sel" style="width:100%;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.06);color:var(--text);padding:8px 12px;border-radius:6px;font-family:var(--font-b);font-size:.75rem"></select>
-        </div>
-        <div>
-          <label style="font-family:var(--font-m);font-size:.45rem;color:var(--text3);display:block;margin-bottom:6px">URL IMAGE</label>
-          <input id="gacha-img-url" type="text" placeholder="https://..." style="width:100%;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.06);color:var(--text);padding:8px 12px;border-radius:6px;font-family:var(--font-b);font-size:.75rem">
-        </div>
-      </div>
-      <button class="action-btn view" onclick="gachaSetImage()" style="padding:10px 20px;font-size:.6rem;border-color:rgba(139,92,246,.2);color:var(--violet)">🖼 Appliquer l'image</button>
-    </div>
   </div>
 
   <div class="tab-content" id="tab-logs" x-show="tab==='logs'" x-cloak>
@@ -376,76 +209,7 @@ function renderTable(containerId,fiches){const el=document.getElementById(contai
 function renderPNJTable(pnjs){const el=document.getElementById('table-pnj');const role=window._adminRole||'modo';const catColors={politique:'#60a5fa',mystique:'#b06eff',ennemi:'#ff3030',allie:'#34d399',neutre:'#fbbf24'};const catLabels={politique:'Politique',mystique:'Mystique',ennemi:'Ennemi',allie:'Allié',neutre:'Neutre'};if(!pnjs.length){el.innerHTML=`<div class="empty-list"><span class="empty-list-icon">◆</span>Aucun PNJ créé.</div>`;return;}el.innerHTML='';pnjs.forEach(p=>{const c=catColors[p.category]||'#00c8ff';const cl=catLabels[p.category]||p.category;const name=(`${p.prenom||''} ${p.nom||''}`).trim()||'(sans nom)';const date=p.createdAt?.toDate?p.createdAt.toDate().toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'}):'–';const safeName=name.replace(/'/g,"\\'");const row=document.createElement('div');row.className='fiche-row';const thumb=document.createElement('div');thumb.className='fiche-thumb';if(p.photoUrl){const img=document.createElement('img');img.src=p.photoUrl;img.loading='lazy';img.onerror=()=>{thumb.innerHTML=`<div class="fiche-thumb-ph" style="background:linear-gradient(135deg,${c}18,#06060c);color:${c}">${name[0]||'?'}</div>`;};thumb.appendChild(img);}else{thumb.innerHTML=`<div class="fiche-thumb-ph" style="background:linear-gradient(135deg,${c}18,#06060c);color:${c}">${name[0]||'?'}</div>`;}row.appendChild(thumb);const info=document.createElement('div');info.className='fiche-info';info.innerHTML=`<div class="fiche-name">${name}</div><div class="fiche-meta"><span class="fiche-tag" style="color:${c};border-color:${c}44;background:${c}0e">${cl}</span>${p.race?`<span class="fiche-tag" style="color:var(--muted);border-color:rgba(90,122,144,0.3)">${p.race}</span>`:''}${p.danger?`<span class="fiche-tag" style="color:var(--muted);border-color:rgba(90,122,144,0.25)">${p.danger}</span>`:''}</div><div class="fiche-desc">${p.desc||''}</div>${p.titre?`<div style="font-family:'Rajdhani',sans-serif;font-size:.56rem;color:${c};margin-top:3px">// ${p.titre}</div>`:''}<div class="fiche-date">Créé le ${date}</div>`;row.appendChild(info);const actions=document.createElement('div');actions.className='fiche-actions';actions.innerHTML=`<div class="fiche-actions-row"><a href="pnj.html" target="_blank" class="action-btn view">↗ Page PNJ</a>${role==='admin'?`<button class="action-btn delete" onclick="deletePNJ('${p.id}','${safeName}')">✕ Suppr.</button>`:''}</div>`;row.appendChild(actions);el.appendChild(row);});}
 function renderLogs(logs){const el=document.getElementById('table-logs');document.getElementById('lbl-logs').textContent=logs.length+' action'+(logs.length>1?'s':'');const LABELS={validate:'✓ Ajouter',delete:'✕ Supprimer',delete_pnj:'✕ Suppr. PNJ'};const header=el.querySelector('.log-row-header');el.innerHTML='';if(header)el.appendChild(header);if(!logs.length){el.innerHTML+='<div class="empty-list"><span class="empty-list-icon">⬡</span>Aucune action loguée.</div>';return;}logs.forEach(l=>{const date=l.at?.toDate?l.at.toDate().toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}):'–';const row=document.createElement('div');row.className='log-row';row.innerHTML=`<span class="log-action ${l.action||''}">${LABELS[l.action]||l.action||'?'}</span><span class="log-role-${l.role||'modo'}">${(l.role||'?').toUpperCase()}</span><span class="log-target" title="${l.targetName||''}">${l.targetName||l.targetId||'?'}</span><span class="log-by" title="${l.byEmail||''}">${l.byName||l.byEmail||'?'}</span><span class="log-date">${date}</span>`;el.appendChild(row);});}
 
-/* ═══ Admin Races Grid ═══ */
-function renderAdminRaces(){var grid=document.getElementById('admin-races-grid');if(!grid)return;var RS=window.RACES_SPECIFIC||{};var RC=window.RACES||{};grid.innerHTML='';Object.keys(RS).forEach(function(group){var gc=RC[group]||{color:'#00f0ff'};RS[group].forEach(function(name){var card=document.createElement('div');card.style.cssText='background:rgba(0,240,255,0.03);border:1px solid rgba(0,240,255,0.1);border-radius:4px;padding:12px 16px;cursor:pointer;transition:all .2s;border-left:3px solid '+gc.color;card.innerHTML='<div style="font-family:Orbitron,sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.1em;color:#fff">'+name+'</div><div style="font-family:Rajdhani,sans-serif;font-size:.58rem;color:'+gc.color+';letter-spacing:.08em;margin-top:3px">'+(gc.label||group)+'</div>';card.onmouseenter=function(){card.style.borderColor=gc.color;card.style.transform='translateY(-2px)';};card.onmouseleave=function(){card.style.borderColor='rgba(0,240,255,0.1)';card.style.transform='none';};card.onclick=function(){window.open('racesjouables.html','_blank');};grid.appendChild(card);});});
-}
-setTimeout(renderAdminRaces,500);
 </script>
-<script src="js/script.js"></script>
-<script>(function(){var t=document.getElementById('nav-toggle'),n=document.getElementById('nav-links');if(!t||!n)return;t.addEventListener('click',function(){var o=n.classList.toggle('open');t.textContent=o?'\u2715':'\u2630';});document.addEventListener('click',function(e){if(!n.contains(e.target)&&!t.contains(e.target)){n.classList.remove('open');t.textContent='\u2630';}});})();</script>
 <script src="js/page-transition.js"></script>
-<script src="js/kanji-blob.js"></script>
-<script src="js/music-player.js"></script>
-<script>
-/* ═══ GACHA ADMIN — Bot API connection ═══ */
-const GACHA_API=window.location.hostname==='localhost'?'http://localhost:5039':'http://87.106.63.126:5039';
-function gachaToken(){return localStorage.getItem('gacha_jwt')}
-async function gachaFetch(path,opts={}){
-  const t=gachaToken();if(!t){document.getElementById('gacha-admin-status').textContent='⚠ Connecte-toi d\'abord sur la page Gacha avec Discord.';return null}
-  const h={'Content-Type':'application/json','Authorization':'Bearer '+t,...(opts.headers||{})};
-  try{const r=await fetch(GACHA_API+path,{...opts,headers:h});return await r.json()}catch(e){console.error('[GACHA]',e);return null}
-}
-let allBannerIds=[];
-async function gachaLoadAdmin(){
-  const st=document.getElementById('gacha-admin-status');
-  const data=await gachaFetch('/api/banners');
-  if(!data){st.textContent='⚠ API bot inaccessible. Vérifie que le bot tourne et que gacha_api.py est chargé.';return}
-  st.textContent='✓ Connecté à l\'API bot — '+data.banners.length+' bannière(s) chargées';
-  st.style.color='var(--green)';
-  const banners=data.banners||[];
-  const rot=data.rotation||{};
-  // Collect all banner IDs
-  allBannerIds=banners.map(b=>b.id);
-  // Display active/next
-  const active=banners.filter(b=>b.status==='live');
-  const next=banners.filter(b=>b.status==='next');
-  document.getElementById('gacha-active-list').innerHTML=active.map(b=>`<div style="margin-bottom:4px">• <strong>${b.name}</strong> <span style="font-size:.6rem;color:var(--text3)">(${b.id})</span></div>`).join('')||'—';
-  document.getElementById('gacha-next-list').innerHTML=next.map(b=>`<div style="margin-bottom:4px">• <strong>${b.name}</strong> <span style="font-size:.6rem;color:var(--text3)">(${b.id})</span></div>`).join('')||'—';
-  // Fill selects
-  const opts=banners.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
-  ['gacha-sel-a1','gacha-sel-a2','gacha-sel-n1','gacha-sel-n2','gacha-img-sel'].forEach(id=>{document.getElementById(id).innerHTML=opts});
-  // Pre-select current rotation
-  if(active[0])document.getElementById('gacha-sel-a1').value=active[0].id;
-  if(active[1])document.getElementById('gacha-sel-a2').value=active[1].id;
-  if(next[0])document.getElementById('gacha-sel-n1').value=next[0].id;
-  if(next[1])document.getElementById('gacha-sel-n2').value=next[1].id;
-}
-async function gachaForceRotation(){
-  if(!confirm('Forcer la rotation des bannières ?'))return;
-  const r=await gachaFetch('/api/admin/rotate',{method:'POST',body:'{}'});
-  if(r&&!r.error){showToast('Rotation forcée !','success');gachaLoadAdmin()}
-  else showToast(r?.error||'Erreur','error');
-}
-async function gachaSetBanners(){
-  const a=[document.getElementById('gacha-sel-a1').value,document.getElementById('gacha-sel-a2').value];
-  const n=[document.getElementById('gacha-sel-n1').value,document.getElementById('gacha-sel-n2').value];
-  const r=await gachaFetch('/api/admin/set-banners',{method:'POST',body:JSON.stringify({active:a,next:n})});
-  if(r&&!r.error){showToast('Bannières mises à jour !','success');gachaLoadAdmin()}
-  else showToast(r?.error||'Erreur','error');
-}
-async function gachaSetImage(){
-  const bid=document.getElementById('gacha-img-sel').value;
-  const url=document.getElementById('gacha-img-url').value.trim();
-  if(!bid){showToast('Sélectionne une bannière','error');return}
-  const r=await gachaFetch('/api/admin/set-image',{method:'POST',body:JSON.stringify({banner_id:bid,image_url:url})});
-  if(r&&!r.error){showToast('Image mise à jour !','success');document.getElementById('gacha-img-url').value=''}
-  else showToast(r?.error||'Erreur','error');
-}
-// Auto-load gacha data when tab is shown
-const _origSetTab=window._setAdminTab;
-window._setAdminTab=function(data){if(_origSetTab)_origSetTab(data);setTimeout(gachaLoadAdmin,200)};
-// Also load if tab is clicked manually
-document.addEventListener('click',e=>{if(e.target.textContent?.includes('Gacha'))setTimeout(gachaLoadAdmin,100)});
-</script>
 </body>
 </html>

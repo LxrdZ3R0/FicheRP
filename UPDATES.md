@@ -6,6 +6,72 @@
 
 ---
 
+## [2026-04-07] — Refactoring navigation & restructuration panel admin
+
+### Contexte
+
+Le bouton d'accès au panel admin était visible en pleine barre de navigation sur toutes les pages du site, ce qui n'avait aucun sens : il s'agit d'un accès réservé aux membres du staff, pas d'un lien de navigation public. Par ailleurs, `admin.html` contenait des onglets et scripts devenus obsolètes (API bot externe, onglet Races redondant) ainsi qu'un double bloc CSS.
+
+### Fichiers modifiés
+
+#### `docs/index.html`
+
+**Avant** : lien `<a href="admin.html" class="admin-badge" id="admin-badge">ADMIN</a>` affiché dans la barre de navigation principale, et lien "Admin" dans le menu burger mobile (item 08).
+
+**Après** :
+- Badge ADMIN supprimé de la navbar
+- Lien supprimé du menu burger mobile
+- Ajout d'un lien discret `⚙ STAFF` dans la zone copyright du footer, à 40% d'opacité — visible uniquement pour qui sait où chercher
+
+---
+
+#### `docs/fiches.html`, `pnj.html`, `portail.html`, `racesjouables.html`, `gacha.html`, `hub.html`
+
+**Avant** : chaque page avait les trois composants admin dans sa nav : `.nav-admin-link` dans `.nav-links`, `.admin-badge` entre le nav-links et le burger, et le lien `#menu-admin-link` dans le menu mobile.
+
+**Après** : tous supprimés sur les 6 pages. Ces pages ne contiennent plus aucune référence à `admin.html` dans leur navigation.
+
+---
+
+#### `docs/admin.html`
+
+**CSS — supprimé** : le bloc `/* NEW ADMIN DESIGN */` (~85 lignes) était un doublon du bloc `/* ORIGINAL ADMIN CSS */` qui le suivait dans le même `<style>`. Les deux blocs redéfinissaient les mêmes classes (`.login-box`, `.admin-header`, `.admin-stats`, etc.), le bloc ORIGINAL l'emportant en cascade. Seul le bloc ORIGINAL est conservé.
+
+**Onglet Gacha — supprimé** :
+- Connectait à une API bot externe (`http://87.106.63.126:5039`) via JWT stocké en localStorage
+- Permettait de forcer la rotation des bannières et d'assigner des images
+- Fonctions supprimées : `gachaFetch()`, `gachaLoadAdmin()`, `gachaForceRotation()`, `gachaSetBanners()`, `gachaSetImage()`
+- Éléments HTML supprimés : `#tab-gacha`, `#gacha-admin-status`, `#gacha-rotation-grid`, les 4 `<select>` de sélection de bannières, `#gacha-img-url`
+
+**Onglet Races — supprimé** :
+- Affichait une grille read-only des races depuis `window.RACES_SPECIFIC` et renvoyait vers `racesjouables.html`
+- Aucune action admin réelle — totalement redondant avec la page publique
+- Fonctions supprimées : `renderAdminRaces()` + `setTimeout(renderAdminRaces, 500)`
+- Éléments HTML supprimés : `#tab-races`, `#admin-races-grid`
+
+**Scripts inutiles — supprimés** :
+- `js/script.js` — script de navigation du site public (toggle burger), sans objet dans le panel admin
+- `js/kanji-blob.js` — animation Three.js du blob Gacha, sans objet dans le panel admin
+- `js/music-player.js` — lecteur audio, sans objet dans le panel admin
+- Script inline `nav-toggle` (IIFE) — référençait `nav-toggle` et `nav-links` qui n'existent pas dans admin.html
+
+**État Alpine.js** : `racesVisible` supprimé de `x-data` et de `_setAdminTab()`. Seul `logsVisible` (contrôle l'onglet Logs, visible admins uniquement) subsiste.
+
+**Panel restant : 3 onglets actifs** — Fiches · PNJ · Logs
+
+---
+
+### État après modification
+
+| Élément | Avant | Après |
+|---------|-------|-------|
+| Accès admin depuis les pages publiques | Badge dans la navbar de **toutes** les pages | Lien discret dans le footer de `index.html` **uniquement** |
+| Onglets admin | Fiches · PNJ · Races · Gacha · Logs | **Fiches · PNJ · Logs** |
+| CSS admin.html | 2 blocs CSS dupliqués | 1 seul bloc CSS |
+| Scripts inclus dans admin.html | debug + constants + utils + Alpine + script.js + page-transition + kanji-blob + music-player | **debug + constants + utils + Alpine + page-transition** |
+
+---
+
 ## [2026-04-06] — Refactoring sécurité : suppression du système VIP Discord IDs
 
 ### Contexte (pourquoi ce changement était urgent)

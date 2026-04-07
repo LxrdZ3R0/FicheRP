@@ -142,12 +142,15 @@ window.JImgCache.stats()                // {total, expired}
 - **Fonctions JS clés** : `renderInventory()`, `renderCharacterPanel()`, `initCharScanAnimation()`, `renderItemsGrid()`, `initDragDrop()`, `initTooltips()`, `toggleEquip()`, `showItemDetail()`, `closeItemDetail()`, `openDeleteModal()`, `closeDeleteModal()`, `confirmDelete()`
 
 ### Panel Admin (`admin.html`)
+- Accès : lien discret `⚙ STAFF` dans le footer de `index.html` uniquement — **absent de toutes les navbars**
 - Auth Firebase (Google uniquement via `signInWithPopup`) + vérification `admins/{uid}` en Firestore
 - Si l'UID n'existe pas dans `/admins` → `auth.signOut()` immédiat + message "Accès refusé"
-- Rôle `admin` : valider / rejeter / supprimer fiches + voir logs
-- Rôle `modo` : valider / rejeter uniquement
-- Alpine.js pour la réactivité des onglets
+- Rôle `admin` : supprimer fiches + voir logs
+- Rôle `modo` : lecture seule (fiches + PNJ)
+- Onglets : **Fiches** · **PNJ** · **Logs** (Logs visible admins uniquement)
+- Alpine.js pour la réactivité des onglets (`logsVisible` contrôle l'onglet Logs)
 - **⚠ SUPPRIMÉ** : bypass VIP Discord IDs — `window._isAdmin` est exclusivement contrôlé par Firebase Auth
+- **⚠ SUPPRIMÉ** : onglet Gacha (API bot externe) + onglet Races (redondant)
 
 ---
 
