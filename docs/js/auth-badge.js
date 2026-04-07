@@ -19,6 +19,8 @@ import { initializeApp, getApps }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, doc, getDoc }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const cfg = {
   apiKey:            "AIzaSyAru7qZX8Gu_b8Y3oNDV-a5PmkrrkRjkcs",
@@ -33,20 +35,32 @@ const cfg = {
    sinon en crée une nouvelle (index, portail, racesjouables) */
 const app  = getApps().length ? getApps()[0] : initializeApp(cfg);
 const auth = getAuth(app);
+const db   = getFirestore(app);
 
-onAuthStateChanged(auth, user => {
+onAuthStateChanged(auth, async user => {
 
-  /* ── État admin global (Firebase auth uniquement) ── */
-  window._isAdmin = !!user;
+  /* ── Vérification whitelist admin dans Firestore ──────────────────────
+     window._isAdmin = true UNIQUEMENT si l'UID existe dans admins/{uid}.
+     Un simple compte Google sans entrée Firestore n'est PAS admin.      */
+  let isAdmin = false;
+  if (user) {
+    try {
+      const snap = await getDoc(doc(db, 'admins', user.uid));
+      isAdmin = snap.exists();
+    } catch {
+      isAdmin = false; /* En cas d'erreur réseau, on refuse par défaut */
+    }
+  }
+  window._isAdmin = isAdmin;
 
-  /* ── Badge vert "ADMIN" dans le nav ── */
+  /* ── Badge vert "ADMIN" dans le nav (visible seulement si whitelist) ── */
   const badge = document.getElementById('admin-badge');
-  if (badge) badge.classList.toggle('visible', !!user);
+  if (badge) badge.classList.toggle('visible', isAdmin);
 
   /* ── Lien "⚙ Connexion" / "⚙ Connecté" ── */
   const navLink = document.querySelector('.nav-admin-link');
   if (navLink) {
-    if (user) {
+    if (isAdmin) {
       navLink.textContent = '⚙ Connecté';
       navLink.removeAttribute('href');
       navLink.style.cursor  = 'default';
@@ -59,16 +73,16 @@ onAuthStateChanged(auth, user => {
     }
   }
 
-  /* ── Bouton "+ Ajouter une fiche" (fiches.html) ── */
+  /* ── Bouton "+ Ajouter une fiche" — réservé aux admins whitelistés ── */
   const addBtn = document.getElementById('add-char-btn');
-  if (addBtn) addBtn.style.display = user ? 'inline-flex' : 'none';
+  if (addBtn) addBtn.style.display = isAdmin ? 'inline-flex' : 'none';
 
   /* ── Lien Admin dans le menu mobile ── */
   const menuAdminLink = document.getElementById('menu-admin-link');
-  if (menuAdminLink) menuAdminLink.style.display = user ? '' : 'none';
+  if (menuAdminLink) menuAdminLink.style.display = isAdmin ? '' : 'none';
 
   /* ── Dispatch un event custom pour les scripts non-module ──
      Permet à n'importe quelle page d'écouter :
-     document.addEventListener('jaharta:auth', e => { if(e.detail.user) ... }) */
-  document.dispatchEvent(new CustomEvent('jaharta:auth', { detail: { user } }));
+     document.addEventListener('jaharta:auth', e => { if(e.detail.isAdmin) ... }) */
+  document.dispatchEvent(new CustomEvent('jaharta:auth', { detail: { user, isAdmin } }));
 });

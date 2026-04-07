@@ -30,11 +30,19 @@ window._serverTimestamp=serverTimestamp;
 window._ref=ref;window._uploadBytes=uploadBytes;window._getDownloadURL=getDownloadURL;
 window._isAdmin=false;
 
-onAuthStateChanged(auth,user=>{
-  window._isAdmin=!!user;
-  document.querySelectorAll('.card-admin-row').forEach(el=>el.style.display=user?'flex':'none');
+onAuthStateChanged(auth,async user=>{
+  /* Vérification whitelist — _isAdmin = true seulement si l'UID est dans admins/{uid} */
+  let isAdmin=false;
+  if(user){
+    try{
+      const snap=await getDoc(doc(db,'admins',user.uid));
+      isAdmin=snap.exists();
+    }catch{isAdmin=false;}
+  }
+  window._isAdmin=isAdmin;
+  document.querySelectorAll('.card-admin-row').forEach(el=>el.style.display=isAdmin?'flex':'none');
   const btn=document.getElementById('add-char-btn');
-  if(btn)btn.style.display=user?'inline-flex':'none';
+  if(btn)btn.style.display=isAdmin?'inline-flex':'none';
 });
 
 /* ── Constants ── */
@@ -534,13 +542,17 @@ function buildCard(ch){
     ps.appendChild(pl);body.appendChild(ps);
   }
 
-  /* Liens */
+  /* Liens — seuls http(s) autorisés (anti javascript: XSS) */
   const links=(ch.links&&ch.links.length?ch.links:null)||(ch.linkUrl?[{t:ch.linkType||'Fiche',h:ch.linkUrl}]:[]);
   if(links.length){
     const ld=document.createElement('div');ld.className='card-links';
     links.forEach(l=>{
+      const rawHref=l.h||'';
+      let safeHref='#';
+      try{const u=new URL(rawHref);if(u.protocol==='https:'||u.protocol==='http:')safeHref=rawHref;}catch{}
       const a=document.createElement('a');a.className='lbtn';
-      a.href=l.h||'#';a.target='_blank';a.textContent=l.t||'Lien';
+      a.href=safeHref;a.target='_blank';a.rel='noopener noreferrer';
+      a.textContent=l.t||'Lien';
       ld.appendChild(a);
     });
     body.appendChild(ld);
@@ -1055,8 +1067,8 @@ body::before{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;
     <a href="portail.html">Portail</a>
     <a href="racesjouables.html">Races</a>
     <a href="gacha.html">Gacha</a>
-    <a href="hub.html">Hub</a>
-  </div>
+    <a href="hub.html">Hub</a>
+  </div>
   <button class="burger" id="burger" aria-label="Menu" aria-expanded="false"><span class="burger-line"></span><span class="burger-line"></span><span class="burger-line"></span></button>
 </nav>
 <!-- MOBILE MENU -->
@@ -1069,7 +1081,7 @@ body::before{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;
     <a href="portail.html" class="menu-link"><span class="menu-link-index">04</span><span class="menu-link-text">Portail</span><span class="menu-link-arrow">→</span></a>
     <a href="racesjouables.html" class="menu-link"><span class="menu-link-index">05</span><span class="menu-link-text">Races</span><span class="menu-link-arrow">→</span></a>
     <a href="gacha.html" class="menu-link"><span class="menu-link-index">06</span><span class="menu-link-text">Gacha</span><span class="menu-link-arrow">→</span></a>
-    <a href="hub.html" class="menu-link"><span class="menu-link-index">07</span><span class="menu-link-text">Hub</span><span class="menu-link-arrow">→</span></a>
+    <a href="hub.html" class="menu-link"><span class="menu-link-index">07</span><span class="menu-link-text">Hub</span><span class="menu-link-arrow">→</span></a>
   </div>
   <div class="menu-deco"></div>
 </div>

@@ -1100,8 +1100,8 @@ html { scroll-behavior: smooth; }
     <a href="pnj.html">PNJ</a>
     <a href="portail.html">Portail</a>
     <a href="racesjouables.html">Races</a>
-    <a href="gacha.html" class="active">Gacha</a>
-  </div>
+    <a href="gacha.html" class="active">Gacha</a>
+  </div>
   <button class="burger" id="burger" aria-label="Menu" aria-expanded="false"><span class="burger-line"></span><span class="burger-line"></span><span class="burger-line"></span></button>
 </nav>
 <!-- MOBILE MENU -->
@@ -1114,7 +1114,7 @@ html { scroll-behavior: smooth; }
     <a href="portail.html" class="menu-link"><span class="menu-link-index">04</span><span class="menu-link-text">Portail</span><span class="menu-link-arrow">→</span></a>
     <a href="racesjouables.html" class="menu-link"><span class="menu-link-index">05</span><span class="menu-link-text">Races</span><span class="menu-link-arrow">→</span></a>
     <a href="gacha.html" class="menu-link active"><span class="menu-link-index">06</span><span class="menu-link-text">Gacha</span><span class="menu-link-arrow">→</span></a>
-    <a href="hub.html" class="menu-link"><span class="menu-link-index">07</span><span class="menu-link-text">Hub</span><span class="menu-link-arrow">→</span></a>
+    <a href="hub.html" class="menu-link"><span class="menu-link-index">07</span><span class="menu-link-text">Hub</span><span class="menu-link-arrow">→</span></a>
   </div>
   <div class="menu-deco"></div>
 </div>
@@ -1549,17 +1549,22 @@ function bannerAccent(id,name){
 const prefersReducedMotion=window.matchMedia('(prefers-reduced-motion:reduce)').matches;
 let U=null,SB=null,BANNERS=[];
 
-// ═══ SESSION (localStorage) ═══
+// ═══ SESSION (localStorage) — TTL 7 jours ═══
+const SESSION_TTL_MS=7*24*60*60*1000;
 function getSession(){
-  // Lire gacha_session OU hub_session (partagé avec le hub)
   try{
-    return JSON.parse(localStorage.getItem('gacha_session'))
-        || JSON.parse(localStorage.getItem('hub_session'));
-  }catch(e){return null}
+    const raw=localStorage.getItem('gacha_session')||localStorage.getItem('hub_session');
+    if(!raw)return null;
+    const s=JSON.parse(raw);
+    /* Rejeter les sessions expirées */
+    if(s._exp&&Date.now()>s._exp){clearSession();return null;}
+    return s;
+  }catch{return null;}
 }
 function setSession(s){
-  localStorage.setItem('gacha_session',JSON.stringify(s));
-  localStorage.setItem('hub_session',JSON.stringify(s)); // sync avec le hub
+  const payload={...s,_exp:Date.now()+SESSION_TTL_MS};
+  localStorage.setItem('gacha_session',JSON.stringify(payload));
+  localStorage.setItem('hub_session',JSON.stringify(payload));
 }
 function clearSession(){
   localStorage.removeItem('gacha_session');
@@ -1576,26 +1581,27 @@ async function verifyCode(){
   if(!code||code.length<5){showCodeError('Entre un code valide');return}
   spinner.style.display='inline-block';
   try{
-    const snap=await db.collection('gacha_link_codes').doc(code).get();
-    if(!snap.exists){showCodeError('Code invalide ou déjà utilisé');spinner.style.display='none';return}
-    const data=snap.data();
-    // Check expiry
-    if(data.expires_at&&new Date(data.expires_at)<new Date()){
-      showCodeError('Code expiré — utilise /link pour en générer un nouveau');
-      spinner.style.display='none';
-      db.collection('gacha_link_codes').doc(code).delete();
-      return;
-    }
-    // Save session
-    setSession({id:data.discord_id,username:data.username,avatar:data.avatar_url});
-    // Delete used code
-    db.collection('gacha_link_codes').doc(code).delete();
+    /* ── Transaction atomique : lecture + suppression en une seule opération ──
+       Empêche la réutilisation du même code par deux onglets simultanés (TOCTOU). */
+    const codeRef=db.collection('gacha_link_codes').doc(code);
+    let sessionData=null;
+    await db.runTransaction(async(tx)=>{
+      const snap=await tx.get(codeRef);
+      if(!snap.exists)throw Object.assign(new Error('Code invalide ou déjà utilisé'),{_userMsg:true});
+      const data=snap.data();
+      if(data.expires_at&&new Date(data.expires_at)<new Date()){
+        tx.delete(codeRef);
+        throw Object.assign(new Error('Code expiré — utilise /link pour en générer un nouveau'),{_userMsg:true});
+      }
+      tx.delete(codeRef);
+      sessionData={id:data.discord_id,username:data.username,avatar:data.avatar_url};
+    });
+    setSession(sessionData);
     spinner.style.display='none';
-    // Load everything
     await loadAndShow();
   }catch(e){
-    console.error('[AUTH]',e);
-    showCodeError('Erreur de connexion — réessaye');
+    const msg=e._userMsg?e.message:'Erreur de connexion — réessaye';
+    showCodeError(msg);
     spinner.style.display='none';
   }
 }

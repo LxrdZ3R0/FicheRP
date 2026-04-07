@@ -229,17 +229,26 @@
       CONSOLE_ERR: '#e040fb',
     };
 
+    /* Échappement HTML pour les valeurs affichées via innerHTML */
+    function esc(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
     /* Affiche les logs du plus récent au plus ancien */
     list.innerHTML = [...logs].reverse().map(e => {
       const color = typeColors[e.type] || '#00f5ff';
+      /* e.type provient du logger interne — safe. e.msg/detail peuvent contenir
+         du texte arbitraire (messages d'erreur, noms Firestore) → escaper. */
       return `
         <div style="margin-bottom:6px; padding-bottom:6px; border-bottom:1px solid rgba(255,255,255,.05);">
-          <span style="color:${color}">[${e.type}]</span>
-          <span style="color:#5a7a90"> ${e.t} · ${e.page}</span><br>
-          <span style="color:#c8e0f0; word-break:break-word">${e.msg}</span>
+          <span style="color:${color}">[${esc(e.type)}]</span>
+          <span style="color:#5a7a90"> ${esc(e.t)} · ${esc(e.page)}</span><br>
+          <span style="color:#c8e0f0; word-break:break-word">${esc(e.msg)}</span>
           ${e.detail
             ? `<div style="color:#5a7a90; font-size:10px; margin-top:2px; word-break:break-word">
-                 ${e.detail.slice(0, 120)}...
+                 ${esc(e.detail.slice(0, 120))}...
                </div>`
             : ''}
         </div>

@@ -934,9 +934,9 @@ body::after{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;o
     <a href="portail.html">Portail</a>
     <a href="racesjouables.html">Races</a>
     <a href="gacha.html">Gacha</a>
-    <a href="hub.html" class="active">Hub</a>
+    <a href="hub.html" class="active">Hub</a>
   </div>
-  <div class="nav-right">
+  <div class="nav-right">
     <img src="" alt="" class="nav-avatar" id="nav-avatar">
     <span class="nav-username" id="nav-username"></span>
     <button class="burger" id="burger" aria-label="Menu" aria-expanded="false">
@@ -957,7 +957,7 @@ body::after{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;o
     <a href="portail.html" class="menu-link"><span class="menu-link-index">04</span><span class="menu-link-text">Portail</span><span class="menu-link-arrow">→</span></a>
     <a href="racesjouables.html" class="menu-link"><span class="menu-link-index">05</span><span class="menu-link-text">Races</span><span class="menu-link-arrow">→</span></a>
     <a href="gacha.html" class="menu-link"><span class="menu-link-index">06</span><span class="menu-link-text">Gacha</span><span class="menu-link-arrow">→</span></a>
-    <a href="hub.html" class="menu-link active"><span class="menu-link-index">07</span><span class="menu-link-text">Hub</span><span class="menu-link-arrow">→</span></a>
+    <a href="hub.html" class="menu-link active"><span class="menu-link-index">07</span><span class="menu-link-text">Hub</span><span class="menu-link-arrow">→</span></a>
   </div>
   <div class="menu-user-section">
     <div>
@@ -1529,9 +1529,23 @@ async function cachedCollection(collection,cacheKey,ttl){
   return docs;
 }
 
-// ── SESSION (partagée gacha ↔ hub) ──
-function getSess(){try{return JSON.parse(localStorage.getItem('hub_session'))||JSON.parse(localStorage.getItem('gacha_session'))}catch(e){return null}}
-function setSess(s){localStorage.setItem('hub_session',JSON.stringify(s));localStorage.setItem('gacha_session',JSON.stringify(s))}
+// ── SESSION (partagée gacha ↔ hub) — TTL 7 jours ──
+const SESSION_TTL=7*24*60*60*1000;
+function getSess(){
+  try{
+    const raw=localStorage.getItem('hub_session')||localStorage.getItem('gacha_session');
+    if(!raw)return null;
+    const s=JSON.parse(raw);
+    /* Vérifier l'expiration de la session */
+    if(s._exp&&Date.now()>s._exp){clearSess();return null;}
+    return s;
+  }catch(e){return null}
+}
+function setSess(s){
+  const payload={...s,_exp:Date.now()+SESSION_TTL};
+  localStorage.setItem('hub_session',JSON.stringify(payload));
+  localStorage.setItem('gacha_session',JSON.stringify(payload));
+}
 function clearSess(){localStorage.removeItem('hub_session');localStorage.removeItem('gacha_session')}
 
 // ── AUTH ──
@@ -1541,17 +1555,31 @@ async function verifyCode(){
   const code=inp.value.trim().toUpperCase();
   if(!code||code.length<4){showErr('Entre un code valide');return}
   btn.disabled=true;btn.textContent='VÉRIFICATION...';
-  try{
-    const snap=await db.collection(C.LINK).doc(code).get();
-    if(!snap.exists){showErr('Code invalide ou déjà utilisé');done();return}
-    const d=snap.data();
-    if(d.expires_at&&new Date(d.expires_at)<new Date()){showErr('Code expiré — utilise /link');db.collection(C.LINK).doc(code).delete();done();return}
-    setSess({id:d.discord_id,username:d.username,avatar:d.avatar_url});
-    db.collection(C.LINK).doc(code).delete();
-    await loadHub();
-  }catch(e){console.error('[AUTH]',e);showErr('Erreur de connexion — réessaye');done()}
   function showErr(m){err.textContent=m;err.style.display='block'}
   function done(){btn.disabled=false;btn.textContent='CONNEXION AU NEXUS'}
+  try{
+    /* ── Transaction atomique : lecture + suppression en une seule opération ──
+       Empêche la réutilisation du même code par deux onglets simultanés (TOCTOU). */
+    const codeRef=db.collection(C.LINK).doc(code);
+    let sessionData=null;
+    await db.runTransaction(async(tx)=>{
+      const snap=await tx.get(codeRef);
+      if(!snap.exists)throw Object.assign(new Error('Code invalide ou déjà utilisé'),{_userMsg:true});
+      const d=snap.data();
+      if(d.expires_at&&new Date(d.expires_at)<new Date()){
+        tx.delete(codeRef);
+        throw Object.assign(new Error('Code expiré — utilise /link'),{_userMsg:true});
+      }
+      /* Marquer utilisé dans la transaction AVANT de retourner les données */
+      tx.delete(codeRef);
+      sessionData={id:d.discord_id,username:d.username,avatar:d.avatar_url};
+    });
+    setSess(sessionData);
+    await loadHub();
+  }catch(e){
+    const msg=e._userMsg?e.message:'Erreur de connexion — réessaye';
+    showErr(msg);done();
+  }
 }
 document.addEventListener('DOMContentLoaded',function(){
   const lc=document.getElementById('link-code');

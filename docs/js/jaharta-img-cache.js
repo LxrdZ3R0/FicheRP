@@ -32,15 +32,28 @@
         if (!raw) return null;
         var entry = JSON.parse(raw);
         if (Date.now() > entry.exp) { localStorage.removeItem(PREFIX + key); return null; }
+        /* Re-valider l'URL au moment de la lecture — protège contre les
+           modifications manuelles du localStorage entre les sessions. */
+        if (!this._isSafeUrl(entry.url)) { localStorage.removeItem(PREFIX + key); return null; }
         return entry.url;
       } catch (e) {
         return null;
       }
     },
 
+    /* ── Validation URL (anti-manipulation localStorage) ── */
+    _isSafeUrl: function(url) {
+      if (!url || typeof url !== 'string') return false;
+      /* Accepte uniquement les URLs Firebase Storage et les data: images compressées */
+      return url.startsWith('https://firebasestorage.googleapis.com/') ||
+             url.startsWith('https://storage.googleapis.com/');
+    },
+
     /* ── Écriture ── */
     set: function(key, url) {
       if (!url) return;
+      /* Rejette silencieusement les URLs non-Firebase pour éviter l'injection */
+      if (!this._isSafeUrl(url)) return;
       var payload = JSON.stringify({ url: url, exp: Date.now() + TTL });
       try {
         localStorage.setItem(PREFIX + key, payload);

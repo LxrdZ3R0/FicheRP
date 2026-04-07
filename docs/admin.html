@@ -204,10 +204,227 @@ function renderAdminHeader(){if(!currentAdmin)return;document.getElementById('ad
 </div>
 
 <script>
-/* ═══ Original admin.html non-module JS — preserved ═══ */
-function renderTable(containerId,fiches){const el=document.getElementById(containerId);const role=window._adminRole||'modo';const canDelete=role==='admin';const lbl=document.getElementById('lbl-fiches');if(lbl)lbl.textContent=fiches.length+' fiche'+(fiches.length>1?'s':'');if(!fiches.length){el.innerHTML='<div class="empty-list"><span class="empty-list-icon">◈</span>Aucune fiche pour le moment.</div>';return;}el.innerHTML='';fiches.forEach(f=>{const rc=window.RACES?.[f.race]||{color:'#00c8ff',label:f.race||'?'};const rk=window.RANKS?.[f.rank]||{color:'#6b7280'};const name=(`${f.firstname||''} ${f.lastname||''}`).trim()||'(sans nom)';const date=f.createdAt?.toDate?f.createdAt.toDate().toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'–';const safeName=name.replace(/'/g,"\\'");const row=document.createElement('div');row.className='fiche-row';const thumb=document.createElement('div');thumb.className='fiche-thumb';if(f.photoUrl){const img=document.createElement('img');img.src=f.photoUrl;img.loading='lazy';img.onerror=()=>{thumb.innerHTML=`<div class="fiche-thumb-ph" style="background:linear-gradient(135deg,${rc.color}18,#06060c);color:${rc.color}">${name[0]||'?'}</div>`;};thumb.appendChild(img);}else{thumb.innerHTML=`<div class="fiche-thumb-ph" style="background:linear-gradient(135deg,${rc.color}18,#06060c);color:${rc.color}">${name[0]||'?'}</div>`;}row.appendChild(thumb);const info=document.createElement('div');info.className='fiche-info';info.innerHTML=`<div class="fiche-name">${name}</div><div class="fiche-meta"><span class="fiche-tag" style="color:${rc.color};border-color:${rc.color}44;background:${rc.color}0e">${rc.label}</span><span class="fiche-tag" style="color:${rk.color};border-color:${rk.color}44;background:${rk.color}0e">Rang ${f.rank||'?'}</span>${f.age?`<span class="fiche-tag" style="color:var(--muted);border-color:rgba(90,122,144,0.3)">${f.age}</span>`:''}</div><div class="fiche-desc">${f.desc||f.bio||''}</div><div class="fiche-discord">Discord : <span>@${f.discord||'?'}</span></div><div class="fiche-date">Ajouté le ${date}</div>`;row.appendChild(info);const actions=document.createElement('div');actions.className='fiche-actions';actions.innerHTML=`<div class="fiche-actions-row">${f.linkUrl?`<a href="${f.linkUrl}" target="_blank" class="action-btn view">↗ ${(function(u){if(!u)return"Fiche";var l=u.toLowerCase();if(l.includes("docs.google.com/document"))return"📄 GDoc";if(l.includes("sites.google.com"))return"🌐 GSite";if(l.includes("drive.google.com"))return"📁 GDrive";if(l.endsWith(".pdf"))return"📕 PDF";if(l.endsWith(".html"))return"🖥️ HTML";return"🔗 Fiche"})(f.linkUrl)}</a>`:''}${canDelete?`<button class="action-btn delete" onclick="deleteFiche('${f.id}','${safeName}')">✕ Supprimer</button>`:''}</div>`;row.appendChild(actions);el.appendChild(row);});}
-function renderPNJTable(pnjs){const el=document.getElementById('table-pnj');const role=window._adminRole||'modo';const catColors={politique:'#60a5fa',mystique:'#b06eff',ennemi:'#ff3030',allie:'#34d399',neutre:'#fbbf24'};const catLabels={politique:'Politique',mystique:'Mystique',ennemi:'Ennemi',allie:'Allié',neutre:'Neutre'};if(!pnjs.length){el.innerHTML=`<div class="empty-list"><span class="empty-list-icon">◆</span>Aucun PNJ créé.</div>`;return;}el.innerHTML='';pnjs.forEach(p=>{const c=catColors[p.category]||'#00c8ff';const cl=catLabels[p.category]||p.category;const name=(`${p.prenom||''} ${p.nom||''}`).trim()||'(sans nom)';const date=p.createdAt?.toDate?p.createdAt.toDate().toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'}):'–';const safeName=name.replace(/'/g,"\\'");const row=document.createElement('div');row.className='fiche-row';const thumb=document.createElement('div');thumb.className='fiche-thumb';if(p.photoUrl){const img=document.createElement('img');img.src=p.photoUrl;img.loading='lazy';img.onerror=()=>{thumb.innerHTML=`<div class="fiche-thumb-ph" style="background:linear-gradient(135deg,${c}18,#06060c);color:${c}">${name[0]||'?'}</div>`;};thumb.appendChild(img);}else{thumb.innerHTML=`<div class="fiche-thumb-ph" style="background:linear-gradient(135deg,${c}18,#06060c);color:${c}">${name[0]||'?'}</div>`;}row.appendChild(thumb);const info=document.createElement('div');info.className='fiche-info';info.innerHTML=`<div class="fiche-name">${name}</div><div class="fiche-meta"><span class="fiche-tag" style="color:${c};border-color:${c}44;background:${c}0e">${cl}</span>${p.race?`<span class="fiche-tag" style="color:var(--muted);border-color:rgba(90,122,144,0.3)">${p.race}</span>`:''}${p.danger?`<span class="fiche-tag" style="color:var(--muted);border-color:rgba(90,122,144,0.25)">${p.danger}</span>`:''}</div><div class="fiche-desc">${p.desc||''}</div>${p.titre?`<div style="font-family:'Rajdhani',sans-serif;font-size:.56rem;color:${c};margin-top:3px">// ${p.titre}</div>`:''}<div class="fiche-date">Créé le ${date}</div>`;row.appendChild(info);const actions=document.createElement('div');actions.className='fiche-actions';actions.innerHTML=`<div class="fiche-actions-row"><a href="pnj.html" target="_blank" class="action-btn view">↗ Page PNJ</a>${role==='admin'?`<button class="action-btn delete" onclick="deletePNJ('${p.id}','${safeName}')">✕ Suppr.</button>`:''}</div>`;row.appendChild(actions);el.appendChild(row);});}
-function renderLogs(logs){const el=document.getElementById('table-logs');document.getElementById('lbl-logs').textContent=logs.length+' action'+(logs.length>1?'s':'');const LABELS={validate:'✓ Ajouter',delete:'✕ Supprimer',delete_pnj:'✕ Suppr. PNJ'};const header=el.querySelector('.log-row-header');el.innerHTML='';if(header)el.appendChild(header);if(!logs.length){el.innerHTML+='<div class="empty-list"><span class="empty-list-icon">⬡</span>Aucune action loguée.</div>';return;}logs.forEach(l=>{const date=l.at?.toDate?l.at.toDate().toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}):'–';const row=document.createElement('div');row.className='log-row';row.innerHTML=`<span class="log-action ${l.action||''}">${LABELS[l.action]||l.action||'?'}</span><span class="log-role-${l.role||'modo'}">${(l.role||'?').toUpperCase()}</span><span class="log-target" title="${l.targetName||''}">${l.targetName||l.targetId||'?'}</span><span class="log-by" title="${l.byEmail||''}">${l.byName||l.byEmail||'?'}</span><span class="log-date">${date}</span>`;el.appendChild(row);});}
+/* ── Échappement HTML — protection XSS stocké ─────────────────────────────
+   À utiliser pour TOUTE donnée Firestore insérée dans innerHTML.
+   Convertit les caractères spéciaux en entités HTML.              ──────── */
+function escHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/* ── Validation URL — uniquement http(s) autorisés ─────────────────────── */
+function safeHref(url) {
+  if (!url) return null;
+  try {
+    const u = new URL(url);
+    return (u.protocol === 'https:' || u.protocol === 'http:') ? url : null;
+  } catch { return null; }
+}
+
+/* ── Label lien depuis URL ──────────────────────────────────────────────── */
+function linkLabel(u) {
+  if (!u) return 'Fiche';
+  const l = u.toLowerCase();
+  if (l.includes('docs.google.com/document')) return '📄 GDoc';
+  if (l.includes('sites.google.com')) return '🌐 GSite';
+  if (l.includes('drive.google.com')) return '📁 GDrive';
+  if (l.endsWith('.pdf')) return '📕 PDF';
+  if (l.endsWith('.html')) return '🖥️ HTML';
+  return '🔗 Fiche';
+}
+
+function renderTable(containerId, fiches) {
+  const el = document.getElementById(containerId);
+  const role = window._adminRole || 'modo';
+  const canDelete = role === 'admin';
+  const lbl = document.getElementById('lbl-fiches');
+  if (lbl) lbl.textContent = fiches.length + ' fiche' + (fiches.length > 1 ? 's' : '');
+  if (!fiches.length) { el.innerHTML = '<div class="empty-list"><span class="empty-list-icon">◈</span>Aucune fiche pour le moment.</div>'; return; }
+  el.innerHTML = '';
+  fiches.forEach(f => {
+    const rc = window.RACES?.[f.race] || { color: '#00c8ff', label: f.race || '?' };
+    const rk = window.RANKS?.[f.rank] || { color: '#6b7280' };
+    const name = (`${f.firstname || ''} ${f.lastname || ''}`).trim() || '(sans nom)';
+    const date = f.createdAt?.toDate ? f.createdAt.toDate().toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '–';
+
+    const row = document.createElement('div');
+    row.className = 'fiche-row';
+
+    /* Thumbnail — src est une URL Firebase Storage (domaine sûr) */
+    const thumb = document.createElement('div');
+    thumb.className = 'fiche-thumb';
+    if (f.photoUrl) {
+      const img = document.createElement('img');
+      img.src = f.photoUrl;
+      img.loading = 'lazy';
+      img.onerror = () => {
+        const ph = document.createElement('div');
+        ph.className = 'fiche-thumb-ph';
+        ph.style.cssText = `background:linear-gradient(135deg,${rc.color}18,#06060c);color:${rc.color}`;
+        ph.textContent = name[0] || '?';
+        thumb.replaceChildren(ph);
+      };
+      thumb.appendChild(img);
+    } else {
+      const ph = document.createElement('div');
+      ph.className = 'fiche-thumb-ph';
+      ph.style.cssText = `background:linear-gradient(135deg,${rc.color}18,#06060c);color:${rc.color}`;
+      ph.textContent = name[0] || '?';
+      thumb.appendChild(ph);
+    }
+    row.appendChild(thumb);
+
+    /* Info — toutes les données Firestore passent par escHtml */
+    const info = document.createElement('div');
+    info.className = 'fiche-info';
+    info.innerHTML = `
+      <div class="fiche-name">${escHtml(name)}</div>
+      <div class="fiche-meta">
+        <span class="fiche-tag" style="color:${rc.color};border-color:${rc.color}44;background:${rc.color}0e">${escHtml(rc.label)}</span>
+        <span class="fiche-tag" style="color:${rk.color};border-color:${rk.color}44;background:${rk.color}0e">Rang ${escHtml(f.rank || '?')}</span>
+        ${f.age ? `<span class="fiche-tag" style="color:var(--muted);border-color:rgba(90,122,144,0.3)">${escHtml(f.age)}</span>` : ''}
+      </div>
+      <div class="fiche-desc">${escHtml(f.desc || f.bio || '')}</div>
+      <div class="fiche-discord">Discord : <span>@${escHtml(f.discord || '?')}</span></div>
+      <div class="fiche-date">Ajouté le ${escHtml(date)}</div>`;
+    row.appendChild(info);
+
+    /* Actions — URL validée, ID passé via dataset (pas d'injection onclick) */
+    const actions = document.createElement('div');
+    actions.className = 'fiche-actions';
+    const actRow = document.createElement('div');
+    actRow.className = 'fiche-actions-row';
+    const validUrl = safeHref(f.linkUrl);
+    if (validUrl) {
+      const a = document.createElement('a');
+      a.href = validUrl;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      a.className = 'action-btn view';
+      a.textContent = '↗ ' + linkLabel(validUrl);
+      actRow.appendChild(a);
+    }
+    if (canDelete) {
+      const btn = document.createElement('button');
+      btn.className = 'action-btn delete';
+      btn.textContent = '✕ Supprimer';
+      btn.dataset.id = f.id;
+      btn.dataset.name = name;
+      btn.addEventListener('click', () => window.deleteFiche(f.id, name));
+      actRow.appendChild(btn);
+    }
+    actions.appendChild(actRow);
+    row.appendChild(actions);
+    el.appendChild(row);
+  });
+}
+
+function renderPNJTable(pnjs) {
+  const el = document.getElementById('table-pnj');
+  const role = window._adminRole || 'modo';
+  const catColors = { politique: '#60a5fa', mystique: '#b06eff', ennemi: '#ff3030', allie: '#34d399', neutre: '#fbbf24' };
+  const catLabels = { politique: 'Politique', mystique: 'Mystique', ennemi: 'Ennemi', allie: 'Allié', neutre: 'Neutre' };
+  if (!pnjs.length) { el.innerHTML = '<div class="empty-list"><span class="empty-list-icon">◆</span>Aucun PNJ créé.</div>'; return; }
+  el.innerHTML = '';
+  pnjs.forEach(p => {
+    const c = catColors[p.category] || '#00c8ff';
+    const cl = catLabels[p.category] || p.category;
+    const name = (`${p.prenom || ''} ${p.nom || ''}`).trim() || '(sans nom)';
+    const date = p.createdAt?.toDate ? p.createdAt.toDate().toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '–';
+
+    const row = document.createElement('div');
+    row.className = 'fiche-row';
+
+    const thumb = document.createElement('div');
+    thumb.className = 'fiche-thumb';
+    if (p.photoUrl) {
+      const img = document.createElement('img');
+      img.src = p.photoUrl;
+      img.loading = 'lazy';
+      img.onerror = () => {
+        const ph = document.createElement('div');
+        ph.className = 'fiche-thumb-ph';
+        ph.style.cssText = `background:linear-gradient(135deg,${c}18,#06060c);color:${c}`;
+        ph.textContent = name[0] || '?';
+        thumb.replaceChildren(ph);
+      };
+      thumb.appendChild(img);
+    } else {
+      const ph = document.createElement('div');
+      ph.className = 'fiche-thumb-ph';
+      ph.style.cssText = `background:linear-gradient(135deg,${c}18,#06060c);color:${c}`;
+      ph.textContent = name[0] || '?';
+      thumb.appendChild(ph);
+    }
+    row.appendChild(thumb);
+
+    const info = document.createElement('div');
+    info.className = 'fiche-info';
+    info.innerHTML = `
+      <div class="fiche-name">${escHtml(name)}</div>
+      <div class="fiche-meta">
+        <span class="fiche-tag" style="color:${c};border-color:${c}44;background:${c}0e">${escHtml(cl)}</span>
+        ${p.race ? `<span class="fiche-tag" style="color:var(--muted);border-color:rgba(90,122,144,0.3)">${escHtml(p.race)}</span>` : ''}
+        ${p.danger ? `<span class="fiche-tag" style="color:var(--muted);border-color:rgba(90,122,144,0.25)">${escHtml(p.danger)}</span>` : ''}
+      </div>
+      <div class="fiche-desc">${escHtml(p.desc || '')}</div>
+      ${p.titre ? `<div style="font-family:'Rajdhani',sans-serif;font-size:.56rem;color:${c};margin-top:3px">// ${escHtml(p.titre)}</div>` : ''}
+      <div class="fiche-date">Créé le ${escHtml(date)}</div>`;
+    row.appendChild(info);
+
+    const actions = document.createElement('div');
+    actions.className = 'fiche-actions';
+    const actRow = document.createElement('div');
+    actRow.className = 'fiche-actions-row';
+    const viewLink = document.createElement('a');
+    viewLink.href = 'pnj.html';
+    viewLink.target = '_blank';
+    viewLink.rel = 'noopener noreferrer';
+    viewLink.className = 'action-btn view';
+    viewLink.textContent = '↗ Page PNJ';
+    actRow.appendChild(viewLink);
+    if (role === 'admin') {
+      const btn = document.createElement('button');
+      btn.className = 'action-btn delete';
+      btn.textContent = '✕ Suppr.';
+      btn.addEventListener('click', () => window.deletePNJ(p.id, name));
+      actRow.appendChild(btn);
+    }
+    actions.appendChild(actRow);
+    row.appendChild(actions);
+    el.appendChild(row);
+  });
+}
+
+function renderLogs(logs) {
+  const el = document.getElementById('table-logs');
+  document.getElementById('lbl-logs').textContent = logs.length + ' action' + (logs.length > 1 ? 's' : '');
+  const LABELS = { validate: '✓ Ajouter', delete: '✕ Supprimer', delete_pnj: '✕ Suppr. PNJ' };
+  const SAFE_ACTIONS = ['validate', 'delete', 'delete_pnj']; /* actions CSS connues */
+  const header = el.querySelector('.log-row-header');
+  el.innerHTML = '';
+  if (header) el.appendChild(header);
+  if (!logs.length) { el.innerHTML += '<div class="empty-list"><span class="empty-list-icon">⬡</span>Aucune action loguée.</div>'; return; }
+  logs.forEach(l => {
+    const date = l.at?.toDate ? l.at.toDate().toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }) : '–';
+    const safeAction = SAFE_ACTIONS.includes(l.action) ? l.action : '';
+    const safeRole = ['admin', 'modo'].includes(l.role) ? l.role : 'modo';
+    const row = document.createElement('div');
+    row.className = 'log-row';
+    /* Toutes les valeurs Firestore passent par escHtml */
+    row.innerHTML = `
+      <span class="log-action ${safeAction}">${escHtml(LABELS[l.action] || l.action || '?')}</span>
+      <span class="log-role-${safeRole}">${escHtml((l.role || '?').toUpperCase())}</span>
+      <span class="log-target" title="${escHtml(l.targetName || '')}">${escHtml(l.targetName || l.targetId || '?')}</span>
+      <span class="log-by" title="${escHtml(l.byEmail || '')}">${escHtml(l.byName || l.byEmail || '?')}</span>
+      <span class="log-date">${escHtml(date)}</span>`;
+    el.appendChild(row);
+  });
+}
 
 </script>
 <script src="js/page-transition.js"></script>

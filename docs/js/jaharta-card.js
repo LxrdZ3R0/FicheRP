@@ -254,16 +254,23 @@ class JahartaCard extends HTMLElement {
       body.appendChild(ps);
     }
 
-    /* Liens */
+    /* Liens — seuls les protocoles http(s) sont autorisés (anti javascript: XSS) */
     const ls = ch.links||(ch.linkUrl?[{t:ch.linkType||"Fiche",h:ch.linkUrl}]:[]);
     if (ls.length > 0) {
       const linksDiv = document.createElement("div");
       linksDiv.className = "card-links";
       ls.forEach(l => {
+        const rawHref = l.h || l.url || "";
+        let safeHref = "#";
+        try {
+          const u = new URL(rawHref);
+          if (u.protocol === "https:" || u.protocol === "http:") safeHref = rawHref;
+        } catch { /* URL invalide → on garde "#" */ }
         const a = document.createElement("a");
         a.className = "lbtn";
-        a.href = l.h || l.url || "#";
+        a.href = safeHref;
         a.target = "_blank";
+        a.rel = "noopener noreferrer"; /* anti reverse-tabnapping */
         a.textContent = l.t || l.type || "Lien";
         linksDiv.appendChild(a);
       });

@@ -6,6 +6,115 @@
 
 ---
 
+## [2026-04-07] — Audit sécurité complet : XSS, TOCTOU, isAdmin, sessions
+
+### Contexte
+
+Audit de sécurité full-stack du projet par un Senior Full-Stack Developer + Cybersecurity Expert. Neuf fichiers corrigés, quatre classes de vulnérabilités éliminées.
+
+---
+
+### Vulnérabilités corrigées
+
+#### CRITIQUE — XSS stocké via innerHTML dans `admin.html`
+
+**Avant** : `renderTable()`, `renderPNJTable()`, `renderLogs()` interpolaient directement les données Firestore dans des template literals insérés via `innerHTML`. Un nom ou une description contenant `<img src=x onerror=...>` s'exécutait à l'affichage.
+
+**Après** :
+- Ajout des helpers `escHtml(s)` et `safeHref(url)` en tête de script
+- Les trois fonctions de rendu reécrites avec `escHtml()` sur chaque champ Firestore
+- Les boutons `onclick="deleteFiche('${id}')"` remplacés par `btn.addEventListener('click', () => ...)`
+
+---
+
+#### CRITIQUE — `javascript:` protocol injection dans `jaharta-card.js` et `fiches.html`
+
+**Avant** : `a.href = l.h || l.url || "#"` sans validation — un lien `javascript:alert(1)` stocké en Firestore s'exécutait au clic.
+
+**Après** : validation systématique par `new URL()` — seuls `https:` et `http:` acceptés. `rel="noopener noreferrer"` ajouté sur tous les liens externes.
+
+---
+
+#### CRITIQUE — TOCTOU (race condition) sur les codes Discord dans `hub.html` et `gacha.html`
+
+**Avant** : la vérification du code Discord faisait un `getDoc()` puis un `deleteDoc()` en deux opérations séparées — un code pouvait être utilisé deux fois simultanément.
+
+**Après** : `db.runTransaction()` rend la lecture + suppression atomiques. Le TTL d'expiration est vérifié à l'intérieur de la transaction.
+
+---
+
+#### CRITIQUE — `isAdmin()` retournait `true` pour tout compte Google dans `firestore.rules`
+
+**Avant** : `function isAdmin() { return request.auth != null; }` — n'importe quel compte Google pouvait écrire dans les collections admin.
+
+**Après** :
+```javascript
+function isAdmin() {
+  return request.auth != null
+    && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+}
+```
+Réécriture complète de `firestore.rules` avec whitelist Firestore vérifiée côté serveur, `ficheIsClean()` pour valider les soumissions joueurs, et field-whitelisting sur les logs.
+
+---
+
+#### ÉLEVÉ — `window._isAdmin = !!user` dans `auth-badge.js` et `fiches.html`
+
+**Avant** : tout utilisateur Firebase Auth authentifié recevait `window._isAdmin = true`.
+
+**Après** : `getDoc(doc(db, 'admins', user.uid))` — seul un UID présent dans la whitelist Firestore donne `isAdmin = true`.
+
+---
+
+#### ÉLEVÉ — XSS dans le panneau debug flottant (`debug.js`)
+
+**Avant** : `list.innerHTML = logs.map(e => \`...\${e.msg}\${e.detail}...\`)` — les messages d'erreur contenant du HTML s'exécutaient.
+
+**Après** : helper `esc(s)` appliqué à tous les champs interpolés dans le panneau debug.
+
+---
+
+#### MOYEN — Validation d'URL manquante dans `jaharta-img-cache.js`
+
+**Avant** : `set(key, url)` acceptait n'importe quelle URL en cache, dont des `data:` ou `javascript:`.
+
+**Après** : `_isSafeUrl(url)` vérifie que l'URL commence par `https://firebasestorage.googleapis.com/` ou `https://storage.googleapis.com/`. Appliqué à la lecture ET à l'écriture du cache.
+
+---
+
+#### MOYEN — Absence de TTL sur les sessions localStorage (`hub.html`, `gacha.html`)
+
+**Avant** : les sessions Discord (hub/gacha) persistaient indéfiniment en localStorage.
+
+**Après** : TTL de 7 jours stocké dans `session._exp`. `getSess()` invalide et efface automatiquement les sessions expirées.
+
+---
+
+#### MOYEN — Storage Rules sans contraintes de taille ni de type (`storage.rules`)
+
+**Avant** : `allow write: if request.auth != null` sans restriction de taille ou de content-type.
+
+**Après** : limites de taille (1–20 Mo selon le dossier) et filtres `contentType` ajoutés. Note explicite sur la limitation des Storage Rules (impossibilité de vérifier la whitelist Firestore — nécessite des custom claims Firebase Auth pour un contrôle strict).
+
+---
+
+### Fichiers modifiés
+
+| Fichier | Correctifs |
+|---------|-----------|
+| `docs/admin.html` | `escHtml()`, `safeHref()`, refonte complète des 3 fonctions de rendu |
+| `docs/js/debug.js` | `esc()` sur tous les champs du panneau flottant |
+| `docs/js/jaharta-card.js` | Validation URL + `rel="noopener noreferrer"` |
+| `docs/fiches.html` | Validation URL + vérification whitelist `isAdmin` |
+| `docs/js/jaharta-img-cache.js` | `_isSafeUrl()` sur lecture et écriture |
+| `docs/js/auth-badge.js` | Vérification whitelist Firestore pour `_isAdmin` |
+| `docs/hub.html` | Transaction atomique + TTL session |
+| `docs/gacha.html` | Transaction atomique + TTL session + correction doublon `getSession` |
+| `firestore.rules` | Réécriture complète — `isAdmin()`, `ficheIsClean()`, field whitelists |
+| `storage.rules` | Limites taille/type, documentation limitation custom claims |
+
+---
+
 ## [2026-04-07] — Refactoring navigation & restructuration panel admin
 
 ### Contexte
