@@ -1984,10 +1984,42 @@ function renderFullChar(){
 
   console.log('[STATS] eq:'+eqList.length+' comp:'+JSON.stringify(bComp)+' sig:'+JSON.stringify(bSig)+' total:'+JSON.stringify(bonuses));
 
+  // ── True Self: INT locked at 10, no bonuses apply ──
+  const _hasTrueSelf=(()=>{
+    const pw=(CHAR_DATA.powers||[]);
+    for(const p of pw){
+      const pid=(typeof p==='string'?p:(p&&p.id||'')).toLowerCase().replace(/ /g,'_');
+      if(pid==='true_self')return true;
+    }
+    const rp=CHAR_DATA.racial_power;
+    if(rp){
+      const rpid=(typeof rp==='string'?rp:(rp&&rp.id||'')).toLowerCase().replace(/ /g,'_');
+      if(rpid==='true_self')return true;
+    }
+    return false;
+  })();
+  _hasTrueSelf_alloc=_hasTrueSelf; // sync to global for alloc functions
+  if(_hasTrueSelf){
+    stats.intelligence=10;
+    bonuses.intelligence=0;
+    bEquip.intelligence=0; bSets.intelligence=0; bParty.intelligence=0;
+    bTitles.intelligence=0; bBuffs.intelligence=0; bComp.intelligence=0; bSig.intelligence=0;
+    delete bonuses.intelligence;
+    delete bEquip.intelligence; delete bSets.intelligence; delete bParty.intelligence;
+    delete bTitles.intelligence; delete bBuffs.intelligence; delete bComp.intelligence; delete bSig.intelligence;
+    console.log('[TRUE SELF] INT locked at 10 — all INT bonuses zeroed');
+  }
+
   // ── Stats display ──
   document.getElementById('char-stats-grid').innerHTML=
     (sp?'<div class="sp-banner" style="grid-column:1/-1">&#9889; '+sp+' pt'+(sp>1?'s':'')+' stat dispo</div>':'')+
-    SK.map(k=>{const base=parseInt(stats[k]||0),bon=bonuses[k]||0;return '<div class="stat-block"><div class="stat-block-val">'+(base+bon)+'</div>'+(bon?'<div class="stat-block-bonus">+'+bon+'</div>':'')+'<div class="stat-block-name">'+SI[k]+' '+SL[k]+'</div></div>';}).join('');
+    SK.map(k=>{
+      if(_hasTrueSelf && k==='intelligence'){
+        return '<div class="stat-block"><div class="stat-block-val">10</div><div class="stat-block-bonus" style="color:#a78bfa">🔒 TRUE SELF</div><div class="stat-block-name">'+SI[k]+' '+SL[k]+'</div></div>';
+      }
+      const base=parseInt(stats[k]||0),bon=bonuses[k]||0;
+      return '<div class="stat-block"><div class="stat-block-val">'+(base+bon)+'</div>'+(bon?'<div class="stat-block-bonus">+'+bon+'</div>':'')+'<div class="stat-block-name">'+SI[k]+' '+SL[k]+'</div></div>';
+    }).join('');
 
   // ── Powers ──
   document.getElementById('char-powers-grid').innerHTML=powers.length
@@ -3371,6 +3403,7 @@ async function removeFromShop(itemId){
 // ══════════════════════════════════════════════
 // ALLOCATION DES STATS
 // ══════════════════════════════════════════════
+let _hasTrueSelf_alloc=false; // set by renderFullChar, read by alloc functions
 const ALLOC_STATS=[
   {id:'strength',label:'Force',icon:'⚔️'},
   {id:'agility',label:'Agilité',icon:'💨'},
@@ -3415,6 +3448,19 @@ function renderAllocStats(){
     const pend=ALLOC_PENDING[s.id]||0;
     const canAdd=left>=ALLOC_MULT;
     const canSub=pend>0;
+    // ── True Self: INT row locked ──
+    if(s.id==='intelligence' && _hasTrueSelf_alloc){
+      return`<div class="alloc-stat-row" style="opacity:.5">
+        <span class="alloc-stat-icon">🔒</span>
+        <span class="alloc-stat-name" style="color:var(--text3)">${s.label} <span style="font-size:.4rem;color:#a78bfa;letter-spacing:.08em">TRUE SELF</span></span>
+        <span class="alloc-stat-val">10</span>
+        <span class="alloc-stat-pending"></span>
+        <div class="alloc-btns">
+          <button class="alloc-btn minus" disabled>−</button>
+          <button class="alloc-btn" disabled>+</button>
+        </div>
+      </div>`;
+    }
     return`<div class="alloc-stat-row">
       <span class="alloc-stat-icon">${s.icon}</span>
       <span class="alloc-stat-name">${s.label}</span>
@@ -3435,6 +3481,8 @@ function setAllocMult(m){
 }
 
 function addAllocStat(stat,dir){
+  // ── True Self: block INT allocation ──
+  if(stat==='intelligence' && _hasTrueSelf_alloc){return;}
   const allocated=Object.values(ALLOC_PENDING).reduce((a,b)=>a+b,0);
   const left=ALLOC_AVAIL-allocated;
   if(dir>0){const add=Math.min(ALLOC_MULT,left);if(add<=0)return;ALLOC_PENDING[stat]=(ALLOC_PENDING[stat]||0)+add;}
@@ -3454,6 +3502,8 @@ async function confirmAlloc(){
     // Copie profonde des stats pour éviter les mutations
     const stats=JSON.parse(JSON.stringify(CHAR.stats||{}));
     Object.entries(ALLOC_PENDING).forEach(([stat,val])=>{
+      // ── True Self: never write INT ──
+      if(stat==='intelligence' && _hasTrueSelf_alloc) return;
       if(val>0) stats[stat]=(parseInt(stats[stat]||0)+val);
     });
     const newAvail=Math.max(0,ALLOC_AVAIL-allocated);

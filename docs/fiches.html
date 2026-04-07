@@ -215,6 +215,27 @@ function charToFiche(id,c){
     const sk=Object.entries(SMAP).find(([,lk])=>lk===longK);
     if(sk&&v)bonusStats[sk[0]]=v;
   });
+
+  // ── True Self: INT locked at 10, no bonuses apply ──
+  const _hasTrueSelf=(()=>{
+    const pw=(c.powers||[]);
+    for(const p of pw){
+      const pid=(typeof p==='string'?p:(p&&p.id||'')).toLowerCase().replace(/ /g,'_');
+      if(pid==='true_self')return true;
+    }
+    const rp=c.racial_power;
+    if(rp){
+      const rpid=(typeof rp==='string'?rp:(rp&&rp.id||'')).toLowerCase().replace(/ /g,'_');
+      if(rpid==='true_self')return true;
+    }
+    return false;
+  })();
+  if(_hasTrueSelf){
+    totalStats.int=10;
+    baseStats.int=10;
+    delete bonusStats.int;
+  }
+
   return{
     id:id,
     _source:'characters',
