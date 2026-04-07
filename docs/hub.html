@@ -2462,7 +2462,7 @@ async function equipWholeSet(setId){
   if(count===0){showEquipToast('❌ Aucun item à équiper',true);return;}
   const key=`${UID}_${CHAR_ID}`;
   try{
-    await db.collection(C.INV).doc(key).set({equipped_assets:newEquipped,items:newItems},{merge:true});
+    await db.collection(C.INV).doc(key).update({equipped_assets:newEquipped,items:newItems});
     INV_DATA.equipped_assets=newEquipped;
     INV_DATA.items=newItems;
     showEquipToast(`✓ ${count} item${count>1?'s':''} équipé${count>1?'s':''}`);
@@ -2708,7 +2708,7 @@ async function toggleEquip(itemId){
       // Déséquiper
       newEquipped=newEquipped.filter(id=>id!==itemId);
       newItems[itemId]=(newItems[itemId]||0)+1;
-      await db.collection(C.INV).doc(key).set({equipped_assets:newEquipped,items:newItems},{merge:true});
+      await db.collection(C.INV).doc(key).update({equipped_assets:newEquipped,items:newItems});
       INV_DATA.equipped_assets=newEquipped;
       INV_DATA.items=newItems;
       showEquipToast(`✓ ${it.name||itemId} déséquipé`);
@@ -2744,7 +2744,7 @@ async function toggleEquip(itemId){
         newItems[itemId]-=1;
         if(newItems[itemId]<=0)delete newItems[itemId];
       }
-      await db.collection(C.INV).doc(key).set({equipped_assets:newEquipped,items:newItems},{merge:true});
+      await db.collection(C.INV).doc(key).update({equipped_assets:newEquipped,items:newItems});
       INV_DATA.equipped_assets=newEquipped;
       INV_DATA.items=newItems;
       showEquipToast(`✓ ${it.name||itemId} équipé`);
@@ -2845,7 +2845,7 @@ async function confirmDelete(){
     if(remaining<=0){delete newItems[itemId];}
     else{newItems[itemId]=remaining;}
     const key=`${UID}_${CHAR_ID}`;
-    await db.collection(C.INV).doc(key).set({items:newItems},{merge:true});
+    await db.collection(C.INV).doc(key).update({items:newItems});
     INV_DATA.items=newItems;
     showEquipToast(`✓ ×${qtyToDelete} ${it.name||itemId} supprimé${qtyToDelete>1?'s':''}`);
     if(_invDetailOpen===itemId)closeItemDetail();
@@ -3394,7 +3394,7 @@ async function addToShop(itemId, maxQty){
 
     // Écrire les deux en parallèle
     await Promise.all([
-      db.collection(C.INV).doc(charKey).set({items:invItems},{merge:true}),
+      db.collection(C.INV).doc(charKey).update({items:invItems}),
       db.collection(C.SHOPS).doc(charKey).set({items:shopItems},{merge:true}),
     ]);
 
@@ -3428,8 +3428,8 @@ async function removeFromShop(itemId){
     }
 
     await Promise.all([
-      db.collection(C.SHOPS).doc(charKey).set({items:shopItems},{merge:true}),
-      db.collection(C.INV).doc(charKey).set({items:invItems},{merge:true}),
+      db.collection(C.SHOPS).doc(charKey).update({items:shopItems}),
+      db.collection(C.INV).doc(charKey).update({items:invItems}),
     ]);
 
     MY_SHOP_DATA.items = shopItems;
@@ -3670,8 +3670,8 @@ async function buyFromPlayerShop(shopKey,itemId){
     for(const[cur,amt] of Object.entries(price)){sellerPersonal[cur]=(sellerPersonal[cur]||0)+amt;}
     await Promise.all([
       db.collection(C.ECONOMY).doc(charKey).set({personal},{merge:true}),
-      db.collection(C.INV).doc(charKey).set({items:invItems},{merge:true}),
-      db.collection(C.SHOPS).doc(shopKey).set({items:newShopItems},{merge:true}),
+      db.collection(C.INV).doc(charKey).update({items:invItems}),
+      db.collection(C.SHOPS).doc(shopKey).update({items:newShopItems}),
       db.collection(C.ECONOMY).doc(shopKey).set({personal:sellerPersonal},{merge:true}),
     ]);
     shop.items=newShopItems;
