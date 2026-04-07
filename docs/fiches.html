@@ -522,10 +522,11 @@ function buildCard(ch){
     const pl=document.createElement('div');pl.className='powers-list';
     powers.forEach(pw=>{
       const pi=document.createElement('div');pi.className='power-item';
-      pi.style.cssText=`border-color:${C}88;background:${C}08`;
+      const pc=pw.rarity?(RARITY_COLORS[pw.rarity]||'#8a8fa8'):C;
+      pi.style.cssText=`border-color:${pc}88;background:${pc}08`;
       const ph=document.createElement('div');ph.className='power-header';
-      const pn=document.createElement('div');pn.className='power-name';pn.style.color=C;pn.textContent=pw.name||pw;ph.appendChild(pn);
-      if(pw.rarity){const rc2=RARITY_COLORS[pw.rarity]||'#8a8fa8';const pr=document.createElement('span');pr.className='power-rarity';pr.textContent=pw.rarity;pr.style.cssText=`color:${rc2};border-color:${rc2}55;background:${rc2}0d`;ph.appendChild(pr);}
+      const pn=document.createElement('div');pn.className='power-name';pn.style.color=pc;pn.textContent=pw.name||pw;ph.appendChild(pn);
+      if(pw.rarity){const pr=document.createElement('span');pr.className='power-rarity';pr.textContent=pw.rarity;pr.style.cssText=`color:${pc};border-color:${pc}55;background:${pc}0d`;ph.appendChild(pr);}
       pi.appendChild(ph);
       if(pw.desc){const pd=document.createElement('div');pd.className='power-desc';pd.textContent=pw.desc;pi.appendChild(pd);}
       pl.appendChild(pi);
