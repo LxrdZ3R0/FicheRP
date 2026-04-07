@@ -3387,7 +3387,7 @@ async function addToShop(itemId, maxQty){
     // Ajouter au shop
     const shopItems = {...(MY_SHOP_DATA.items||{})};
     if(shopItems[itemId]){
-      shopItems[itemId].qty = (shopItems[itemId].qty||0) + qty;
+      shopItems[itemId] = {...shopItems[itemId], qty: (shopItems[itemId].qty||0) + qty};
     } else {
       shopItems[itemId] = { price: { [currency]: price }, qty: qty };
     }
@@ -3613,6 +3613,7 @@ function selectShop(key){
   ACTIVE_SHOP_KEY=key;renderShopsList();
   const shop=ALL_SHOPS_DATA.find(s=>s.key===key);
   if(shop)renderShopDetail(shop);
+  else{const det=document.getElementById('shop-detail');if(det)det.innerHTML='<div class="empty">Ce shop est maintenant vide</div>';}
 }
 
 function renderShopDetail(shop){
@@ -3649,7 +3650,9 @@ function renderShopDetail(shop){
 async function buyFromPlayerShop(shopKey,itemId){
   if(!UID||!CHAR_ID){showEquipToast('❌ Connecte-toi',true);return;}
   const shop=ALL_SHOPS_DATA.find(s=>s.key===shopKey);if(!shop)return;
-  const si=shop.items[itemId];const it=ALL_ITEMS_DATA[itemId]||{};
+  const si=shop.items[itemId];
+  if(!si){showEquipToast('❌ Cet article n\'est plus disponible',true);return;}
+  const it=ALL_ITEMS_DATA[itemId]||{};
   const price=si.price||{};const charKey=`${UID}_${CHAR_ID}`;
   try{
     const[econSnap,invSnap]=await Promise.all([db.collection(C.ECONOMY).doc(charKey).get(),db.collection(C.INV).doc(charKey).get()]);
@@ -3668,10 +3671,11 @@ async function buyFromPlayerShop(shopKey,itemId){
     const sellerSnap=await db.collection(C.ECONOMY).doc(shopKey).get();
     const sellerPersonal=Object.assign({},(sellerSnap.exists?sellerSnap.data().personal:null)||{});
     for(const[cur,amt] of Object.entries(price)){sellerPersonal[cur]=(sellerPersonal[cur]||0)+amt;}
+    const saleEntry={item_id:itemId,item_name:it.name||itemId,price,buyer:charKey,at:new Date().toISOString()};
     await Promise.all([
       db.collection(C.ECONOMY).doc(charKey).set({personal},{merge:true}),
-      db.collection(C.INV).doc(charKey).update({items:invItems}),
-      db.collection(C.SHOPS).doc(shopKey).update({items:newShopItems}),
+      db.collection(C.INV).doc(charKey).set({items:invItems},{merge:true}),
+      db.collection(C.SHOPS).doc(shopKey).update({items:newShopItems,sales_log:firebase.firestore.FieldValue.arrayUnion(saleEntry)}),
       db.collection(C.ECONOMY).doc(shopKey).set({personal:sellerPersonal},{merge:true}),
     ]);
     shop.items=newShopItems;
