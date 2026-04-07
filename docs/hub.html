@@ -2020,12 +2020,12 @@ function renderFullChar(){
 
   // ── True Self: INT locked at 10, no bonuses apply ──
   const _hasTrueSelf=(()=>{
-    const pw=(CHAR_DATA.powers||[]);
+    const pw=(c.powers||[]);
     for(const p of pw){
       const pid=(typeof p==='string'?p:(p&&p.id||'')).toLowerCase().replace(/ /g,'_');
       if(pid==='true_self')return true;
     }
-    const rp=CHAR_DATA.racial_power;
+    const rp=c.racial_power;
     if(rp){
       const rpid=(typeof rp==='string'?rp:(rp&&rp.id||'')).toLowerCase().replace(/ /g,'_');
       if(rpid==='true_self')return true;
