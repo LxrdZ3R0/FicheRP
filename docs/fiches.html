@@ -114,6 +114,34 @@ async function loadBonusData(){
   }catch(err){console.warn('[Fiches] bonus data load:',err.message);}
 }
 
+/* ── Companion sync_power → flat stat bonuses map ── */
+function _ficheSyncPowerBonuses(power){
+  const p=(power||'').toLowerCase().trim();
+  const ALL=['strength','agility','speed','intelligence','mana','resistance','charisma'];
+  const MAP={
+    'royalty presence':{charisma:100},
+    "hunter's dominion":{agility:100},
+    'lost knowledge':{intelligence:100},
+    'old tenacity':{resistance:200},
+    'thunderclap':Object.fromEntries(ALL.map(s=>[s,20])),
+    'thunder strikes twice':Object.fromEntries(ALL.map(s=>[s,30])),
+    'challenger':Object.fromEntries(ALL.map(s=>[s,55])),
+    'killer instinct':{strength:25,resistance:25,mana:25},
+    'unextinguishable':{strength:150,resistance:150,mana:150},
+    'strategist':{agility:25,intelligence:25,mana:25},
+    'unfathomable':{agility:150,intelligence:150,mana:150},
+    'assassin':{agility:45,intelligence:45,mana:45},
+    'unavoidable':{agility:200,intelligence:200,mana:200},
+    'sturdy':{strength:23,resistance:23,agility:23,charisma:23},
+    'unchained':{strength:130,resistance:130,agility:130,charisma:130},
+    'blessing':Object.fromEntries(ALL.map(s=>[s,23])),
+    'the one':Object.fromEntries(ALL.map(s=>[s,300])),
+    'curse':{strength:46,intelligence:46,agility:46,charisma:46,speed:-23,mana:-23,resistance:-23},
+    'the last':Object.fromEntries(ALL.map(s=>[s,300])),
+  };
+  return MAP[p]||{};
+}
+
 /* ── Compute total bonuses for a character ── */
 function computeCharBonuses(charId,charStats){
   // Find discord_id for this char
@@ -160,6 +188,7 @@ function computeCharBonuses(charId,charStats){
   // Companion (active + synchronized)
   const owned=compUser.owned_companions||{};
   const activeComp=compUser.active_companion;
+  let _compBuffMult={};
   if(activeComp&&owned[activeComp]){
     const cd=owned[activeComp];
     if(cd.synchronized){
@@ -170,6 +199,11 @@ function computeCharBonuses(charId,charStats){
       const baseE=allC[activeComp]||{};
       const sync=info.sync_bonuses||baseE.sync_bonuses||{};
       Object.entries(sync).forEach(([s,v])=>add(s,v));
+      // Sync power flat bonuses
+      const spB=_ficheSyncPowerBonuses(info.sync_power||baseE.sync_power||'');
+      Object.entries(spB).forEach(([s,v])=>add(s,v));
+      // buff_mult
+      _compBuffMult=info.buff_mult||{};
     }
   }
   // Signature items
@@ -178,7 +212,7 @@ function computeCharBonuses(charId,charStats){
   const sigB=calcSigBonuses(eqList,charStats,aura,existBuf);
   Object.entries(sigB).forEach(([s,v])=>add(s,v));
 
-  return bonuses;
+  return {bonuses, buff_mult:_compBuffMult};
 }
 
 /* ── Rank from level (mirrors bot stats_common.py) ── */
@@ -201,13 +235,22 @@ function charToFiche(id,c){
   };
   // Compute bonuses from equipment, companions, signature items, buffs
   const longStats={strength:s.strength||0,agility:s.agility||0,speed:s.speed||0,intelligence:s.intelligence||0,mana:s.mana||0,resistance:s.resistance||0,charisma:s.charisma||0,aura:s.aura||0};
-  const bon=computeCharBonuses(id,longStats);
+  const bonResult=computeCharBonuses(id,longStats);
+  const bon=bonResult.bonuses||bonResult; // backward compat
+  const compBuffMult=bonResult.buff_mult||{};
   // Merge bonuses into stats (short keys)
   const totalStats={...baseStats};
   Object.entries(bon).forEach(([longK,v])=>{
     // Find short key
     const sk=Object.entries(SMAP).find(([,lk])=>lk===longK);
     if(sk)totalStats[sk[0]]=(totalStats[sk[0]]||0)+v;
+  });
+  // Apply companion buff_mult to total stats
+  Object.entries(compBuffMult).forEach(([longK,mult])=>{
+    const sk=Object.entries(SMAP).find(([,lk])=>lk===longK);
+    if(sk && mult>0 && mult!==1){
+      totalStats[sk[0]]=Math.floor((totalStats[sk[0]]||0)*mult);
+    }
   });
   // Store bonus amounts per short key for display
   const bonusStats={};

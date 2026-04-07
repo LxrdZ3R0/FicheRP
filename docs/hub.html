@@ -1878,6 +1878,34 @@ async function loadWallet(){
   walletEl.innerHTML=html||'<div class="empty">Portefeuille vide</div>';
 }
 
+// ── Companion sync_power → flat stat bonuses map ──
+function _compSyncPowerBonuses(power){
+  const p=(power||'').toLowerCase().trim();
+  const ALL=['strength','agility','speed','intelligence','mana','resistance','charisma'];
+  const MAP={
+    'royalty presence':{charisma:100},
+    "hunter's dominion":{agility:100},
+    'lost knowledge':{intelligence:100},
+    'old tenacity':{resistance:200},
+    'thunderclap':Object.fromEntries(ALL.map(s=>[s,20])),
+    'thunder strikes twice':Object.fromEntries(ALL.map(s=>[s,30])),
+    'challenger':Object.fromEntries(ALL.map(s=>[s,55])),
+    'killer instinct':{strength:25,resistance:25,mana:25},
+    'unextinguishable':{strength:150,resistance:150,mana:150},
+    'strategist':{agility:25,intelligence:25,mana:25},
+    'unfathomable':{agility:150,intelligence:150,mana:150},
+    'assassin':{agility:45,intelligence:45,mana:45},
+    'unavoidable':{agility:200,intelligence:200,mana:200},
+    'sturdy':{strength:23,resistance:23,agility:23,charisma:23},
+    'unchained':{strength:130,resistance:130,agility:130,charisma:130},
+    'blessing':Object.fromEntries(ALL.map(s=>[s,23])),
+    'the one':Object.fromEntries(ALL.map(s=>[s,300])),
+    'curse':{strength:46,intelligence:46,agility:46,charisma:46,speed:-23,mana:-23,resistance:-23},
+    'the last':Object.fromEntries(ALL.map(s=>[s,300])),
+  };
+  return MAP[p]||{};
+}
+
 // ── RENDER PERSONNAGE ──
 function renderFullChar(){
   const c=CHAR,fn=c.first_name||'',ln=c.last_name||'';
@@ -1959,6 +1987,7 @@ function renderFullChar(){
   });
   // 6) Compagnons (sync bonuses du compagnon actif)
   let activeCompName='';
+  let compBuffMult={}; // {stat: multiplier} from evolved companions
   if(COMP_USER&&COMP_CFG){
     const owned=COMP_USER.owned_companions||{};
     const activeId=COMP_USER.active_companion;
@@ -1973,6 +2002,11 @@ function renderFullChar(){
       if(cd.synchronized){
         const syncBonuses=info.sync_bonuses||baseEntry.sync_bonuses||{};
         Object.entries(syncBonuses).forEach(([s,v])=>{addTo(bComp,s,v);});
+        // Companion sync_power flat bonuses
+        const spBonuses=_compSyncPowerBonuses(info.sync_power||baseEntry.sync_power||'');
+        Object.entries(spBonuses).forEach(([s,v])=>{addTo(bComp,s,v);});
+        // buff_mult for evolved companions
+        compBuffMult=info.buff_mult||{};
       }
     }
   }
@@ -2010,7 +2044,7 @@ function renderFullChar(){
     console.log('[TRUE SELF] INT locked at 10 — all INT bonuses zeroed');
   }
 
-  // ── Stats display ──
+  // ── Stats display (with companion buff_mult) ──
   document.getElementById('char-stats-grid').innerHTML=
     (sp?'<div class="sp-banner" style="grid-column:1/-1">&#9889; '+sp+' pt'+(sp>1?'s':'')+' stat dispo</div>':'')+
     SK.map(k=>{
@@ -2018,7 +2052,16 @@ function renderFullChar(){
         return '<div class="stat-block"><div class="stat-block-val">10</div><div class="stat-block-bonus" style="color:#a78bfa">🔒 TRUE SELF</div><div class="stat-block-name">'+SI[k]+' '+SL[k]+'</div></div>';
       }
       const base=parseInt(stats[k]||0),bon=bonuses[k]||0;
-      return '<div class="stat-block"><div class="stat-block-val">'+(base+bon)+'</div>'+(bon?'<div class="stat-block-bonus">+'+bon+'</div>':'')+'<div class="stat-block-name">'+SI[k]+' '+SL[k]+'</div></div>';
+      let total=base+bon;
+      const mult=parseFloat(compBuffMult[k]||0);
+      let multLabel='';
+      if(mult>0 && mult!==1){
+        const before=total;
+        total=Math.floor(total*mult);
+        const multBonus=total-before;
+        if(multBonus>0) multLabel='<div class="stat-block-bonus-detail">×'+mult+' (+'+multBonus+')</div>';
+      }
+      return '<div class="stat-block"><div class="stat-block-val">'+total+'</div>'+(bon?'<div class="stat-block-bonus">+'+bon+'</div>':'')+multLabel+'<div class="stat-block-name">'+SI[k]+' '+SL[k]+'</div></div>';
     }).join('');
 
   // ── Powers ──
