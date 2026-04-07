@@ -56,7 +56,7 @@ window.RACES_SPECIFIC = {
                   'Siren', 'Moth'],
   'MythZooids':  ['Qilin', 'Dragon', 'Minotaur', 'Hellhound', 'Sphynx',
                   'Phoenix', 'Fenrir', 'Unicorn', 'Kitsune', 'Salamander',
-                  'Hakutaku'],
+                  'Hakutaku', 'Aberration ancestrale'],
   'Demons':      ['Tiefling', 'Succubus', 'Devil'],
   'Artificial':  ['Android', 'Shuma'],
   'Semi-Liquid': ['Slime', 'Nureonago'],
