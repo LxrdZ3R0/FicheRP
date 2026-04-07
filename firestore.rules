@@ -1,0 +1,227 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ═══════════════════════════════════════════════════════════
+    //  isAdmin() = Firebase Auth uniquement.
+    //  Les joueurs Discord (gacha/hub) n'ont PAS de Firebase Auth —
+    //  leurs collections utilisent des règles sans auth explicites.
+    //  Le bot Discord utilise le Firebase Admin SDK (service account)
+    //  qui bypasse ces règles côté serveur.
+    // ═══════════════════════════════════════════════════════════
+
+    function isAdmin() {
+      return request.auth != null;
+    }
+
+    // ── VIP WHITELIST ────────────────────────────────────────────
+    match /vip_whitelist/{discordId} {
+      allow read:  if isAdmin();
+      allow write: if false;
+    }
+
+    // ── FICHES DE PERSONNAGE ─────────────────────────────────────
+    match /fiches/{ficheId} {
+      allow read: if true;
+      allow create: if request.resource.data.status == 'en_attente'
+                    && !('_vip_id' in request.resource.data);
+      allow update: if isAdmin()
+                    && !('_vip_id' in request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    // ── PNJ ──────────────────────────────────────────────────────
+    match /pnj/{id} {
+      allow read: if true;
+      allow create, update: if isAdmin()
+                             && !('_vip_id' in request.resource.data);
+      allow delete: if isAdmin();
+    }
+    match /pnj_filters/{id} {
+      allow read: if true;
+      allow create, update: if isAdmin()
+                             && !('_vip_id' in request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    // ── ADMINS ───────────────────────────────────────────────────
+    // Lecture restreinte à l'admin lui-même (son propre UID).
+    // admin.html lit getDoc(admins/{user.uid}) après signIn — compatible.
+    match /admins/{uid} {
+      allow read:  if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    // ── LOGS ─────────────────────────────────────────────────────
+    match /logs/{id} {
+      allow read:           if isAdmin();
+      allow create:         if isAdmin()
+                            && !('_vip_id' in request.resource.data);
+      allow update, delete: if false;
+    }
+
+    // ── LINK CODES ───────────────────────────────────────────────
+    // delete: if true — le client supprime le code après usage.
+    // TODO P2-C : migrer la suppression vers le bot.
+    match /gacha_link_codes/{code} {
+      allow read:           if true;
+      allow delete:         if true;
+      allow create, update: if false;
+    }
+
+    // ── PERSONNAGES ──────────────────────────────────────────────
+    // TODO P2-A CRITIQUE : confirmAlloc() écrit des stats sans validation
+    // des valeurs. À migrer : confirmAlloc() → stat_allocation_requests → bot.
+    match /characters/{charId} {
+      allow read: if true;
+      allow update: if isAdmin()
+                    || request.resource.data.diff(resource.data).affectedKeys()
+                       .hasOnly(['stats', 'available_stat_points',
+                                 'unallocated_stat_points', 'updated_at']);
+      allow create: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ── PERSONNAGE ACTIF ─────────────────────────────────────────
+    match /active_characters/{userId} {
+      allow read:  if true;
+      allow write: if isAdmin();
+    }
+
+    // ── JOUEURS ──────────────────────────────────────────────────
+    // display_theme modifiable sans auth depuis hub.html/setTheme().
+    match /players/{userId} {
+      allow read: if true;
+      allow update: if isAdmin()
+                    || request.resource.data.diff(resource.data).affectedKeys()
+                       .hasOnly(['display_theme']);
+      allow create: if isAdmin();
+      allow delete: if false;
+    }
+
+    // ── INVENTAIRES ──────────────────────────────────────────────
+    // CORRECTION : create autorisé sans auth (champs restreints) —
+    // nécessaire si le document n'existe pas encore lors du premier équipement.
+    match /inventories/{key} {
+      allow read: if true;
+      allow create: if isAdmin()
+                    || request.resource.data.keys().hasOnly(['equipped_assets', 'items']);
+      allow update: if isAdmin()
+                    || request.resource.data.diff(resource.data).affectedKeys()
+                       .hasOnly(['equipped_assets', 'items']);
+      allow delete: if false;
+    }
+
+    // ── ÉCONOMIE ─────────────────────────────────────────────────
+    // CORRECTION : create autorisé sans auth (champs restreints) —
+    // nécessaire si le document n'existe pas encore lors d'un premier achat.
+    // TODO P2-B : migrer vers runTransaction() pour éviter les race conditions.
+    match /economy/{key} {
+      allow read: if true;
+      allow create: if isAdmin()
+                    || request.resource.data.keys().hasOnly(['personal', 'family', 'royal']);
+      allow update: if isAdmin()
+                    || request.resource.data.diff(resource.data).affectedKeys()
+                       .hasOnly(['personal', 'family', 'royal']);
+      allow delete: if false;
+    }
+
+    // ── SHOPS ────────────────────────────────────────────────────
+    // CORRECTION : les joueurs Discord doivent pouvoir gérer leur shop
+    // (ajouter/retirer des items, ouvrir/fermer). Champs restreints.
+    // Opérations concernées : addToShop, removeFromShop, toggleShopOpen,
+    // buyFromPlayerShop (mise à jour du shop vendeur par l'acheteur).
+    match /shops/{key} {
+      allow read: if true;
+      allow create: if isAdmin()
+                    || request.resource.data.keys().hasOnly(['items', 'open', 'name']);
+      allow update: if isAdmin()
+                    || request.resource.data.diff(resource.data).affectedKeys()
+                       .hasOnly(['items', 'open', 'name']);
+      allow delete: if isAdmin();
+    }
+
+    // ── GACHA ADMIN ACTIONS ──────────────────────────────────────
+    match /gacha_admin_actions/{actionId} {
+      allow read:           if true;
+      allow create:         if isAdmin();
+      allow update, delete: if false;
+    }
+
+    // ── GACHA PULLS ──────────────────────────────────────────────
+    // Création sans Firebase Auth (joueurs Discord).
+    // Champs whitelistés — vip_boost, specialz_full_leg, _vip_id sont
+    // refusés au niveau Firestore même si le client tente de les envoyer.
+    match /gacha_pulls/{pullId} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly([
+                        'user_id', 'banner_id', 'count', 'status', 'created_at'
+                      ])
+                    && request.resource.data.status == 'pending'
+                    && request.resource.data.count in [1, 5, 10];
+      allow update, delete: if false;
+    }
+
+    // ── STAT ALLOCATION REQUESTS ──────────────────────────────────
+    // Collection future pour migrer confirmAlloc() vers le bot (TODO P2-A).
+    // Déjà préparée pour ne pas avoir à modifier les règles lors de la migration.
+    match /stat_allocation_requests/{id} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly([
+                        'user_id', 'char_id', 'allocations', 'status', 'created_at'
+                      ])
+                    && request.resource.data.status == 'pending';
+      allow update, delete: if false;
+    }
+
+    // ── DONNÉES BOT (lecture seule côté client) ──────────────────
+    match /companions_user/{key}        { allow read: if true; allow write: if isAdmin(); }
+    match /titles_user/{userId}         { allow read: if true; allow write: if isAdmin(); }
+    match /gacha_pity/{userId}          { allow read: if true; allow write: if isAdmin(); }
+    match /gacha_rotation/{doc}         { allow read: if true; allow write: if isAdmin(); }
+    match /config_admin/{guildId}       { allow read: if true; allow write: if isAdmin(); }
+    match /buffs/{userId}               { allow read: if true; allow write: if isAdmin(); }
+    match /powers_unique_states/{doc}   { allow read: if true; allow write: if isAdmin(); }
+    match /powers_limit_states/{userId} { allow read: if true; allow write: if isAdmin(); }
+    match /party_membership/{key}       { allow read: if true; allow write: if isAdmin(); }
+    match /party_invites/{key}          { allow read: if true; allow write: if isAdmin(); }
+
+    // ── PARTIES ──────────────────────────────────────────────────
+    // pp et autres champs modifiables sans auth (hub.html ppShopBuy).
+    // TODO P2-B : transactions atomiques côté bot.
+    match /parties/{partyId} {
+      allow read: if true;
+      allow update: if isAdmin()
+                    || request.resource.data.diff(resource.data).affectedKeys()
+                       .hasOnly(['pp', 'max_size', 'stat_gain', 'msg_threshold',
+                                 'purchased_powers', 'log', 'votes']);
+      allow create: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ── GACHA CONFIG ─────────────────────────────────────────────
+    match /gacha_config/{doc} {
+      allow read:  if true;
+      allow write: if isAdmin()
+                   && !('_vip_id' in request.resource.data);
+    }
+
+    // ── CONFIG STATIQUE ──────────────────────────────────────────
+    match /config/{doc} {
+      allow read: if true;
+      allow create, update: if isAdmin();
+      allow delete: if false;
+    }
+
+    // ── MODÉRATION ───────────────────────────────────────────────
+    match /moderation_warnings/{userId} { allow read: if true; allow write: if isAdmin(); }
+    match /moderation_mutes/{userId}    { allow read: if true; allow write: if isAdmin(); }
+
+    // ── RACES DATA ───────────────────────────────────────────────
+    match /races_data/{doc} {
+      allow read: if true;
+      allow create, update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+  }
+}

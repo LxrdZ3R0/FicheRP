@@ -1,0 +1,49 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ── Photos de personnages (fiches.html — admin requis) ────────
+    match /photos/{allPaths=**} {
+      allow read:  if true;
+      allow write: if request.auth != null;
+    }
+
+    // ── Photos PNJ (pnj.html — admin requis) ─────────────────────
+    // CORRECTION : chemin manquant — tombait dans le fallback bloquant.
+    match /pnj/{allPaths=**} {
+      allow read:  if true;
+      allow write: if request.auth != null;
+    }
+
+    // ── Musiques du lecteur audio ─────────────────────────────────
+    match /audio/{allPaths=**} {
+      allow read:  if true;
+      allow write: if request.auth != null;
+    }
+
+    // ── Icônes UI (navarites, eggs, kanites…) ─────────────────────
+    // Lecture seule — uploads réservés au bot/admin via console.
+    match /icons/{allPaths=**} {
+      allow read:  if true;
+      allow write: if request.auth != null;
+    }
+
+    // ── Données de races (images, JSON) ──────────────────────────
+    match /races_data/{allPaths=**} {
+      allow read:  if true;
+      allow write: if request.auth != null;
+    }
+
+    // ── Fichiers attachés aux fiches personnages ──────────────────
+    match /fiches/{allPaths=**} {
+      allow read:  if true;
+      allow write: if request.auth != null;
+    }
+
+    // ── Fallback : tout chemin non déclaré → bloqué ───────────────
+    // Tout nouveau dossier Storage doit être déclaré explicitement ci-dessus.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
