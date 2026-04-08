@@ -244,8 +244,10 @@ document.addEventListener('jaharta:auth',function(e){
     <a href="portail.html">Portail</a>
     <a href="racesjouables.html" class="active">Races</a>
     <a href="gacha.html">Gacha</a>
-    <a href="hub.html">Hub</a>
-  </div>
+    <a href="hub.html">Hub</a>
+
+  </div>
+
   <button class="burger" id="burger" aria-label="Menu" aria-expanded="false"><span class="burger-line"></span><span class="burger-line"></span><span class="burger-line"></span></button>
 </nav>
 <!-- MOBILE MENU -->
@@ -258,7 +260,8 @@ document.addEventListener('jaharta:auth',function(e){
     <a href="portail.html" class="menu-link"><span class="menu-link-index">04</span><span class="menu-link-text">Portail</span><span class="menu-link-arrow">→</span></a>
     <a href="racesjouables.html" class="menu-link active"><span class="menu-link-index">05</span><span class="menu-link-text">Races</span><span class="menu-link-arrow">→</span></a>
     <a href="gacha.html" class="menu-link"><span class="menu-link-index">06</span><span class="menu-link-text">Gacha</span><span class="menu-link-arrow">→</span></a>
-    <a href="hub.html" class="menu-link"><span class="menu-link-index">07</span><span class="menu-link-text">Hub</span><span class="menu-link-arrow">→</span></a>
+    <a href="hub.html" class="menu-link"><span class="menu-link-index">07</span><span class="menu-link-text">Hub</span><span class="menu-link-arrow">→</span></a>
+
   </div>
   <div class="menu-deco"></div>
 </div>
@@ -586,9 +589,13 @@ document.querySelectorAll('.rv').forEach(function(g,i){setTimeout(function(){g.c
         +'<option value="Sous conditions"'+(d.access!=='Ouverte'?' selected':'')+'>Sous conditions</option>'
         +'</select></div></div>'
         +'<div class="rp4-fg"><label class="rp4-fl">Image (URL)</label><input class="rp4-fi" id="rp-ed-image" value="'+(d.imageUrl||'').replace(/"/g,'&quot;')+'" placeholder="https://..."></div>'
-        +'<div class="rp4-fg"><label class="rp4-fl">Description</label><textarea class="rp4-fta" id="rp-ed-desc">'+(d.description||'')+'</textarea></div>'
-        +'<div class="rp4-fg"><label class="rp4-fl">Stats (JSON)</label><textarea class="rp4-fta rp4-mono" id="rp-ed-stats">'+JSON.stringify(d.baseStats||{})+'</textarea></div>'
-        +'<div class="rp4-fg"><label class="rp4-fl">Pouvoirs (JSON)</label><textarea class="rp4-fta rp4-mono" id="rp-ed-powers">'+JSON.stringify(d.basePowers||[])+'</textarea></div>'
+        +'<div class="rp4-fg"><label class="rp4-fl">Description</label><textarea class="rp4-fta" id="rp-ed-desc" placeholder="Supporte le **markdown** Discord">'+(d.description||'')+'</textarea></div>'
+        +'<div class="rp4-fg"><label class="rp4-fl">Stats de base</label><div class="rp4-stats-edit" id="rp4-stats-edit">'
+        +(function(){var SK=['str','agi','spd','int','mana','res','cha','aura'],SL=['STR','AGI','SPD','INT','MNA','RES','CHA','AUR'],bs=d.baseStats||{};return SK.map(function(k,i){return '<div class="rp4-stat-ed"><span class="rp4-stat-ed-lbl">'+SL[i]+'</span><input class="rp4-fi rp4-stat-input" type="number" value="'+(bs[k]||0)+'" data-stat="'+k+'"></div>'}).join('')})()
+        +'</div></div>'
+        +'<div class="rp4-fg"><label class="rp4-fl">Pouvoirs de base</label><div id="rp4-powers-edit">'
+        +(d.basePowers||[]).map(function(p,i){return '<div class="rp4-pw-row" data-pw-idx="'+i+'"><div class="rp4-fg" style="flex:1;margin-bottom:0"><input class="rp4-fi" placeholder="Nom" value="'+((p.name||p||'').replace?((p.name||p||'').replace(/"/g,'&quot;')):'') +'" data-pk="name"></div><div class="rp4-fg" style="flex:2;margin-bottom:0"><input class="rp4-fi" placeholder="Description" value="'+((p.desc||'').replace?((p.desc||'').replace(/"/g,'&quot;')):'') +'" data-pk="desc"></div><button type="button" class="rp4-pw-rm" onclick="this.parentElement.remove()">✕</button></div>'}).join('')
+        +'</div><button type="button" class="rp4-pw-add" onclick="window._addRp4Power()">+ Ajouter un pouvoir</button></div>'
         +'<button class="rp4-save">Sauvegarder</button>'
         +'</div>';
     }
@@ -663,7 +670,7 @@ document.querySelectorAll('.rv').forEach(function(g,i){setTimeout(function(){g.c
         /* Description */
         +'<div class="rp4-col">'
           +'<div class="rp4-stitle">Description</div>'
-          +'<div class="rp4-desc" style="border-color:'+ac+'40">'+(d.description||'Aucune description disponible pour cette race.')+'</div>'
+          +'<div class="rp4-desc" style="border-color:'+ac+'40">'+(window.parseDiscordMarkdown ? window.parseDiscordMarkdown(d.description||'Aucune description disponible pour cette race.', ac) : (d.description||'Aucune description disponible pour cette race.'))+'</div>'
         +'</div>'
         +'<div class="rp4-divider"></div>'
         /* Powers */
@@ -857,6 +864,13 @@ document.querySelectorAll('.rv').forEach(function(g,i){setTimeout(function(){g.c
   }
 
   /* ── Save ── */
+  /* ── Add power row helper ── */
+  window._addRp4Power = function(){
+    var c=document.getElementById('rp4-powers-edit');if(!c)return;
+    var idx=c.querySelectorAll('.rp4-pw-row').length;
+    c.insertAdjacentHTML('beforeend','<div class="rp4-pw-row" data-pw-idx="'+idx+'"><div class="rp4-fg" style="flex:1;margin-bottom:0"><input class="rp4-fi" placeholder="Nom" data-pk="name"></div><div class="rp4-fg" style="flex:2;margin-bottom:0"><input class="rp4-fi" placeholder="Description" data-pk="desc"></div><button type="button" class="rp4-pw-rm" onclick="this.parentElement.remove()">✕</button></div>');
+  };
+
   function doSave(name, overlay, btn) {
     if (!db) {
       console.error('[races] doSave : Firebase non disponible');
@@ -881,17 +895,22 @@ document.querySelectorAll('.rv').forEach(function(g,i){setTimeout(function(){g.c
     var affinityStr=(document.getElementById('rp-ed-affinity')&&document.getElementById('rp-ed-affinity').value||'').trim();
     siteData.affinity = affinityStr ? affinityStr.split(',').map(function(s){return s.trim();}).filter(Boolean) : [];
 
-    // baseStats : JSON du formulaire
+    // baseStats : collecte depuis les inputs visuels
     var baseStats={};
-    try{baseStats=JSON.parse(document.getElementById('rp-ed-stats').value||'{}');}catch(e){
-      console.warn('[races] JSON baseStats invalide'); baseStats={};
-    }
+    document.querySelectorAll('#rp4-stats-edit [data-stat]').forEach(function(inp){
+      baseStats[inp.dataset.stat] = parseInt(inp.value) || 0;
+    });
     siteData.baseStats = baseStats;
 
-    // basePowers : JSON du formulaire
-    try{siteData.basePowers=JSON.parse(document.getElementById('rp-ed-powers').value||'[]');}catch(e){
-      console.warn('[races] JSON basePowers invalide'); siteData.basePowers=[];
-    }
+    // basePowers : collecte depuis les lignes visuelles
+    var powers=[];
+    document.querySelectorAll('#rp4-powers-edit .rp4-pw-row').forEach(function(row){
+      var n=row.querySelector('[data-pk="name"]');
+      var d=row.querySelector('[data-pk="desc"]');
+      var nm=n?n.value.trim():'';
+      if(nm)powers.push({name:nm,desc:d?d.value.trim():''});
+    });
+    siteData.basePowers=powers;
 
     // ── Écrire aussi les champs bot (strength, agility...) depuis baseStats ──
     // Ça garantit que le bot peut toujours lire les stats correctement.
@@ -920,7 +939,7 @@ document.querySelectorAll('.rv').forEach(function(g,i){setTimeout(function(){g.c
   css.textContent = `
   .rp-ov{position:fixed;inset:0;z-index:10000;background:rgba(2,5,15,0.82);backdrop-filter:blur(18px);display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;transition:opacity .4s;pointer-events:none}
   .rp-ov.rp-open{opacity:1;pointer-events:all}
-  .rp-ov.rp-closing{opacity:0;pointer-events:none}
+  .rp-ov.rp-closing{opacity:0;pointer-events:none;transition:opacity .3s ease-in .12s}
 
   .rp4-outer{position:relative;width:820px;max-width:96vw}
 
@@ -938,7 +957,14 @@ document.querySelectorAll('.rv').forEach(function(g,i){setTimeout(function(){g.c
   /* Main popup */
   .rp4-popup{position:relative;background:rgba(3,6,18,.97);border:1px solid rgba(0,229,255,.16);clip-path:polygon(0 0,calc(100% - 28px) 0,100% 28px,100% 100%,28px 100%,0 calc(100% - 28px));overflow:hidden;transform:scale(.93) translateY(20px);filter:blur(3px);transition:transform .45s cubic-bezier(.16,1,.3,1),filter .45s}
   .rp-open .rp4-popup{transform:scale(1) translateY(0);filter:blur(0)}
-  .rp-closing .rp4-popup{transform:scale(.93) translateY(20px);filter:blur(3px)}
+  .rp-closing .rp4-popup{animation:rp4CloseGlitch .4s ease-in forwards}
+  @keyframes rp4CloseGlitch{
+    0%{transform:scale(1) translateY(0);opacity:1;filter:blur(0)}
+    15%{transform:scale(1) translateX(-6px);opacity:1;filter:blur(0)}
+    30%{transform:scale(1) translateX(4px);opacity:.85;filter:blur(1px)}
+    55%{transform:scale(.98) translateY(10px) skewX(-1deg);opacity:.5;filter:blur(3px)}
+    100%{transform:scale(.88) translateY(35px);opacity:0;filter:blur(8px)}
+  }
 
   /* Corner cut fill */
   .rp4-popup::after{content:'';position:absolute;top:0;right:0;width:28px;height:28px;background:rgba(0,229,255,.05);border-bottom:1px solid rgba(0,229,255,.2);border-left:1px solid rgba(0,229,255,.2);pointer-events:none;z-index:2}
@@ -1037,6 +1063,18 @@ document.querySelectorAll('.rv').forEach(function(g,i){setTimeout(function(){g.c
   .rp4-save{width:100%;font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:#020713;background:linear-gradient(135deg,#4DA3FF,#8B5CF6);border:none;padding:11px;cursor:pointer;transition:all .3s;margin-top:6px;clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px))}
   .rp4-save:hover{box-shadow:0 0 20px rgba(77,163,255,.3);transform:translateY(-1px)}
   .rp4-save:disabled{opacity:.5;cursor:not-allowed}
+
+  /* Stat editor grid */
+  .rp4-stats-edit{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+  .rp4-stat-ed{display:flex;flex-direction:column;align-items:center;gap:4px;background:rgba(0,229,255,0.02);border:1px solid rgba(0,229,255,0.06);border-radius:4px;padding:8px 4px}
+  .rp4-stat-ed-lbl{font-family:'Rajdhani',sans-serif;font-size:9px;font-weight:600;letter-spacing:.1em;color:rgba(255,255,255,.3)}
+  .rp4-stat-input{font-family:'Orbitron',sans-serif;font-weight:700;font-size:13px;color:#4DA3FF;width:60px;text-align:center;background:rgba(0,229,255,0.03);border:1px solid rgba(0,229,255,0.12);border-radius:3px;padding:5px 3px}
+  /* Power editor */
+  .rp4-pw-row{display:flex;gap:8px;align-items:center;margin-bottom:6px;padding:8px 10px;background:rgba(0,229,255,0.02);border:1px solid rgba(0,229,255,0.06);border-radius:4px}
+  .rp4-pw-rm{width:26px;height:26px;flex-shrink:0;border:1px solid rgba(255,71,87,.15);background:rgba(255,71,87,.04);border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;color:rgba(255,71,87,.4);transition:all .2s}
+  .rp4-pw-rm:hover{border-color:rgba(255,71,87,.5);color:#FF4757;background:rgba(255,71,87,.1)}
+  .rp4-pw-add{width:100%;margin-top:6px;padding:8px;border:1px dashed rgba(0,229,255,.12);border-radius:4px;background:transparent;color:rgba(255,255,255,.3);font-family:'Rajdhani',sans-serif;font-size:11px;letter-spacing:.1em;cursor:pointer;transition:all .2s}
+  .rp4-pw-add:hover{border-color:rgba(77,163,255,.3);color:#4DA3FF;background:rgba(77,163,255,.02)}
 
   @media(max-width:700px){
     .rp4-header{flex-direction:column}
