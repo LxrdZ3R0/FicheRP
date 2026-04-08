@@ -507,7 +507,12 @@ const firebaseConfig={apiKey:"AIzaSyAru7qZX8Gu_b8Y3oNDV-a5PmkrrkRjkcs",authDomai
 const app=getApps().length?getApps()[0]:initializeApp(firebaseConfig);const db=getFirestore(app);const auth=getAuth(app);
 window._db=db;window._addDoc=addDoc;window._deleteDoc=deleteDoc;window._doc=doc;window._serverTimestamp=serverTimestamp;window._collection=collection;
 window._isAdmin=false;
-onAuthStateChanged(auth,user=>{window._isAdmin=!!user;document.querySelectorAll('.admin-only').forEach(el=>el.style.display=user?'flex':'none');if(typeof window._renderAllLore==='function')window._renderAllLore();});
+onAuthStateChanged(auth,user=>{
+  window._isAdmin=!!user;
+  if(typeof window._renderAllLore==='function')window._renderAllLore();
+  document.querySelectorAll('.admin-only').forEach(el=>el.style.display=user?'flex':'none');
+  if(user)document.querySelectorAll('.lore-del-btn').forEach(el=>el.style.display='flex');
+});
 enableIndexedDbPersistence(db).catch(e=>{if(e.code!=='failed-precondition'&&e.code!=='unimplemented')console.warn('[offline]',e.code);});
 
 const CATS=['empires','organisations','dynasties','histoire','pantheon','chronologie','glossaire'];
@@ -532,7 +537,7 @@ onSnapshot(collection(db,'lore'),snap=>{
 <script>
 /* ═══ RENDER ═══ */
 function makeCard(d,type){
-  var del=window._isAdmin?'<button class="lore-del-btn" onclick="deleteLoreEntry(event,\''+d.id+'\')">&#x2715;</button>':'';
+  var del=window._isAdmin?'<button class="lore-del-btn" style="display:flex" onclick="deleteLoreEntry(event,\''+d.id+'\')">&#x2715;</button>':'';
   return '<div class="lore-card rv" style="--lc:'+d.color+'" data-type="'+type+'" data-id="'+d.id+'">'+del+'<div class="card-scan"></div><div class="lc-header"><span class="lc-hex">'+d.ico+'</span><div class="lc-header-text"><div class="lc-title">'+d.name+'</div><div class="lc-subtitle">'+(d.sub||'')+'</div></div></div><div class="lc-body"><p class="lc-desc">'+(d.desc||'')+'</p>'+(d.tags?'<div class="lc-tags">'+d.tags.map(function(t){return '<span class="lc-tag">'+t+'</span>'}).join('')+'</div>':'')+'<div class="lc-footer"><span class="lc-status"><span class="lc-dot" style="background:'+d.color+';box-shadow:0 0 6px '+d.color+'"></span>'+(d.status||'')+'</span><span class="lc-arrow">&rarr;</span></div></div></div>';
 }
 function renderGrid(id,items,type){var g=document.getElementById(id);if(!g)return;g.innerHTML=items.map(function(d){return makeCard(d,type)}).join('');revealCards(g)}
@@ -619,7 +624,7 @@ function renderPantheon(){
   var g=document.getElementById('pantheon-grid');
   g.innerHTML=DATA.pantheon.map(function(p){
     var details='';if(p.details){var dk=Object.keys(p.details);details=dk.map(function(k){return '<div class="pth-detail-section"><div class="pth-detail-label" onclick="event.stopPropagation();this.classList.toggle(\'expanded\')">'+k.charAt(0).toUpperCase()+k.slice(1)+'</div><div class="pth-detail-content">'+p.details[k]+'</div></div>'}).join('')}
-    var pdel=window._isAdmin?'<button class="lore-del-btn" onclick="deleteLoreEntry(event,\''+p.id+'\')">&#x2715;</button>':'';
+    var pdel=window._isAdmin?'<button class="lore-del-btn" style="display:flex" onclick="deleteLoreEntry(event,\''+p.id+'\')">&#x2715;</button>':'';
     return '<div class="pth-flip" style="--rc:'+p.color+'">'+pdel+'<div class="pth-inner" onclick="flipCard(this)"><div class="pth-face pth-front"><div class="pth-scanlines"></div><div class="pth-sweep"></div><div class="pth-photo"><span class="pth-photo-ico">'+p.ico+'</span><div class="pth-photo-ov"></div></div><div class="pth-domain-badge"><span class="pth-domain-val">'+((p.domain||'').split(' ')[0]||'\u2726')+'</span><span class="pth-domain-lbl">Primordial</span></div><div class="pth-body"><div class="pth-fn">'+(p.domain||'')+'</div><div class="pth-ln">'+p.name+'</div><p class="pth-desc">'+p.desc+'</p><div class="pth-hint">// CLIQUER POUR D\u00c9TAILS</div></div></div><div class="pth-face pth-back"><div class="pth-back-title">'+p.name+'</div>'+details+'<div class="pth-back-flip" onclick="event.stopPropagation();flipCard(this.closest(\'.pth-inner\'))">// RETOURNER LA CARTE</div></div></div></div>';
   }).join('');
 }
@@ -635,7 +640,7 @@ function flipCard(inner){
 function renderChronologie(){
   var t=document.getElementById('chrono-timeline');
   t.innerHTML=DATA.chronologie.map(function(c){
-    var cdel=window._isAdmin?'<button class="lore-del-btn" onclick="deleteLoreEntry(event,\''+c.id+'\')">&#x2715;</button>':'';
+    var cdel=window._isAdmin?'<button class="lore-del-btn" style="display:flex" onclick="deleteLoreEntry(event,\''+c.id+'\')">&#x2715;</button>':'';
     return '<div class="chrono-era rv" style="--ec:'+c.color+'">'+cdel+'<div class="chrono-era-tag">'+c.era+'</div><div class="chrono-era-title">'+c.title+'</div><div class="chrono-era-desc">'+c.desc+'</div>'+(c.events?'<div class="chrono-events">'+c.events.map(function(e){return '<div class="chrono-event">'+e+'</div>'}).join('')+'</div>':'')+'</div>';
   }).join('');revealCards(t);
 }
@@ -644,7 +649,7 @@ function renderChronologie(){
 function renderGlossaire(filter){
   var g=document.getElementById('glossary-grid');var items=DATA.glossaire;
   if(filter)items=items.filter(function(i){return i.term.toLowerCase().indexOf(filter)!==-1||i.def.toLowerCase().indexOf(filter)!==-1});
-  g.innerHTML=items.map(function(i){var gdel=window._isAdmin?'<button class="lore-del-btn" onclick="deleteLoreEntry(event,\''+i.id+'\')">&#x2715;</button>':'';return '<div class="glossary-item" style="position:relative">'+gdel+'<div class="glossary-term">'+i.term+'</div><div class="glossary-def">'+i.def+'</div><div class="glossary-cat">'+i.cat+'</div></div>'}).join('');
+  g.innerHTML=items.map(function(i){var gdel=window._isAdmin?'<button class="lore-del-btn" style="display:flex" onclick="deleteLoreEntry(event,\''+i.id+'\')">&#x2715;</button>':'';return '<div class="glossary-item" style="position:relative">'+gdel+'<div class="glossary-term">'+i.term+'</div><div class="glossary-def">'+i.def+'</div><div class="glossary-cat">'+i.cat+'</div></div>'}).join('');
 }
 
 /* ═══ CLICK HANDLERS ═══ */

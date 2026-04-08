@@ -234,7 +234,7 @@ function renderAdminHeader(){if(!currentAdmin)return;document.getElementById('ad
 .admin-tab{font-family:'Rajdhani',sans-serif;font-size:.66rem;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);background:transparent;border:none;padding:12px 22px;cursor:pointer;transition:color .2s;position:relative;display:flex;align-items:center;gap:8px;}
 .admin-tab::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:2px;background:var(--gold);transform:scaleX(0);transition:transform .25s;}.admin-tab.active{color:var(--gold);}.admin-tab.active::after{transform:scaleX(1);}
 .tab-badge{font-family:'Orbitron',sans-serif;font-size:.52rem;font-weight:700;background:var(--magenta);color:#fff;padding:2px 7px;border-radius:10px;display:none;}
-.tab-content{display:none;padding:28px 36px;}
+.tab-content{display:none;padding:28px 36px;}.tab-content.active{display:block;}
 .tab-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--border);}
 .tab-title{font-family:'Orbitron',sans-serif;font-size:.75rem;font-weight:700;letter-spacing:.2em;color:var(--text);text-transform:uppercase;}
 .tab-count{font-family:'Rajdhani',sans-serif;font-size:.6rem;color:var(--muted);letter-spacing:.15em;}
@@ -286,13 +286,11 @@ function renderAdminHeader(){if(!currentAdmin)return;document.getElementById('ad
 .lore-item-color{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
 .lore-item-actions{display:flex;gap:8px;flex-shrink:0;}
 @media(max-width:650px){.lf-row.lf-half{width:100%;}.lore-subtabs{gap:4px;}.lore-subtab{padding:6px 10px;font-size:.55rem;}}
-[x-cloak]{display:none!important}
 .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--dark2);border:1px solid var(--border);font-family:'Rajdhani',sans-serif;font-size:.7rem;letter-spacing:.14em;color:var(--text);padding:14px 28px;z-index:9000;transition:transform .3s,opacity .3s;opacity:0;border-radius:10px;}.toast.show{transform:translateX(-50%) translateY(0);opacity:1;}.toast.success{border-color:rgba(68,255,136,.4);color:var(--green);}.toast.error{border-color:rgba(255,71,87,.4);color:var(--red);}
 @media(max-width:900px){.fiche-row{grid-template-columns:70px 1fr;}.fiche-actions{grid-column:1/-1;flex-direction:row;flex-wrap:wrap;padding:10px 14px;min-width:unset;}.admin-stats{grid-template-columns:repeat(3,1fr);}.log-row{grid-template-columns:100px 70px 1fr 120px;}.log-date{display:none;}}
 @media(max-width:650px){.admin-header{padding:0 16px;}.admin-tabs{overflow-x:auto;}.tab-content{padding:20px 16px;}.admin-stats{padding:20px 16px 0;grid-template-columns:repeat(2,1fr);}.admin-meta{gap:8px;}.admin-user{display:none;}.log-row{grid-template-columns:90px 1fr 100px;}.log-role,.log-by{display:none;}}
 
 </style>
-<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 <script src="js/debug.js"></script>
 <script src="js/constants.js"></script>
 <script src="js/utils.js"></script>
@@ -340,7 +338,7 @@ function renderAdminHeader(){if(!currentAdmin)return;document.getElementById('ad
 </div>
 
 <!-- PANEL -->
-<div id="panel-screen" x-data="{ tab: 'fiches', logsVisible: false }">
+<div id="panel-screen">
   <div class="admin-header">
     <div class="admin-logo"><img src="img/logo-jaharta.png" alt="" style="width:32px;height:32px;object-fit:contain;vertical-align:middle;margin-right:8px;">JAHARTA <span>// ADMIN</span></div>
     <div class="admin-meta">
@@ -359,10 +357,10 @@ function renderAdminHeader(){if(!currentAdmin)return;document.getElementById('ad
   </div>
 
   <div class="admin-tabs">
-    <button class="admin-tab" :class="{active:tab==='fiches'}" @click="tab='fiches'">Fiches</button>
-    <button class="admin-tab" :class="{active:tab==='pnj'}" @click="tab='pnj'">PNJ <span class="tab-badge" id="badge-pnj" style="background:#b06eff"></span></button>
-    <button class="admin-tab" :class="{active:tab==='lore'}" @click="tab='lore'">Lore</button>
-    <button class="admin-tab" id="tab-btn-logs" x-cloak x-show="logsVisible" :class="{active:tab==='logs'}" @click="tab='logs'">Logs</button>
+    <button class="admin-tab active" id="tab-btn-fiches" onclick="showAdminTab('fiches')">Fiches</button>
+    <button class="admin-tab" id="tab-btn-pnj" onclick="showAdminTab('pnj')">PNJ <span class="tab-badge" id="badge-pnj" style="background:#b06eff"></span></button>
+    <button class="admin-tab" id="tab-btn-lore" onclick="showAdminTab('lore')">Lore</button>
+    <button class="admin-tab" id="tab-btn-logs" style="display:none" onclick="showAdminTab('logs')">Logs</button>
   </div>
 
   <div class="tab-content" id="tab-fiches" x-show="tab==='fiches'" x-cloak>
