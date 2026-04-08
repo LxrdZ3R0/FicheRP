@@ -36,13 +36,14 @@ window._loreData=_loreData;
 
 function loadAllLore(){
   LORE_COLLECTIONS.forEach(cat=>{
-    const q=query(collection(db,'lore_'+cat),orderBy('createdAt','desc'));
-    onSnapshot(q,snap=>{
+    const col=collection(db,'lore_'+cat);
+    onSnapshot(col,snap=>{
       const items=[];snap.forEach(d=>items.push({id:d.id,...d.data()}));
+      items.sort((a,b)=>{const ta=a.createdAt?.toMillis?a.createdAt.toMillis():0;const tb=b.createdAt?.toMillis?b.createdAt.toMillis():0;return tb-ta;});
       _loreData[cat]=items;
       const cntEl=document.getElementById('cnt-lore');
       if(cntEl){let total=0;LORE_COLLECTIONS.forEach(c=>{total+=_loreData[c].length});cntEl.textContent=total;}
-      renderLoreCategory(cat);
+      if(typeof window.renderLoreCategory==='function') window.renderLoreCategory(cat);
     },err=>console.warn('[lore_'+cat+']',err.message));
   });
 }
@@ -630,7 +631,7 @@ function renderLogs(logs) {
    LORE — Sub-tab switching, submit, render
    ═══════════════════════════════════════════════════════════════════ */
 
-function switchLoreSub(cat) {
+window.switchLoreSub = function(cat) {
   document.querySelectorAll('.lore-subtab').forEach(b => b.classList.toggle('active', b.dataset.cat === cat));
   document.querySelectorAll('.lore-panel').forEach(p => p.classList.remove('active'));
   const panel = document.getElementById('lore-panel-' + cat);
@@ -712,7 +713,7 @@ function resetLoreForm(cat) {
 }
 
 /* ── Render lore items list ───────────────────────────────────────── */
-function renderLoreCategory(cat) {
+window.renderLoreCategory = function(cat) {
   const el = document.getElementById('lore-list-' + cat);
   if (!el) return;
   const items = window._loreData[cat] || [];

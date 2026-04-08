@@ -465,36 +465,33 @@ body::before{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;
 <script type="module">
 /* ═══ FIREBASE — Chargement du Lore depuis Firestore ═══ */
 import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import{getFirestore,collection,query,orderBy,onSnapshot,enableIndexedDbPersistence}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import{getFirestore,collection,onSnapshot,enableIndexedDbPersistence}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 const firebaseConfig={apiKey:"AIzaSyAru7qZX8Gu_b8Y3oNDV-a5PmkrrkRjkcs",authDomain:"jaharta-rp.firebaseapp.com",projectId:"jaharta-rp",storageBucket:"jaharta-rp.firebasestorage.app",messagingSenderId:"217075417489",appId:"1:217075417489:web:4d1e2df422a5cd42411a30"};
 const app=initializeApp(firebaseConfig);const db=getFirestore(app);
 enableIndexedDbPersistence(db).catch(e=>{if(e.code!=='failed-precondition'&&e.code!=='unimplemented')console.warn('[offline]',e.code);});
 
-/* Expose DATA globally for the non-module render functions */
-window.DATA={empires:[],organisations:[],dynasties:[],histoire:[],pantheon:[],chronologie:[],glossaire:[]};
+/* Populate existing DATA object (created by the non-module script which runs first) */
+if(!window.DATA) window.DATA={empires:[],organisations:[],dynasties:[],histoire:[],pantheon:[],chronologie:[],glossaire:[]};
 
 /* Load each lore collection in real time */
-function loadLoreCat(cat,orderField){
-  const q=query(collection(db,'lore_'+cat),orderBy(orderField||'createdAt','desc'));
-  onSnapshot(q,snap=>{
+function loadLoreCat(cat){
+  const col=collection(db,'lore_'+cat);
+  onSnapshot(col,snap=>{
     const items=[];
     snap.forEach(d=>items.push({id:d.id,...d.data()}));
+    items.sort((a,b)=>{const ta=a.createdAt?.toMillis?a.createdAt.toMillis():0;const tb=b.createdAt?.toMillis?b.createdAt.toMillis():0;return tb-ta;});
     window.DATA[cat]=items;
     /* Re-render the relevant section */
     if(typeof window._renderLore==='function') window._renderLore(cat);
   },err=>console.warn('[lore_'+cat+']',err.message));
 }
 
-loadLoreCat('empires','createdAt');
-loadLoreCat('organisations','createdAt');
-loadLoreCat('dynasties','createdAt');
-loadLoreCat('histoire','createdAt');
-loadLoreCat('pantheon','createdAt');
-loadLoreCat('chronologie','createdAt');
-loadLoreCat('glossaire','createdAt');
+['empires','organisations','dynasties','histoire','pantheon','chronologie','glossaire'].forEach(c=>loadLoreCat(c));
 </script>
 
 <script>
+/* DATA sera rempli par le module Firebase via window.DATA */
+if(!window.DATA) window.DATA={empires:[],organisations:[],dynasties:[],histoire:[],pantheon:[],chronologie:[],glossaire:[]};
 var DATA=window.DATA;
 
 /* ═══ RENDER ═══ */
