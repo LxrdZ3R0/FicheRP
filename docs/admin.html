@@ -35,20 +35,11 @@ function showScreen(name){
   document.getElementById('loading-screen').style.display=name==='loading'?'flex':'none';
   document.getElementById('panel-screen').style.display=name==='panel'?'block':'none';
   if(name==='panel'){
-    // Forcer Alpine à retirer x-cloak
-    document.querySelectorAll('[x-cloak]').forEach(el=>{
-      el.removeAttribute('x-cloak');
-      el.style.removeProperty('display');
-    });
     // S'assurer que le tab fiches est visible par défaut
-    const ficheTab=document.getElementById('tab-fiches');
-    if(ficheTab && ficheTab.style.display==='none'){
-      console.log('[ADMIN] Forçage visibilité tab fiches');
-      ficheTab.style.display='';
-    }
+    switchAdminTab('fiches');
   }
 }
-window._setAdminTab=(data)=>{const el=document.getElementById('panel-screen');if(!el)return;function trySet(){if(!el._x_dataStack){return false;}const alpineData=Alpine.$data(el);if(alpineData){alpineData.logsVisible=(data.role==='admin');return true;}return false;}if(!trySet()){let attempts=0;const iv=setInterval(()=>{if(trySet()||++attempts>20)clearInterval(iv);},100);}};
+window._setAdminTab=(data)=>{const btn=document.getElementById('tab-btn-logs');if(btn)btn.style.display=(data.role==='admin')?'':'none';};
 
 /* ═══ LORE ═══ */
 const _ld={empires:[],organisations:[],dynasties:[],histoire:[],pantheon:[],chronologie:[],glossaire:[]};
@@ -153,7 +144,7 @@ function renderAdminHeader(){if(!currentAdmin)return;document.getElementById('ad
 .admin-tab{font-family:'Rajdhani',sans-serif;font-size:.66rem;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);background:transparent;border:none;padding:12px 22px;cursor:pointer;transition:color .2s;position:relative;display:flex;align-items:center;gap:8px;}
 .admin-tab::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:2px;background:var(--gold);transform:scaleX(0);transition:transform .25s;}.admin-tab.active{color:var(--gold);}.admin-tab.active::after{transform:scaleX(1);}
 .tab-badge{font-family:'Orbitron',sans-serif;font-size:.52rem;font-weight:700;background:var(--magenta);color:#fff;padding:2px 7px;border-radius:10px;display:none;}
-.tab-content{display:none;padding:28px 36px;}
+.tab-content{display:none;padding:28px 36px;}.tab-content.active{display:block;}
 .tab-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--border);}
 .tab-title{font-family:'Orbitron',sans-serif;font-size:.75rem;font-weight:700;letter-spacing:.2em;color:var(--text);text-transform:uppercase;}
 .tab-count{font-family:'Rajdhani',sans-serif;font-size:.6rem;color:var(--muted);letter-spacing:.15em;}
@@ -204,13 +195,13 @@ function renderAdminHeader(){if(!currentAdmin)return;document.getElementById('ad
 .lore-item-color{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
 .lore-item-actions{display:flex;gap:8px;flex-shrink:0;}
 @media(max-width:650px){.lf-row.lf-half{width:100%;}}
-[x-cloak]{display:none!important}
+/* x-cloak supprimé — plus nécessaire sans Alpine */
 .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--dark2);border:1px solid var(--border);font-family:'Rajdhani',sans-serif;font-size:.7rem;letter-spacing:.14em;color:var(--text);padding:14px 28px;z-index:9000;transition:transform .3s,opacity .3s;opacity:0;border-radius:10px;}.toast.show{transform:translateX(-50%) translateY(0);opacity:1;}.toast.success{border-color:rgba(68,255,136,.4);color:var(--green);}.toast.error{border-color:rgba(255,71,87,.4);color:var(--red);}
 @media(max-width:900px){.fiche-row{grid-template-columns:70px 1fr;}.fiche-actions{grid-column:1/-1;flex-direction:row;flex-wrap:wrap;padding:10px 14px;min-width:unset;}.admin-stats{grid-template-columns:repeat(3,1fr);}.log-row{grid-template-columns:100px 70px 1fr 120px;}.log-date{display:none;}}
 @media(max-width:650px){.admin-header{padding:0 16px;}.admin-tabs{overflow-x:auto;}.tab-content{padding:20px 16px;}.admin-stats{padding:20px 16px 0;grid-template-columns:repeat(2,1fr);}.admin-meta{gap:8px;}.admin-user{display:none;}.log-row{grid-template-columns:90px 1fr 100px;}.log-role,.log-by{display:none;}}
 
 </style>
-<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
+<!-- Alpine.js supprimé — tabs gérés en vanilla JS pour éviter race condition -->
 <script src="js/debug.js"></script>
 <script src="js/constants.js"></script>
 <script src="js/utils.js"></script>
@@ -258,7 +249,7 @@ function renderAdminHeader(){if(!currentAdmin)return;document.getElementById('ad
 </div>
 
 <!-- PANEL -->
-<div id="panel-screen" x-data="{ tab: 'fiches', logsVisible: false }">
+<div id="panel-screen">
   <div class="admin-header">
     <div class="admin-logo"><img src="img/logo-jaharta.png" alt="" style="width:32px;height:32px;object-fit:contain;vertical-align:middle;margin-right:8px;">JAHARTA <span>// ADMIN</span></div>
     <div class="admin-meta">
@@ -277,23 +268,23 @@ function renderAdminHeader(){if(!currentAdmin)return;document.getElementById('ad
   </div>
 
   <div class="admin-tabs">
-    <button class="admin-tab" :class="{active:tab==='fiches'}" @click="tab='fiches'">Fiches</button>
-    <button class="admin-tab" :class="{active:tab==='pnj'}" @click="tab='pnj'">PNJ <span class="tab-badge" id="badge-pnj" style="background:#b06eff"></span></button>
-    <button class="admin-tab" :class="{active:tab==='lore'}" @click="tab='lore'">Lore</button>
-    <button class="admin-tab" id="tab-btn-logs" x-cloak x-show="logsVisible" :class="{active:tab==='logs'}" @click="tab='logs'">Logs</button>
+    <button class="admin-tab active" data-tab="fiches" onclick="switchAdminTab('fiches')">Fiches</button>
+    <button class="admin-tab" data-tab="pnj" onclick="switchAdminTab('pnj')">PNJ <span class="tab-badge" id="badge-pnj" style="background:#b06eff"></span></button>
+    <button class="admin-tab" data-tab="lore" onclick="switchAdminTab('lore')">Lore</button>
+    <button class="admin-tab" data-tab="logs" id="tab-btn-logs" style="display:none" onclick="switchAdminTab('logs')">Logs</button>
   </div>
 
-  <div class="tab-content" id="tab-fiches" x-show="tab==='fiches'" x-cloak>
+  <div class="tab-content active" id="tab-fiches" data-tab="fiches">
     <div class="tab-header"><div class="tab-title">◈ Fiches personnages</div><div class="tab-count" id="lbl-fiches">—</div></div>
     <div class="fiche-list" id="table-fiches"><div class="empty-list"><span class="empty-list-icon">⟳</span>Chargement...</div></div>
   </div>
 
-  <div class="tab-content" id="tab-pnj" x-show="tab==='pnj'" x-cloak>
+  <div class="tab-content" id="tab-pnj" data-tab="pnj">
     <div class="tab-header"><div class="tab-title">◈ PNJ</div><a href="pnj.html" target="_blank" class="action-btn view">↗ Page PNJ publique</a></div>
     <div class="fiche-list" id="table-pnj"><div class="empty-list"><span class="empty-list-icon">⟳</span>Chargement...</div></div>
   </div>
 
-  <div class="tab-content" id="tab-lore" x-show="tab==='lore'" x-cloak>
+  <div class="tab-content" id="tab-lore" data-tab="lore">
     <div class="tab-header"><div class="tab-title">◈ Gestion du Lore</div><a href="lore.html" target="_blank" class="action-btn view">↗ Page Lore</a></div>
     <div class="lore-subtabs">
       <button class="lore-subtab active" data-cat="empires" onclick="switchLoreSub('empires')">🏰 Empires</button>
@@ -313,7 +304,7 @@ function renderAdminHeader(){if(!currentAdmin)return;document.getElementById('ad
     <div class="lore-panel" id="lore-panel-glossaire"><div class="lore-form-title">Ajouter un Terme</div><div class="lore-form"><div class="lf-row"><label>Terme *</label><input type="text" id="lg-term"></div><div class="lf-row"><label>Définition *</label><textarea id="lg-def" rows="3"></textarea></div><div class="lf-row"><label>Catégorie</label><input type="text" id="lg-cat"></div><button class="lore-submit" onclick="submitLore('glossaire')">+ Ajouter</button></div><div class="lore-list" id="lore-list-glossaire"><div class="empty-list"><span class="empty-list-icon">📖</span>Aucun.</div></div></div>
   </div>
 
-  <div class="tab-content" id="tab-logs" x-show="tab==='logs'" x-cloak>
+  <div class="tab-content" id="tab-logs" data-tab="logs">
     <div class="tab-header"><div class="tab-title">⬡ Historique des actions</div><div class="tab-count" id="lbl-logs">—</div></div>
     <div class="log-list" id="table-logs">
       <div class="log-row log-row-header"><span>Action</span><span>Rôle</span><span>Cible</span><span>Par</span><span>Date</span></div>
@@ -549,19 +540,20 @@ window.renderLogs = function(logs) {
 <script src="js/page-transition.js"></script>
 
 <script>
-// Fallback: si Alpine ne s'est pas initialisé après 3s, retirer x-cloak manuellement
-setTimeout(function(){
-  var cloaked = document.querySelectorAll('[x-cloak]');
-  if(cloaked.length > 0){
-    console.warn('[ADMIN] Alpine n\'a pas retiré x-cloak après 3s, forçage manuel');
-    cloaked.forEach(function(el){ el.removeAttribute('x-cloak'); });
-    // Afficher le tab fiches par défaut
-    var tabs = document.querySelectorAll('.tab-content');
-    tabs.forEach(function(t){ t.style.display = 'none'; });
-    var fiches = document.getElementById('tab-fiches');
-    if(fiches) fiches.style.display = 'block';
-  }
-}, 3000);
+/* ── Vanilla JS tab switcher — remplace Alpine.js ──────────────────────── */
+window.switchAdminTab = function(tabName) {
+  // Update tab buttons
+  document.querySelectorAll('.admin-tab').forEach(function(btn) {
+    btn.classList.toggle('active', btn.dataset.tab === tabName);
+  });
+  // Update tab content panels
+  document.querySelectorAll('.tab-content').forEach(function(panel) {
+    var isActive = panel.dataset.tab === tabName;
+    panel.classList.toggle('active', isActive);
+    panel.style.display = isActive ? 'block' : 'none';
+  });
+  console.log('[ADMIN] Tab switched to:', tabName);
+};
 </script>
 </body>
 </html>
