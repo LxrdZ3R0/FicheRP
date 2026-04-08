@@ -12,14 +12,15 @@
 <!-- FIREBASE MODULE -->
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import{getFirestore,collection,doc,getDoc,getDocFromServer,addDoc,deleteDoc,query,orderBy,where,onSnapshot,serverTimestamp,enableIndexedDbPersistence}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import{getFirestore,collection,doc,getDoc,getDocFromServer,addDoc,deleteDoc,query,orderBy,onSnapshot,serverTimestamp,enableIndexedDbPersistence,where}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import{getAuth,onAuthStateChanged,signOut,GoogleAuthProvider,signInWithPopup}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 const firebaseConfig={apiKey:"AIzaSyAru7qZX8Gu_b8Y3oNDV-a5PmkrrkRjkcs",authDomain:"jaharta-rp.firebaseapp.com",projectId:"jaharta-rp",storageBucket:"jaharta-rp.firebasestorage.app",messagingSenderId:"217075417489",appId:"1:217075417489:web:4d1e2df422a5cd42411a30"};
 const app=initializeApp(firebaseConfig);const db=getFirestore(app);const auth=getAuth(app);
 enableIndexedDbPersistence(db).catch(e=>{if(e.code!=='failed-precondition'&&e.code!=='unimplemented')console.warn('[offline]',e.code);});
 let currentAdmin=null;
+console.log('[ADMIN] Module Firebase chargé, auth state listener en place');
 onAuthStateChanged(auth,async user=>{
-  if(!user){showScreen('login');currentAdmin=null;return;}showScreen('loading');try{const snap=await getDocFromServer(doc(db,'admins',user.uid));if(!snap.exists()){await signOut(auth);showScreen('login');document.getElementById('login-error').textContent='⚠ Accès refusé. Votre compte n\'est pas dans la whitelist admin.';return;}const data=snap.data();currentAdmin={uid:user.uid,email:user.email,name:data.name||user.displayName||user.email,role:data.role||'admin'};window._adminRole=currentAdmin.role;window._adminEmail=currentAdmin.email;window._adminName=currentAdmin.name;renderAdminHeader();showScreen('panel');setTimeout(()=>window._setAdminTab?.({role:currentAdmin.role}),50);loadAllFiches();loadPNJ();loadLore();if(currentAdmin.role==='admin')loadLogs();}catch(err){document.getElementById('login-error').textContent='⚠ '+err.message;showScreen('login');}});
+  if(!user){console.log('[ADMIN] Pas de user, affichage login');showScreen('login');currentAdmin=null;return;}console.log('[ADMIN] User détecté:', user.email);showScreen('loading');try{const snap=await getDocFromServer(doc(db,'admins',user.uid));if(!snap.exists()){await signOut(auth);showScreen('login');document.getElementById('login-error').textContent='⚠ Accès refusé. Votre compte n\'est pas dans la whitelist admin.';return;}const data=snap.data();currentAdmin={uid:user.uid,email:user.email,name:data.name||user.displayName||user.email,role:data.role||'admin'};window._adminRole=currentAdmin.role;window._adminEmail=currentAdmin.email;window._adminName=currentAdmin.name;console.log('[ADMIN] Admin vérifié, rôle:', currentAdmin.role);renderAdminHeader();console.log('[ADMIN] Header rendu, affichage panel');showScreen('panel');console.log('[ADMIN] Panel affiché, chargement données...');setTimeout(()=>window._setAdminTab?.({role:currentAdmin.role}),50);loadAllFiches();loadPNJ();loadLore();if(currentAdmin.role==='admin')loadLogs();}catch(err){console.error('[ADMIN] ERREUR auth:', err);document.getElementById('login-error').textContent='⚠ '+err.message;showScreen('login');}});
 window.loginGoogle=async function(){const errEl=document.getElementById('login-error');errEl.textContent='';try{await signInWithPopup(auth,new GoogleAuthProvider());}catch(e){if(e.code!=='auth/popup-closed-by-user')errEl.textContent='⚠ Erreur Google : '+e.message;}};
 window.adminLogout=async function(){currentAdmin=null;window._adminRole=null;await signOut(auth);};
 async function writeLog(action,targetId,targetName){if(!currentAdmin)return;try{const d={action,targetId,targetName,byEmail:currentAdmin.email,byUid:currentAdmin.uid,byName:currentAdmin.name,role:currentAdmin.role,at:serverTimestamp()};await addDoc(collection(db,'logs'),d);}catch(e){console.warn('[log]',e.message);}}
@@ -28,167 +29,85 @@ function loadAllFiches(){const q=query(collection(db,'fiches'),orderBy('createdA
 window.deleteFiche=async function(id,name){if(!confirm('Supprimer définitivement cette fiche ?'))return;await deleteDoc(doc(db,'fiches',id));await writeLog('delete',id,name);showToast('Fiche supprimée.','error');};
 function loadPNJ(){const q=query(collection(db,'pnj'),orderBy('createdAt','desc'));onSnapshot(q,snap=>{const pnjs=[];snap.forEach(d=>pnjs.push({id:d.id,...d.data()}));document.getElementById('cnt-pnj').textContent=pnjs.length;const bp=document.getElementById('badge-pnj');bp.textContent=pnjs.length||'';bp.style.display=pnjs.length?'inline':'none';renderPNJTable(pnjs);},err=>console.warn('[pnj]',err.message));}
 window.deletePNJ=async function(id,name){if(!confirm('Supprimer définitivement ce PNJ ?'))return;await deleteDoc(doc(db,'pnj',id));await writeLog('delete_pnj',id,name);showToast('PNJ supprimé.','error');};
+function showScreen(name){
+  console.log('[ADMIN] showScreen:', name);
+  document.getElementById('login-screen').style.display=name==='login'?'flex':'none';
+  document.getElementById('loading-screen').style.display=name==='loading'?'flex':'none';
+  document.getElementById('panel-screen').style.display=name==='panel'?'block':'none';
+  if(name==='panel'){
+    // Forcer Alpine à retirer x-cloak
+    document.querySelectorAll('[x-cloak]').forEach(el=>{
+      el.removeAttribute('x-cloak');
+      el.style.removeProperty('display');
+    });
+    // S'assurer que le tab fiches est visible par défaut
+    const ficheTab=document.getElementById('tab-fiches');
+    if(ficheTab && ficheTab.style.display==='none'){
+      console.log('[ADMIN] Forçage visibilité tab fiches');
+      ficheTab.style.display='';
+    }
+  }
+}
+window._setAdminTab=(data)=>{const el=document.getElementById('panel-screen');if(!el)return;function trySet(){if(!el._x_dataStack){return false;}const alpineData=Alpine.$data(el);if(alpineData){alpineData.logsVisible=(data.role==='admin');return true;}return false;}if(!trySet()){let attempts=0;const iv=setInterval(()=>{if(trySet()||++attempts>20)clearInterval(iv);},100);}};
 
-/* ═══ LORE — collection unique "lore" avec champ category ═══ */
-const _loreData={empires:[],organisations:[],dynasties:[],histoire:[],pantheon:[],chronologie:[],glossaire:[]};
-
+/* ═══ LORE ═══ */
+const _ld={empires:[],organisations:[],dynasties:[],histoire:[],pantheon:[],chronologie:[],glossaire:[]};
 function loadLore(){
+  console.log('[ADMIN] Chargement lore...');
   onSnapshot(collection(db,'lore'),snap=>{
-    // Reset all
-    Object.keys(_loreData).forEach(k=>{ _loreData[k]=[]; });
-    snap.forEach(d=>{
-      const data={id:d.id,...d.data()};
-      const cat=data.category;
-      if(_loreData[cat]) _loreData[cat].push(data);
-    });
-    // Sort each by createdAt desc
-    Object.keys(_loreData).forEach(k=>{
-      _loreData[k].sort((a,b)=>{
-        const ta=a.createdAt?.seconds||0, tb=b.createdAt?.seconds||0;
-        return tb-ta;
-      });
-    });
-    // Update counter
-    let total=0; Object.values(_loreData).forEach(arr=>{total+=arr.length;});
-    const cnt=document.getElementById('cnt-lore'); if(cnt) cnt.textContent=total;
-    // Re-render active sub
-    const activeSub=document.querySelector('.lore-subtab.active');
-    if(activeSub) renderLoreList(activeSub.dataset.cat);
+    Object.keys(_ld).forEach(k=>{_ld[k]=[];});
+    snap.forEach(d=>{const x={id:d.id,...d.data()};const c=x.category;if(_ld[c])_ld[c].push(x);});
+    Object.keys(_ld).forEach(k=>{_ld[k].sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));});
+    let t=0;Object.values(_ld).forEach(a=>{t+=a.length;});
+    const ce=document.getElementById('cnt-lore');if(ce)ce.textContent=t;
+    console.log('[ADMIN] Lore chargé, total:', t);
+    const as=document.querySelector('.lore-subtab.active');
+    if(as)window._renderLoreList(as.dataset.cat);
   },err=>console.warn('[lore]',err.message));
 }
-
-function renderLoreList(cat){
-  const el=document.getElementById('lore-list-'+cat);
-  if(!el) return;
-  const items=_loreData[cat]||[];
+window._renderLoreList=function(cat){
+  const el=document.getElementById('lore-list-'+cat);if(!el)return;
+  const items=_ld[cat]||[];
   const role=window._adminRole||'modo';
-  const icons={empires:'🏰',organisations:'⚔️',dynasties:'👑',histoire:'📜',pantheon:'✨',chronologie:'⏳',glossaire:'📖'};
-
-  if(!items.length){
-    el.innerHTML='<div class="empty-list"><span class="empty-list-icon">'+(icons[cat]||'◈')+'</span>Aucun élément.</div>';
-    return;
-  }
+  if(!items.length){el.innerHTML='<div class="empty-list"><span class="empty-list-icon">\u25C8</span>Aucun \u00E9l\u00E9ment.</div>';return;}
   el.innerHTML='';
   items.forEach(item=>{
-    const name=escHtml(item.name||item.title||item.term||'?');
-    const sub=escHtml(item.sub||item.domain||item.era||item.cat||item.desc||'').substring(0,80);
-    const ico=item.ico||'◈';
-    const color=item.color||'#8B5CF6';
-
-    const row=document.createElement('div');
-    row.className='lore-item';
-    row.innerHTML=`
-      <div class="lore-item-ico" style="border-color:${color}22">${ico}</div>
-      <span class="lore-item-color" style="background:${color};box-shadow:0 0 8px ${color}"></span>
-      <div class="lore-item-info">
-        <div class="lore-item-name">${name}</div>
-        <div class="lore-item-sub">${sub}</div>
-      </div>
-      <div class="lore-item-actions"></div>`;
+    const n=escHtml(item.name||item.title||item.term||'?');
+    const s=escHtml(item.sub||item.domain||item.era||item.cat||item.desc||'').substring(0,80);
+    const ico=item.ico||'\u25C8';const co=item.color||'#8B5CF6';
+    const row=document.createElement('div');row.className='lore-item';
+    row.innerHTML='<div class="lore-item-ico" style="border-color:'+co+'22">'+ico+'</div><span class="lore-item-color" style="background:'+co+'"></span><div class="lore-item-info"><div class="lore-item-name">'+n+'</div><div class="lore-item-sub">'+s+'</div></div><div class="lore-item-actions"></div>';
     if(role==='admin'){
-      const btn=document.createElement('button');
-      btn.className='action-btn delete';
-      btn.textContent='✕ Suppr.';
-      btn.addEventListener('click',()=>deleteLoreItem(item.id,item.name||item.title||item.term));
+      const btn=document.createElement('button');btn.className='action-btn delete';btn.textContent='\u2715 Suppr.';
+      btn.addEventListener('click',()=>{if(!confirm('Supprimer ?'))return;deleteDoc(doc(db,'lore',item.id)).then(()=>{writeLog('del_lore',item.id,item.name||item.title||item.term||'?');showToast('Supprim\u00E9.','error');}).catch(e=>showToast('Erreur: '+e.message,'error'));});
       row.querySelector('.lore-item-actions').appendChild(btn);
     }
     el.appendChild(row);
   });
-}
-
-async function deleteLoreItem(id,name){
-  if(!confirm('Supprimer cet élément du lore ?'))return;
-  try{
-    await deleteDoc(doc(db,'lore',id));
-    await writeLog('delete_lore',id,name||'?');
-    showToast('Élément supprimé.','error');
-  }catch(e){showToast('Erreur : '+e.message,'error');}
-}
-
-/* ── Lore sub-tab switch ── */
+};
 window.switchLoreSub=function(cat){
   document.querySelectorAll('.lore-subtab').forEach(b=>b.classList.toggle('active',b.dataset.cat===cat));
   document.querySelectorAll('.lore-panel').forEach(p=>p.classList.remove('active'));
-  const panel=document.getElementById('lore-panel-'+cat);
-  if(panel) panel.classList.add('active');
-  renderLoreList(cat);
+  const panel=document.getElementById('lore-panel-'+cat);if(panel)panel.classList.add('active');
+  window._renderLoreList(cat);
 };
-
-/* ── Lore submit ── */
 window.submitLore=async function(cat){
-  const data=collectLoreFields(cat);
-  if(!data) return;
-  data.category=cat;
-  data.createdAt=serverTimestamp();
-  try{
-    const ref=await addDoc(collection(db,'lore'),data);
-    await writeLog('add_lore',ref.id,data.name||data.term||data.title||'?');
-    showToast('Élément ajouté !','success');
-    resetLoreForm(cat);
-  }catch(e){showToast('Erreur : '+e.message,'error');}
+  const v=id=>{const el=document.getElementById(id);return el?el.value.trim():'';};
+  const pt=s=>s?s.split(',').map(t=>t.trim()).filter(Boolean):[];
+  const pj=s=>{try{return JSON.parse(s);}catch{return null;}};
+  let data=null;
+  if(cat==='empires'){const nm=v('le-name'),ds=v('le-desc');if(!nm||!ds){showToast('Nom et desc requis','error');return;}data={name:nm,sub:v('le-sub'),ico:v('le-ico')||'\U0001F3F0',color:v('le-color')||'#FF4757',desc:ds,full:v('le-full'),tags:pt(v('le-tags')),status:v('le-status'),lois:v('le-lois'),hierarch:v('le-hierarch')};const st=v('le-stats');if(st){const j=pj(st);if(j)data.stats=j;else{showToast('Stats JSON invalide','error');return;}}const vl=v('le-villes');if(vl){const j=pj(vl);if(Array.isArray(j))data.villes=j;else{showToast('Villes JSON invalide','error');return;}}}
+  else if(cat==='organisations'){const nm=v('lo-name'),ds=v('lo-desc');if(!nm||!ds){showToast('Requis','error');return;}data={name:nm,sub:v('lo-sub'),ico:v('lo-ico')||'\u2694\uFE0F',color:v('lo-color')||'#4DA3FF',desc:ds,full:v('lo-full'),tags:pt(v('lo-tags')),status:v('lo-status'),lois:v('lo-lois'),hierarch:v('lo-hierarch'),etendue:v('lo-etendue'),membres:v('lo-membres')};}
+  else if(cat==='dynasties'){const nm=v('ld-name');if(!nm){showToast('Nom requis','error');return;}data={name:nm,sub:v('ld-sub'),ico:v('ld-ico')||'\U0001F451',color:v('ld-color')||'#ffd60a',empire:v('ld-empire')};const m=v('ld-members');if(m){const j=pj(m);if(Array.isArray(j))data.members=j;else{showToast('JSON invalide','error');return;}}}
+  else if(cat==='histoire'){const nm=v('lh-name'),ds=v('lh-desc');if(!nm||!ds){showToast('Requis','error');return;}data={name:nm,sub:v('lh-sub'),ico:v('lh-ico')||'\U0001F4DC',color:v('lh-color')||'#44ff88',desc:ds,full:v('lh-full'),tags:pt(v('lh-tags')),status:v('lh-status')};}
+  else if(cat==='pantheon'){const nm=v('lp-name'),ds=v('lp-desc');if(!nm||!ds){showToast('Requis','error');return;}data={name:nm,domain:v('lp-domain'),ico:v('lp-ico')||'\u2728',color:v('lp-color')||'#8B5CF6',desc:ds};const dt=v('lp-details');if(dt){const j=pj(dt);if(j&&typeof j==='object')data.details=j;else{showToast('JSON invalide','error');return;}}}
+  else if(cat==='chronologie'){const ti=v('lc-title'),ds=v('lc-desc');if(!ti||!ds){showToast('Requis','error');return;}const ev=v('lc-events');data={title:ti,era:v('lc-era'),color:v('lc-color')||'#00e5cc',desc:ds,events:ev?ev.split('\n').map(s=>s.trim()).filter(Boolean):[],order:parseInt(v('lc-order'))||0};}
+  else if(cat==='glossaire'){const tm=v('lg-term'),df=v('lg-def');if(!tm||!df){showToast('Requis','error');return;}data={term:tm,def:df,cat:v('lg-cat')||'G\u00E9n\u00E9ral'};}
+  if(!data)return;
+  data.category=cat;data.createdAt=serverTimestamp();
+  try{const ref=await addDoc(collection(db,'lore'),data);await writeLog('add_lore',ref.id,data.name||data.term||data.title||'?');showToast('Ajout\u00E9 !','success');const panel=document.getElementById('lore-panel-'+cat);if(panel)panel.querySelectorAll('input,textarea').forEach(el=>{if(el.type==='color'||el.type==='number')return;el.value='';});}catch(e){showToast('Erreur: '+e.message,'error');}
 };
 
-function collectLoreFields(cat){
-  const v=id=>{const el=document.getElementById(id);return el?el.value.trim():'';};
-  const parseTags=s=>s?s.split(',').map(t=>t.trim()).filter(Boolean):[];
-  const parseJSON=s=>{try{return JSON.parse(s);}catch{return null;}};
-
-  if(cat==='empires'){
-    const name=v('le-name'),desc=v('le-desc');
-    if(!name||!desc){showToast('Nom et description requis.','error');return null;}
-    const d={name,sub:v('le-sub'),ico:v('le-ico')||'🏰',color:v('le-color')||'#FF4757',desc,full:v('le-full'),tags:parseTags(v('le-tags')),status:v('le-status'),lois:v('le-lois'),hierarch:v('le-hierarch')};
-    const s=v('le-stats');if(s){const j=parseJSON(s);if(j)d.stats=j;else{showToast('Stats JSON invalide.','error');return null;}}
-    const vl=v('le-villes');if(vl){const j=parseJSON(vl);if(Array.isArray(j))d.villes=j;else{showToast('Villes JSON invalide.','error');return null;}}
-    return d;
-  }
-  if(cat==='organisations'){
-    const name=v('lo-name'),desc=v('lo-desc');
-    if(!name||!desc){showToast('Nom et description requis.','error');return null;}
-    return{name,sub:v('lo-sub'),ico:v('lo-ico')||'⚔️',color:v('lo-color')||'#4DA3FF',desc,full:v('lo-full'),tags:parseTags(v('lo-tags')),status:v('lo-status'),lois:v('lo-lois'),hierarch:v('lo-hierarch'),etendue:v('lo-etendue'),membres:v('lo-membres')};
-  }
-  if(cat==='dynasties'){
-    const name=v('ld-name');
-    if(!name){showToast('Nom requis.','error');return null;}
-    const d={name,sub:v('ld-sub'),ico:v('ld-ico')||'👑',color:v('ld-color')||'#ffd60a',empire:v('ld-empire')};
-    const m=v('ld-members');if(m){const j=parseJSON(m);if(Array.isArray(j))d.members=j;else{showToast('Members JSON invalide.','error');return null;}}
-    return d;
-  }
-  if(cat==='histoire'){
-    const name=v('lh-name'),desc=v('lh-desc');
-    if(!name||!desc){showToast('Nom et description requis.','error');return null;}
-    return{name,sub:v('lh-sub'),ico:v('lh-ico')||'📜',color:v('lh-color')||'#44ff88',desc,full:v('lh-full'),tags:parseTags(v('lh-tags')),status:v('lh-status')};
-  }
-  if(cat==='pantheon'){
-    const name=v('lp-name'),desc=v('lp-desc');
-    if(!name||!desc){showToast('Nom et description requis.','error');return null;}
-    const d={name,domain:v('lp-domain'),ico:v('lp-ico')||'✨',color:v('lp-color')||'#8B5CF6',desc};
-    const dt=v('lp-details');if(dt){const j=parseJSON(dt);if(j&&typeof j==='object')d.details=j;else{showToast('Détails JSON invalide.','error');return null;}}
-    return d;
-  }
-  if(cat==='chronologie'){
-    const title=v('lc-title'),desc=v('lc-desc');
-    if(!title||!desc){showToast('Titre et description requis.','error');return null;}
-    const ev=v('lc-events');
-    return{title,era:v('lc-era'),color:v('lc-color')||'#00e5cc',desc,events:ev?ev.split('\n').map(s=>s.trim()).filter(Boolean):[],order:parseInt(v('lc-order'))||0};
-  }
-  if(cat==='glossaire'){
-    const term=v('lg-term'),def=v('lg-def');
-    if(!term||!def){showToast('Terme et définition requis.','error');return null;}
-    return{term,def,cat:v('lg-cat')||'Général'};
-  }
-  return null;
-}
-
-function resetLoreForm(cat){
-  const panel=document.getElementById('lore-panel-'+cat);
-  if(panel) panel.querySelectorAll('input,textarea').forEach(el=>{
-    if(el.type==='color'||el.type==='number') return;
-    el.value='';
-  });
-}
-
-function showScreen(name){document.getElementById('login-screen').style.display=name==='login'?'flex':'none';document.getElementById('loading-screen').style.display=name==='loading'?'flex':'none';document.getElementById('panel-screen').style.display=name==='panel'?'block':'none';}
-window._setAdminTab=(data)=>{const el=document.getElementById('panel-screen');if(!el)return;function trySet(){if(!el._x_dataStack){return false;}const alpineData=Alpine.$data(el);if(alpineData){alpineData.logsVisible=(data.role==='admin');return true;}return false;}if(!trySet()){let attempts=0;const iv=setInterval(()=>{if(trySet()||++attempts>20)clearInterval(iv);},100);}};
 function renderAdminHeader(){if(!currentAdmin)return;document.getElementById('admin-name').textContent=currentAdmin.name;const rb=document.getElementById('role-badge');rb.textContent=currentAdmin.role.toUpperCase();rb.className='role-badge role-'+currentAdmin.role;}
 </script>
 
@@ -234,7 +153,7 @@ function renderAdminHeader(){if(!currentAdmin)return;document.getElementById('ad
 .admin-tab{font-family:'Rajdhani',sans-serif;font-size:.66rem;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);background:transparent;border:none;padding:12px 22px;cursor:pointer;transition:color .2s;position:relative;display:flex;align-items:center;gap:8px;}
 .admin-tab::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:2px;background:var(--gold);transform:scaleX(0);transition:transform .25s;}.admin-tab.active{color:var(--gold);}.admin-tab.active::after{transform:scaleX(1);}
 .tab-badge{font-family:'Orbitron',sans-serif;font-size:.52rem;font-weight:700;background:var(--magenta);color:#fff;padding:2px 7px;border-radius:10px;display:none;}
-.tab-content{display:none;padding:28px 36px;}.tab-content.active{display:block;}
+.tab-content{display:none;padding:28px 36px;}
 .tab-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--border);}
 .tab-title{font-family:'Orbitron',sans-serif;font-size:.75rem;font-weight:700;letter-spacing:.2em;color:var(--text);text-transform:uppercase;}
 .tab-count{font-family:'Rajdhani',sans-serif;font-size:.6rem;color:var(--muted);letter-spacing:.15em;}
@@ -266,31 +185,32 @@ function renderAdminHeader(){if(!currentAdmin)return;document.getElementById('ad
 .log-by{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .log-date{color:var(--muted);text-align:right;}
 .empty-list{text-align:center;padding:56px 24px;font-family:'Rajdhani',sans-serif;color:var(--muted);letter-spacing:.16em;font-size:.72rem;line-height:2.2;}.empty-list-icon{font-size:2rem;display:block;margin-bottom:12px;opacity:.15;}
-/* Lore admin */
 .lore-subtabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:24px;}
-.lore-subtab{font-family:'Rajdhani',sans-serif;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);background:rgba(255,255,255,.02);border:1px solid var(--border);padding:8px 16px;cursor:pointer;transition:all .2s;border-radius:8px;}.lore-subtab:hover{border-color:rgba(139,92,246,.3);color:var(--text);}.lore-subtab.active{color:var(--violet);border-color:rgba(139,92,246,.5);background:rgba(139,92,246,.06);box-shadow:0 0 12px rgba(139,92,246,.1);}
+.lore-subtab{font-family:'Rajdhani',sans-serif;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);background:rgba(255,255,255,.02);border:1px solid var(--border);padding:8px 16px;cursor:pointer;transition:all .2s;border-radius:8px;}.lore-subtab:hover{border-color:rgba(139,92,246,.3);color:var(--text);}.lore-subtab.active{color:var(--violet);border-color:rgba(139,92,246,.5);background:rgba(139,92,246,.06);}
 .lore-panel{display:none;}.lore-panel.active{display:block;}
 .lore-form-title{font-family:'Orbitron',sans-serif;font-size:.68rem;font-weight:700;letter-spacing:.18em;color:var(--violet);margin-bottom:18px;text-transform:uppercase;}
 .lore-form{background:rgba(8,12,30,0.5);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:28px;display:flex;flex-wrap:wrap;gap:14px;}
 .lf-row{width:100%;display:flex;flex-direction:column;gap:4px;}.lf-row.lf-half{width:calc(50% - 7px);}
 .lf-row label{font-family:'Rajdhani',sans-serif;font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);}
-.lf-row input,.lf-row textarea{width:100%;background:rgba(255,255,255,0.02);border:1px solid var(--border);color:var(--text);font-family:'Rajdhani',sans-serif;font-size:.85rem;padding:10px 14px;outline:none;transition:border-color .2s;border-radius:8px;box-sizing:border-box;resize:vertical;}.lf-row input:focus,.lf-row textarea:focus{border-color:var(--violet);box-shadow:0 0 12px rgba(139,92,246,.08);}
+.lf-row input,.lf-row textarea{width:100%;background:rgba(255,255,255,0.02);border:1px solid var(--border);color:var(--text);font-family:'Rajdhani',sans-serif;font-size:.85rem;padding:10px 14px;outline:none;border-radius:8px;box-sizing:border-box;resize:vertical;}.lf-row input:focus,.lf-row textarea:focus{border-color:var(--violet);}
 .lf-row input[type="color"]{height:42px;padding:4px;cursor:pointer;}
-.lore-submit{width:100%;font-family:'Orbitron',sans-serif;font-size:.62rem;font-weight:700;letter-spacing:.18em;color:#fff;background:linear-gradient(135deg,var(--violet),#6C5CE7);border:none;padding:13px;cursor:pointer;transition:all .3s;border-radius:10px;margin-top:4px;}.lore-submit:hover{box-shadow:0 0 24px rgba(139,92,246,0.3);transform:translateY(-1px);}
+.lore-submit{width:100%;font-family:'Orbitron',sans-serif;font-size:.62rem;font-weight:700;letter-spacing:.18em;color:#fff;background:linear-gradient(135deg,var(--violet),#6C5CE7);border:none;padding:13px;cursor:pointer;border-radius:10px;margin-top:4px;}.lore-submit:hover{box-shadow:0 0 24px rgba(139,92,246,0.3);}
 .lore-list{display:flex;flex-direction:column;gap:12px;}
-.lore-item{background:rgba(8,12,30,0.5);backdrop-filter:blur(8px);border:1px solid var(--border);border-radius:10px;padding:16px 20px;display:flex;align-items:center;gap:16px;transition:all .3s;}.lore-item:hover{border-color:rgba(139,92,246,.15);transform:translateX(3px);}
-.lore-item-ico{font-size:1.5rem;width:42px;height:42px;display:flex;align-items:center;justify-content:center;flex-shrink:0;border-radius:8px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.04);}
+.lore-item{background:rgba(8,12,30,0.5);border:1px solid var(--border);border-radius:10px;padding:16px 20px;display:flex;align-items:center;gap:16px;}
+.lore-item-ico{font-size:1.5rem;width:42px;height:42px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .lore-item-info{flex:1;min-width:0;}
 .lore-item-name{font-family:'Orbitron',sans-serif;font-weight:700;font-size:.78rem;color:#fff;letter-spacing:.06em;margin-bottom:3px;}
-.lore-item-sub{font-family:'Rajdhani',sans-serif;font-size:.6rem;color:var(--muted);letter-spacing:.08em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:500px;}
+.lore-item-sub{font-family:'Rajdhani',sans-serif;font-size:.6rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:500px;}
 .lore-item-color{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
 .lore-item-actions{display:flex;gap:8px;flex-shrink:0;}
-@media(max-width:650px){.lf-row.lf-half{width:100%;}.lore-subtabs{gap:4px;}.lore-subtab{padding:6px 10px;font-size:.55rem;}}
+@media(max-width:650px){.lf-row.lf-half{width:100%;}}
+[x-cloak]{display:none!important}
 .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--dark2);border:1px solid var(--border);font-family:'Rajdhani',sans-serif;font-size:.7rem;letter-spacing:.14em;color:var(--text);padding:14px 28px;z-index:9000;transition:transform .3s,opacity .3s;opacity:0;border-radius:10px;}.toast.show{transform:translateX(-50%) translateY(0);opacity:1;}.toast.success{border-color:rgba(68,255,136,.4);color:var(--green);}.toast.error{border-color:rgba(255,71,87,.4);color:var(--red);}
 @media(max-width:900px){.fiche-row{grid-template-columns:70px 1fr;}.fiche-actions{grid-column:1/-1;flex-direction:row;flex-wrap:wrap;padding:10px 14px;min-width:unset;}.admin-stats{grid-template-columns:repeat(3,1fr);}.log-row{grid-template-columns:100px 70px 1fr 120px;}.log-date{display:none;}}
 @media(max-width:650px){.admin-header{padding:0 16px;}.admin-tabs{overflow-x:auto;}.tab-content{padding:20px 16px;}.admin-stats{padding:20px 16px 0;grid-template-columns:repeat(2,1fr);}.admin-meta{gap:8px;}.admin-user{display:none;}.log-row{grid-template-columns:90px 1fr 100px;}.log-role,.log-by{display:none;}}
 
 </style>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 <script src="js/debug.js"></script>
 <script src="js/constants.js"></script>
 <script src="js/utils.js"></script>
@@ -338,7 +258,7 @@ function renderAdminHeader(){if(!currentAdmin)return;document.getElementById('ad
 </div>
 
 <!-- PANEL -->
-<div id="panel-screen">
+<div id="panel-screen" x-data="{ tab: 'fiches', logsVisible: false }">
   <div class="admin-header">
     <div class="admin-logo"><img src="img/logo-jaharta.png" alt="" style="width:32px;height:32px;object-fit:contain;vertical-align:middle;margin-right:8px;">JAHARTA <span>// ADMIN</span></div>
     <div class="admin-meta">
@@ -357,10 +277,10 @@ function renderAdminHeader(){if(!currentAdmin)return;document.getElementById('ad
   </div>
 
   <div class="admin-tabs">
-    <button class="admin-tab active" id="tab-btn-fiches" onclick="showAdminTab('fiches')">Fiches</button>
-    <button class="admin-tab" id="tab-btn-pnj" onclick="showAdminTab('pnj')">PNJ <span class="tab-badge" id="badge-pnj" style="background:#b06eff"></span></button>
-    <button class="admin-tab" id="tab-btn-lore" onclick="showAdminTab('lore')">Lore</button>
-    <button class="admin-tab" id="tab-btn-logs" style="display:none" onclick="showAdminTab('logs')">Logs</button>
+    <button class="admin-tab" :class="{active:tab==='fiches'}" @click="tab='fiches'">Fiches</button>
+    <button class="admin-tab" :class="{active:tab==='pnj'}" @click="tab='pnj'">PNJ <span class="tab-badge" id="badge-pnj" style="background:#b06eff"></span></button>
+    <button class="admin-tab" :class="{active:tab==='lore'}" @click="tab='lore'">Lore</button>
+    <button class="admin-tab" id="tab-btn-logs" x-cloak x-show="logsVisible" :class="{active:tab==='logs'}" @click="tab='logs'">Logs</button>
   </div>
 
   <div class="tab-content" id="tab-fiches" x-show="tab==='fiches'" x-cloak>
@@ -374,133 +294,23 @@ function renderAdminHeader(){if(!currentAdmin)return;document.getElementById('ad
   </div>
 
   <div class="tab-content" id="tab-lore" x-show="tab==='lore'" x-cloak>
-    <div class="tab-header"><div class="tab-title">◈ Gestion du Lore</div><a href="lore.html" target="_blank" class="action-btn view">↗ Page Lore publique</a></div>
-
-    <div class="lore-subtabs" id="lore-subtabs">
+    <div class="tab-header"><div class="tab-title">◈ Gestion du Lore</div><a href="lore.html" target="_blank" class="action-btn view">↗ Page Lore</a></div>
+    <div class="lore-subtabs">
       <button class="lore-subtab active" data-cat="empires" onclick="switchLoreSub('empires')">🏰 Empires</button>
-      <button class="lore-subtab" data-cat="organisations" onclick="switchLoreSub('organisations')">⚔️ Organisations</button>
+      <button class="lore-subtab" data-cat="organisations" onclick="switchLoreSub('organisations')">⚔️ Orgs</button>
       <button class="lore-subtab" data-cat="dynasties" onclick="switchLoreSub('dynasties')">👑 Dynasties</button>
       <button class="lore-subtab" data-cat="histoire" onclick="switchLoreSub('histoire')">📜 Histoire</button>
       <button class="lore-subtab" data-cat="pantheon" onclick="switchLoreSub('pantheon')">✨ Panthéon</button>
-      <button class="lore-subtab" data-cat="chronologie" onclick="switchLoreSub('chronologie')">⏳ Chronologie</button>
+      <button class="lore-subtab" data-cat="chronologie" onclick="switchLoreSub('chronologie')">⏳ Chrono</button>
       <button class="lore-subtab" data-cat="glossaire" onclick="switchLoreSub('glossaire')">📖 Glossaire</button>
     </div>
-
-    <!-- EMPIRES -->
-    <div class="lore-panel active" id="lore-panel-empires">
-      <div class="lore-form-title">Ajouter un Empire</div>
-      <div class="lore-form">
-        <div class="lf-row"><label>Nom *</label><input type="text" id="le-name" placeholder="Nom de l'empire"></div>
-        <div class="lf-row"><label>Sous-titre</label><input type="text" id="le-sub" placeholder="Ex: Empire du Feu"></div>
-        <div class="lf-row lf-half"><label>Icône (emoji)</label><input type="text" id="le-ico" placeholder="🏰" maxlength="4"></div>
-        <div class="lf-row lf-half"><label>Couleur</label><input type="color" id="le-color" value="#FF4757"></div>
-        <div class="lf-row"><label>Description courte *</label><textarea id="le-desc" rows="2" placeholder="Description carte"></textarea></div>
-        <div class="lf-row"><label>Description complète</label><textarea id="le-full" rows="4" placeholder="Texte complet (popup)"></textarea></div>
-        <div class="lf-row"><label>Tags (virgules)</label><input type="text" id="le-tags" placeholder="Militaire, Expansionniste"></div>
-        <div class="lf-row"><label>Statut</label><input type="text" id="le-status" placeholder="Actif, Déchu..."></div>
-        <div class="lf-row"><label>Lois</label><textarea id="le-lois" rows="2" placeholder="Lois de l'empire"></textarea></div>
-        <div class="lf-row"><label>Hiérarchie</label><textarea id="le-hierarch" rows="2" placeholder="Structure hiérarchique"></textarea></div>
-        <div class="lf-row"><label>Stats (JSON)</label><textarea id="le-stats" rows="2" placeholder='{"Population":"12M","Armée":"350K"}'></textarea></div>
-        <div class="lf-row"><label>Villes (JSON)</label><textarea id="le-villes" rows="3" placeholder='[{"name":"Ville1","desc":"Description..."}]'></textarea></div>
-        <button class="lore-submit" onclick="submitLore('empires')">+ Ajouter l'Empire</button>
-      </div>
-      <div class="lore-list" id="lore-list-empires"><div class="empty-list"><span class="empty-list-icon">🏰</span>Aucun empire.</div></div>
-    </div>
-
-    <!-- ORGANISATIONS -->
-    <div class="lore-panel" id="lore-panel-organisations">
-      <div class="lore-form-title">Ajouter une Organisation</div>
-      <div class="lore-form">
-        <div class="lf-row"><label>Nom *</label><input type="text" id="lo-name" placeholder="Nom"></div>
-        <div class="lf-row"><label>Sous-titre</label><input type="text" id="lo-sub" placeholder="Ex: Guilde des Mages"></div>
-        <div class="lf-row lf-half"><label>Icône</label><input type="text" id="lo-ico" placeholder="⚔️" maxlength="4"></div>
-        <div class="lf-row lf-half"><label>Couleur</label><input type="color" id="lo-color" value="#4DA3FF"></div>
-        <div class="lf-row"><label>Description courte *</label><textarea id="lo-desc" rows="2" placeholder="Description carte"></textarea></div>
-        <div class="lf-row"><label>Description complète</label><textarea id="lo-full" rows="4" placeholder="Texte complet"></textarea></div>
-        <div class="lf-row"><label>Tags</label><input type="text" id="lo-tags" placeholder="Ordre, Secret"></div>
-        <div class="lf-row"><label>Statut</label><input type="text" id="lo-status" placeholder="Actif"></div>
-        <div class="lf-row"><label>Lois</label><textarea id="lo-lois" rows="2"></textarea></div>
-        <div class="lf-row"><label>Hiérarchie</label><textarea id="lo-hierarch" rows="2"></textarea></div>
-        <div class="lf-row"><label>Étendue</label><textarea id="lo-etendue" rows="2"></textarea></div>
-        <div class="lf-row"><label>Membres notables</label><textarea id="lo-membres" rows="2"></textarea></div>
-        <button class="lore-submit" onclick="submitLore('organisations')">+ Ajouter l'Organisation</button>
-      </div>
-      <div class="lore-list" id="lore-list-organisations"><div class="empty-list"><span class="empty-list-icon">⚔️</span>Aucune organisation.</div></div>
-    </div>
-
-    <!-- DYNASTIES -->
-    <div class="lore-panel" id="lore-panel-dynasties">
-      <div class="lore-form-title">Ajouter une Dynastie</div>
-      <div class="lore-form">
-        <div class="lf-row"><label>Nom *</label><input type="text" id="ld-name" placeholder="Nom de la dynastie"></div>
-        <div class="lf-row"><label>Sous-titre</label><input type="text" id="ld-sub" placeholder="Maison royale"></div>
-        <div class="lf-row lf-half"><label>Icône</label><input type="text" id="ld-ico" placeholder="👑" maxlength="4"></div>
-        <div class="lf-row lf-half"><label>Couleur</label><input type="color" id="ld-color" value="#ffd60a"></div>
-        <div class="lf-row"><label>Empire rattaché</label><input type="text" id="ld-empire" placeholder="Nom de l'empire"></div>
-        <div class="lf-row"><label>Membres (JSON)</label><textarea id="ld-members" rows="5" placeholder='[{"gen":"1ère gén.","members":[{"name":"Roi X","title":"Fondateur","desc":"..."}]}]'></textarea></div>
-        <button class="lore-submit" onclick="submitLore('dynasties')">+ Ajouter la Dynastie</button>
-      </div>
-      <div class="lore-list" id="lore-list-dynasties"><div class="empty-list"><span class="empty-list-icon">👑</span>Aucune dynastie.</div></div>
-    </div>
-
-    <!-- HISTOIRE -->
-    <div class="lore-panel" id="lore-panel-histoire">
-      <div class="lore-form-title">Ajouter un Événement</div>
-      <div class="lore-form">
-        <div class="lf-row"><label>Nom *</label><input type="text" id="lh-name" placeholder="Nom de l'événement"></div>
-        <div class="lf-row"><label>Sous-titre</label><input type="text" id="lh-sub" placeholder="Ère des Cendres"></div>
-        <div class="lf-row lf-half"><label>Icône</label><input type="text" id="lh-ico" placeholder="📜" maxlength="4"></div>
-        <div class="lf-row lf-half"><label>Couleur</label><input type="color" id="lh-color" value="#44ff88"></div>
-        <div class="lf-row"><label>Description courte *</label><textarea id="lh-desc" rows="2"></textarea></div>
-        <div class="lf-row"><label>Description complète</label><textarea id="lh-full" rows="4"></textarea></div>
-        <div class="lf-row"><label>Tags</label><input type="text" id="lh-tags" placeholder="Guerre, Cataclysme"></div>
-        <div class="lf-row"><label>Statut</label><input type="text" id="lh-status" placeholder="Ère révolue"></div>
-        <button class="lore-submit" onclick="submitLore('histoire')">+ Ajouter</button>
-      </div>
-      <div class="lore-list" id="lore-list-histoire"><div class="empty-list"><span class="empty-list-icon">📜</span>Aucun événement.</div></div>
-    </div>
-
-    <!-- PANTHEON -->
-    <div class="lore-panel" id="lore-panel-pantheon">
-      <div class="lore-form-title">Ajouter un Primordial</div>
-      <div class="lore-form">
-        <div class="lf-row"><label>Nom *</label><input type="text" id="lp-name" placeholder="Nom du primordial"></div>
-        <div class="lf-row"><label>Domaine *</label><input type="text" id="lp-domain" placeholder="Feu & Destruction"></div>
-        <div class="lf-row lf-half"><label>Icône</label><input type="text" id="lp-ico" placeholder="✨" maxlength="4"></div>
-        <div class="lf-row lf-half"><label>Couleur</label><input type="color" id="lp-color" value="#8B5CF6"></div>
-        <div class="lf-row"><label>Description *</label><textarea id="lp-desc" rows="3"></textarea></div>
-        <div class="lf-row"><label>Détails (JSON)</label><textarea id="lp-details" rows="4" placeholder='{"culte":"...","pouvoirs":"...","histoire":"..."}'></textarea></div>
-        <button class="lore-submit" onclick="submitLore('pantheon')">+ Ajouter</button>
-      </div>
-      <div class="lore-list" id="lore-list-pantheon"><div class="empty-list"><span class="empty-list-icon">✨</span>Aucun primordial.</div></div>
-    </div>
-
-    <!-- CHRONOLOGIE -->
-    <div class="lore-panel" id="lore-panel-chronologie">
-      <div class="lore-form-title">Ajouter une Ère</div>
-      <div class="lore-form">
-        <div class="lf-row"><label>Titre *</label><input type="text" id="lc-title" placeholder="L'Ère du Nexus"></div>
-        <div class="lf-row"><label>Tag d'ère</label><input type="text" id="lc-era" placeholder="-∞ à -5000"></div>
-        <div class="lf-row lf-half"><label>Couleur</label><input type="color" id="lc-color" value="#00e5cc"></div>
-        <div class="lf-row lf-half"><label>Ordre (tri)</label><input type="number" id="lc-order" value="0" min="0"></div>
-        <div class="lf-row"><label>Description *</label><textarea id="lc-desc" rows="3"></textarea></div>
-        <div class="lf-row"><label>Événements (un par ligne)</label><textarea id="lc-events" rows="4" placeholder="Création du monde&#10;Naissance des Primordiaux"></textarea></div>
-        <button class="lore-submit" onclick="submitLore('chronologie')">+ Ajouter</button>
-      </div>
-      <div class="lore-list" id="lore-list-chronologie"><div class="empty-list"><span class="empty-list-icon">⏳</span>Aucune ère.</div></div>
-    </div>
-
-    <!-- GLOSSAIRE -->
-    <div class="lore-panel" id="lore-panel-glossaire">
-      <div class="lore-form-title">Ajouter un Terme</div>
-      <div class="lore-form">
-        <div class="lf-row"><label>Terme *</label><input type="text" id="lg-term" placeholder="Mot ou expression"></div>
-        <div class="lf-row"><label>Définition *</label><textarea id="lg-def" rows="3"></textarea></div>
-        <div class="lf-row"><label>Catégorie</label><input type="text" id="lg-cat" placeholder="Magie, Géographie, Politique"></div>
-        <button class="lore-submit" onclick="submitLore('glossaire')">+ Ajouter</button>
-      </div>
-      <div class="lore-list" id="lore-list-glossaire"><div class="empty-list"><span class="empty-list-icon">📖</span>Aucun terme.</div></div>
-    </div>
+    <div class="lore-panel active" id="lore-panel-empires"><div class="lore-form-title">Ajouter un Empire</div><div class="lore-form"><div class="lf-row"><label>Nom *</label><input type="text" id="le-name"></div><div class="lf-row"><label>Sous-titre</label><input type="text" id="le-sub"></div><div class="lf-row lf-half"><label>Icône</label><input type="text" id="le-ico" placeholder="🏰" maxlength="4"></div><div class="lf-row lf-half"><label>Couleur</label><input type="color" id="le-color" value="#FF4757"></div><div class="lf-row"><label>Description courte *</label><textarea id="le-desc" rows="2"></textarea></div><div class="lf-row"><label>Description complète</label><textarea id="le-full" rows="3"></textarea></div><div class="lf-row"><label>Tags (virgules)</label><input type="text" id="le-tags"></div><div class="lf-row"><label>Statut</label><input type="text" id="le-status"></div><div class="lf-row"><label>Lois</label><textarea id="le-lois" rows="2"></textarea></div><div class="lf-row"><label>Hiérarchie</label><textarea id="le-hierarch" rows="2"></textarea></div><div class="lf-row"><label>Stats JSON</label><textarea id="le-stats" rows="2"></textarea></div><div class="lf-row"><label>Villes JSON</label><textarea id="le-villes" rows="2"></textarea></div><button class="lore-submit" onclick="submitLore('empires')">+ Ajouter</button></div><div class="lore-list" id="lore-list-empires"><div class="empty-list"><span class="empty-list-icon">🏰</span>Aucun empire.</div></div></div>
+    <div class="lore-panel" id="lore-panel-organisations"><div class="lore-form-title">Ajouter une Organisation</div><div class="lore-form"><div class="lf-row"><label>Nom *</label><input type="text" id="lo-name"></div><div class="lf-row"><label>Sous-titre</label><input type="text" id="lo-sub"></div><div class="lf-row lf-half"><label>Icône</label><input type="text" id="lo-ico" maxlength="4"></div><div class="lf-row lf-half"><label>Couleur</label><input type="color" id="lo-color" value="#4DA3FF"></div><div class="lf-row"><label>Desc courte *</label><textarea id="lo-desc" rows="2"></textarea></div><div class="lf-row"><label>Desc complète</label><textarea id="lo-full" rows="3"></textarea></div><div class="lf-row"><label>Tags</label><input type="text" id="lo-tags"></div><div class="lf-row"><label>Statut</label><input type="text" id="lo-status"></div><div class="lf-row"><label>Lois</label><textarea id="lo-lois" rows="2"></textarea></div><div class="lf-row"><label>Hiérarchie</label><textarea id="lo-hierarch" rows="2"></textarea></div><div class="lf-row"><label>Étendue</label><textarea id="lo-etendue" rows="2"></textarea></div><div class="lf-row"><label>Membres</label><textarea id="lo-membres" rows="2"></textarea></div><button class="lore-submit" onclick="submitLore('organisations')">+ Ajouter</button></div><div class="lore-list" id="lore-list-organisations"><div class="empty-list"><span class="empty-list-icon">⚔️</span>Aucune.</div></div></div>
+    <div class="lore-panel" id="lore-panel-dynasties"><div class="lore-form-title">Ajouter une Dynastie</div><div class="lore-form"><div class="lf-row"><label>Nom *</label><input type="text" id="ld-name"></div><div class="lf-row"><label>Sous-titre</label><input type="text" id="ld-sub"></div><div class="lf-row lf-half"><label>Icône</label><input type="text" id="ld-ico" maxlength="4"></div><div class="lf-row lf-half"><label>Couleur</label><input type="color" id="ld-color" value="#ffd60a"></div><div class="lf-row"><label>Empire</label><input type="text" id="ld-empire"></div><div class="lf-row"><label>Membres JSON</label><textarea id="ld-members" rows="4"></textarea></div><button class="lore-submit" onclick="submitLore('dynasties')">+ Ajouter</button></div><div class="lore-list" id="lore-list-dynasties"><div class="empty-list"><span class="empty-list-icon">👑</span>Aucune.</div></div></div>
+    <div class="lore-panel" id="lore-panel-histoire"><div class="lore-form-title">Ajouter un Événement</div><div class="lore-form"><div class="lf-row"><label>Nom *</label><input type="text" id="lh-name"></div><div class="lf-row"><label>Sous-titre</label><input type="text" id="lh-sub"></div><div class="lf-row lf-half"><label>Icône</label><input type="text" id="lh-ico" maxlength="4"></div><div class="lf-row lf-half"><label>Couleur</label><input type="color" id="lh-color" value="#44ff88"></div><div class="lf-row"><label>Desc courte *</label><textarea id="lh-desc" rows="2"></textarea></div><div class="lf-row"><label>Desc complète</label><textarea id="lh-full" rows="3"></textarea></div><div class="lf-row"><label>Tags</label><input type="text" id="lh-tags"></div><div class="lf-row"><label>Statut</label><input type="text" id="lh-status"></div><button class="lore-submit" onclick="submitLore('histoire')">+ Ajouter</button></div><div class="lore-list" id="lore-list-histoire"><div class="empty-list"><span class="empty-list-icon">📜</span>Aucun.</div></div></div>
+    <div class="lore-panel" id="lore-panel-pantheon"><div class="lore-form-title">Ajouter un Primordial</div><div class="lore-form"><div class="lf-row"><label>Nom *</label><input type="text" id="lp-name"></div><div class="lf-row"><label>Domaine</label><input type="text" id="lp-domain"></div><div class="lf-row lf-half"><label>Icône</label><input type="text" id="lp-ico" maxlength="4"></div><div class="lf-row lf-half"><label>Couleur</label><input type="color" id="lp-color" value="#8B5CF6"></div><div class="lf-row"><label>Desc *</label><textarea id="lp-desc" rows="3"></textarea></div><div class="lf-row"><label>Détails JSON</label><textarea id="lp-details" rows="3"></textarea></div><button class="lore-submit" onclick="submitLore('pantheon')">+ Ajouter</button></div><div class="lore-list" id="lore-list-pantheon"><div class="empty-list"><span class="empty-list-icon">✨</span>Aucun.</div></div></div>
+    <div class="lore-panel" id="lore-panel-chronologie"><div class="lore-form-title">Ajouter une Ère</div><div class="lore-form"><div class="lf-row"><label>Titre *</label><input type="text" id="lc-title"></div><div class="lf-row"><label>Tag ère</label><input type="text" id="lc-era"></div><div class="lf-row lf-half"><label>Couleur</label><input type="color" id="lc-color" value="#00e5cc"></div><div class="lf-row lf-half"><label>Ordre</label><input type="number" id="lc-order" value="0"></div><div class="lf-row"><label>Desc *</label><textarea id="lc-desc" rows="3"></textarea></div><div class="lf-row"><label>Événements (1/ligne)</label><textarea id="lc-events" rows="3"></textarea></div><button class="lore-submit" onclick="submitLore('chronologie')">+ Ajouter</button></div><div class="lore-list" id="lore-list-chronologie"><div class="empty-list"><span class="empty-list-icon">⏳</span>Aucune.</div></div></div>
+    <div class="lore-panel" id="lore-panel-glossaire"><div class="lore-form-title">Ajouter un Terme</div><div class="lore-form"><div class="lf-row"><label>Terme *</label><input type="text" id="lg-term"></div><div class="lf-row"><label>Définition *</label><textarea id="lg-def" rows="3"></textarea></div><div class="lf-row"><label>Catégorie</label><input type="text" id="lg-cat"></div><button class="lore-submit" onclick="submitLore('glossaire')">+ Ajouter</button></div><div class="lore-list" id="lore-list-glossaire"><div class="empty-list"><span class="empty-list-icon">📖</span>Aucun.</div></div></div>
   </div>
 
   <div class="tab-content" id="tab-logs" x-show="tab==='logs'" x-cloak>
@@ -516,7 +326,7 @@ function renderAdminHeader(){if(!currentAdmin)return;document.getElementById('ad
 /* ── Échappement HTML — protection XSS stocké ─────────────────────────────
    À utiliser pour TOUTE donnée Firestore insérée dans innerHTML.
    Convertit les caractères spéciaux en entités HTML.              ──────── */
-function escHtml(s) {
+window.escHtml = function(s) {
   return String(s == null ? '' : s)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -546,7 +356,7 @@ function linkLabel(u) {
   return '🔗 Fiche';
 }
 
-function renderTable(containerId, fiches) {
+window.renderTable = function(containerId, fiches) {
   const el = document.getElementById(containerId);
   const role = window._adminRole || 'modo';
   const canDelete = role === 'admin';
@@ -632,7 +442,7 @@ function renderTable(containerId, fiches) {
   });
 }
 
-function renderPNJTable(pnjs) {
+window.renderPNJTable = function(pnjs) {
   const el = document.getElementById('table-pnj');
   const role = window._adminRole || 'modo';
   const catColors = { politique: '#60a5fa', mystique: '#b06eff', ennemi: '#ff3030', allie: '#34d399', neutre: '#fbbf24' };
@@ -709,7 +519,7 @@ function renderPNJTable(pnjs) {
   });
 }
 
-function renderLogs(logs) {
+window.renderLogs = function(logs) {
   const el = document.getElementById('table-logs');
   document.getElementById('lbl-logs').textContent = logs.length + ' action' + (logs.length > 1 ? 's' : '');
   const LABELS = { validate: '✓ Ajouter', delete: '✕ Supprimer', delete_pnj: '✕ Suppr. PNJ' };
@@ -737,5 +547,21 @@ function renderLogs(logs) {
 
 </script>
 <script src="js/page-transition.js"></script>
+
+<script>
+// Fallback: si Alpine ne s'est pas initialisé après 3s, retirer x-cloak manuellement
+setTimeout(function(){
+  var cloaked = document.querySelectorAll('[x-cloak]');
+  if(cloaked.length > 0){
+    console.warn('[ADMIN] Alpine n\'a pas retiré x-cloak après 3s, forçage manuel');
+    cloaked.forEach(function(el){ el.removeAttribute('x-cloak'); });
+    // Afficher le tab fiches par défaut
+    var tabs = document.querySelectorAll('.tab-content');
+    tabs.forEach(function(t){ t.style.display = 'none'; });
+    var fiches = document.getElementById('tab-fiches');
+    if(fiches) fiches.style.display = 'block';
+  }
+}, 3000);
+</script>
 </body>
 </html>
