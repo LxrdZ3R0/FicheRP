@@ -395,8 +395,8 @@ body::before{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;
 <body>
 <div class="page-transition-overlay" id="page-transition"><div class="pt-logo-wrap"><div class="pt-glow-ring"></div><div class="pt-scan"></div><img src="img/logo-jaharta.png" class="pt-img" alt="Jaharta"></div><div class="pt-bar-wrap"><div class="pt-bar-fill"></div></div><div class="pt-text">Chargement</div></div>
 <div class="scroll-line" id="scroll-line"></div>
-<nav class="nav" id="nav"><a href="index.html" class="nav-logo"><img src="img/logo-jaharta.png" alt="Logo Jaharta" style="width:36px;height:36px;object-fit:contain;vertical-align:middle;margin-right:10px;">JAHARTA</a><div class="nav-links" id="nav-links"><a href="index.html">Accueil</a><a href="fiches.html">Fiches RP</a><a href="pnj.html">PNJ</a><a href="portail.html">Portail</a><a href="lore.html" class="active">Lore</a><a href="racesjouables.html">Races</a><a href="gacha.html">Gacha</a><a href="hub.html">Hub</a><a href="admin.html" class="nav-admin-link">Admin</a></div><a href="admin.html" class="admin-badge" id="admin-badge">ADMIN</a><button class="burger" id="burger" aria-label="Menu" aria-expanded="false"><span class="burger-line"></span><span class="burger-line"></span><span class="burger-line"></span></button></nav>
-<div class="mobile-menu" id="mobile-menu"><div class="menu-inner"><div class="menu-header-label">// NAVIGATION</div><a href="index.html" class="menu-link"><span class="menu-link-index">01</span><span class="menu-link-text">Accueil</span><span class="menu-link-arrow">&rarr;</span></a><a href="fiches.html" class="menu-link"><span class="menu-link-index">02</span><span class="menu-link-text">Fiches</span><span class="menu-link-arrow">&rarr;</span></a><a href="pnj.html" class="menu-link"><span class="menu-link-index">03</span><span class="menu-link-text">PNJ</span><span class="menu-link-arrow">&rarr;</span></a><a href="portail.html" class="menu-link"><span class="menu-link-index">04</span><span class="menu-link-text">Portail</span><span class="menu-link-arrow">&rarr;</span></a><a href="lore.html" class="menu-link active"><span class="menu-link-index">05</span><span class="menu-link-text">Lore</span><span class="menu-link-arrow">&rarr;</span></a><a href="racesjouables.html" class="menu-link"><span class="menu-link-index">06</span><span class="menu-link-text">Races</span><span class="menu-link-arrow">&rarr;</span></a><a href="gacha.html" class="menu-link"><span class="menu-link-index">07</span><span class="menu-link-text">Gacha</span><span class="menu-link-arrow">&rarr;</span></a><a href="hub.html" class="menu-link"><span class="menu-link-index">08</span><span class="menu-link-text">Hub</span><span class="menu-link-arrow">&rarr;</span></a><a href="admin.html" class="menu-link" id="menu-admin-link"><span class="menu-link-index">09</span><span class="menu-link-text">Admin</span><span class="menu-link-arrow">&rarr;</span></a></div><div class="menu-deco"></div></div>
+<nav class="nav" id="nav"><a href="index.html" class="nav-logo"><img src="img/logo-jaharta.png" alt="Logo Jaharta" style="width:36px;height:36px;object-fit:contain;vertical-align:middle;margin-right:10px;">JAHARTA</a><div class="nav-links" id="nav-links"><a href="index.html">Accueil</a><a href="fiches.html">Fiches RP</a><a href="pnj.html">PNJ</a><a href="portail.html">Portail</a><a href="racesjouables.html">Races</a><a href="gacha.html">Gacha</a><a href="hub.html">Hub</a><a href="admin.html" class="nav-admin-link">Admin</a></div><a href="admin.html" class="admin-badge" id="admin-badge">ADMIN</a><button class="burger" id="burger" aria-label="Menu" aria-expanded="false"><span class="burger-line"></span><span class="burger-line"></span><span class="burger-line"></span></button></nav>
+<div class="mobile-menu" id="mobile-menu"><div class="menu-inner"><div class="menu-header-label">// NAVIGATION</div><a href="index.html" class="menu-link"><span class="menu-link-index">01</span><span class="menu-link-text">Accueil</span><span class="menu-link-arrow">&rarr;</span></a><a href="fiches.html" class="menu-link"><span class="menu-link-index">02</span><span class="menu-link-text">Fiches</span><span class="menu-link-arrow">&rarr;</span></a><a href="pnj.html" class="menu-link"><span class="menu-link-index">03</span><span class="menu-link-text">PNJ</span><span class="menu-link-arrow">&rarr;</span></a><a href="portail.html" class="menu-link"><span class="menu-link-index">04</span><span class="menu-link-text">Portail</span><span class="menu-link-arrow">&rarr;</span></a><a href="racesjouables.html" class="menu-link"><span class="menu-link-index">05</span><span class="menu-link-text">Races</span><span class="menu-link-arrow">&rarr;</span></a><a href="gacha.html" class="menu-link"><span class="menu-link-index">06</span><span class="menu-link-text">Gacha</span><span class="menu-link-arrow">&rarr;</span></a><a href="hub.html" class="menu-link"><span class="menu-link-index">07</span><span class="menu-link-text">Hub</span><span class="menu-link-arrow">&rarr;</span></a><a href="admin.html" class="menu-link" id="menu-admin-link"><span class="menu-link-index">08</span><span class="menu-link-text">Admin</span><span class="menu-link-arrow">&rarr;</span></a></div><div class="menu-deco"></div></div>
 <div class="sb-overlay" id="sb-overlay"></div>
 <button class="sb-toggle" id="sb-toggle">&#x25C8;</button>
 
@@ -462,9 +462,40 @@ body::before{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;
   </main>
 </div>
 
+<script type="module">
+/* ═══ FIREBASE — Chargement du Lore depuis Firestore ═══ */
+import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import{getFirestore,collection,query,orderBy,onSnapshot,enableIndexedDbPersistence}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+const firebaseConfig={apiKey:"AIzaSyAru7qZX8Gu_b8Y3oNDV-a5PmkrrkRjkcs",authDomain:"jaharta-rp.firebaseapp.com",projectId:"jaharta-rp",storageBucket:"jaharta-rp.firebasestorage.app",messagingSenderId:"217075417489",appId:"1:217075417489:web:4d1e2df422a5cd42411a30"};
+const app=initializeApp(firebaseConfig);const db=getFirestore(app);
+enableIndexedDbPersistence(db).catch(e=>{if(e.code!=='failed-precondition'&&e.code!=='unimplemented')console.warn('[offline]',e.code);});
+
+/* Expose DATA globally for the non-module render functions */
+window.DATA={empires:[],organisations:[],dynasties:[],histoire:[],pantheon:[],chronologie:[],glossaire:[]};
+
+/* Load each lore collection in real time */
+function loadLoreCat(cat,orderField){
+  const q=query(collection(db,'lore_'+cat),orderBy(orderField||'createdAt','desc'));
+  onSnapshot(q,snap=>{
+    const items=[];
+    snap.forEach(d=>items.push({id:d.id,...d.data()}));
+    window.DATA[cat]=items;
+    /* Re-render the relevant section */
+    if(typeof window._renderLore==='function') window._renderLore(cat);
+  },err=>console.warn('[lore_'+cat+']',err.message));
+}
+
+loadLoreCat('empires','createdAt');
+loadLoreCat('organisations','createdAt');
+loadLoreCat('dynasties','createdAt');
+loadLoreCat('histoire','createdAt');
+loadLoreCat('pantheon','createdAt');
+loadLoreCat('chronologie','createdAt');
+loadLoreCat('glossaire','createdAt');
+</script>
+
 <script>
-/* ═══ DATA — empty structure, to be filled with real content ═══ */
-var DATA={empires:[],organisations:[],dynasties:[],histoire:[],pantheon:[],chronologie:[],glossaire:[]};
+var DATA=window.DATA;
 
 /* ═══ RENDER ═══ */
 function makeCard(d,type){
@@ -591,7 +622,20 @@ document.addEventListener('click',function(e){
   else if(type==='dynasty-member'){var m=card.querySelector('.lc-title');var d=card.querySelector('.lc-desc');var s=card.querySelector('.lc-subtitle');if(m)openPopup('<h2 class="cm-h2">'+m.textContent+'</h2>'+(s?'<h3 class="cm-h3">'+s.textContent+'</h3>':'')+'<div class="cm-text"><p>'+(d?d.textContent:'')+'</p></div>',null,card.style.getPropertyValue('--lc'))}
 });
 
-/* ═══ INIT ═══ */
+/* ═══ INIT — Reactive render dispatcher ═══ */
+window._renderLore=function(cat){
+  DATA=window.DATA;
+  switch(cat){
+    case 'empires':renderGrid('empires-grid',DATA.empires,'empire');break;
+    case 'organisations':renderGrid('orgs-grid',DATA.organisations,'org');break;
+    case 'dynasties':renderDynasties();break;
+    case 'histoire':renderGrid('histoire-grid',DATA.histoire,'histoire');break;
+    case 'pantheon':renderPantheon();break;
+    case 'chronologie':renderChronologie();break;
+    case 'glossaire':renderGlossaire();break;
+  }
+};
+/* Initial render (vide) */
 renderGrid('empires-grid',DATA.empires,'empire');
 renderGrid('orgs-grid',DATA.organisations,'org');
 renderDynasties();

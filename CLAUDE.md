@@ -84,6 +84,13 @@ const firebaseConfig = {
 | `admins/{uid}` | Whitelist staff — role: `admin\|modo` |
 | `logs/{id}` | Historique actions admin |
 | `users/{discordId}` | Données joueurs (navarites, gacha, inventaire…) |
+| `lore_empires/{id}` | Empires — factions, territoires, villes |
+| `lore_organisations/{id}` | Organisations — ordres, guildes, cabales |
+| `lore_dynasties/{id}` | Dynasties — lignées, généalogie, membres |
+| `lore_histoire/{id}` | Événements historiques majeurs |
+| `lore_pantheon/{id}` | Panthéon — primordiaux, cultes |
+| `lore_chronologie/{id}` | Chronologie — frise des ères |
+| `lore_glossaire/{id}` | Glossaire — termes et définitions |
 
 **Globals window exposés** dans les modules Firebase pour les scripts non-module :
 `window._db`, `window._storage`, `window._isAdmin`, `window._doc`, `window._updateDoc`, `window._deleteDoc`
@@ -147,7 +154,8 @@ window.JImgCache.stats()                // {total, expired}
 - Si l'UID n'existe pas dans `/admins` → `auth.signOut()` immédiat + message "Accès refusé"
 - Rôle `admin` : supprimer fiches + voir logs
 - Rôle `modo` : lecture seule (fiches + PNJ)
-- Onglets : **Fiches** · **PNJ** · **Logs** (Logs visible admins uniquement)
+- Onglets : **Fiches** · **PNJ** · **Lore** · **Logs** (Logs visible admins uniquement)
+- Onglet **Lore** : 7 sous-onglets (Empires, Organisations, Dynasties, Histoire, Panthéon, Chronologie, Glossaire) — CRUD complet vers les collections `lore_*` en Firestore, données affichées en temps réel sur `lore.html` via `onSnapshot`
 - Alpine.js pour la réactivité des onglets (`logsVisible` contrôle l'onglet Logs)
 - **⚠ SUPPRIMÉ** : bypass VIP Discord IDs — `window._isAdmin` est exclusivement contrôlé par Firebase Auth
 - **⚠ SUPPRIMÉ** : onglet Gacha (API bot externe) + onglet Races (redondant)

@@ -73,6 +73,39 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // ── LORE ──────────────────────────────────────────────────────────────────
+    // 7 collections lore : empires, organisations, dynasties, histoire,
+    // pantheon, chronologie, glossaire.
+    // Lecture publique (lore.html). Écriture : admins whitelistés uniquement.
+    match /lore_empires/{id} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+    match /lore_organisations/{id} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+    match /lore_dynasties/{id} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+    match /lore_histoire/{id} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+    match /lore_pantheon/{id} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+    match /lore_chronologie/{id} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+    match /lore_glossaire/{id} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
     // ── LOGS ─────────────────────────────────────────────────────────────────
     // Lecture : admins. Création : admins (le panel crée des logs après chaque action).
     // Pas de modification ni suppression pour garantir l'intégrité de l'audit trail.
