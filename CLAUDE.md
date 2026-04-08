@@ -28,6 +28,7 @@ docs/
 ├── fiches.html          Cartes personnages joueurs (PC)
 ├── pnj.html             Personnages non-joueurs
 ├── portail.html         Portail lore + carte monde
+├── lore.html            Lore complet — 7 sections (CRUD admin intégré)
 ├── racesjouables.html   Encyclopédie des 42 races
 ├── gacha.html           Système Gacha Nexus (auth requis)
 ├── hub.html             Hub joueur — 12 onglets (auth requis)
@@ -147,6 +148,15 @@ window.JImgCache.stats()                // {total, expired}
 - **Grille droite** : filtres catégorie/rareté/slot, recherche, tri, drag & drop (SortableJS), tooltips (Tippy.js)
 - **Portefeuille** : `PLAYER.golden_eggs` peut être un objet Firestore — extraction sécurisée via `Object.values(_ge).find(v=>typeof v==='number')`
 - **Fonctions JS clés** : `renderInventory()`, `renderCharacterPanel()`, `initCharScanAnimation()`, `renderItemsGrid()`, `initDragDrop()`, `initTooltips()`, `toggleEquip()`, `showItemDetail()`, `closeItemDetail()`, `openDeleteModal()`, `closeDeleteModal()`, `confirmDelete()`
+
+### Lore (`lore.html`)
+- Page publique avec sidebar de navigation et 7 sections : Empires, Organisations, Dynasties, Histoire, Panthéon, Chronologie, Glossaire
+- Données temps réel via `onSnapshot()` sur les collections `lore_*` en Firestore
+- Accessible depuis la card "Lore de Jaharta" dans `portail.html`
+- **CRUD admin intégré** : les admins whitelistés Firestore (`admins/{uid}`) voient des boutons "+" par section + boutons supprimer sur chaque carte
+- Auth Firebase (Google) via `getAuth()` + vérification `admins/{uid}` — pas de badge admin visible
+- Modal de création avec champs dynamiques par catégorie (même structure que `admin.html`)
+- Sécurité : `sanitize()` sur tous les inputs, `escH()` pour l'affichage, `isAdmin()` dans les Firestore rules
 
 ### Panel Admin (`admin.html`)
 - Accès : lien discret `⚙ STAFF` dans le footer de `index.html` uniquement — **absent de toutes les navbars**
