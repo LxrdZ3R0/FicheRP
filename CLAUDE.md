@@ -28,7 +28,6 @@ docs/
 ├── fiches.html          Cartes personnages joueurs (PC)
 ├── pnj.html             Personnages non-joueurs
 ├── portail.html         Portail lore + carte monde
-├── lore.html            Lore complet — 7 sections (CRUD admin intégré)
 ├── racesjouables.html   Encyclopédie des 42 races
 ├── gacha.html           Système Gacha Nexus (auth requis)
 ├── hub.html             Hub joueur — 12 onglets (auth requis)
@@ -85,13 +84,6 @@ const firebaseConfig = {
 | `admins/{uid}` | Whitelist staff — role: `admin\|modo` |
 | `logs/{id}` | Historique actions admin |
 | `users/{discordId}` | Données joueurs (navarites, gacha, inventaire…) |
-| `lore_empires/{id}` | Empires — factions, territoires, villes |
-| `lore_organisations/{id}` | Organisations — ordres, guildes, cabales |
-| `lore_dynasties/{id}` | Dynasties — lignées, généalogie, membres |
-| `lore_histoire/{id}` | Événements historiques majeurs |
-| `lore_pantheon/{id}` | Panthéon — primordiaux, cultes |
-| `lore_chronologie/{id}` | Chronologie — frise des ères |
-| `lore_glossaire/{id}` | Glossaire — termes et définitions |
 
 **Globals window exposés** dans les modules Firebase pour les scripts non-module :
 `window._db`, `window._storage`, `window._isAdmin`, `window._doc`, `window._updateDoc`, `window._deleteDoc`
@@ -149,23 +141,13 @@ window.JImgCache.stats()                // {total, expired}
 - **Portefeuille** : `PLAYER.golden_eggs` peut être un objet Firestore — extraction sécurisée via `Object.values(_ge).find(v=>typeof v==='number')`
 - **Fonctions JS clés** : `renderInventory()`, `renderCharacterPanel()`, `initCharScanAnimation()`, `renderItemsGrid()`, `initDragDrop()`, `initTooltips()`, `toggleEquip()`, `showItemDetail()`, `closeItemDetail()`, `openDeleteModal()`, `closeDeleteModal()`, `confirmDelete()`
 
-### Lore (`lore.html`)
-- Page publique avec sidebar de navigation et 7 sections : Empires, Organisations, Dynasties, Histoire, Panthéon, Chronologie, Glossaire
-- Données temps réel via `onSnapshot()` sur les collections `lore_*` en Firestore
-- Accessible depuis la card "Lore de Jaharta" dans `portail.html`
-- **CRUD admin intégré** : les admins whitelistés Firestore (`admins/{uid}`) voient des boutons "+" par section + boutons supprimer sur chaque carte
-- Auth Firebase (Google) via `getAuth()` + vérification `admins/{uid}` — pas de badge admin visible
-- Modal de création avec champs dynamiques par catégorie (même structure que `admin.html`)
-- Sécurité : `sanitize()` sur tous les inputs, `escH()` pour l'affichage, `isAdmin()` dans les Firestore rules
-
 ### Panel Admin (`admin.html`)
 - Accès : lien discret `⚙ STAFF` dans le footer de `index.html` uniquement — **absent de toutes les navbars**
 - Auth Firebase (Google uniquement via `signInWithPopup`) + vérification `admins/{uid}` en Firestore
 - Si l'UID n'existe pas dans `/admins` → `auth.signOut()` immédiat + message "Accès refusé"
 - Rôle `admin` : supprimer fiches + voir logs
 - Rôle `modo` : lecture seule (fiches + PNJ)
-- Onglets : **Fiches** · **PNJ** · **Lore** · **Logs** (Logs visible admins uniquement)
-- Onglet **Lore** : 7 sous-onglets (Empires, Organisations, Dynasties, Histoire, Panthéon, Chronologie, Glossaire) — CRUD complet vers les collections `lore_*` en Firestore, données affichées en temps réel sur `lore.html` via `onSnapshot`
+- Onglets : **Fiches** · **PNJ** · **Logs** (Logs visible admins uniquement)
 - Alpine.js pour la réactivité des onglets (`logsVisible` contrôle l'onglet Logs)
 - **⚠ SUPPRIMÉ** : bypass VIP Discord IDs — `window._isAdmin` est exclusivement contrôlé par Firebase Auth
 - **⚠ SUPPRIMÉ** : onglet Gacha (API bot externe) + onglet Races (redondant)

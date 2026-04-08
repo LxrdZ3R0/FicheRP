@@ -74,34 +74,8 @@ service cloud.firestore {
     }
 
     // ── LORE ──────────────────────────────────────────────────────────────────
-    // 7 collections lore : empires, organisations, dynasties, histoire,
-    // pantheon, chronologie, glossaire.
     // Lecture publique (lore.html). Écriture : admins whitelistés uniquement.
-    match /lore_empires/{id} {
-      allow read: if true;
-      allow create, update, delete: if isAdmin();
-    }
-    match /lore_organisations/{id} {
-      allow read: if true;
-      allow create, update, delete: if isAdmin();
-    }
-    match /lore_dynasties/{id} {
-      allow read: if true;
-      allow create, update, delete: if isAdmin();
-    }
-    match /lore_histoire/{id} {
-      allow read: if true;
-      allow create, update, delete: if isAdmin();
-    }
-    match /lore_pantheon/{id} {
-      allow read: if true;
-      allow create, update, delete: if isAdmin();
-    }
-    match /lore_chronologie/{id} {
-      allow read: if true;
-      allow create, update, delete: if isAdmin();
-    }
-    match /lore_glossaire/{id} {
+    match /lore/{docId} {
       allow read: if true;
       allow create, update, delete: if isAdmin();
     }

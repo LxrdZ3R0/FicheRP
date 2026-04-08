@@ -17,7 +17,6 @@ Le site permet à tout visiteur de consulter les informations de l'univers Jahar
 | **Fiches RP** | Cartes des personnages joueurs validés | Public (lecture) |
 | **PNJ** | Personnages non-joueurs importants | Public (lecture) |
 | **Portail** | Liens Lore + Carte du monde | Public |
-| **Lore** | 7 sections lore (Empires, Organisations, Dynasties, Histoire, Panthéon, Chronologie, Glossaire) — CRUD admin intégré | Public (lecture) / Admin (CRUD) |
 | **Races jouables** | Encyclopédie des 42 races (7 groupes) | Public |
 | **Gacha Nexus** | Système de tirages avec Navarites | Auth Discord `/link` |
 | **Hub joueur** | 12 onglets de progression personnalisée | Auth Discord `/link` |
@@ -54,7 +53,6 @@ JahartaRP/
 │   ├── fiches.html                ← Personnages joueurs (PC)
 │   ├── pnj.html                   ← Personnages non-joueurs
 │   ├── portail.html               ← Portail ressources (Lore + Carte)
-│   ├── lore.html                  ← Lore complet — 7 sections (CRUD admin intégré)
 │   ├── racesjouables.html         ← Encyclopédie des 42 races (7 groupes)
 │   ├── gacha.html                 ← Gacha Nexus — tirages + pity (auth Discord)
 │   ├── hub.html                   ← Hub joueur — 12 onglets (auth Discord)
@@ -296,22 +294,6 @@ Toutes les données sont chargées en temps réel via `onSnapshot()`.
 }
 ```
 
-### Collections `lore_*` — Données Lore (lore.html + admin.html)
-
-7 collections avec la même structure de base :
-
-| Collection | Champs spécifiques |
-|------------|-------------------|
-| `lore_empires` | name, sub, ico, color, desc, full, tags[], status, lois, hierarch, stats{}, villes[] |
-| `lore_organisations` | name, sub, ico, color, desc, full, tags[], status, lois, hierarch, etendue, membres |
-| `lore_dynasties` | name, sub, ico, color, empire, members[] (gen, members[]) |
-| `lore_histoire` | name, sub, ico, color, desc, full, tags[], status |
-| `lore_pantheon` | name, domain, ico, color, desc, details{} |
-| `lore_chronologie` | title, era, color, desc, events[], order |
-| `lore_glossaire` | term, def, cat |
-
-Champs communs : `createdAt` (serverTimestamp), `updatedAt` (serverTimestamp, optionnel).
-
 ---
 
 ## Règles de sécurité Firebase
@@ -323,37 +305,22 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper : vérifie la whitelist admin Firestore
-    function isAdmin() {
-      return request.auth != null
-        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
-    }
-
     // Fiches : soumission publique, lecture publique si validée, écriture admin
     match /fiches/{ficheId} {
       allow create: if true;
       allow read:   if resource.data.status == "validee" || request.auth != null;
-      allow update, delete: if isAdmin();
+      allow update, delete: if request.auth != null;
     }
 
     // PNJ et filtres : lecture publique, écriture admin
-    match /pnj/{id}         { allow read: if true; allow write: if isAdmin(); }
-    match /pnj_filters/{id} { allow read: if true; allow write: if isAdmin(); }
+    match /pnj/{id}         { allow read: if true; allow write: if request.auth != null; }
+    match /pnj_filters/{id} { allow read: if true; allow write: if request.auth != null; }
 
-    // Lore : lecture publique, écriture admin uniquement
-    match /lore_empires/{id}       { allow read: if true; allow write: if isAdmin(); }
-    match /lore_organisations/{id} { allow read: if true; allow write: if isAdmin(); }
-    match /lore_dynasties/{id}     { allow read: if true; allow write: if isAdmin(); }
-    match /lore_histoire/{id}      { allow read: if true; allow write: if isAdmin(); }
-    match /lore_pantheon/{id}      { allow read: if true; allow write: if isAdmin(); }
-    match /lore_chronologie/{id}   { allow read: if true; allow write: if isAdmin(); }
-    match /lore_glossaire/{id}     { allow read: if true; allow write: if isAdmin(); }
-
-    // Whitelist admins : lecture si connecté (vérifié dans admin.html + lore.html)
+    // Whitelist admins : lecture si connecté (vérifié dans admin.html)
     match /admins/{uid}     { allow read: if request.auth != null; }
 
-    // Logs : lecture et écriture admin
-    match /logs/{id}        { allow read, write: if isAdmin(); }
+    // Logs : lecture et écriture si connecté
+    match /logs/{id}        { allow read, write: if request.auth != null; }
   }
 }
 ```
@@ -398,7 +365,6 @@ Chaque page surcharge `--accent` dans son `<style>` inline :
 | fiches.html | cyan | `<style>` de fiches.html |
 | pnj.html | magenta | `<style>` de pnj.html |
 | portail.html | gold | `<style>` de portail.html |
-| lore.html | violet | `<style>` de lore.html |
 | racesjouables.html | gold | `<style>` de racesjouables.html |
 | admin.html | gold | `<style>` de admin.html |
 

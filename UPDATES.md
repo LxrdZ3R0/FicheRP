@@ -6,31 +6,6 @@
 
 ---
 
-## [2026-04-08] — CRUD admin intégré dans lore.html + sécurité
-
-### Changements
-
-#### lore.html — CRUD admin intégré
-- **Firebase Auth** ajouté : les admins whitelistés Firestore (`admins/{uid}`) peuvent créer et supprimer des entrées lore directement depuis la page publique
-- Boutons "+" par section (visibles uniquement pour les admins via `body.is-admin`)
-- Boutons supprimer (✕) sur chaque carte (lore-card, panthéon flip, chronologie, glossaire)
-- Modal de création dynamique avec champs adaptés par catégorie (même structure que `admin.html`)
-- Sécurité : `sanitize()` sur les inputs, `escH()` pour l'affichage HTML, vérification `_isAdmin` côté client + `isAdmin()` dans les Firestore rules
-- Badge admin / lien admin **supprimés** du nav et menu mobile (cohérent avec fiches.html et pnj.html)
-
-#### CRITIQUE — Script malveillant supprimé de lore.html
-- Un `<script>` externe pointant vers un faux CDN Discord (`cdn.discordapp.com/yepQN9...`) a été détecté et **supprimé**. Ce n'était pas un script légitime. Vérifier les autres pages et l'historique git pour identifier l'origine.
-
-#### portail.html — Lien Lore activé
-- La carte "Lore de Jaharta" pointe désormais vers `lore.html` (au lieu de `href="#"`)
-
-#### Firestore Rules — Collections lore_*
-- 7 rules ajoutées pour `lore_empires`, `lore_organisations`, `lore_dynasties`, `lore_histoire`, `lore_pantheon`, `lore_chronologie`, `lore_glossaire`
-- Pattern : lecture publique, écriture admin uniquement via `isAdmin()` (vérifie `admins/{uid}`)
-- **Rappel** : ces rules doivent être déployées manuellement dans Firebase Console → Firestore → Règles
-
----
-
 ## [2026-04-07] — Audit sécurité complet : XSS, TOCTOU, isAdmin, sessions
 
 ### Contexte
