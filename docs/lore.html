@@ -107,29 +107,44 @@ body::before{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;
 
 /* ═══ LORE CARDS ═══ */
 .lore-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:22px;margin-bottom:48px}
-.lore-card{position:relative;background:rgba(6,10,24,0.6);border:1px solid rgba(255,255,255,0.04);border-radius:4px;overflow:hidden;display:flex;flex-direction:column;transition:all .45s cubic-bezier(0.16,1,0.3,1);cursor:pointer;text-decoration:none;color:inherit;opacity:0;transform:translateY(24px)}
+
+/* Card shell */
+.lore-card{position:relative;border-radius:8px;overflow:hidden;display:flex;flex-direction:column;cursor:pointer;text-decoration:none;color:inherit;opacity:0;transform:translateY(24px);transition:all .45s cubic-bezier(0.16,1,0.3,1)}
 .lore-card.visible{opacity:1;transform:translateY(0)}
-.lore-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--lc,var(--violet)),transparent 80%);opacity:.4;transition:opacity .4s;z-index:2}
-.lore-card::after{content:'';position:absolute;top:0;right:0;width:24px;height:24px;background:linear-gradient(225deg,rgba(2,7,19,0.95) 50%,transparent 50%);border-bottom:1px solid color-mix(in srgb,var(--lc,var(--violet)) 15%,transparent);border-left:1px solid color-mix(in srgb,var(--lc,var(--violet)) 15%,transparent);z-index:3;transition:all .4s}
-.lore-card:hover{border-color:color-mix(in srgb,var(--lc,var(--violet)) 30%,transparent);box-shadow:0 0 30px color-mix(in srgb,var(--lc,var(--violet)) 10%,transparent),0 12px 40px rgba(0,0,0,0.4);transform:translateY(-4px)}
-.lore-card:hover::before{opacity:1}
-.card-scan{position:absolute;inset:0;pointer-events:none;z-index:4;opacity:0;transition:opacity .4s;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(77,163,255,0.015) 2px,rgba(77,163,255,0.015) 4px)}
-.lore-card:hover .card-scan{opacity:1}
-.lc-header{position:relative;padding:24px 22px 18px;display:flex;align-items:flex-start;gap:16px}
-.lc-header::after{content:'';position:absolute;bottom:0;left:22px;right:22px;height:1px;background:linear-gradient(90deg,color-mix(in srgb,var(--lc,var(--violet)) 20%,transparent),transparent)}
-.lc-hex{position:relative;width:46px;height:46px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0}
-.lc-hex::before{content:'';position:absolute;inset:0;background:color-mix(in srgb,var(--lc,var(--violet)) 6%,transparent);border:1px solid color-mix(in srgb,var(--lc,var(--violet)) 15%,transparent);clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);transition:all .4s}
-.lore-card:hover .lc-hex::before{background:color-mix(in srgb,var(--lc,var(--violet)) 10%,transparent);border-color:color-mix(in srgb,var(--lc,var(--violet)) 30%,transparent);box-shadow:0 0 14px color-mix(in srgb,var(--lc,var(--violet)) 15%,transparent)}
-.lc-header-text{flex:1;min-width:0}
-.lc-title{font-family:var(--font-h);font-weight:800;font-size:.88rem;letter-spacing:.06em;color:#fff;margin-bottom:3px;transition:text-shadow .4s}
-.lore-card:hover .lc-title{text-shadow:0 0 14px color-mix(in srgb,var(--lc,var(--violet)) 30%,transparent)}
-.lc-subtitle{font-family:var(--font-m);font-size:.42rem;letter-spacing:.18em;text-transform:uppercase;color:var(--lc,var(--violet));opacity:.5}
-.lc-body{padding:16px 22px 20px;flex:1;display:flex;flex-direction:column}
+.lore-card:hover{transform:translateY(-4px)}
+
+/* Rotating conic border */
+@property --lc-rot{syntax:'<angle>';initial-value:0deg;inherits:false}
+.lc-border{position:absolute;inset:-1px;border-radius:9px;z-index:0;background:conic-gradient(from var(--lc-rot,0deg),transparent 25%,var(--lc,var(--violet)) 45%,transparent 65%);opacity:0;transition:opacity .4s;pointer-events:none}
+.lore-card:hover .lc-border{opacity:.6;animation:lcBorderRot 3s linear infinite}
+@keyframes lcBorderRot{to{--lc-rot:360deg}}
+
+/* Content layer — sits above the border */
+.lc-content{position:relative;z-index:1;background:rgba(6,10,24,0.92);border-radius:7px;margin:1px;display:flex;flex-direction:column;flex:1;padding:24px 22px 20px;border:1px solid rgba(255,255,255,0.04);transition:border-color .4s,box-shadow .4s}
+.lore-card:hover .lc-content{border-color:color-mix(in srgb,var(--lc,var(--violet)) 20%,transparent);box-shadow:inset 0 0 40px color-mix(in srgb,var(--lc,var(--violet)) 4%,transparent)}
+
+/* Logo / icon row */
+.lc-logo{display:flex;align-items:center;gap:16px;margin-bottom:18px}
+.lc-ico-wrap{position:relative;width:52px;height:52px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0;transition:filter .4s}
+.lc-ico-wrap::before{content:'';position:absolute;inset:0;background:color-mix(in srgb,var(--lc,var(--violet)) 7%,transparent);border:1px solid color-mix(in srgb,var(--lc,var(--violet)) 18%,transparent);clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);transition:all .4s}
+.lore-card:hover .lc-ico-wrap::before{background:color-mix(in srgb,var(--lc,var(--violet)) 14%,transparent);border-color:color-mix(in srgb,var(--lc,var(--violet)) 40%,transparent);box-shadow:0 0 20px color-mix(in srgb,var(--lc,var(--violet)) 18%,transparent)}
+.lore-card:hover .lc-ico-wrap{filter:drop-shadow(0 0 8px var(--lc,var(--violet)))}
+
+/* Trail line extending from icon */
+.lc-trail{flex:1;height:1px;background:linear-gradient(90deg,color-mix(in srgb,var(--lc,var(--violet)) 50%,transparent),transparent);opacity:.45;transition:opacity .4s}
+.lore-card:hover .lc-trail{opacity:1}
+
+/* Text */
+.lc-title{font-family:var(--font-h);font-weight:800;font-size:.9rem;letter-spacing:.06em;color:#fff;margin-bottom:4px;transition:text-shadow .4s}
+.lore-card:hover .lc-title{text-shadow:0 0 16px color-mix(in srgb,var(--lc,var(--violet)) 35%,transparent)}
+.lc-subtitle{font-family:var(--font-m);font-size:.42rem;letter-spacing:.2em;text-transform:uppercase;color:var(--lc,var(--violet));opacity:.5;margin-bottom:14px}
 .lc-desc{font-family:var(--font-b);font-size:.95rem;font-weight:400;color:var(--text2);line-height:1.65;margin-bottom:14px;flex:1}
 .lc-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
 .lc-tag{font-family:var(--font-m);font-size:.42rem;letter-spacing:.08em;text-transform:uppercase;padding:4px 10px;border:1px solid rgba(255,255,255,0.06);color:var(--text3);background:rgba(255,255,255,0.015);transition:all .3s}
-.lore-card:hover .lc-tag{border-color:color-mix(in srgb,var(--lc,var(--violet)) 15%,transparent);color:var(--text2)}
-.lc-footer{display:flex;align-items:center;justify-content:space-between;border-top:1px solid rgba(255,255,255,0.03);padding-top:12px}
+.lore-card:hover .lc-tag{border-color:color-mix(in srgb,var(--lc,var(--violet)) 18%,transparent);color:var(--text2)}
+
+/* Footer */
+.lc-footer{display:flex;align-items:center;justify-content:space-between;border-top:1px solid rgba(255,255,255,0.04);padding-top:12px;margin-top:auto}
 .lc-status{font-family:var(--font-m);font-size:.44rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);display:flex;align-items:center;gap:6px}
 .lc-dot{width:5px;height:5px;border-radius:50%;animation:lcDot 2.5s infinite}
 @keyframes lcDot{0%,100%{opacity:1}50%{opacity:.3}}
@@ -395,7 +410,7 @@ body::before{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;
 .admin-create-btn{font-family:var(--font-h);font-size:.6rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--bg);background:linear-gradient(135deg,var(--violet),#6C5CE7);border:none;padding:11px 22px;cursor:pointer;border-radius:6px;transition:all .3s;display:flex;align-items:center;gap:8px}
 .admin-create-btn:hover{box-shadow:0 0 24px rgba(139,92,246,0.35);transform:translateY(-1px)}
 .admin-create-btn::before{content:'+';font-size:.85rem;font-weight:900}
-.lore-card-admin-actions{position:absolute;top:8px;right:32px;z-index:10;display:flex;gap:6px;opacity:0;transition:opacity .3s}
+.lore-card-admin-actions{position:absolute;top:10px;right:10px;z-index:10;display:flex;gap:6px;opacity:0;transition:opacity .3s}
 .lore-card:hover .lore-card-admin-actions{opacity:1}
 .lore-admin-btn{width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:50%;border:1px solid rgba(255,255,255,0.1);background:rgba(4,8,20,0.85);backdrop-filter:blur(8px);cursor:pointer;transition:all .25s;font-size:.72rem;color:var(--text2)}
 .lore-admin-btn:hover{border-color:rgba(139,92,246,0.5);color:var(--violet);background:rgba(139,92,246,0.1)}
@@ -718,7 +733,8 @@ function makeCard(d,type){
   var catMap={empire:'empires',org:'organisations',dynastie:'dynasties',dynasty:'dynasties',histoire:'histoire'};
   var cat=catMap[type]||type;
   var nm=d.name||d.title||d.term||'?';
-  return '<div class="lore-card rv" style="--lc:'+d.color+'" data-type="'+type+'" data-id="'+d.id+'">'+adminBtns(cat,d.id,nm)+'<div class="card-scan"></div><div class="lc-header"><span class="lc-hex">'+d.ico+'</span><div class="lc-header-text"><div class="lc-title">'+nm+'</div><div class="lc-subtitle">'+(d.sub||'')+'</div></div></div><div class="lc-body"><p class="lc-desc">'+(d.desc||'')+'</p>'+(d.tags?'<div class="lc-tags">'+d.tags.map(function(t){return '<span class="lc-tag">'+t+'</span>'}).join('')+'</div>':'')+'<div class="lc-footer"><span class="lc-status"><span class="lc-dot" style="background:'+d.color+';box-shadow:0 0 6px '+d.color+'"></span>'+(d.status||'')+'</span><span class="lc-arrow">&rarr;</span></div></div></div>';
+  var tagsHtml=d.tags&&d.tags.length?'<div class="lc-tags">'+d.tags.map(function(t){return '<span class="lc-tag">'+t+'</span>'}).join('')+'</div>':'';
+  return '<div class="lore-card rv" style="--lc:'+d.color+'" data-type="'+type+'" data-id="'+d.id+'">'+adminBtns(cat,d.id,nm)+'<div class="lc-border"></div><div class="lc-content"><div class="lc-logo"><div class="lc-ico-wrap">'+d.ico+'</div><span class="lc-trail"></span></div><div class="lc-title">'+nm+'</div><div class="lc-subtitle">'+(d.sub||'')+'</div><p class="lc-desc">'+(d.desc||'')+'</p>'+tagsHtml+'<div class="lc-footer"><span class="lc-status"><span class="lc-dot" style="background:'+d.color+';box-shadow:0 0 6px '+d.color+'"></span>'+(d.status||'')+'</span><span class="lc-arrow">&rarr;</span></div></div></div>';
 }
 function renderGrid(id,items,type){var g=document.getElementById(id);if(!g)return;g.innerHTML=items.map(function(d){return makeCard(d,type)}).join('');revealCards(g)}
 function revealCards(c){var cards=c.querySelectorAll('.rv,.chrono-era,.pth-flip');cards.forEach(function(el,i){el.classList.remove('visible');el.style.animationDelay=(.05+i*.1)+'s';setTimeout(function(){el.classList.add('visible')},80+i*100)})}
@@ -760,7 +776,7 @@ function showCities(id){
   bn.onclick=function(){renderGrid('empires-grid',DATA.empires,'empire');this.remove()};
   content.insertBefore(bn,grid);
   grid.innerHTML=e.villes.map(function(v){
-    return '<div class="lore-card rv" style="--lc:'+e.color+'" onclick="openPopup(\'<h2 class=cm-h2>'+v.name.replace(/'/g,"\\&#39;")+'</h2><div class=cm-text><p>'+v.desc.replace(/'/g,"\\&#39;")+'</p></div>\',null,\''+e.color+'\')"><div class="card-scan"></div><div class="lc-header"><span class="lc-hex">\u{1F3D9}\uFE0F</span><div class="lc-header-text"><div class="lc-title">'+v.name+'</div><div class="lc-subtitle">'+e.name+'</div></div></div><div class="lc-body"><p class="lc-desc">'+v.desc+'</p><div class="lc-footer"><span class="lc-status"><span class="lc-dot" style="background:'+e.color+';box-shadow:0 0 6px '+e.color+'"></span>Ville</span><span class="lc-arrow">&rarr;</span></div></div></div>';
+    return '<div class="lore-card rv" style="--lc:'+e.color+'" onclick="openPopup(\'<h2 class=cm-h2>'+v.name.replace(/'/g,"\\&#39;")+'</h2><div class=cm-text><p>'+v.desc.replace(/'/g,"\\&#39;")+'</p></div>\',null,\''+e.color+'\')"><div class="lc-border"></div><div class="lc-content"><div class="lc-logo"><div class="lc-ico-wrap">🏙️</div><span class="lc-trail"></span></div><div class="lc-title">'+v.name+'</div><div class="lc-subtitle">'+e.name+'</div><p class="lc-desc">'+v.desc+'</p><div class="lc-footer"><span class="lc-status"><span class="lc-dot" style="background:'+e.color+';box-shadow:0 0 6px '+e.color+'"></span>Ville</span><span class="lc-arrow">&rarr;</span></div></div></div>';
   }).join('');revealCards(grid);
 }
 
