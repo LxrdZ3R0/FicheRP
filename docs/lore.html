@@ -64,10 +64,10 @@ body::before{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;
 .sb-item{position:relative;display:flex;align-items:center;gap:14px;padding:18px 20px;cursor:pointer;transition:all .3s cubic-bezier(0.16,1,0.3,1);text-decoration:none;color:inherit;border-left:3px solid transparent;margin:2px 0}
 .sb-item:hover{background:rgba(77,163,255,0.04);border-left-color:rgba(77,163,255,0.2)}
 .sb-item.active{background:rgba(139,92,246,0.06);border-left-color:var(--ic,var(--violet))}
-.sb-ico{position:relative;width:48px;height:48px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;transition:all .3s}
-.sb-ico::before{content:'';position:absolute;inset:0;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);transition:all .3s}
-.sb-item:hover .sb-ico::before{border-color:color-mix(in srgb,var(--ic,var(--blue)) 30%,transparent);background:color-mix(in srgb,var(--ic,var(--blue)) 5%,transparent)}
-.sb-item.active .sb-ico::before{border-color:color-mix(in srgb,var(--ic,var(--violet)) 40%,transparent);background:color-mix(in srgb,var(--ic,var(--violet)) 8%,transparent);box-shadow:0 0 14px color-mix(in srgb,var(--ic,var(--violet)) 15%,transparent)}
+.sb-ico{position:relative;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;transition:all .3s}
+.sb-ico::before{content:'';position:absolute;inset:0;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:10px;transition:all .3s}
+.sb-item:hover .sb-ico::before{border-color:color-mix(in srgb,var(--ic,var(--blue)) 30%,transparent);background:color-mix(in srgb,var(--ic,var(--blue)) 5%,transparent);border-radius:12px}
+.sb-item.active .sb-ico::before{border-color:color-mix(in srgb,var(--ic,var(--violet)) 45%,transparent);background:color-mix(in srgb,var(--ic,var(--violet)) 8%,transparent);box-shadow:0 0 16px color-mix(in srgb,var(--ic,var(--violet)) 18%,transparent);border-radius:12px}
 .sb-item.active .sb-ico{filter:drop-shadow(0 0 8px var(--ic,var(--violet)))}
 .sb-item-text{flex:1;min-width:0}
 .sb-item-name{font-family:var(--font-b);font-size:.95rem;font-weight:600;letter-spacing:.06em;color:var(--text2);transition:color .3s}
@@ -125,9 +125,9 @@ body::before{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;
 
 /* Logo / icon row */
 .lc-logo{display:flex;align-items:center;gap:16px;margin-bottom:18px}
-.lc-ico-wrap{position:relative;width:52px;height:52px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0;transition:filter .4s}
-.lc-ico-wrap::before{content:'';position:absolute;inset:0;background:color-mix(in srgb,var(--lc,var(--violet)) 7%,transparent);border:1px solid color-mix(in srgb,var(--lc,var(--violet)) 18%,transparent);clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);transition:all .4s}
-.lore-card:hover .lc-ico-wrap::before{background:color-mix(in srgb,var(--lc,var(--violet)) 14%,transparent);border-color:color-mix(in srgb,var(--lc,var(--violet)) 40%,transparent);box-shadow:0 0 20px color-mix(in srgb,var(--lc,var(--violet)) 18%,transparent)}
+.lc-ico-wrap{position:relative;width:48px;height:48px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;transition:filter .4s}
+.lc-ico-wrap::before{content:'';position:absolute;inset:0;background:color-mix(in srgb,var(--lc,var(--violet)) 7%,transparent);border:1px solid color-mix(in srgb,var(--lc,var(--violet)) 18%,transparent);border-radius:10px;transition:all .4s}
+.lore-card:hover .lc-ico-wrap::before{background:color-mix(in srgb,var(--lc,var(--violet)) 14%,transparent);border-color:color-mix(in srgb,var(--lc,var(--violet)) 40%,transparent);box-shadow:0 0 20px color-mix(in srgb,var(--lc,var(--violet)) 18%,transparent);border-radius:12px}
 .lore-card:hover .lc-ico-wrap{filter:drop-shadow(0 0 8px var(--lc,var(--violet)))}
 
 /* Trail line extending from icon */
@@ -150,6 +150,12 @@ body::before{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;
 @keyframes lcDot{0%,100%{opacity:1}50%{opacity:.3}}
 .lc-arrow{font-family:var(--font-m);font-size:.7rem;color:transparent;transition:all .3s}
 .lore-card:hover .lc-arrow{color:var(--lc,var(--violet));transform:translateX(3px)}
+
+/* Card image banner */
+.lc-img{position:relative;height:140px;background-size:cover;background-position:center;border-radius:7px 7px 0 0;margin:1px 1px 0;z-index:1;flex-shrink:0}
+.lc-img-ov{position:absolute;inset:0;border-radius:7px 7px 0 0}
+.lore-card.has-img .lc-content{border-radius:0 0 7px 7px;margin-top:0;padding-top:16px}
+.lore-card.has-img .lc-border{border-radius:9px}
 
 
 /* ═══ CYBER POPUP — adapted from cyberpopover-2025 ═══ */
@@ -401,12 +407,15 @@ body::before{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;
 .glossary-search input{width:100%;background:rgba(255,255,255,0.02);border:1px solid rgba(77,163,255,0.1);padding:14px 18px 14px 44px;font-family:var(--font-b);font-size:1rem;font-weight:400;color:var(--text);border-radius:2px;outline:none;transition:border-color .3s}
 .glossary-search input:focus{border-color:var(--violet)}
 .glossary-search::before{content:'⌕';position:absolute;left:16px;top:50%;transform:translateY(-50%);font-size:1.1rem;color:var(--text3)}
-.glossary-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
-.glossary-item{background:rgba(6,10,24,0.5);border:1px solid rgba(255,255,255,0.04);border-radius:2px;padding:18px 20px;transition:all .3s}
-.glossary-item:hover{border-color:rgba(139,92,246,0.15)}
-.glossary-term{font-family:var(--font-h);font-weight:700;font-size:.78rem;letter-spacing:.06em;color:var(--violet);margin-bottom:6px}
-.glossary-def{font-family:var(--font-b);font-size:.95rem;font-weight:400;color:var(--text2);line-height:1.7}
-.glossary-cat{font-family:var(--font-m);font-size:.4rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-top:8px}
+.glossary-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:0;border:1px solid rgba(255,255,255,0.04);border-radius:2px;overflow:hidden}
+.glossary-item{background:rgba(2,6,16,0.94);padding:24px 22px 20px;position:relative;overflow:hidden;transition:background .4s;border-right:1px solid rgba(255,107,157,0.07);border-bottom:1px solid rgba(255,107,157,0.07)}
+.glossary-item:hover{background:rgba(5,12,30,0.98)}
+.glossary-item::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--rose,#ff6b9d),transparent 70%);opacity:.4;transition:opacity .4s}
+.glossary-item:hover::before{opacity:1}
+.glossary-item::after{content:'';position:absolute;bottom:0;right:0;width:10px;height:10px;background:rgba(255,107,157,0.04);border-top:1px solid rgba(255,107,157,0.1);border-left:1px solid rgba(255,107,157,0.1)}
+.glossary-term{font-family:var(--font-h);font-weight:700;font-size:.82rem;letter-spacing:.06em;color:#fff;margin-bottom:8px;line-height:1.3}
+.glossary-def{font-family:var(--font-b);font-size:.92rem;font-weight:300;color:var(--text2);line-height:1.7;flex:1}
+.glossary-cat{font-family:var(--font-m);font-size:.38rem;letter-spacing:.2em;color:var(--rose,#ff6b9d);opacity:.35;text-transform:uppercase;margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.04)}
 
 /* ═══ FOOTER ═══ */
 .footer{border-top:1px solid rgba(255,255,255,0.04);padding:3rem clamp(1.5rem,4vw,3rem);display:flex;align-items:center;justify-content:space-between;gap:2rem;flex-wrap:wrap}
@@ -595,7 +604,13 @@ const CS=["empires","organisations","dynasties","histoire","pantheon","chronolog
 onSnapshot(collection(db,"lore"),snap=>{
   CS.forEach(c=>{window.DATA[c]=[];});
   snap.forEach(d=>{const x={id:d.id,...d.data()};const c=x.category;if(window.DATA[c])window.DATA[c].push(x);});
-  CS.forEach(c=>{window.DATA[c].sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));});
+  CS.forEach(c=>{
+    if(c==='chronologie'){
+      window.DATA[c].sort((a,b)=>(a.order||0)-(b.order||0));
+    } else {
+      window.DATA[c].sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+    }
+  });
   if(typeof window._renderAllLore==="function")window._renderAllLore();
 },err=>console.warn("[lore]",err.message));
 </script>
@@ -786,6 +801,7 @@ var LORE_FIELDS={
     {key:'sub',label:'Sous-titre',type:'text'},
     {key:'ico',label:'Icône',type:'text',placeholder:'🏰',half:true},
     {key:'color',label:'Couleur',type:'color',def:'#FF4757',half:true},
+    {key:'imageUrl',label:'Image (URL)',type:'text',placeholder:'https://...'},
     {key:'desc',label:'Description courte *',type:'textarea',required:true},
     {key:'full',label:'Description complète',type:'textarea',rows:4},
     {key:'tags',label:'Tags (virgules)',type:'text',isArray:true},
@@ -795,7 +811,9 @@ var LORE_FIELDS={
     {key:'stats',label:'Statistiques',type:'repeater_kv'},
     {key:'villes',label:'Villes',type:'repeater_obj',fields:[
       {key:'name',label:'Nom de la ville'},
-      {key:'desc',label:'Description',type:'textarea',rows:2}
+      {key:'imageUrl',label:'Image (URL)',placeholder:'https://...'},
+      {key:'desc',label:'Description courte'},
+      {key:'full',label:'Description complète',type:'textarea',rows:3}
     ]}
   ],
   organisations:[
@@ -803,6 +821,7 @@ var LORE_FIELDS={
     {key:'sub',label:'Sous-titre',type:'text'},
     {key:'ico',label:'Icône',type:'text',placeholder:'⚔️',half:true},
     {key:'color',label:'Couleur',type:'color',def:'#4DA3FF',half:true},
+    {key:'imageUrl',label:'Image (URL)',type:'text',placeholder:'https://...'},
     {key:'desc',label:'Description courte *',type:'textarea',required:true},
     {key:'full',label:'Description complète',type:'textarea',rows:4},
     {key:'tags',label:'Tags',type:'text',isArray:true},
@@ -817,10 +836,12 @@ var LORE_FIELDS={
     {key:'sub',label:'Sous-titre',type:'text'},
     {key:'ico',label:'Icône',type:'text',placeholder:'👑',half:true},
     {key:'color',label:'Couleur',type:'color',def:'#ffd60a',half:true},
+    {key:'imageUrl',label:'Image (URL)',type:'text',placeholder:'https://...'},
     {key:'empire',label:'Empire',type:'text'},
     {key:'members',label:'Générations & Membres',type:'repeater_group',groupLabel:'Nom de la génération',memberFields:[
       {key:'name',label:'Nom'},
       {key:'title',label:'Titre'},
+      {key:'imageUrl',label:'Image (URL)',placeholder:'https://...'},
       {key:'desc',label:'Description',type:'textarea',rows:2}
     ]}
   ],
@@ -829,6 +850,7 @@ var LORE_FIELDS={
     {key:'sub',label:'Sous-titre',type:'text'},
     {key:'ico',label:'Icône',type:'text',placeholder:'📜',half:true},
     {key:'color',label:'Couleur',type:'color',def:'#44ff88',half:true},
+    {key:'imageUrl',label:'Image (URL)',type:'text',placeholder:'https://...'},
     {key:'desc',label:'Description courte *',type:'textarea',required:true},
     {key:'full',label:'Description complète',type:'textarea',rows:4},
     {key:'tags',label:'Tags',type:'text',isArray:true},
@@ -839,6 +861,7 @@ var LORE_FIELDS={
     {key:'domain',label:'Domaine',type:'text'},
     {key:'ico',label:'Icône',type:'text',placeholder:'✨',half:true},
     {key:'color',label:'Couleur',type:'color',def:'#8B5CF6',half:true},
+    {key:'imageUrl',label:'Image (URL)',type:'text',placeholder:'https://...'},
     {key:'desc',label:'Description *',type:'textarea',required:true,rows:4},
     {key:'details',label:'Sections détaillées',type:'repeater_kv_textarea'}
   ],
@@ -1043,7 +1066,9 @@ function makeCard(d,type){
   var cat=catMap[type]||type;
   var nm=d.name||d.title||d.term||'?';
   var tagsHtml=d.tags&&d.tags.length?'<div class="lc-tags">'+d.tags.map(function(t){return '<span class="lc-tag">'+t+'</span>'}).join('')+'</div>':'';
-  return '<div class="lore-card rv" style="--lc:'+d.color+'" data-type="'+type+'" data-id="'+d.id+'">'+adminBtns(cat,d.id,nm)+'<div class="lc-border"></div><div class="lc-content"><div class="lc-logo"><div class="lc-ico-wrap">'+d.ico+'</div><span class="lc-trail"></span></div><div class="lc-title">'+nm+'</div><div class="lc-subtitle">'+(d.sub||'')+'</div><p class="lc-desc">'+(d.desc||'')+'</p>'+tagsHtml+'<div class="lc-footer"><span class="lc-status"><span class="lc-dot" style="background:'+d.color+';box-shadow:0 0 6px '+d.color+'"></span>'+(d.status||'')+'</span><span class="lc-arrow">&rarr;</span></div></div></div>';
+  var imgHtml=d.imageUrl?'<div class="lc-img" style="background-image:url(\''+d.imageUrl+'\')"><div class="lc-img-ov" style="background:linear-gradient(180deg,transparent 30%,rgba(6,10,24,0.95) 100%)"></div></div>':'';
+  var logoHtml=d.imageUrl?'':'<div class="lc-logo"><div class="lc-ico-wrap">'+d.ico+'</div><span class="lc-trail"></span></div>';
+  return '<div class="lore-card rv'+(d.imageUrl?' has-img':'')+'" style="--lc:'+d.color+'" data-type="'+type+'" data-id="'+d.id+'">'+adminBtns(cat,d.id,nm)+'<div class="lc-border"></div>'+imgHtml+'<div class="lc-content">'+logoHtml+'<div class="lc-title">'+nm+'</div><div class="lc-subtitle">'+(d.sub||'')+'</div><p class="lc-desc">'+(d.desc||'')+'</p>'+tagsHtml+'<div class="lc-footer"><span class="lc-status"><span class="lc-dot" style="background:'+d.color+';box-shadow:0 0 6px '+d.color+'"></span>'+(d.status||'')+'</span><span class="lc-arrow">&rarr;</span></div></div></div>';
 }
 function renderGrid(id,items,type){var g=document.getElementById(id);if(!g)return;g.innerHTML=items.map(function(d){return makeCard(d,type)}).join('');revealCards(g)}
 function revealCards(c){var cards=c.querySelectorAll('.rv,.chrono-era,.pth-flip');cards.forEach(function(el,i){el.classList.remove('visible');el.style.animationDelay=(.05+i*.1)+'s';setTimeout(function(){el.classList.add('visible')},80+i*100)})}
@@ -1074,7 +1099,8 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape'&&overlay.cla
 function openEmpire(id){
   var e=DATA.empires.find(function(x){return x.id===id});if(!e)return;
   var stats='';if(e.stats){var k=Object.keys(e.stats);stats='<div class="cm-stat-row">'+k.map(function(s){return '<div class="cm-stat"><span class="cm-stat-val" style="color:'+e.color+'">'+e.stats[s]+'</span><span class="cm-stat-lbl">'+s+'</span></div>'}).join('')+'</div>'}
-  var html='<h2 class="cm-h2">'+e.name+'</h2>'+(e.tags?'<div class="cm-tags">'+e.tags.map(function(t){return '<span class="cm-tag">'+t+'</span>'}).join('')+'</div>':'')+stats+'<div class="cm-text">'+parseDiscordMd(e.full||e.desc,e.color)+'</div>';
+  var imgBanner=e.imageUrl?'<div style="margin:-32px -32px 20px;height:180px;background:url(\''+e.imageUrl+'\') center/cover;position:relative;border-radius:0"><div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(4,8,20,0.95) 100%)"></div></div>':'';
+  var html=imgBanner+'<h2 class="cm-h2">'+e.name+'</h2>'+(e.tags?'<div class="cm-tags">'+e.tags.map(function(t){return '<span class="cm-tag">'+t+'</span>'}).join('')+'</div>':'')+stats+'<div class="cm-text">'+parseDiscordMd(e.full||e.desc,e.color)+'</div>';
   if(e.lois)html+='<h3 class="cm-h3">Lois</h3><div class="cm-text">'+parseDiscordMd(e.lois,e.color)+'</div>';
   if(e.hierarch)html+='<h3 class="cm-h3">Hi&eacute;rarchie</h3><div class="cm-text">'+parseDiscordMd(e.hierarch,e.color)+'</div>';
   var actions='<button class="cm-btn" onclick="closePopup()"><span class="cm-btn-bg"></span><kbd>esc</kbd><span>Retour</span></button>';
@@ -1092,15 +1118,19 @@ function showCities(id){
   /* Store ville data for click handler */
   window._cityData = e.villes;
   window._cityColor = e.color;
+  window._cityEmpireId = id;
   grid.innerHTML=e.villes.map(function(v,i){
-    return '<div class="lore-card rv" style="--lc:'+e.color+'" data-type="city" data-city-idx="'+i+'"><div class="lc-border"></div><div class="lc-content"><div class="lc-logo"><div class="lc-ico-wrap">🏙️</div><span class="lc-trail"></span></div><div class="lc-title">'+v.name+'</div><div class="lc-subtitle">'+e.name+'</div><p class="lc-desc">'+v.desc+'</p><div class="lc-footer"><span class="lc-status"><span class="lc-dot" style="background:'+e.color+';box-shadow:0 0 6px '+e.color+'"></span>Ville</span><span class="lc-arrow">&rarr;</span></div></div></div>';
+    var imgHtml=v.imageUrl?'<div class="lc-img" style="background-image:url(\''+v.imageUrl+'\')"><div class="lc-img-ov" style="background:linear-gradient(180deg,transparent 30%,rgba(6,10,24,0.95) 100%)"></div></div>':'';
+    var logoHtml=v.imageUrl?'':'<div class="lc-logo"><div class="lc-ico-wrap">🏙️</div><span class="lc-trail"></span></div>';
+    return '<div class="lore-card rv'+(v.imageUrl?' has-img':'')+'" style="--lc:'+e.color+'" data-type="city" data-city-idx="'+i+'"><div class="lc-border"></div>'+imgHtml+'<div class="lc-content">'+logoHtml+'<div class="lc-title">'+v.name+'</div><div class="lc-subtitle">'+e.name+'</div><p class="lc-desc">'+(v.desc||'')+'</p><div class="lc-footer"><span class="lc-status"><span class="lc-dot" style="background:'+e.color+';box-shadow:0 0 6px '+e.color+'"></span>Ville</span><span class="lc-arrow">&rarr;</span></div></div></div>';
   }).join('');revealCards(grid);
 }
 
 /* ═══ ORG POPUP ═══ */
 function openOrg(id){
   var o=DATA.organisations.find(function(x){return x.id===id});if(!o)return;
-  var html='<h2 class="cm-h2">'+o.name+'</h2>'+(o.tags?'<div class="cm-tags">'+o.tags.map(function(t){return '<span class="cm-tag">'+t+'</span>'}).join('')+'</div>':'')+'<div class="cm-text">'+parseDiscordMd(o.full||o.desc,o.color)+'</div>';
+  var imgBanner=o.imageUrl?'<div style="margin:-32px -32px 20px;height:180px;background:url(\''+o.imageUrl+'\') center/cover;position:relative"><div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(4,8,20,0.95) 100%)"></div></div>':'';
+  var html=imgBanner+'<h2 class="cm-h2">'+o.name+'</h2>'+(o.tags?'<div class="cm-tags">'+o.tags.map(function(t){return '<span class="cm-tag">'+t+'</span>'}).join('')+'</div>':'')+'<div class="cm-text">'+parseDiscordMd(o.full||o.desc,o.color)+'</div>';
   if(o.lois)html+='<h3 class="cm-h3">Lois &amp; R&egrave;gles</h3><div class="cm-text">'+parseDiscordMd(o.lois,o.color)+'</div>';
   if(o.hierarch)html+='<h3 class="cm-h3">Hi&eacute;rarchie</h3><div class="cm-text">'+parseDiscordMd(o.hierarch,o.color)+'</div>';
   if(o.etendue)html+='<h3 class="cm-h3">&Eacute;tendue</h3><div class="cm-text">'+parseDiscordMd(o.etendue,o.color)+'</div>';
@@ -1113,14 +1143,15 @@ function openOrg(id){
 /* ═══ HISTOIRE POPUP ═══ */
 function openHistoire(id){
   var h=DATA.histoire.find(function(x){return x.id===id});if(!h)return;
-  var html='<h2 class="cm-h2">'+h.name+'</h2>'+(h.tags?'<div class="cm-tags">'+h.tags.map(function(t){return '<span class="cm-tag">'+t+'</span>'}).join('')+'</div>':'')+'<div class="cm-text">'+parseDiscordMd(h.full||h.desc,h.color)+'</div>';
+  var imgBanner=h.imageUrl?'<div style="margin:-32px -32px 20px;height:180px;background:url(\''+h.imageUrl+'\') center/cover;position:relative"><div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(4,8,20,0.95) 100%)"></div></div>':'';
+  var html=imgBanner+'<h2 class="cm-h2">'+h.name+'</h2>'+(h.tags?'<div class="cm-tags">'+h.tags.map(function(t){return '<span class="cm-tag">'+t+'</span>'}).join('')+'</div>':'')+'<div class="cm-text">'+parseDiscordMd(h.full||h.desc,h.color)+'</div>';
   var actions='<button class="cm-btn" onclick="closePopup()"><span class="cm-btn-bg"></span><kbd>esc</kbd><span>Fermer</span></button>';
   if(window._isAdmin)actions+='<button class="cm-btn" onclick="closePopup();openEditLore(\'histoire\',\''+id+'\')"><span class="cm-btn-bg"></span><kbd>✎</kbd><span>Modifier</span></button>';
   openPopup(html,actions,h.color);
 }
 
 /* ═══ DYNASTIES ═══ */
-function renderDynasties(){renderGrid('dynasties-grid',DATA.dynasties.map(function(d){return{id:d.id,name:d.name,sub:d.sub,ico:d.ico,color:d.color,desc:d.empire?'Empire: '+d.empire:'',tags:['Lign\u00e9e royale'],status:(d.members||[]).length+' g\u00e9n\u00e9rations',_cat:'dynasties'}}),'dynasty')}
+function renderDynasties(){renderGrid('dynasties-grid',DATA.dynasties.map(function(d){return{id:d.id,name:d.name,sub:d.sub,ico:d.ico,color:d.color,imageUrl:d.imageUrl,desc:d.empire?'Empire: '+d.empire:'',tags:['Lign\u00e9e royale'],status:(d.members||[]).length+' g\u00e9n\u00e9rations',_cat:'dynasties'}}),'dynasty')}
 function showDynastyMembers(id){
   var d=DATA.dynasties.find(function(x){return x.id===id});if(!d||!d.members)return;
   var grid=document.getElementById('dynasties-grid');var membersDiv=document.getElementById('dynasty-members');
@@ -1130,7 +1161,7 @@ function showDynastyMembers(id){
     html+='<div class="dynasty-gen-sep" style="--lc:'+d.color+'"><span class="dynasty-gen-label">'+gen.gen+'</span></div>';
     if(gi>0)html+='<div class="dynasty-connector" style="background:linear-gradient(180deg,'+d.color+',transparent)"></div>';
     html+='<div class="lore-grid">';gen.members.forEach(function(m){
-      html+=makeCard({id:m.name,name:m.name,sub:m.title,ico:d.ico,color:d.color,desc:m.desc,tags:[],status:'Membre'},'dynasty-member');
+      html+=makeCard({id:m.name,name:m.name,sub:m.title,ico:d.ico,color:d.color,imageUrl:m.imageUrl,desc:m.desc,tags:[],status:'Membre'},'dynasty-member');
     });html+='</div>';
   });
   membersDiv.innerHTML=html;revealCards(membersDiv);
@@ -1144,7 +1175,10 @@ function renderPantheon(){
     var details='';if(p.details){var dk=Object.keys(p.details);details=dk.map(function(k){return '<div class="pth-detail-section"><div class="pth-detail-label" onclick="event.stopPropagation();this.classList.toggle(\'expanded\')">'+k.charAt(0).toUpperCase()+k.slice(1)+'</div><div class="pth-detail-content">'+parseDiscordMd(p.details[k],p.color)+'</div></div>'}).join('')}
     var adminHtml='';
     if(window._isAdmin){adminHtml='<div class="lore-card-admin-actions" style="position:absolute;top:8px;right:8px;z-index:10;display:flex;gap:6px;opacity:0;transition:opacity .3s"><button class="lore-admin-btn" title="Modifier" onclick="event.stopPropagation();openEditLore(\'pantheon\',\''+p.id+'\')">✎</button><button class="lore-admin-btn delete" title="Supprimer" onclick="event.stopPropagation();deleteLoreItem(\'pantheon\',\''+p.id+'\',\''+esc(p.name)+'\')">✕</button></div>';}
-    return '<div class="pth-flip" style="--rc:'+p.color+';position:relative" onmouseenter="this.querySelector(\'.lore-card-admin-actions\')&&(this.querySelector(\'.lore-card-admin-actions\').style.opacity=1)" onmouseleave="this.querySelector(\'.lore-card-admin-actions\')&&(this.querySelector(\'.lore-card-admin-actions\').style.opacity=0)">'+adminHtml+'<div class="pth-inner" onclick="flipCard(this)"><div class="pth-face pth-front"><div class="pth-scanlines"></div><div class="pth-sweep"></div><div class="pth-photo"><span class="pth-photo-ico">'+p.ico+'</span><div class="pth-photo-ov"></div></div><div class="pth-domain-badge"><span class="pth-domain-val">'+((p.domain||'').split(' ')[0]||'\u2726')+'</span><span class="pth-domain-lbl">Primordial</span></div><div class="pth-body"><div class="pth-fn">'+(p.domain||'')+'</div><div class="pth-ln">'+p.name+'</div><p class="pth-desc">'+p.desc+'</p><div class="pth-hint">// CLIQUER POUR D\u00c9TAILS</div></div></div><div class="pth-face pth-back"><div class="pth-back-title">'+p.name+'</div>'+details+'<div class="pth-back-flip" onclick="event.stopPropagation();flipCard(this.closest(\'.pth-inner\'))">// RETOURNER LA CARTE</div></div></div></div>';
+    var photoContent = p.imageUrl
+      ? '<img src="'+p.imageUrl+'" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0">'
+      : '<span class="pth-photo-ico">'+p.ico+'</span>';
+    return '<div class="pth-flip" style="--rc:'+p.color+';position:relative" onmouseenter="this.querySelector(\'.lore-card-admin-actions\')&&(this.querySelector(\'.lore-card-admin-actions\').style.opacity=1)" onmouseleave="this.querySelector(\'.lore-card-admin-actions\')&&(this.querySelector(\'.lore-card-admin-actions\').style.opacity=0)">'+adminHtml+'<div class="pth-inner" onclick="flipCard(this)"><div class="pth-face pth-front"><div class="pth-scanlines"></div><div class="pth-sweep"></div><div class="pth-photo">'+photoContent+'<div class="pth-photo-ov"></div></div><div class="pth-domain-badge"><span class="pth-domain-val">'+((p.domain||'').split(' ')[0]||'\u2726')+'</span><span class="pth-domain-lbl">Primordial</span></div><div class="pth-body"><div class="pth-fn">'+(p.domain||'')+'</div><div class="pth-ln">'+p.name+'</div><p class="pth-desc">'+p.desc+'</p><div class="pth-hint">// CLIQUER POUR D\u00c9TAILS</div></div></div><div class="pth-face pth-back"><div class="pth-back-title">'+p.name+'</div>'+details+'<div class="pth-back-flip" onclick="event.stopPropagation();flipCard(this.closest(\'.pth-inner\'))">// RETOURNER LA CARTE</div></div></div></div>';
   }).join('');
 }
 function flipCard(inner){
@@ -1188,7 +1222,12 @@ document.addEventListener('click',function(e){
     var idx=parseInt(card.dataset.cityIdx);
     var v=window._cityData&&window._cityData[idx];
     var col=window._cityColor||'var(--violet)';
-    if(v)openPopup('<h2 class="cm-h2">'+v.name+'</h2><div class="cm-text">'+parseDiscordMd(v.desc,col)+'</div>',null,col);
+    if(v){
+      var cityHtml='<h2 class="cm-h2">'+v.name+'</h2><div class="cm-text">'+parseDiscordMd(v.full||v.desc||'',col)+'</div>';
+      var cityActions='<button class="cm-btn" onclick="closePopup()"><span class="cm-btn-bg"></span><kbd>esc</kbd><span>Fermer</span></button>';
+      if(window._isAdmin&&window._cityEmpireId)cityActions+='<button class="cm-btn" onclick="closePopup();openEditLore(\'empires\',\''+window._cityEmpireId+'\')"><span class="cm-btn-bg"></span><kbd>✎</kbd><span>Modifier l\'empire</span></button>';
+      openPopup(cityHtml,cityActions,col);
+    }
   }
   else if(type==='dynasty-member'){var m=card.querySelector('.lc-title');var d=card.querySelector('.lc-desc');var s=card.querySelector('.lc-subtitle');var col=card.style.getPropertyValue('--lc');if(m)openPopup('<h2 class="cm-h2">'+m.textContent+'</h2>'+(s?'<h3 class="cm-h3">'+s.textContent+'</h3>':'')+'<div class="cm-text">'+parseDiscordMd(d?d.textContent:'',col)+'</div>',null,col)}
 });
