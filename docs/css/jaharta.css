@@ -2430,3 +2430,21 @@ a.admin-badge:hover { border-color: rgba(0,255,136,0.6); box-shadow: 0 0 12px rg
     scroll-behavior:auto!important;
   }
 }
+
+/* ═══ GLOBAL DISCORD MARKDOWN STYLES (jmd) ═══ */
+.jmd strong,.jmd b{font-weight:700;color:var(--text,#e8eaf0)}
+.jmd em,.jmd i{font-style:italic}
+.jmd u{text-decoration:underline}
+.jmd s,.jmd del{text-decoration:line-through;opacity:.6}
+.jmd code{font-family:var(--font-m,'Share Tech Mono',monospace);font-size:.82em;background:rgba(255,255,255,0.06);padding:2px 6px;border-radius:3px;color:var(--text,#e8eaf0)}
+.jmd pre{background:rgba(0,0,0,0.35);border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:12px 14px;overflow-x:auto;margin:8px 0}
+.jmd pre code{background:none;padding:0;font-size:.8rem;color:var(--text2,#c5c8d4)}
+.jmd blockquote{border-left:3px solid rgba(255,255,255,0.15);padding-left:12px;margin:8px 0;color:var(--text3,#6b7080)}
+.jmd .jmd-h{font-family:var(--font-h,'Orbitron',sans-serif);font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin:16px 0 8px;padding-bottom:4px;border-bottom:1px solid rgba(255,255,255,0.06);color:var(--jmd-accent,#00f0ff);text-shadow:0 0 12px var(--jmd-accent,#00f0ff),0 0 24px color-mix(in srgb,var(--jmd-accent,#00f0ff) 40%,transparent)}
+.jmd .jmd-h1{font-size:1.3rem}
+.jmd .jmd-h2{font-size:1.1rem}
+.jmd .jmd-h3{font-size:.95rem}
+.jmd .jmd-spoiler{background:rgba(255,255,255,0.12);color:transparent;border-radius:3px;padding:0 4px;cursor:pointer;transition:all .2s}
+.jmd .jmd-spoiler.revealed,.jmd .jmd-spoiler:hover{color:var(--text2,#c5c8d4);background:rgba(255,255,255,0.06)}
+.jmd ul,.jmd ol{margin:6px 0;padding-left:20px}
+.jmd li{margin-bottom:4px}
