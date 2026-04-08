@@ -151,6 +151,28 @@
 
     var adminSection = '';
     if (isAdmin) {
+      /* Build stat repeater rows */
+      var statsRepHTML = '';
+      var bs = d.baseStats || {};
+      statKeys.forEach(function(k, i) {
+        var v = bs[k] || 0;
+        statsRepHTML += '<div class="rp-stat-row-ed" data-stat-key="' + k + '">' +
+          '<span class="rp-stat-row-lbl">' + statNames[i] + '</span>' +
+          '<input class="rp-fi rp-stat-input" type="number" value="' + v + '" data-stat="' + k + '" style="width:70px;text-align:center">' +
+          '</div>';
+      });
+
+      /* Build power repeater rows */
+      var powersRepHTML = '';
+      var pw = d.basePowers || [];
+      pw.forEach(function(p, i) {
+        powersRepHTML += '<div class="rp-power-row-ed" data-power-idx="' + i + '">' +
+          '<div class="rp-fg" style="flex:1;margin-bottom:0"><input class="rp-fi" placeholder="Nom du pouvoir" value="' + ((p.name||p||'').replace ? (p.name||p||'').replace(/"/g,'&quot;') : '') + '" data-pk="name"></div>' +
+          '<div class="rp-fg" style="flex:2;margin-bottom:0"><input class="rp-fi" placeholder="Description" value="' + ((p.desc||'').replace ? (p.desc||'').replace(/"/g,'&quot;') : '') + '" data-pk="desc"></div>' +
+          '<button type="button" class="rp-power-rm" onclick="this.parentElement.remove()" title="Supprimer">✕</button>' +
+          '</div>';
+      });
+
       adminSection = '<div class="rp-admin-section">' +
         '<div class="rp-admin-title">✎ Mode Admin</div>' +
         '<div class="rp-admin-grid">' +
@@ -161,9 +183,10 @@
           field('rp-ed-affinity', 'Affinité', d.affinity || '') +
           '<div class="rp-fg"><label class="rp-fl">Accès</label><select class="rp-fi" id="rp-ed-access"><option value="Ouverte"' + (d.access==='Ouverte'?' selected':'') + '>Ouverte</option><option value="Sous conditions"' + (d.access!=='Ouverte'?' selected':'') + '>Sous conditions</option></select></div>' +
         '</div>' +
-        '<div class="rp-fg"><label class="rp-fl">Description</label><textarea class="rp-fta" id="rp-ed-desc" rows="3">' + (d.description||'') + '</textarea></div>' +
-        '<div class="rp-fg"><label class="rp-fl">Stats de base (JSON)</label><textarea class="rp-fta rp-mono" id="rp-ed-stats" rows="2">' + JSON.stringify(d.baseStats||{}) + '</textarea></div>' +
-        '<div class="rp-fg"><label class="rp-fl">Pouvoirs de base (JSON)</label><textarea class="rp-fta rp-mono" id="rp-ed-powers" rows="2">' + JSON.stringify(d.basePowers||[]) + '</textarea></div>' +
+        '<div class="rp-fg"><label class="rp-fl">Description</label><textarea class="rp-fta" id="rp-ed-desc" rows="3" placeholder="Supporte le **markdown** Discord">' + (d.description||'') + '</textarea></div>' +
+        '<div class="rp-fg"><label class="rp-fl">Stats de base</label><div class="rp-stats-edit-grid" id="rp-stats-edit">' + statsRepHTML + '</div></div>' +
+        '<div class="rp-fg"><label class="rp-fl">Pouvoirs de base</label><div id="rp-powers-edit">' + powersRepHTML + '</div>' +
+        '<button type="button" class="rp-power-add" onclick="window._addRacePower()">+ Ajouter un pouvoir</button></div>' +
         '<button class="rp-save-btn">▸ Sauvegarder</button>' +
       '</div>';
     }
@@ -186,7 +209,7 @@
           infoItem('Pluriel', d.plural || name + 's', accent) +
           infoItem('Accès', d.access || 'Ouverte', accent) +
         '</div>' +
-        (d.description ? '<div class="rp-desc">' + d.description + '</div>' : '') +
+        (d.description ? '<div class="rp-desc">' + (window.parseDiscordMarkdown ? window.parseDiscordMarkdown(d.description, accent) : d.description) + '</div>' : '') +
         '<div class="rp-section-title" style="border-color:' + accent + '30">Stats de base</div>' +
         '<div class="rp-stats-grid">' + statsHTML + '</div>' +
         '<div class="rp-section-title" style="border-color:' + accent + '30">Pouvoirs de base</div>' +
@@ -215,13 +238,24 @@
       longevity: (document.getElementById('rp-ed-longevity')?.value || '').trim(),
       affinity: (document.getElementById('rp-ed-affinity')?.value || '').trim(),
       access: document.getElementById('rp-ed-access')?.value || 'Ouverte',
-      description: (document.getElementById('rp-ed-desc')?.value || '').trim(),
+      description: (document.getElementById('rp-ed-desc')?.value || ''),
     };
 
-    try { data.baseStats = JSON.parse(document.getElementById('rp-ed-stats')?.value || '{}'); }
-    catch(e) { data.baseStats = {}; }
-    try { data.basePowers = JSON.parse(document.getElementById('rp-ed-powers')?.value || '[]'); }
-    catch(e) { data.basePowers = []; }
+    /* Collect stats from repeater inputs */
+    var stats = {};
+    document.querySelectorAll('[data-stat]').forEach(function(inp) {
+      stats[inp.dataset.stat] = parseInt(inp.value) || 0;
+    });
+    data.baseStats = stats;
+
+    /* Collect powers from repeater rows */
+    var powers = [];
+    document.querySelectorAll('.rp-power-row-ed').forEach(function(row) {
+      var n = row.querySelector('[data-pk="name"]')?.value?.trim() || '';
+      var d = row.querySelector('[data-pk="desc"]')?.value?.trim() || '';
+      if (n) powers.push({ name: n, desc: d });
+    });
+    data.basePowers = powers;
 
     saveRaceData(raceName, data).then(function() {
       racesData[raceName] = data;
@@ -245,6 +279,20 @@
     });
   }
 
+  /* ── Add power row helper ── */
+  window._addRacePower = function() {
+    var container = document.getElementById('rp-powers-edit');
+    if (!container) return;
+    var idx = container.querySelectorAll('.rp-power-row-ed').length;
+    container.insertAdjacentHTML('beforeend',
+      '<div class="rp-power-row-ed" data-power-idx="' + idx + '">' +
+      '<div class="rp-fg" style="flex:1;margin-bottom:0"><input class="rp-fi" placeholder="Nom du pouvoir" data-pk="name"></div>' +
+      '<div class="rp-fg" style="flex:2;margin-bottom:0"><input class="rp-fi" placeholder="Description" data-pk="desc"></div>' +
+      '<button type="button" class="rp-power-rm" onclick="this.parentElement.remove()" title="Supprimer">✕</button>' +
+      '</div>'
+    );
+  };
+
   /* ── Inject CSS ── */
   var style = document.createElement('style');
   style.textContent = [
@@ -253,7 +301,8 @@
     '.rp-overlay.rp-closing{opacity:0;pointer-events:none}',
     '.rp-popup{position:relative;background:rgba(10,10,20,0.95);border:1px solid rgba(0,240,255,0.15);border-radius:8px;max-width:560px;width:100%;max-height:85vh;overflow-y:auto;transform:scale(0.95) translateY(20px);transition:transform .35s cubic-bezier(0.16,1,0.3,1);scrollbar-width:thin;scrollbar-color:rgba(0,240,255,0.3) transparent}',
     '.rp-open .rp-popup{transform:scale(1) translateY(0)}',
-    '.rp-closing .rp-popup{transform:scale(0.95) translateY(20px)}',
+    '.rp-closing .rp-popup{animation:rpCloseGlitch .35s ease-in forwards}',
+    '@keyframes rpCloseGlitch{0%{transform:scale(1) translateY(0);opacity:1;filter:blur(0)}15%{transform:scale(1) translateX(-5px);filter:blur(0)}30%{transform:scale(1) translateX(3px);opacity:.85;filter:blur(1px)}55%{transform:scale(.98) translateY(8px) skewX(-1deg);opacity:.5;filter:blur(2px)}100%{transform:scale(.9) translateY(30px);opacity:0;filter:blur(6px)}}',
     '.rp-scanline{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(0,240,255,0.15),transparent);animation:rpScan 4s linear infinite;pointer-events:none;z-index:10}',
     '@keyframes rpScan{0%{top:-2px}100%{top:100%}}',
     '.rp-close{position:absolute;top:16px;right:16px;background:none;border:1px solid rgba(0,240,255,0.2);color:var(--text-secondary,#8a8fa8);width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.9rem;border-radius:4px;transition:all .2s;z-index:11}',
@@ -294,6 +343,17 @@
     ".rp-save-btn{width:100%;font-family:'Rajdhani',sans-serif;font-size:.75rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--bg-deep,#06060c);background:linear-gradient(135deg,var(--cyan,#00f0ff),#80ffea);border:none;border-radius:3px;padding:12px;cursor:pointer;transition:all .3s;margin-top:8px}",
     '.rp-save-btn:hover{background:#fff;box-shadow:0 0 20px rgba(0,240,255,0.3)}',
     '.rp-save-btn:disabled{opacity:0.5;cursor:not-allowed}',
+    /* Stat editor grid */
+    '.rp-stats-edit-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}',
+    '.rp-stat-row-ed{display:flex;flex-direction:column;align-items:center;gap:4px;background:rgba(0,240,255,0.02);border:1px solid rgba(0,240,255,0.06);border-radius:4px;padding:8px 4px}',
+    ".rp-stat-row-lbl{font-family:'Rajdhani',sans-serif;font-size:.5rem;font-weight:600;letter-spacing:.1em;color:var(--text-dim,#4a4e66)}",
+    ".rp-stat-input{font-family:'Orbitron',sans-serif;font-weight:700;font-size:.85rem;color:var(--cyan,#00f0ff);background:rgba(0,240,255,0.03);border:1px solid rgba(0,240,255,0.12);border-radius:3px;padding:6px 4px}",
+    /* Power editor rows */
+    '.rp-power-row-ed{display:flex;gap:8px;align-items:center;margin-bottom:6px;padding:8px 10px;background:rgba(0,240,255,0.02);border:1px solid rgba(0,240,255,0.06);border-radius:4px}',
+    ".rp-power-rm{width:26px;height:26px;flex-shrink:0;border:1px solid rgba(255,0,110,0.15);background:rgba(255,0,110,0.04);border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.65rem;color:rgba(255,0,110,0.4);transition:all .2s}",
+    '.rp-power-rm:hover{border-color:rgba(255,0,110,0.5);color:#ff006e;background:rgba(255,0,110,0.1)}',
+    ".rp-power-add{width:100%;margin-top:6px;padding:8px;border:1px dashed rgba(0,240,255,0.12);border-radius:4px;background:transparent;color:var(--text-dim,#4a4e66);font-family:'Rajdhani',sans-serif;font-size:.72rem;letter-spacing:.1em;cursor:pointer;transition:all .2s}",
+    '.rp-power-add:hover{border-color:rgba(0,240,255,0.3);color:var(--cyan,#00f0ff);background:rgba(0,240,255,0.02)}',
     '@media(max-width:560px){.rp-stats-grid{grid-template-columns:repeat(4,1fr)}.rp-admin-grid{grid-template-columns:1fr}.rp-info-grid{grid-template-columns:1fr}}',
   ].join('\n');
   document.head.appendChild(style);

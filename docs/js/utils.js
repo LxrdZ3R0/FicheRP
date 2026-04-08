@@ -259,3 +259,53 @@ window.showToast = function(msg, type = 'success', duration = 4000) {
   clearTimeout(t._timer);
   t._timer = setTimeout(() => { t.className = 'toast'; }, duration);
 };
+
+
+/* ══════════════════════════════════════════════════════════════════════
+   6. DISCORD MARKDOWN PARSER — transforme la syntaxe Discord en HTML
+   ══════════════════════════════════════════════════════════════════════
+   Supporte: **gras**, *italique*, __souligné__, ~~barré~~, `code`,
+   ```blocs```, > citations, ||spoiler||, # headers (néon),
+   - listes, retours à la ligne.
+
+   Usage : const html = parseDiscordMarkdown(text, '#ff0055');
+   ══════════════════════════════════════════════════════════════════════ */
+window.parseDiscordMarkdown = function(text, accentColor) {
+  if (!text) return '';
+  function escHtml(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
+  var s = escHtml(text);
+  /* Code blocks ``` */
+  s = s.replace(/```([^`]*?)```/gs, function(m,c){ return '<pre><code>'+c+'</code></pre>'; });
+  /* Inline code */
+  s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
+  /* Spoiler ||text|| */
+  s = s.replace(/\|\|([^|]+)\|\|/g, '<span class="jmd-spoiler" onclick="this.classList.toggle(\'revealed\')">$1</span>');
+  /* Headers # ## ### — must be at line start */
+  s = s.replace(/^### (.+)$/gm, '<div class="jmd-h jmd-h3">$1</div>');
+  s = s.replace(/^## (.+)$/gm, '<div class="jmd-h jmd-h2">$1</div>');
+  s = s.replace(/^# (.+)$/gm, '<div class="jmd-h jmd-h1">$1</div>');
+  /* Bold + italic ***text*** */
+  s = s.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+  /* Bold **text** */
+  s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  /* Italic *text* */
+  s = s.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
+  /* Underline __text__ */
+  s = s.replace(/__(.+?)__/g, '<u>$1</u>');
+  /* Strikethrough ~~text~~ */
+  s = s.replace(/~~(.+?)~~/g, '<del>$1</del>');
+  /* Blockquote > at start */
+  s = s.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
+  /* Unordered list - item */
+  s = s.replace(/^- (.+)$/gm, '<li>$1</li>');
+  s = s.replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>');
+  s = s.replace(/<\/ul>\s*<ul>/g, '');
+  /* Line breaks — preserve newlines */
+  s = s.replace(/\n/g, '<br>');
+  /* Clean up double <br> after block elements */
+  s = s.replace(/(<\/div>)<br>/g, '$1');
+  s = s.replace(/(<\/pre>)<br>/g, '$1');
+  s = s.replace(/(<\/blockquote>)<br>/g, '$1');
+  s = s.replace(/(<\/ul>)<br>/g, '$1');
+  return '<div class="jmd" style="--jmd-accent:'+(accentColor||'#00f0ff')+'">'+s+'</div>';
+};
