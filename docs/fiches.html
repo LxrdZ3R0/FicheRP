@@ -1044,24 +1044,8 @@ body::before{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;
 <div class="noise"></div>
 <div class="toast" id="toast"></div>
 
-<nav class="nav" id="nav">
-  <a href="index.html" class="nav-logo"><img src="img/logo-jaharta.png" alt="Logo Jaharta" style="width:36px;height:36px;object-fit:contain;vertical-align:middle;margin-right:10px;">JAHARTA</a>
-  <div class="nav-links" id="nav-links">
-    <a href="index.html">Accueil</a>
-    <a href="fiches.html" class="active">Fiches RP</a>
-    <a href="pnj.html">PNJ</a>
-    <a href="portail.html">Portail</a>
-    <a href="racesjouables.html">Races</a>
-    <a href="gacha.html">Gacha</a>
-    <a href="hub.html">Hub</a>
-  </div>
-  <button class="burger" id="burger" aria-label="Menu" aria-expanded="false"><span class="burger-line"></span><span class="burger-line"></span><span class="burger-line"></span></button>
-</nav>
-<!-- MOBILE MENU -->
-<div class="mobile-menu" id="mobile-menu">
-  <div class="menu-inner">
-    <div class="menu-header-label">// NAVIGATION</div>
-    <a href="index.html" class="menu-link"><span class="menu-link-index">01</span><span class="menu-link-text">Accueil</span><span class="menu-link-arrow">→</span></a>
+<div id="jaharta-nav"></div>
+<script src="js/jaharta-nav.js"></script><a href="index.html" class="menu-link"><span class="menu-link-index">01</span><span class="menu-link-text">Accueil</span><span class="menu-link-arrow">→</span></a>
     <a href="fiches.html" class="menu-link active"><span class="menu-link-index">02</span><span class="menu-link-text">Fiches</span><span class="menu-link-arrow">→</span></a>
     <a href="pnj.html" class="menu-link"><span class="menu-link-index">03</span><span class="menu-link-text">PNJ</span><span class="menu-link-arrow">→</span></a>
     <a href="portail.html" class="menu-link"><span class="menu-link-index">04</span><span class="menu-link-text">Portail</span><span class="menu-link-arrow">→</span></a>
@@ -1319,31 +1303,6 @@ window.addEventListener('scroll',function(){var h=document.documentElement.scrol
 <script>
 // Burger menu
 (function(){
-  var burger=document.getElementById('burger');
-  var mm=document.getElementById('mobile-menu');
-  if(!burger||!mm)return;
-  burger.addEventListener('click',function(){
-    var isOpen=burger.classList.toggle('active');
-    mm.classList.toggle('open');
-    burger.setAttribute('aria-expanded',isOpen);
-    document.body.style.overflow=isOpen?'hidden':'';
-  });
-  mm.querySelectorAll('.menu-link').forEach(function(link){
-    link.addEventListener('click',function(){
-      burger.classList.remove('active');
-      mm.classList.remove('open');
-      burger.setAttribute('aria-expanded','false');
-      document.body.style.overflow='';
-    });
-  });
-  document.addEventListener('keydown',function(e){
-    if(e.key==='Escape'&&mm.classList.contains('open')){
-      burger.classList.remove('active');
-      mm.classList.remove('open');
-      burger.setAttribute('aria-expanded','false');
-      document.body.style.overflow='';
-    }
-  });
 })();
 </script>
 </body>
