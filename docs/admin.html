@@ -18,9 +18,8 @@ const firebaseConfig={apiKey:"AIzaSyAru7qZX8Gu_b8Y3oNDV-a5PmkrrkRjkcs",authDomai
 const app=initializeApp(firebaseConfig);const db=getFirestore(app);const auth=getAuth(app);
 enableIndexedDbPersistence(db).catch(e=>{if(e.code!=='failed-precondition'&&e.code!=='unimplemented')console.warn('[offline]',e.code);});
 let currentAdmin=null;
-console.log('[ADMIN] Module Firebase chargé, auth state listener en place');
 onAuthStateChanged(auth,async user=>{
-  if(!user){console.log('[ADMIN] Pas de user, affichage login');showScreen('login');currentAdmin=null;return;}console.log('[ADMIN] User détecté:', user.email);showScreen('loading');try{const snap=await getDocFromServer(doc(db,'admins',user.uid));if(!snap.exists()){await signOut(auth);showScreen('login');document.getElementById('login-error').textContent='⚠ Accès refusé. Votre compte n\'est pas dans la whitelist admin.';return;}const data=snap.data();currentAdmin={uid:user.uid,email:user.email,name:data.name||user.displayName||user.email,role:data.role||'admin'};window._adminRole=currentAdmin.role;window._adminEmail=currentAdmin.email;window._adminName=currentAdmin.name;console.log('[ADMIN] Admin vérifié, rôle:', currentAdmin.role);renderAdminHeader();console.log('[ADMIN] Header rendu, affichage panel');showScreen('panel');console.log('[ADMIN] Panel affiché, chargement données...');setTimeout(()=>window._setAdminTab?.({role:currentAdmin.role}),50);loadAllFiches();loadPNJ();loadLore();if(currentAdmin.role==='admin')loadLogs();}catch(err){console.error('[ADMIN] ERREUR auth:', err);document.getElementById('login-error').textContent='⚠ '+err.message;showScreen('login');}});
+  if(!user){showScreen('login');currentAdmin=null;return;}showScreen('loading');try{const snap=await getDocFromServer(doc(db,'admins',user.uid));if(!snap.exists()){await signOut(auth);showScreen('login');document.getElementById('login-error').textContent='⚠ Accès refusé. Votre compte n\'est pas dans la whitelist admin.';return;}const data=snap.data();currentAdmin={uid:user.uid,email:user.email,name:data.name||user.displayName||user.email,role:data.role||'admin'};window._adminRole=currentAdmin.role;window._adminEmail=currentAdmin.email;window._adminName=currentAdmin.name;renderAdminHeader();showScreen('panel');setTimeout(()=>window._setAdminTab?.({role:currentAdmin.role}),50);loadAllFiches();loadPNJ();loadLore();if(currentAdmin.role==='admin')loadLogs();}catch(err){console.error('[ADMIN] ERREUR auth:', err);document.getElementById('login-error').textContent='⚠ '+err.message;showScreen('login');}});
 window.loginGoogle=async function(){const errEl=document.getElementById('login-error');errEl.textContent='';try{await signInWithPopup(auth,new GoogleAuthProvider());}catch(e){if(e.code!=='auth/popup-closed-by-user')errEl.textContent='⚠ Erreur Google : '+e.message;}};
 window.adminLogout=async function(){currentAdmin=null;window._adminRole=null;await signOut(auth);};
 async function writeLog(action,targetId,targetName){if(!currentAdmin)return;try{const d={action,targetId,targetName,byEmail:currentAdmin.email,byUid:currentAdmin.uid,byName:currentAdmin.name,role:currentAdmin.role,at:serverTimestamp()};await addDoc(collection(db,'logs'),d);}catch(e){console.warn('[log]',e.message);}}
@@ -30,7 +29,6 @@ window.deleteFiche=async function(id,name){if(!confirm('Supprimer définitivemen
 function loadPNJ(){const q=query(collection(db,'pnj'),orderBy('createdAt','desc'));onSnapshot(q,snap=>{const pnjs=[];snap.forEach(d=>pnjs.push({id:d.id,...d.data()}));document.getElementById('cnt-pnj').textContent=pnjs.length;const bp=document.getElementById('badge-pnj');bp.textContent=pnjs.length||'';bp.style.display=pnjs.length?'inline':'none';renderPNJTable(pnjs);},err=>console.warn('[pnj]',err.message));}
 window.deletePNJ=async function(id,name){if(!confirm('Supprimer définitivement ce PNJ ?'))return;await deleteDoc(doc(db,'pnj',id));await writeLog('delete_pnj',id,name);showToast('PNJ supprimé.','error');};
 function showScreen(name){
-  console.log('[ADMIN] showScreen:', name);
   document.getElementById('login-screen').style.display=name==='login'?'flex':'none';
   document.getElementById('loading-screen').style.display=name==='loading'?'flex':'none';
   document.getElementById('panel-screen').style.display=name==='panel'?'block':'none';
@@ -44,14 +42,12 @@ window._setAdminTab=(data)=>{const btn=document.getElementById('tab-btn-logs');i
 /* ═══ LORE ═══ */
 const _ld={empires:[],organisations:[],dynasties:[],histoire:[],pantheon:[],chronologie:[],glossaire:[]};
 function loadLore(){
-  console.log('[ADMIN] Chargement lore...');
   onSnapshot(collection(db,'lore'),snap=>{
     Object.keys(_ld).forEach(k=>{_ld[k]=[];});
     snap.forEach(d=>{const x={id:d.id,...d.data()};const c=x.category;if(_ld[c])_ld[c].push(x);});
     Object.keys(_ld).forEach(k=>{_ld[k].sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));});
     let t=0;Object.values(_ld).forEach(a=>{t+=a.length;});
     const ce=document.getElementById('cnt-lore');if(ce)ce.textContent=t;
-    console.log('[ADMIN] Lore chargé, total:', t);
     const as=document.querySelector('.lore-subtab.active');
     if(as)window._renderLoreList(as.dataset.cat);
   },err=>console.warn('[lore]',err.message));
@@ -104,7 +100,13 @@ function renderAdminHeader(){if(!currentAdmin)return;document.getElementById('ad
 
 <link rel="stylesheet" href="css/jaharta.css">
 <style>
-:root{--accent:var(--gold);--accent-rgb:255,214,10;--accent-border:rgba(255,214,10,0.22);--accent-bg:rgba(255,214,10,0.04);--cyan:#4DA3FF;--magenta:#ff006e;--gold:#ffd60a;--dark:#020713;--dark2:#070d1e;--dark3:#0c1228;--panel:rgba(77,163,255,0.035);--border:rgba(255,255,255,0.06);--text:#e2e6f0;--muted:#7c84a0;--green:#44ff88;--red:#FF4757;--orange:#f97316;--violet:#8B5CF6;}
+:root{
+  --accent:var(--gold);--accent-rgb:255,214,10;
+  --accent-border:rgba(255,214,10,0.22);--accent-bg:rgba(255,214,10,0.04);
+  --dark:var(--bg);--dark2:var(--bg2);--dark3:var(--surface);
+  --panel:rgba(77,163,255,0.035);--border:rgba(255,255,255,0.06);
+  --orange:#f97316;
+}
 .noise{position:fixed;inset:0;z-index:9997;pointer-events:none;opacity:.035;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-size:200px;}
 /* Screens */
 #login-screen,#loading-screen{position:fixed;inset:0;background:var(--dark);z-index:500;display:flex;align-items:center;justify-content:center;}
@@ -552,7 +554,6 @@ window.switchAdminTab = function(tabName) {
     panel.classList.toggle('active', isActive);
     panel.style.display = isActive ? 'block' : 'none';
   });
-  console.log('[ADMIN] Tab switched to:', tabName);
 };
 </script>
 </body>

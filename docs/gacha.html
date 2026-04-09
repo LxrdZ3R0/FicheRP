@@ -19,26 +19,11 @@
 
 /* ═══ VARS ═══ */
 :root {
-  --font-h: 'Orbitron', sans-serif;
-  --font-b: 'Rajdhani', sans-serif;
-  --font-body: 'Exo 2', sans-serif;
-  --font-m: 'Share Tech Mono', monospace;
-  --blue: #4DA3FF;
-  --violet: #8B5CF6;
-  --gold: #ffd60a;
-  --magenta: #ff006e;
-  --green: #44ff88;
-  --red: #FF4757;
-  --cyan: #00e5ff;
-  --text: #e2e6f0;
-  --text2: #8891ab;
-  --text3: #3e4668;
   --bg: #030816;
   --card: rgba(8, 14, 36, 0.7);
+  --text2: #8891ab;
+  --text3: #3e4668;
   --border: rgba(77, 163, 255, 0.08);
-  --glow-blue: rgba(77, 163, 255, 0.35);
-  --glow-violet: rgba(139, 92, 246, 0.35);
-  --glow-gold: rgba(255, 214, 10, 0.35);
 }
 
 /* ═══ BASE ═══ */
@@ -1507,8 +1492,6 @@ const db=firebase.firestore();
   window.GACHA_SPECIALZ_FIRST_PULL_USED = false;
   window.GACHA_SPECIALZ_BOOSTED_IDS = SPECIALZ_BOOSTED_IDS;
   if (isSpecialRoll) {
-    console.log('%c[GACHA] ⚡ SPECIALZ ACTIVATED — LEG+ guaranteed on first x10!', 'color:#ffd60a;font-size:14px;font-weight:bold');
-    if (isBoosted) console.log('%c[GACHA] 🔥 BOOSTED USER — first x10 = FULL LEG+ !', 'color:#ff006e;font-size:14px;font-weight:bold');
     window.JMP_CONFIG = { tracks: [SPECIALZ_INDEX], autoTrack: 0 };
   } else {
     window.JMP_CONFIG = { tracks: [BO2_INDEX], autoTrack: 0 };
@@ -1763,7 +1746,6 @@ async function saveBannerImg(bid){
     }
     closeBannerImgEditor(bid);
     JCache.invalidate('gacha_config','banner_images');
-    console.log('[BANNER_IMG] Image sauvegardée pour',bid);
   }catch(e){
     console.error('[SAVE_BANNER_IMG]',e);
     alert('Erreur : '+e.message);

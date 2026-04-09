@@ -5,34 +5,65 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Exo+2:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Share+Tech+Mono&display=swap');
 
-/* --- CSS Variables --- */
+/* --- CSS Variables — SOURCE DE VÉRITÉ --- */
 :root {
-  --bg-deep: #030612;
-  --bg-dark: #0a0a14;
+  /* ── Fonds ── */
+  --bg:       #020713;
+  --bg2:      #070d1e;
+  --surface:  #0c1228;
+  --surface2: #0a0f22;
+  --border:   rgba(77, 163, 255, 0.1);
+
+  /* Aliases legacy (utilisés par jaharta.css en interne) */
+  --bg-deep:    #030612;
+  --bg-dark:    #0a0a14;
   --bg-surface: #0f0f1a;
-  --bg-card: #12122080;
+  --bg-card:    rgba(18, 18, 32, 0.5);
 
-  --cyan: #4DA3FF;
-  --cyan-dim: #00a0aa;
-  --cyan-glow: #00f0ff60;
-  --violet: #8B5CF6;
-  --violet-dim: #7b2fbd;
-  --violet-glow: #b44aff40;
-  --magenta: #ff2a8a;
-  --magenta-glow: #ff2a8a30;
+  /* ── Couleurs ── */
+  --blue:    #4DA3FF;   /* accent bleu principal */
+  --cyan:    #00e5ff;   /* cyan vif */
+  --violet:  #8B5CF6;   /* violet */
+  --purple:  #6C5CE7;   /* indigo */
+  --magenta: #ff006e;   /* accent PNJ */
+  --gold:    #ffd60a;   /* accent portail / admin */
+  --red:     #FF4757;   /* danger */
+  --green:   #44ff88;   /* succès */
+  --orange:  #ff9800;   /* avertissement */
 
-  --text-primary: #e8eaf0;
+  /* ── Lueurs ── */
+  --cyan-dim:    #00a0aa;
+  --cyan-glow:   rgba(0, 229, 255, 0.38);
+  --violet-dim:  #7b2fbd;
+  --violet-glow: rgba(180, 74, 255, 0.25);
+  --magenta-glow: rgba(255, 0, 110, 0.19);
+  --glow-sm:     0 0 8px var(--cyan-glow);
+  --glow-md:     0 0 20px var(--cyan-glow), 0 0 40px rgba(0, 240, 255, 0.13);
+  --glow-lg:     0 0 30px var(--cyan-glow), 0 0 80px rgba(0, 240, 255, 0.09), 0 0 120px rgba(0, 240, 255, 0.05);
+  --glow-violet: 0 0 20px var(--violet-glow), 0 0 50px rgba(180, 74, 255, 0.08);
+  --glow-blue:   rgba(77, 163, 255, 0.35);
+  --glow-gold:   rgba(255, 214, 10, 0.35);
+
+  /* ── Textes ── */
+  --text:  #e2e6f0;
+  --text2: #7c84a0;
+  --text3: #3a4060;
+  --muted: #5a7a90;
+
+  /* Aliases legacy */
+  --text-primary:   #e8eaf0;
   --text-secondary: #8a8fa8;
-  --text-dim: #70769a;
+  --text-dim:       #70769a;
 
+  /* ── Polices ── */
+  --font-h:    'Orbitron', sans-serif;
+  --font-b:    'Rajdhani', sans-serif;
+  --font-body: 'Exo 2', sans-serif;
+  --font-m:    'Share Tech Mono', monospace;
+
+  /* Aliases legacy */
   --font-display: 'Orbitron', sans-serif;
   --font-heading: 'Rajdhani', sans-serif;
-  --font-body: 'Exo 2', sans-serif;
-
-  --glow-sm: 0 0 8px var(--cyan-glow);
-  --glow-md: 0 0 20px var(--cyan-glow), 0 0 40px #00f0ff20;
-  --glow-lg: 0 0 30px var(--cyan-glow), 0 0 80px #00f0ff15, 0 0 120px #00f0ff08;
-  --glow-violet: 0 0 20px var(--violet-glow), 0 0 50px #b44aff15;
 }
 
 /* --- Reset & Base --- */
