@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/x-icon" href="img/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="img/favicon-180.png">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>JAHARTA — Bestiaire</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Exo+2:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+<script type="module">
+import{initializeApp,getApps}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import{getFirestore,collection,addDoc,doc,getDoc,updateDoc,deleteDoc,onSnapshot,query,orderBy,serverTimestamp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import{getStorage,ref,uploadBytes,getDownloadURL}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
+import{getAuth,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+const cfg={apiKey:"AIzaSyAru7qZX8Gu_b8Y3oNDV-a5PmkrrkRjkcs",authDomain:"jaharta-rp.firebaseapp.com",projectId:"jaharta-rp",storageBucket:"jaharta-rp.firebasestorage.app",messagingSenderId:"217075417489",appId:"1:217075417489:web:4d1e2df422a5cd42411a30"};
+const app=getApps().length?getApps()[0]:initializeApp(cfg);
+const db=getFirestore(app);const storage=getStorage(app);const auth=getAuth(app);
+window._db=db;window._storage=storage;
+window._addDoc=addDoc;window._collection=collection;window._doc=doc;window._getDoc=getDoc;
+window._updateDoc=updateDoc;window._deleteDoc=deleteDoc;window._serverTimestamp=serverTimestamp;
+window._ref=ref;window._uploadBytes=uploadBytes;window._getDownloadURL=getDownloadURL;
+window._isAdmin=false;
+onAuthStateChanged(auth,user=>{
+  window._isAdmin=!!user;
+  document.querySelectorAll('.admin-only').forEach(el=>el.style.display=user?'inline-flex':'none');
+  document.querySelectorAll('.bcard').forEach(c=>c.classList.toggle('is-admin',!!user));
+});
+
+window._loadBestiaire=function(){
+  if(window._bestLoaded)return;window._bestLoaded=true;
+  const q=query(collection(db,'bestiaire'),orderBy('createdAt','desc'));
+  onSnapshot(q,snap=>{
+    const docs=[];snap.forEach(d=>docs.push({id:d.id,...d.data()}));
+    window._bestiaireData=docs;
+    renderBestiaire();
+  },err=>console.warn('[bestiaire]',err.message));
+};
+</script>
+
+<link rel="stylesheet" href="css/jaharta.css">
+<link rel="stylesheet" href="css/bestiaire-card.css">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:transparent;color:var(--text);font-family:"Exo 2",sans-serif;font-weight:300;line-height:1.7;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+
+.hero-sub{position:relative;min-height:38vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:120px 2rem 50px;overflow:hidden}
+.hero-sub-tag{font-family:'Share Tech Mono',monospace;font-size:.55rem;letter-spacing:.5em;text-transform:uppercase;color:var(--text3,#5a7a90);margin-bottom:1.4rem}
+.glitch-title{font-family:'Orbitron',sans-serif;font-weight:900;font-size:clamp(2rem,6vw,3.5rem);letter-spacing:.08em;margin-bottom:.8rem;background:linear-gradient(135deg,#00e5ff,#8B5CF6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-sub-desc{font-size:.92rem;color:#9aa6bf;max-width:560px;margin:0 auto 1.5rem;font-weight:300}
+
+.page-wrap{max-width:1380px;margin:0 auto;padding:24px clamp(1.5rem,4vw,3rem) 60px}
+
+/* Sub-tabs Sauvage / Compagnon */
+.best-tabs{display:flex;gap:6px;justify-content:center;margin:14px 0 30px;flex-wrap:wrap}
+.best-tab{
+  font-family:'Orbitron',sans-serif;font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;
+  background:rgba(8,12,30,0.6);border:1px solid rgba(255,255,255,0.07);
+  color:#9aa6bf;padding:11px 26px;border-radius:8px;cursor:pointer;
+  transition:all .25s;display:inline-flex;align-items:center;gap:10px;
+  backdrop-filter:blur(10px);
+}
+.best-tab:hover{border-color:rgba(0,229,255,0.35);color:#fff}
+.best-tab.active{
+  border-color:#00e5ff;color:#00e5ff;
+  background:rgba(0,229,255,0.06);
+  box-shadow:0 0 22px rgba(0,229,255,0.18),inset 0 0 18px rgba(0,229,255,0.06);
+}
+.best-tab .cnt{
+  font-family:'Share Tech Mono',monospace;font-size:.6rem;
+  background:rgba(255,255,255,0.06);padding:2px 7px;border-radius:3px;color:#fff;
+}
+
+.create-row{display:flex;justify-content:flex-end;margin-bottom:14px}
+.create-best-btn{
+  font-family:'Orbitron',sans-serif;font-size:.62rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;
+  padding:10px 18px;border-radius:6px;cursor:pointer;background:linear-gradient(135deg,#00e5ff,#80ffea);
+  color:#04060f;border:none;box-shadow:0 0 18px rgba(0,229,255,0.25);display:none;align-items:center;gap:8px;
+}
+.create-best-btn:hover{background:#fff}
+
+.empty-best{
+  text-align:center;padding:80px 20px;font-family:'Share Tech Mono',monospace;color:#5a7a90;
+  font-size:.7rem;letter-spacing:.18em;
+}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(2,5,12,0.85);backdrop-filter:blur(6px);z-index:9000;display:none;align-items:flex-start;justify-content:center;padding:60px 20px;overflow-y:auto}
+.modal-overlay.open{display:flex}
+.modal-best{
+  width:100%;max-width:560px;background:#070b18;border:1px solid rgba(0,229,255,0.18);
+  border-radius:12px;padding:32px 30px;position:relative;
+  box-shadow:0 24px 80px -12px #000,0 0 30px rgba(0,229,255,0.08);
+}
+.modal-best h2{font-family:'Orbitron',sans-serif;font-size:.95rem;letter-spacing:.16em;color:#00e5ff;margin-bottom:6px;text-transform:uppercase}
+.modal-best .msub{font-family:'Share Tech Mono',monospace;font-size:.55rem;color:#5a7a90;letter-spacing:.14em;margin-bottom:22px}
+.mb-close{position:absolute;top:14px;right:14px;background:transparent;border:none;color:#5a7a90;font-size:1.2rem;cursor:pointer;padding:6px 10px;border-radius:4px}
+.mb-close:hover{color:#fff;background:rgba(255,255,255,0.05)}
+.fg{margin-bottom:14px}
+.fg label{display:block;font-family:'Share Tech Mono',monospace;font-size:.55rem;letter-spacing:.18em;text-transform:uppercase;color:#7a8aa3;margin-bottom:6px}
+.fg input[type=text],.fg input[type=url],.fg input[type=number],.fg select,.fg textarea{
+  width:100%;background:rgba(0,0,0,0.35);border:1px solid rgba(255,255,255,0.08);
+  color:#e0e8f5;font-family:'Exo 2',sans-serif;font-size:.85rem;padding:10px 12px;
+  border-radius:6px;outline:none;transition:border-color .2s;
+}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:#00e5ff}
+.fg textarea{min-height:140px;resize:vertical;font-family:'Exo 2',sans-serif}
+.fg-row{display:flex;gap:12px}
+.fg-row .fg{flex:1}
+.color-picker-wrap{display:flex;gap:10px;align-items:center}
+.color-picker-wrap input[type=color]{width:48px;height:42px;border:1px solid rgba(255,255,255,0.1);background:transparent;border-radius:6px;cursor:pointer;padding:2px}
+.style-help{font-family:'Share Tech Mono',monospace;font-size:.5rem;color:#5a7a90;letter-spacing:.1em;margin-top:6px}
+.bsub-best{
+  width:100%;font-family:'Orbitron',sans-serif;font-size:.7rem;font-weight:700;letter-spacing:.18em;
+  text-transform:uppercase;background:linear-gradient(135deg,#00e5ff,#80ffea);color:#04060f;
+  border:none;padding:14px;border-radius:6px;cursor:pointer;margin-top:8px;
+}
+.bsub-best:hover{background:#fff}
+
+.md-help{
+  background:rgba(0,229,255,0.04);border:1px dashed rgba(0,229,255,0.2);
+  padding:10px 12px;border-radius:6px;font-family:'Share Tech Mono',monospace;
+  font-size:.5rem;color:#7a8aa3;letter-spacing:.06em;line-height:1.7;margin-top:4px;
+}
+.md-help b{color:#00e5ff}
+
+footer{border-top:1px solid rgba(255,255,255,0.04);padding:3rem clamp(1.5rem,4vw,3rem);display:flex;align-items:center;justify-content:space-between;gap:2rem;flex-wrap:wrap;margin-top:40px}
+
+/* ═══ BURGER NAV OVERRIDE ═══ */
+.nav-links{display:none!important}
+.nav-toggle{display:none!important}
+.nav-backdrop{display:none!important}
+.burger{display:flex;width:42px;height:42px;background:rgba(77,163,255,0.06);border:1px solid rgba(77,163,255,0.15);border-radius:8px;cursor:pointer;flex-direction:column;align-items:center;justify-content:center;gap:5px;transition:all .3s;position:relative;z-index:1001}
+.burger:hover{border-color:rgba(77,163,255,0.35);background:rgba(77,163,255,0.1);box-shadow:0 0 16px rgba(77,163,255,0.15)}
+.burger-line{display:block;width:18px;height:1.5px;border-radius:2px;background:#4DA3FF;transition:all .4s cubic-bezier(0.76,0,0.24,1);transform-origin:center}
+.burger.active .burger-line:nth-child(1){transform:translateY(6.5px) rotate(45deg)}
+.burger.active .burger-line:nth-child(2){opacity:0;transform:scaleX(0)}
+.burger.active .burger-line:nth-child(3){transform:translateY(-6.5px) rotate(-45deg)}
+.burger.active{border-color:#8B5CF6;background:rgba(139,92,246,0.1);box-shadow:0 0 20px rgba(139,92,246,0.2)}
+.burger.active .burger-line{background:#8B5CF6}
+.mobile-menu{position:fixed;top:0;left:0;right:0;bottom:0;z-index:999;display:flex;flex-direction:column;background:rgba(2,7,19,0.97);backdrop-filter:blur(40px);padding:80px 0 40px;opacity:0;visibility:hidden;transition:opacity .4s ease,visibility .4s;overflow-y:auto}
+.mobile-menu.open{opacity:1;visibility:visible}
+.mobile-menu::before{content:'';position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(77,163,255,0.015) 2px,rgba(77,163,255,0.015) 4px);z-index:0}
+.mobile-menu::after{content:'';position:absolute;top:10%;right:-10%;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(139,92,246,0.08),transparent 70%);pointer-events:none;z-index:0}
+.menu-inner{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;padding:0 clamp(2rem,6vw,4rem)}
+.menu-header-label{font-family:'Share Tech Mono',monospace;font-size:.48rem;letter-spacing:.5em;color:#9aa0b8;opacity:.5;margin-bottom:2rem;text-transform:uppercase}
+.menu-link{display:flex;align-items:center;gap:16px;text-decoration:none;padding:16px 0;border-bottom:1px solid rgba(77,163,255,0.04);transform:translateX(-30px);opacity:0;transition:all .4s cubic-bezier(0.16,1,0.3,1)}
+.mobile-menu.open .menu-link{transform:translateX(0);opacity:1}
+.mobile-menu.open .menu-link:nth-child(1){transition-delay:.06s}
+.mobile-menu.open .menu-link:nth-child(2){transition-delay:.10s}
+.mobile-menu.open .menu-link:nth-child(3){transition-delay:.14s}
+.mobile-menu.open .menu-link:nth-child(4){transition-delay:.18s}
+.mobile-menu.open .menu-link:nth-child(5){transition-delay:.22s}
+.mobile-menu.open .menu-link:nth-child(6){transition-delay:.26s}
+.mobile-menu.open .menu-link:nth-child(7){transition-delay:.30s}
+.mobile-menu.open .menu-link:nth-child(8){transition-delay:.34s}
+.menu-link-index{font-family:'Share Tech Mono',monospace;font-size:.5rem;color:rgba(77,163,255,0.3);min-width:28px;letter-spacing:.1em}
+.menu-link-text{font-family:'Orbitron',sans-serif;font-size:clamp(1.1rem,4vw,1.6rem);font-weight:700;letter-spacing:.12em;color:#c8cde0;transition:all .3s;text-transform:uppercase}
+.menu-link:hover .menu-link-text,.menu-link.active .menu-link-text{color:#fff}
+.menu-link.active .menu-link-text{background:linear-gradient(90deg,#4DA3FF,#8B5CF6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.menu-link-arrow{margin-left:auto;font-family:'Share Tech Mono',monospace;font-size:.7rem;color:rgba(77,163,255,0.2);transition:all .3s}
+.menu-link:hover .menu-link-arrow{color:#4DA3FF;transform:translateX(4px)}
+.menu-deco{position:absolute;bottom:15%;left:5%;width:120px;height:120px;opacity:.04;border:1px solid #4DA3FF;transform:rotate(45deg);z-index:0}
+.menu-deco::before{content:'';position:absolute;inset:12px;border:1px solid #8B5CF6}
+</style>
+
+<script src="js/debug.js"></script>
+<script src="js/constants.js"></script>
+<script src="js/utils.js"></script>
+</head>
+<body>
+<div class="noise"></div>
+<div class="toast" id="toast"></div>
+
+<div id="jaharta-nav"></div>
+<script src="js/jaharta-nav.js"></script>
+
+<section class="hero-sub">
+  <p class="hero-sub-tag">Faune & Compagnons · Créatures de Jaharta</p>
+  <h1 class="glitch-title">BESTIAIRE</h1>
+  <p class="hero-sub-desc">Les créatures sauvages qui peuplent les terres de Jaharta, et les compagnons fidèles qui marchent aux côtés de leurs maîtres.</p>
+</section>
+
+<div class="page-wrap">
+  <div class="best-tabs">
+    <button class="best-tab active" data-section="sauvage" onclick="switchBestSection('sauvage')">
+      ◈ Sauvages <span class="cnt" id="cnt-sauvage">0</span>
+    </button>
+    <button class="best-tab" data-section="compagnon" onclick="switchBestSection('compagnon')">
+      ◈ Compagnons <span class="cnt" id="cnt-compagnon">0</span>
+    </button>
+  </div>
+
+  <div class="create-row">
+    <button class="create-best-btn admin-only" onclick="openBestModal()">+ Nouvelle Bête</button>
+  </div>
+
+  <div class="bestiaire-grid" id="best-grid"></div>
+  <div class="empty-best" id="best-empty">⟳ Chargement du bestiaire...</div>
+</div>
+
+<!-- MODAL CRÉATION / ÉDITION -->
+<div class="modal-overlay" id="best-modal">
+  <div class="modal-best">
+    <button class="mb-close" onclick="closeBestModal()">✕</button>
+    <h2 id="best-modal-title">◆ Nouvelle Bête</h2>
+    <p class="msub">Réservé aux administrateurs · Apparaît en direct sur la page publique</p>
+
+    <div class="fg-row">
+      <div class="fg">
+        <label>Section</label>
+        <select id="best-section">
+          <option value="sauvage">Sauvage</option>
+          <option value="compagnon">Compagnon</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Style de carte</label>
+        <select id="best-style">
+          <option value="holo">Holographique</option>
+          <option value="galaxy">Galaxie</option>
+          <option value="v">Rare V</option>
+          <option value="vmax">VMAX</option>
+          <option value="vstar">VStar</option>
+          <option value="ultra">Ultra Rare</option>
+          <option value="rainbow">Rainbow Secret</option>
+          <option value="secret">Or Secret</option>
+          <option value="radiant">Radiant</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="fg-row">
+      <div class="fg">
+        <label>Nom *</label>
+        <input type="text" id="best-name" placeholder="Ex: Drakar des Cendres">
+      </div>
+      <div class="fg">
+        <label>Dangerosité (1–5)</label>
+        <input type="number" id="best-danger" min="1" max="5" value="3">
+      </div>
+    </div>
+
+    <div class="fg">
+      <label>Couleur néon de la carte</label>
+      <div class="color-picker-wrap">
+        <input type="color" id="best-color" value="#00e5ff">
+        <input type="text" id="best-color-hex" value="#00e5ff" style="flex:1">
+      </div>
+      <div class="style-help">Sert pour la lueur et les titres "#" en markdown.</div>
+    </div>
+
+    <div class="fg">
+      <label>Image principale (URL)</label>
+      <input type="url" id="best-image" placeholder="https://...">
+    </div>
+
+    <div class="fg" id="best-image2-wrap" style="display:none">
+      <label>Image secondaire (dos de la carte) — Compagnons</label>
+      <input type="url" id="best-image2" placeholder="https://...">
+    </div>
+
+    <div class="fg">
+      <label>Informations (dos de la carte)</label>
+      <textarea id="best-info" placeholder="# Titre principal&#10;## Sous-titre&#10;### Note italique&#10;------&#10;Texte libre…"></textarea>
+      <div class="md-help">
+        <b># Titre</b> → couleur néon · <b>## Titre</b> → blanc néon · <b>### Titre</b> → italique blanc néon · <b>------</b> → séparateur
+      </div>
+    </div>
+
+    <button class="bsub-best" id="best-submit-btn" onclick="submitBest()">◆ Créer la bête</button>
+  </div>
+</div>
+
+<footer>
+  <div style="font-family:'Orbitron',sans-serif;font-size:.7rem;font-weight:700;letter-spacing:.2em;color:#5a7a90">JAHARTA</div>
+  <div style="display:flex;gap:18px">
+    <a href="index.html" style="font-size:.68rem;color:#9aa6bf;text-decoration:none">Accueil</a>
+    <a href="fiches.html" style="font-size:.68rem;color:#9aa6bf;text-decoration:none">Fiches RP</a>
+    <a href="pnj.html" style="font-size:.68rem;color:#9aa6bf;text-decoration:none">PNJ</a>
+    <a href="https://discord.gg/Jaharta" target="_blank" style="font-size:.68rem;color:#9aa6bf;text-decoration:none">Discord ↗</a>
+  </div>
+  <div style="font-family:'Share Tech Mono',monospace;font-size:.45rem;color:#5a7a90;letter-spacing:.15em">© 2024 — 2026 JAHARTA</div>
+</footer>
+
+<script>
+/* ═══ BESTIAIRE — logique page (non-module) ═══ */
+
+window._bestSection = 'sauvage';
+window._bestiaireData = [];
+
+const STYLE_DEFAULT_NEON = {
+  holo:    '#69d1e9',
+  galaxy:  '#b06eff',
+  v:       '#ff6b9d',
+  vmax:    '#ff4757',
+  vstar:   '#ffd60a',
+  ultra:   '#00e5cc',
+  rainbow: '#ff49f6',
+  secret:  '#d8b75c',
+  radiant: '#82ffd5'
+};
+
+function escHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+/* ── Markdown discord-like → HTML ── */
+function renderBestMD(text, neon) {
+  const lines = String(text || '').split(/\r?\n/);
+  let html = '';
+  let m;
+  for (const raw of lines) {
+    const line = raw.replace(/\s+$/, '');
+    if (!line.trim()) { html += '<div style="height:6px"></div>'; continue; }
+    if (/^-{6,}$/.test(line.trim())) { html += '<hr class="bcard-sep">'; continue; }
+    if ((m = line.match(/^\s*###\s+(.*)$/))) {
+      html += '<h3 class="bcard-h3">' + escHtml(m[1]) + '</h3>'; continue;
+    }
+    if ((m = line.match(/^\s*##\s+(.*)$/))) {
+      html += '<h2 class="bcard-h2">' + escHtml(m[1]) + '</h2>'; continue;
+    }
+    if ((m = line.match(/^\s*#\s+(.*)$/))) {
+      html += '<h1 class="bcard-h1" style="color:' + neon + ';text-shadow:0 0 6px ' + neon + ',0 0 14px ' + neon + ',0 0 24px ' + neon + '">' + escHtml(m[1]) + '</h1>';
+      continue;
+    }
+    html += '<p class="bcard-p">' + escHtml(line) + '</p>';
+  }
+  return html;
+}
+
+/* ── Render stars (1–5) ── */
+function renderStars(n) {
+  const v = Math.max(1, Math.min(5, parseInt(n) || 1));
+  let s = '';
+  for (let i = 0; i < 5; i++) s += i < v ? '★' : '<span class="off">★</span>';
+  return s;
+}
+
+/* ── Build single card DOM ── */
+function buildBestCard(b) {
+  const neon = b.color || STYLE_DEFAULT_NEON[b.style] || '#69d1e9';
+  const card = document.createElement('div');
+  card.className = 'bcard';
+  card.dataset.style = b.style || 'holo';
+  card.dataset.id = b.id;
+  card.style.setProperty('--neon', neon);
+  if (window._isAdmin) card.classList.add('is-admin');
+
+  const isComp = b.section === 'compagnon';
+  const backImgHTML = (isComp && b.image2)
+    ? '<div class="bcard__back-img-mask"><img class="bcard__back-img" src="' + escHtml(b.image2) + '" alt=""></div>'
+    : '';
+
+  card.innerHTML =
+    '<div class="bcard__inner">' +
+      '<div class="bcard__face bcard__front">' +
+        '<div class="bcard__img-wrap">' +
+          (b.image ? '<img src="' + escHtml(b.image) + '" alt="' + escHtml(b.name || '') + '" loading="lazy">' : '') +
+        '</div>' +
+        '<div class="bcard__shine"></div>' +
+        '<div class="bcard__glare"></div>' +
+        '<div class="bcard__top"><div class="bcard__name">' + escHtml(b.name || '?') + '</div></div>' +
+        '<div class="bcard__bottom">' +
+          '<div class="bcard__danger-lbl">DANGER</div>' +
+          '<div class="bcard__stars">' + renderStars(b.danger) + '</div>' +
+        '</div>' +
+        '<div class="bcard__admin">' +
+          '<button class="bcard__edit" type="button">Éditer</button>' +
+          '<button class="bcard__del" type="button">Suppr.</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="bcard__face bcard__back">' +
+        backImgHTML +
+        '<div class="bcard__back-content">' + renderBestMD(b.info, neon) + '</div>' +
+      '</div>' +
+    '</div>';
+
+  bindBestCard(card, b);
+  return card;
+}
+
+/* ── Interactivité (tilt + flip + admin) ── */
+function bindBestCard(card, b) {
+  const inner = card.querySelector('.bcard__inner');
+  let rot = 0;
+  let flipped = false;
+
+  card.addEventListener('mousemove', e => {
+    if (flipped) return;
+    const r = card.getBoundingClientRect();
+    const px = (e.clientX - r.left) / r.width;
+    const py = (e.clientY - r.top) / r.height;
+    const rx = (py - 0.5) * -16;
+    const ry = (px - 0.5) * 16;
+    card.style.setProperty('--mx', (px * 100) + '%');
+    card.style.setProperty('--my', (py * 100) + '%');
+    card.style.setProperty('--posx', (px * 100) + '%');
+    card.style.setProperty('--posy', (py * 100) + '%');
+    card.style.setProperty('--hyp', Math.min(1, Math.hypot(px - 0.5, py - 0.5) * 2));
+    card.classList.add('interacting');
+    inner.style.transform = 'rotateY(' + (rot + ry).toFixed(2) + 'deg) rotateX(' + (rx).toFixed(2) + 'deg)';
+  });
+
+  card.addEventListener('mouseleave', () => {
+    card.classList.remove('interacting');
+    inner.style.transform = 'rotateY(' + rot + 'deg)';
+    card.style.setProperty('--hyp', 0);
+  });
+
+  /* Flip on click — 720° spin, alterne front/back */
+  card.addEventListener('click', e => {
+    if (e.target.closest('.bcard__admin')) return; /* boutons admin */
+    flipped = !flipped;
+    rot += flipped ? 900 : 720; /* 900 = 2.5 tours pour atterrir au dos, 720 retour au front */
+    card.classList.remove('interacting');
+    inner.style.transform = 'rotateY(' + rot + 'deg)';
+  });
+
+  /* Admin actions */
+  const editBtn = card.querySelector('.bcard__edit');
+  const delBtn  = card.querySelector('.bcard__del');
+  if (editBtn) editBtn.addEventListener('click', ev => { ev.stopPropagation(); openEditBest(b.id); });
+  if (delBtn)  delBtn.addEventListener('click',  ev => { ev.stopPropagation(); deleteBest(b.id, b.name); });
+}
+
+/* ── Render section ── */
+function renderBestiaire() {
+  const grid = document.getElementById('best-grid');
+  const empty = document.getElementById('best-empty');
+  grid.innerHTML = '';
+  const all = window._bestiaireData || [];
+  const sauv = all.filter(b => (b.section || 'sauvage') === 'sauvage');
+  const comp = all.filter(b => b.section === 'compagnon');
+  document.getElementById('cnt-sauvage').textContent = sauv.length;
+  document.getElementById('cnt-compagnon').textContent = comp.length;
+  const items = window._bestSection === 'compagnon' ? comp : sauv;
+  if (!items.length) {
+    empty.style.display = 'block';
+    empty.textContent = '◈ Aucune bête dans cette section.';
+    return;
+  }
+  empty.style.display = 'none';
+  items.forEach(b => grid.appendChild(buildBestCard(b)));
+}
+
+window.switchBestSection = function(section) {
+  window._bestSection = section;
+  document.querySelectorAll('.best-tab').forEach(b => b.classList.toggle('active', b.dataset.section === section));
+  renderBestiaire();
+};
+
+/* ── Modal ── */
+window.openBestModal = function() {
+  if (!window._isAdmin) return;
+  document.getElementById('best-modal-title').textContent = '◆ Nouvelle Bête';
+  document.getElementById('best-section').value = window._bestSection;
+  document.getElementById('best-style').value = 'holo';
+  document.getElementById('best-name').value = '';
+  document.getElementById('best-danger').value = 3;
+  document.getElementById('best-color').value = STYLE_DEFAULT_NEON.holo;
+  document.getElementById('best-color-hex').value = STYLE_DEFAULT_NEON.holo;
+  document.getElementById('best-image').value = '';
+  document.getElementById('best-image2').value = '';
+  document.getElementById('best-info').value = '';
+  toggleImage2Wrap();
+  const btn = document.getElementById('best-submit-btn');
+  btn.textContent = '◆ Créer la bête';
+  btn.onclick = submitBest;
+  document.getElementById('best-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+};
+
+window.closeBestModal = function() {
+  document.getElementById('best-modal').classList.remove('open');
+  document.body.style.overflow = '';
+};
+
+document.addEventListener('click', e => {
+  const m = document.getElementById('best-modal');
+  if (e.target === m) closeBestModal();
+});
+
+function toggleImage2Wrap() {
+  const sec = document.getElementById('best-section').value;
+  document.getElementById('best-image2-wrap').style.display = sec === 'compagnon' ? 'block' : 'none';
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('best-section').addEventListener('change', toggleImage2Wrap);
+  document.getElementById('best-style').addEventListener('change', e => {
+    const def = STYLE_DEFAULT_NEON[e.target.value] || '#69d1e9';
+    document.getElementById('best-color').value = def;
+    document.getElementById('best-color-hex').value = def;
+  });
+  document.getElementById('best-color').addEventListener('input', e => {
+    document.getElementById('best-color-hex').value = e.target.value;
+  });
+  document.getElementById('best-color-hex').addEventListener('input', e => {
+    if (/^#[0-9a-fA-F]{6}$/.test(e.target.value)) document.getElementById('best-color').value = e.target.value;
+  });
+
+  /* Démarrer le chargement */
+  if (typeof window._loadBestiaire === 'function') window._loadBestiaire();
+  else {
+    const iv = setInterval(() => {
+      if (typeof window._loadBestiaire === 'function') { clearInterval(iv); window._loadBestiaire(); }
+    }, 50);
+  }
+});
+
+/* ── Submit (create) ── */
+window.submitBest = async function() {
+  if (!window._isAdmin) { alert('⚠ Connexion admin requise'); return; }
+  const data = collectBestForm();
+  if (!data) return;
+  const btn = document.getElementById('best-submit-btn');
+  btn.disabled = true; btn.textContent = '⟳ Création...';
+  try {
+    data.createdAt = window._serverTimestamp();
+    await window._addDoc(window._collection(window._db, 'bestiaire'), data);
+    closeBestModal();
+  } catch (e) {
+    alert('Erreur: ' + e.message);
+  }
+  btn.disabled = false; btn.textContent = '◆ Créer la bête';
+};
+
+/* ── Edit ── */
+window.openEditBest = async function(id) {
+  const snap = await window._getDoc(window._doc(window._db, 'bestiaire', id));
+  if (!snap.exists()) return;
+  const b = snap.data();
+  document.getElementById('best-modal-title').textContent = '✎ Éditer la bête';
+  document.getElementById('best-section').value = b.section || 'sauvage';
+  document.getElementById('best-style').value = b.style || 'holo';
+  document.getElementById('best-name').value = b.name || '';
+  document.getElementById('best-danger').value = b.danger || 1;
+  const c = b.color || STYLE_DEFAULT_NEON[b.style || 'holo'];
+  document.getElementById('best-color').value = c;
+  document.getElementById('best-color-hex').value = c;
+  document.getElementById('best-image').value = b.image || '';
+  document.getElementById('best-image2').value = b.image2 || '';
+  document.getElementById('best-info').value = b.info || '';
+  toggleImage2Wrap();
+  const btn = document.getElementById('best-submit-btn');
+  btn.textContent = '✎ Mettre à jour';
+  btn.onclick = () => updateBest(id);
+  document.getElementById('best-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+};
+
+window.updateBest = async function(id) {
+  if (!window._isAdmin) { alert('⚠ Connexion admin requise'); return; }
+  const data = collectBestForm();
+  if (!data) return;
+  const btn = document.getElementById('best-submit-btn');
+  btn.disabled = true; btn.textContent = '⟳ Mise à jour...';
+  try {
+    await window._updateDoc(window._doc(window._db, 'bestiaire', id), data);
+    closeBestModal();
+  } catch (e) {
+    alert('Erreur: ' + e.message);
+  }
+  btn.disabled = false; btn.textContent = '✎ Mettre à jour';
+};
+
+window.deleteBest = async function(id, name) {
+  if (!window._isAdmin) return;
+  if (!confirm('Supprimer "' + (name || 'cette bête') + '" ?')) return;
+  try { await window._deleteDoc(window._doc(window._db, 'bestiaire', id)); }
+  catch (e) { alert('Erreur: ' + e.message); }
+};
+
+function collectBestForm() {
+  const name = document.getElementById('best-name').value.trim();
+  if (!name) { alert('Le nom est obligatoire'); return null; }
+  const section = document.getElementById('best-section').value;
+  const style = document.getElementById('best-style').value;
+  const dangerRaw = parseInt(document.getElementById('best-danger').value, 10);
+  const danger = Math.max(1, Math.min(5, isNaN(dangerRaw) ? 1 : dangerRaw));
+  const color = document.getElementById('best-color-hex').value || STYLE_DEFAULT_NEON[style] || '#00e5ff';
+  const image = document.getElementById('best-image').value.trim();
+  const image2 = document.getElementById('best-image2').value.trim();
+  const info = document.getElementById('best-info').value;
+  const data = { name, section, style, danger, color, image, info };
+  if (section === 'compagnon') data.image2 = image2;
+  return data;
+}
+</script>
+
+<script src="js/page-transition.js"></script>
+</body>
+</html>

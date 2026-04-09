@@ -120,7 +120,7 @@ async function loadBonusData(){
     compUsersSnap.forEach(d=>{_allCompUsers[d.id]=d.data();});
     if(compCfgSnap.exists())_compCfg=compCfgSnap.data();
     if(setsCfgSnap.exists())_itemSets=setsCfgSnap.data();
-  }catch(err){window._dbg?.warn('[Fiches] bonus data load',err.message);}
+  }catch(err){console.warn('[Fiches] bonus data load:',err.message);}
 }
 
 /* ── Companion sync_power → flat stat bonuses map ── */
@@ -689,7 +689,7 @@ window._loadCards=function(){
       charLoaded=true;
       renderAll();
     },err=>{
-      window._dbg?.warn('[Fiches] characters load',err.message);
+      console.warn('[Fiches] characters load:',err.message);
       charLoaded=true;
       renderAll();
     });
@@ -701,7 +701,7 @@ window._loadCards=function(){
       ficheLoaded=true;
       renderAll();
     },err=>{
-      window._dbg?.warn('[Fiches] fiches load',err.message);
+      console.warn('[Fiches] fiches load:',err.message);
       ficheLoaded=true;
       renderAll();
     });
@@ -992,6 +992,41 @@ body::before{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;
 .nav-links{display:none!important}
 .nav-toggle{display:none!important}
 .nav-backdrop{display:none!important}
+.burger{display:flex;width:42px;height:42px;background:rgba(77,163,255,0.06);border:1px solid rgba(77,163,255,0.15);border-radius:8px;cursor:pointer;flex-direction:column;align-items:center;justify-content:center;gap:5px;transition:all .3s;position:relative;z-index:1001}
+.burger:hover{border-color:rgba(77,163,255,0.35);background:rgba(77,163,255,0.1);box-shadow:0 0 16px rgba(77,163,255,0.15)}
+.burger-line{display:block;width:18px;height:1.5px;border-radius:2px;background:#4DA3FF;transition:all .4s cubic-bezier(0.76,0,0.24,1);transform-origin:center}
+.burger.active .burger-line:nth-child(1){transform:translateY(6.5px) rotate(45deg)}
+.burger.active .burger-line:nth-child(2){opacity:0;transform:scaleX(0)}
+.burger.active .burger-line:nth-child(3){transform:translateY(-6.5px) rotate(-45deg)}
+.burger.active{border-color:#8B5CF6;background:rgba(139,92,246,0.1);box-shadow:0 0 20px rgba(139,92,246,0.2)}
+.burger.active .burger-line{background:#8B5CF6}
+.mobile-menu{position:fixed;top:0;left:0;right:0;bottom:0;z-index:999;display:flex;flex-direction:column;background:rgba(2,7,19,0.97);backdrop-filter:blur(40px);padding:80px 0 40px;opacity:0;visibility:hidden;transition:opacity .4s ease,visibility .4s;overflow-y:auto}
+.mobile-menu.open{opacity:1;visibility:visible}
+.mobile-menu::before{content:'';position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(77,163,255,0.015) 2px,rgba(77,163,255,0.015) 4px);z-index:0}
+.mobile-menu::after{content:'';position:absolute;top:10%;right:-10%;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(139,92,246,0.08),transparent 70%);pointer-events:none;z-index:0}
+.menu-inner{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;padding:0 clamp(2rem,6vw,4rem)}
+.menu-header-label{font-family:'Share Tech Mono',monospace;font-size:.48rem;letter-spacing:.5em;color:#9aa0b8;opacity:.5;margin-bottom:2rem;text-transform:uppercase}
+.menu-link{display:flex;align-items:center;gap:16px;text-decoration:none;padding:16px 0;border-bottom:1px solid rgba(77,163,255,0.04);transform:translateX(-30px);opacity:0;transition:all .4s cubic-bezier(0.16,1,0.3,1)}
+.mobile-menu.open .menu-link{transform:translateX(0);opacity:1}
+.mobile-menu.open .menu-link:nth-child(1){transition-delay:.06s}
+.mobile-menu.open .menu-link:nth-child(2){transition-delay:.10s}
+.mobile-menu.open .menu-link:nth-child(3){transition-delay:.14s}
+.mobile-menu.open .menu-link:nth-child(4){transition-delay:.18s}
+.mobile-menu.open .menu-link:nth-child(5){transition-delay:.22s}
+.mobile-menu.open .menu-link:nth-child(6){transition-delay:.26s}
+.mobile-menu.open .menu-link:nth-child(7){transition-delay:.30s}
+.mobile-menu.open .menu-link:nth-child(8){transition-delay:.34s}
+.menu-link-index{font-family:'Share Tech Mono',monospace;font-size:.5rem;color:rgba(77,163,255,0.3);min-width:28px;letter-spacing:.1em}
+.menu-link-text{font-family:'Orbitron',sans-serif;font-size:clamp(1.1rem,4vw,1.6rem);font-weight:700;letter-spacing:.12em;color:#c8cde0;transition:all .3s;text-transform:uppercase}
+.menu-link:hover .menu-link-text,.menu-link.active .menu-link-text{color:#fff}
+.menu-link.active .menu-link-text{background:linear-gradient(90deg,#4DA3FF,#8B5CF6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.menu-link-arrow{margin-left:auto;font-family:'Share Tech Mono',monospace;font-size:.7rem;color:rgba(77,163,255,0.2);transition:all .3s}
+.menu-link:hover .menu-link-arrow{color:#4DA3FF;transform:translateX(4px)}
+.menu-link.active .menu-link-arrow{color:#8B5CF6}
+.menu-link::before{content:'';width:0;height:1px;background:linear-gradient(90deg,#4DA3FF,transparent);transition:width .4s ease}
+.menu-link:hover::before{width:20px}
+.menu-deco{position:absolute;bottom:15%;left:5%;width:120px;height:120px;opacity:.04;border:1px solid #4DA3FF;transform:rotate(45deg);z-index:0}
+.menu-deco::before{content:'';position:absolute;inset:12px;border:1px solid #8B5CF6}
 
 </style>
 
@@ -1136,9 +1171,9 @@ body::before{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;
    ALL ORIGINAL FICHES.HTML JS — preserved exactly
    ═══════════════════════════════════════════════════ */
 window.updateRaceSpecific=function(group){const sel=document.getElementById('f-race-specific');sel.innerHTML='';if(!group){sel.disabled=true;sel.innerHTML='<option value="">— Choisir d\'abord un groupe —</option>';return;}sel.disabled=false;sel.innerHTML='<option value="">— Choisir une race —</option>';(window.RACES_SPECIFIC[group]||[]).forEach(r=>{const o=document.createElement('option');o.value=r;o.textContent=r;sel.appendChild(o);});};
-window.deleteFicheById=async function(id){if(!window._isAdmin){showToast('Connexion admin requise','error');return;}if(!confirm('Supprimer définitivement cette fiche ?'))return;try{await window._deleteDoc(window._doc(window._db,'fiches',id));showToast('Fiche supprimée.','error');}catch(e){window._dbg?.error('[deleteFiche]',e);showToast('⚠ '+e.message,'error');}};
+window.deleteFicheById=async function(id){if(!window._isAdmin){alert('Connexion admin requise');return;}if(!confirm('Supprimer définitivement cette fiche ?'))return;try{await window._deleteDoc(window._doc(window._db,'fiches',id));showToast('Fiche supprimée.','error');}catch(e){console.error(e);showToast('⚠ '+e.message,'error');}};
 window.openEditFiche=async function(id){
-  if(!window._isAdmin){showToast('Connexion admin requise','error');return;}
+  if(!window._isAdmin){alert('Connexion admin requise');return;}
   const snap=await window._getDoc(window._doc(window._db,'fiches',id));
   if(!snap.exists())return;
   const ch=snap.data();
@@ -1184,14 +1219,14 @@ window.openEditFiche=async function(id){
     let finalPhoto=photoUrl;
     const photoFileEl=document.getElementById('f-file');
     const photoFile=photoFileEl&&photoFileEl.files[0];
-    if(photoFile){try{const compressed=await compressImage(photoFile);const r2=window._ref(window._storage,`photos/${Date.now()}_${photoFile.name.replace(/\.[^.]+$/,'.jpg')}`);const s2=await window._uploadBytes(r2,compressed);finalPhoto=await window._getDownloadURL(s2.ref);}catch(e){window._dbg?.warn('[Photo upload]',e.message);}}
+    if(photoFile){try{const compressed=await compressImage(photoFile);const r2=window._ref(window._storage,`photos/${Date.now()}_${photoFile.name.replace(/\.[^.]+$/,'.jpg')}`);const s2=await window._uploadBytes(r2,compressed);finalPhoto=await window._getDownloadURL(s2.ref);}catch(e){console.warn('Photo:',e.message);}}
     try{
       const _updStats={str:Math.min(9999,parseInt(document.getElementById('f-str').value)||0),agi:Math.min(9999,parseInt(document.getElementById('f-agi').value)||0),spd:Math.min(9999,parseInt(document.getElementById('f-spd').value)||0),int:Math.min(9999,parseInt(document.getElementById('f-int').value)||0),mana:Math.min(9999,parseInt(document.getElementById('f-mana').value)||0),res:Math.min(9999,parseInt(document.getElementById('f-res').value)||0),cha:Math.min(9999,parseInt(document.getElementById('f-cha').value)||0),aura:Math.min(9999,parseInt(document.getElementById('f-aura').value)||0)};
       const _age=document.getElementById('f-age').value.trim();
       const _updatePayload={firstname,lastname,age:_age,race,raceSpecific,rank,desc,discord,links,linkUrl:links[0]?.h||'',stats:_updStats,powers:getPowers(),photoUrl:finalPhoto,updatedAt:new Date()};
       await window._updateDoc(window._doc(window._db,'fiches',id),_updatePayload);
       closeModal();showToast('\u2713 Fiche mise \u00e0 jour !');
-    }catch(e){window._dbg?.error('[editFiche]',e);showToast('\u26a0 '+e.message,'error');}
+    }catch(e){console.error(e);showToast('\u26a0 '+e.message,'error');}
     newBtn.disabled=false;newBtn.textContent='\u25b8 Ajouter la fiche';
     newBtn.removeEventListener('click',editHandler);
     newBtn.addEventListener('click',submitCard);
@@ -1215,13 +1250,13 @@ function showPrev(src){document.getElementById('pdtxt').style.display='none';let
 function clearPrev(){document.getElementById('pdtxt').style.display='';const img=document.getElementById('photo-drop').querySelector('img.prev-img');if(img)img.remove();}
 function addLinkField(label='Fiche',url=''){const wrap=document.getElementById('links-url-wrap');const row=document.createElement('div');row.className='link-entry';row.innerHTML=`<input type="text" class="fi link-label-inp" placeholder="Libellé" value="${label}"><input type="text" class="fi link-url-inp" placeholder="https://..." value="${url}"><button type="button" class="link-rm-btn" onclick="this.parentElement.remove()">✕</button>`;wrap.appendChild(row);}
 function addFileField(label='Fichier'){const wrap=document.getElementById('links-file-wrap');const row=document.createElement('div');row.className='link-file-entry';row.innerHTML=`<input type="text" class="fi link-label-inp" placeholder="Libellé" value="${label}"><input type="file" accept=".html,.htm,.pdf,.doc,.docx,.odt,.txt,.md,.pages,.png,.jpg,.jpeg"><button type="button" class="link-rm-btn" onclick="this.parentElement.remove()">✕</button>`;wrap.appendChild(row);}
-async function getLinks(){const links=[];document.querySelectorAll('#links-url-wrap .link-entry').forEach(row=>{const label=row.querySelector('.link-label-inp').value.trim()||'Fiche';const url=row.querySelector('.link-url-inp')?.value.trim()||row.querySelectorAll('input')[1]?.value.trim()||'';if(url)links.push({t:label,h:url});});const fileRows=document.querySelectorAll('#links-file-wrap .link-file-entry');for(const row of fileRows){const label=row.querySelector('.link-label-inp').value.trim()||'Fichier';const file=row.querySelector('input[type=file]').files[0];if(!file)continue;try{const path=`fiches/${Date.now()}_${file.name}`;const snap=await window._uploadBytes(window._ref(window._storage,path),file);const url=await window._getDownloadURL(snap.ref);links.push({t:label,h:url});}catch(e){window._dbg?.warn('[upload]',e.message);showToast('⚠ Erreur upload: '+e.message,'error');}}return links;}
+async function getLinks(){const links=[];document.querySelectorAll('#links-url-wrap .link-entry').forEach(row=>{const label=row.querySelector('.link-label-inp').value.trim()||'Fiche';const url=row.querySelector('.link-url-inp')?.value.trim()||row.querySelectorAll('input')[1]?.value.trim()||'';if(url)links.push({t:label,h:url});});const fileRows=document.querySelectorAll('#links-file-wrap .link-file-entry');for(const row of fileRows){const label=row.querySelector('.link-label-inp').value.trim()||'Fichier';const file=row.querySelector('input[type=file]').files[0];if(!file)continue;try{const path=`fiches/${Date.now()}_${file.name}`;const snap=await window._uploadBytes(window._ref(window._storage,path),file);const url=await window._getDownloadURL(snap.ref);links.push({t:label,h:url});}catch(e){console.warn('[upload]',e.message);showToast('⚠ Erreur upload: '+e.message,'error');}}return links;}
 function clearLinks(){const wu=document.getElementById('links-url-wrap');const wf=document.getElementById('links-file-wrap');if(wu)wu.innerHTML='';if(wf)wf.innerHTML='';addLinkField('Fiche','');}
 const _RARITIES=['Common','Uncommon','Rare','Epic','Legendary','Mythic','Unique','Artifact','Mastercraft'];
 function addPowerField(name='',desc='',rarity=''){const wrap=document.getElementById('powers-form-wrap');const row=document.createElement('div');row.className='power-entry';const opts=_RARITIES.map(r=>`<option value="${r}"${rarity===r?' selected':''}>${r}</option>`).join('');row.innerHTML=`<input type="text" class="fi power-name-inp" placeholder="Nom du pouvoir" value="${name.replace(/"/g,'&quot;')}" style="flex:1;min-width:0"><select class="fs power-rarity-inp" style="width:112px;flex-shrink:0;font-size:.62rem"><option value="">Rareté…</option>${opts}</select><textarea class="fta power-desc-inp" placeholder="Description..." style="flex:2;min-height:42px">${desc.replace(/</g,'&lt;')}</textarea><button type="button" class="power-rm-btn" onclick="this.parentElement.remove()">✕</button>`;wrap.appendChild(row);}
 function getPowers(){const entries=document.querySelectorAll('#powers-form-wrap .power-entry');const powers=[];entries.forEach(e=>{const name=e.querySelector('.power-name-inp').value.trim();const desc=e.querySelector('.power-desc-inp').value.trim();const rarity=e.querySelector('.power-rarity-inp')?.value||'';if(name)powers.push({name,desc,...(rarity?{rarity}:{})});});return powers;}
 function clearPowers(){document.getElementById('powers-form-wrap').innerHTML='';}
-async function submitCard(){if(!window._isAdmin){showToast('⚠ Connexion admin requise.','error');return;}const fn=sanitize(document.getElementById('f-fn').value.trim());const ln=sanitize(document.getElementById('f-ln').value.trim());const age=sanitize(document.getElementById('f-age').value.trim());const race=document.getElementById('f-race').value;const raceSpecific=document.getElementById('f-race-specific').value;const rank=document.getElementById('f-rank').value;const bio=sanitize(document.getElementById('f-bio').value.trim());const discord=sanitize(document.getElementById('f-discord').value.trim());const stats={str:Math.min(9999,parseInt(document.getElementById('f-str').value)||0),agi:Math.min(9999,parseInt(document.getElementById('f-agi').value)||0),spd:Math.min(9999,parseInt(document.getElementById('f-spd').value)||0),int:Math.min(9999,parseInt(document.getElementById('f-int').value)||0),mana:Math.min(9999,parseInt(document.getElementById('f-mana').value)||0),res:Math.min(9999,parseInt(document.getElementById('f-res').value)||0),cha:Math.min(9999,parseInt(document.getElementById('f-cha').value)||0),aura:Math.min(9999,parseInt(document.getElementById('f-aura').value)||0)};const photoUrl=photoFile?'':document.getElementById('f-photo-url').value.trim();if(!fn||!ln||!race||!rank||!bio||!discord){showToast('Remplissez tous les champs obligatoires (*)','error');return;}const btn=document.getElementById('bsub');btn.disabled=true;btn.textContent='⟳ Envoi en cours...';const allLinks=await getLinks();const data={firstname:fn,lastname:ln,age,race,rank,bio,desc:bio,discord,stats,powers:getPowers(),photoUrl,links:allLinks,linkUrl:allLinks[0]?.h||''};try{if(photoFile){const compressed=await compressImage(photoFile);const r2=window._ref(window._storage,`photos/${Date.now()}_${photoFile.name.replace(/\.[^.]+$/,'.jpg')}`);const s2=await window._uploadBytes(r2,compressed);data.photoUrl=await window._getDownloadURL(s2.ref);}await window._addDoc(window._collection(window._db,'fiches'),{...data,status:'validee',createdAt:window._serverTimestamp()});showToast('✓ Fiche ajoutée et publiée !','success');}catch(e){window._dbg?.error('[submitCard]',e);showToast('⚠ Erreur : '+e.message,'error');}btn.disabled=false;btn.textContent='▸ Ajouter la fiche';['f-fn','f-ln','f-age','f-bio','f-discord','f-photo-url'].forEach(id=>document.getElementById(id).value='');clearLinks();document.getElementById('f-race').value='';updateRaceSpecific('');['f-str','f-agi','f-spd','f-int','f-mana','f-res','f-cha','f-aura'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='0';});clearPowers();document.getElementById('f-rank').value='';photoFile=null;clearPrev();document.getElementById('f-file').value='';closeModal();}
+async function submitCard(){if(!window._isAdmin){showToast('⚠ Connexion admin requise.','error');return;}const fn=sanitize(document.getElementById('f-fn').value.trim());const ln=sanitize(document.getElementById('f-ln').value.trim());const age=sanitize(document.getElementById('f-age').value.trim());const race=document.getElementById('f-race').value;const raceSpecific=document.getElementById('f-race-specific').value;const rank=document.getElementById('f-rank').value;const bio=sanitize(document.getElementById('f-bio').value.trim());const discord=sanitize(document.getElementById('f-discord').value.trim());const stats={str:Math.min(9999,parseInt(document.getElementById('f-str').value)||0),agi:Math.min(9999,parseInt(document.getElementById('f-agi').value)||0),spd:Math.min(9999,parseInt(document.getElementById('f-spd').value)||0),int:Math.min(9999,parseInt(document.getElementById('f-int').value)||0),mana:Math.min(9999,parseInt(document.getElementById('f-mana').value)||0),res:Math.min(9999,parseInt(document.getElementById('f-res').value)||0),cha:Math.min(9999,parseInt(document.getElementById('f-cha').value)||0),aura:Math.min(9999,parseInt(document.getElementById('f-aura').value)||0)};const photoUrl=photoFile?'':document.getElementById('f-photo-url').value.trim();if(!fn||!ln||!race||!rank||!bio||!discord){showToast('Remplissez tous les champs obligatoires (*)','error');return;}const btn=document.getElementById('bsub');btn.disabled=true;btn.textContent='⟳ Envoi en cours...';const allLinks=await getLinks();const data={firstname:fn,lastname:ln,age,race,rank,bio,desc:bio,discord,stats,powers:getPowers(),photoUrl,links:allLinks,linkUrl:allLinks[0]?.h||''};try{if(photoFile){const compressed=await compressImage(photoFile);const r2=window._ref(window._storage,`photos/${Date.now()}_${photoFile.name.replace(/\.[^.]+$/,'.jpg')}`);const s2=await window._uploadBytes(r2,compressed);data.photoUrl=await window._getDownloadURL(s2.ref);}await window._addDoc(window._collection(window._db,'fiches'),{...data,status:'validee',createdAt:window._serverTimestamp()});showToast('✓ Fiche ajoutée et publiée !','success');}catch(e){console.error(e);showToast('⚠ Erreur : '+e.message,'error');}btn.disabled=false;btn.textContent='▸ Ajouter la fiche';['f-fn','f-ln','f-age','f-bio','f-discord','f-photo-url'].forEach(id=>document.getElementById(id).value='');clearLinks();document.getElementById('f-race').value='';updateRaceSpecific('');['f-str','f-agi','f-spd','f-int','f-mana','f-res','f-cha','f-aura'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='0';});clearPowers();document.getElementById('f-rank').value='';photoFile=null;clearPrev();document.getElementById('f-file').value='';closeModal();}
 </script>
 
 <!-- v5 Shared UI Scripts -->

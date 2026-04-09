@@ -307,18 +307,4 @@
     clear:  () => { localStorage.removeItem(STORAGE_KEY); refreshPanel(); },
   };
 
-  /**
-   * _dbg — logger silencieux (panel uniquement, pas de console browser en prod).
-   * Usage : window._dbg.error('[TAG]', e)  /  window._dbg.warn('[TAG]', msg)
-   */
-  window._dbg = {
-    error: (tag, err) => {
-      const msg = typeof err === 'object' ? (err?.message || JSON.stringify(err)) : String(err);
-      push('CONSOLE_ERR', tag + ' ' + msg, err?.stack || '');
-    },
-    warn: (tag, msg) => {
-      push('CONSOLE_ERR', tag + ' ' + String(msg));
-    },
-  };
-
 })();

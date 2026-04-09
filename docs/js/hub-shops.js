@@ -21,7 +21,7 @@ async function loadMonShop(){
     MY_SHOP_DATA = await cachedGet(C.SHOPS,`${UID}_${CHAR_ID}`,'_monshop',60);
     _monshopLoaded = true;
     renderMonShop();
-  }catch(err){ window._dbg?.error('[MONSHOP]',err); el.innerHTML='<div class="empty">Erreur de chargement</div>'; }
+  }catch(err){ console.error('[MONSHOP]',err); el.innerHTML='<div class="empty">Erreur de chargement</div>'; }
 }
 
 function renderMonShop(){
@@ -154,7 +154,7 @@ async function toggleShopOpen(){
     renderMonShop();
     showToast(newState ? '✓ Boutique ouverte !' : '✓ Boutique fermée', 'success');
   }catch(err){
-    window._dbg?.error('[SHOP_TOGGLE]',err);
+    console.error('[SHOP_TOGGLE]',err);
     showToast('❌ Erreur — vérifie les permissions','error');
   }
 }
@@ -199,7 +199,7 @@ async function addToShop(itemId, maxQty){
     renderMonShop();
     showToast('✓ Article mis en vente !','success');
   }catch(err){
-    window._dbg?.error('[SHOP_ADD]',err);
+    console.error('[SHOP_ADD]',err);
     showToast('❌ Erreur lors de la mise en vente','error');
   }
 }
@@ -233,7 +233,7 @@ async function removeFromShop(itemId){
     renderMonShop();
     showToast('✓ Article retiré de la vente','success');
   }catch(err){
-    window._dbg?.error('[SHOP_REMOVE]',err);
+    console.error('[SHOP_REMOVE]',err);
     showToast('❌ Erreur lors du retrait','error');
   }
 }
@@ -371,7 +371,7 @@ async function confirmAlloc(){
       if(b){b.style.background='';b.style.color='';b.textContent="Confirmer l'allocation";b.disabled=true;}
     },2500);
   }catch(err){
-    window._dbg?.error('[ALLOC]',err);
+    console.error('[ALLOC]',err);
     const b=document.getElementById('alloc-confirm-btn');
     if(b){b.disabled=false;b.textContent="Confirmer l'allocation";}
     showEquipToast('❌ Erreur Firestore — vérifie les rules',true);
@@ -391,7 +391,7 @@ async function loadShops(){
     const docs=await cachedCollection(C.SHOPS,'_shops',60);
     ALL_SHOPS_DATA=docs.filter(d=>d.open&&Object.keys(d.items||{}).length>0).map(d=>({key:d._key,...d}));
     renderShopsList();
-  }catch(err){window._dbg?.error('[SHOPS]',err);listEl.innerHTML='<div class="empty">Erreur de chargement</div>';}
+  }catch(err){console.error('[SHOPS]',err);listEl.innerHTML='<div class="empty">Erreur de chargement</div>';}
 }
 
 function renderShopsList(){
@@ -478,7 +478,7 @@ async function buyFromPlayerShop(shopKey,itemId){
     cacheInvalidate('_inventory');cacheInvalidate('_economy');cacheInvalidate('_shops');cacheInvalidate('_monshop');
     renderShopsList();selectShop(shopKey);
     showEquipToast(`✓ ${it.name||itemId} acheté !`);
-  }catch(err){window._dbg?.error('[BUY_SHOP]',err);showEquipToast('❌ Erreur achat',true);}
+  }catch(err){console.error('[BUY_SHOP]',err);showEquipToast('❌ Erreur achat',true);}
 }
 
 function formatShopPrice(price){
@@ -506,7 +506,7 @@ async function loadUshop(){
       }
     }
     renderUshop();renderUshopBalance();
-  }catch(err){window._dbg?.error('[USHOP]',err);gridEl.innerHTML='<div class="empty">Erreur chargement</div>';}
+  }catch(err){console.error('[USHOP]',err);gridEl.innerHTML='<div class="empty">Erreur chargement</div>';}
 }
 
 async function renderUshopBalance(){
@@ -730,7 +730,7 @@ async function buyFromUshop(itemId){
     ]);
     cacheInvalidate('_inventory');cacheInvalidate('_economy');
     renderUshopBalance();showEquipToast(`✓ ${it.name||itemId} acheté !`);
-  }catch(err){window._dbg?.error('[USHOP_BUY]',err);showEquipToast('❌ Erreur achat',true);}
+  }catch(err){console.error('[USHOP_BUY]',err);showEquipToast('❌ Erreur achat',true);}
 }
 
 

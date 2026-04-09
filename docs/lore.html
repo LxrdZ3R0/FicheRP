@@ -22,6 +22,26 @@ body::before{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;
 .nav{position:fixed;top:0;left:0;right:0;z-index:1000;padding:0 clamp(1.5rem,4vw,3rem);height:72px;display:flex;align-items:center;justify-content:space-between;background:rgba(2,7,19,0.92);backdrop-filter:blur(24px) saturate(1.4);border-bottom:1px solid rgba(77,163,255,0.06)}
 .nav-logo{font-family:var(--font-h);font-weight:800;font-size:1.1rem;letter-spacing:.22em;color:#fff;text-decoration:none;display:flex;align-items:center;gap:10px}
 .nav-links{display:none!important}.nav-toggle{display:none!important}.nav-backdrop{display:none!important}
+.burger{display:flex;width:42px;height:42px;background:rgba(77,163,255,0.06);border:1px solid rgba(77,163,255,0.15);border-radius:8px;cursor:pointer;flex-direction:column;align-items:center;justify-content:center;gap:5px;transition:all .3s;position:relative;z-index:1001}
+.burger:hover{border-color:rgba(77,163,255,0.35);background:rgba(77,163,255,0.1);box-shadow:0 0 16px rgba(77,163,255,0.15)}
+.burger-line{display:block;width:18px;height:1.5px;border-radius:2px;background:#4DA3FF;transition:all .4s cubic-bezier(0.76,0,0.24,1);transform-origin:center}
+.burger.active .burger-line:nth-child(1){transform:translateY(6.5px) rotate(45deg)}.burger.active .burger-line:nth-child(2){opacity:0;transform:scaleX(0)}.burger.active .burger-line:nth-child(3){transform:translateY(-6.5px) rotate(-45deg)}.burger.active{border-color:#8B5CF6;background:rgba(139,92,246,0.1);box-shadow:0 0 20px rgba(139,92,246,0.2)}.burger.active .burger-line{background:#8B5CF6}
+.mobile-menu{position:fixed;top:0;left:0;right:0;bottom:0;z-index:999;display:flex;flex-direction:column;background:rgba(2,7,19,0.97);backdrop-filter:blur(40px);padding:80px 0 40px;opacity:0;visibility:hidden;transition:opacity .4s ease,visibility .4s;overflow-y:auto}
+.mobile-menu.open{opacity:1;visibility:visible}
+.mobile-menu::before{content:'';position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(77,163,255,0.015) 2px,rgba(77,163,255,0.015) 4px);z-index:0}
+.menu-inner{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;padding:0 clamp(2rem,6vw,4rem)}
+.menu-header-label{font-family:var(--font-m);font-size:.48rem;letter-spacing:.5em;color:#9aa0b8;opacity:.5;margin-bottom:2rem;text-transform:uppercase}
+.menu-link{display:flex;align-items:center;gap:16px;text-decoration:none;padding:16px 0;border-bottom:1px solid rgba(77,163,255,0.04);transform:translateX(-30px);opacity:0;transition:all .4s cubic-bezier(0.16,1,0.3,1)}
+.mobile-menu.open .menu-link{transform:translateX(0);opacity:1}
+.mobile-menu.open .menu-link:nth-child(1){transition-delay:.06s}.mobile-menu.open .menu-link:nth-child(2){transition-delay:.10s}.mobile-menu.open .menu-link:nth-child(3){transition-delay:.14s}.mobile-menu.open .menu-link:nth-child(4){transition-delay:.18s}.mobile-menu.open .menu-link:nth-child(5){transition-delay:.22s}.mobile-menu.open .menu-link:nth-child(6){transition-delay:.26s}.mobile-menu.open .menu-link:nth-child(7){transition-delay:.30s}.mobile-menu.open .menu-link:nth-child(8){transition-delay:.34s}
+.menu-link-index{font-family:var(--font-m);font-size:.5rem;color:rgba(77,163,255,0.3);min-width:28px;letter-spacing:.1em}
+.menu-link-text{font-family:var(--font-h);font-size:clamp(1.1rem,4vw,1.6rem);font-weight:700;letter-spacing:.12em;color:#c8cde0;transition:all .3s;text-transform:uppercase}
+.menu-link:hover .menu-link-text,.menu-link.active .menu-link-text{color:#fff}
+.menu-link.active .menu-link-text{background:linear-gradient(90deg,#4DA3FF,#8B5CF6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.menu-link-arrow{margin-left:auto;font-family:var(--font-m);font-size:.7rem;color:rgba(77,163,255,0.2);transition:all .3s}
+.menu-link:hover .menu-link-arrow{color:#4DA3FF;transform:translateX(4px)}
+.menu-deco{position:absolute;bottom:15%;left:5%;width:120px;height:120px;opacity:.04;border:1px solid #4DA3FF;transform:rotate(45deg);z-index:0}
+.menu-deco::before{content:'';position:absolute;inset:12px;border:1px solid #8B5CF6}
 
 
 /* ═══ LORE SHELL ═══ */
@@ -573,12 +593,12 @@ import{getFirestore,collection,doc,onSnapshot,addDoc,updateDoc,deleteDoc,serverT
 import{getAuth,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 const fc={apiKey:"AIzaSyAru7qZX8Gu_b8Y3oNDV-a5PmkrrkRjkcs",authDomain:"jaharta-rp.firebaseapp.com",projectId:"jaharta-rp",storageBucket:"jaharta-rp.firebasestorage.app",messagingSenderId:"217075417489",appId:"1:217075417489:web:4d1e2df422a5cd42411a30"};
 const app=getApps().length?getApps()[0]:initializeApp(fc);const db=getFirestore(app);const auth=getAuth(app);
-enableIndexedDbPersistence(db).catch(e=>{if(e.code!=="failed-precondition"&&e.code!=="unimplemented")window._dbg?.warn('[offline]',e.code);});
+enableIndexedDbPersistence(db).catch(e=>{if(e.code!=="failed-precondition"&&e.code!=="unimplemented")console.warn("[offline]",e.code);});
 
 /* ── Admin CRUD exposé sur window ── */
-window._loreUpdateDoc=async function(id,data){try{await updateDoc(doc(db,'lore',id),data);return true;}catch(e){window._dbg?.error('[lore] update',e);return false;}};
-window._loreAddDoc=async function(data){try{data.createdAt=serverTimestamp();const ref=await addDoc(collection(db,'lore'),data);return ref.id;}catch(e){window._dbg?.error('[lore] add',e);return null;}};
-window._loreDeleteDoc=async function(id){try{await deleteDoc(doc(db,'lore',id));return true;}catch(e){window._dbg?.error('[lore] delete',e);return false;}};
+window._loreUpdateDoc=async function(id,data){try{await updateDoc(doc(db,'lore',id),data);return true;}catch(e){console.error('[lore] update error:',e);return false;}};
+window._loreAddDoc=async function(data){try{data.createdAt=serverTimestamp();const ref=await addDoc(collection(db,'lore'),data);return ref.id;}catch(e){console.error('[lore] add error:',e);return null;}};
+window._loreDeleteDoc=async function(id){try{await deleteDoc(doc(db,'lore',id));return true;}catch(e){console.error('[lore] delete error:',e);return false;}};
 
 const CS=["empires","organisations","dynasties","histoire","pantheon","chronologie","glossaire"];
 onSnapshot(collection(db,"lore"),snap=>{
@@ -592,7 +612,7 @@ onSnapshot(collection(db,"lore"),snap=>{
     }
   });
   if(typeof window._renderAllLore==="function")window._renderAllLore();
-},err=>window._dbg?.warn('[lore]',err.message));
+},err=>console.warn("[lore]",err.message));
 </script>
 <script>
 

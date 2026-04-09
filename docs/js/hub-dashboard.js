@@ -67,7 +67,7 @@ async function loadWallet(){
         gold=personal.gold_kanite||0;
         platinum=personal.platinum_kanite||0;
       }
-    }catch(e){window._dbg?.error('[WALLET]',e)}
+    }catch(e){console.error('[WALLET]',e)}
   }
   // Build wallet items — always show navarites and golden eggs, show kanites if > 0
   let html='';

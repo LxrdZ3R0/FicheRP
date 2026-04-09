@@ -148,7 +148,7 @@ async function ppShopBuy(type){
     await db.collection(C.PARTIES).doc(partyId).update(update);
     cacheInvalidate('_party');showToast('Achat effectué !','success');
     const fresh=await cachedGet(C.PARTIES,partyId,'_party',2);PARTY_DATA=fresh;renderParty(fresh);
-  }catch(err){window._dbg?.error('[PP SHOP]',err);showToast('Erreur: '+err.message,'error');}
+  }catch(err){console.error('[PP SHOP]',err);showToast('Erreur: '+err.message,'error');}
 }
 
 // ── RENDER PROGRESSION ──
@@ -287,7 +287,7 @@ function renderSettings(){
     const theme=(PLAYER&&PLAYER.display_theme)||'purple';
     if(themeEl)themeEl.textContent=theme;
     document.querySelectorAll('.theme-opt').forEach(el=>el.classList.toggle('selected',el.dataset.theme===theme));
-  }catch(err){window._dbg?.error('[SETTINGS]',err);}
+  }catch(err){console.error('[SETTINGS]',err);}
 }
 
 async function setTheme(theme){

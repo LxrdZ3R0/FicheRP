@@ -42,8 +42,8 @@
         snap.forEach(function(d) {
           racesData[d.id] = d.data();
         });
-      }).catch(function(e) { window._dbg?.warn('[races]', e.message); });
-    } catch(e) { window._dbg?.warn('[races]', 'no firebase'); }
+      }).catch(function(e) { console.warn('[races]', e.message); });
+    } catch(e) { console.warn('[races] no firebase'); }
   }
 
   /* ── Save to Firestore ── */

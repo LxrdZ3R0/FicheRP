@@ -1,0 +1,557 @@
+/* ══════════════════════════════════════════════════════════════════
+   BESTIAIRE CARDS — Effets holographiques
+   Adaptés depuis pokemon-cards-holo-effect-v2 (Simey, MIT)
+   Variables CSS d'interaction : --mx, --my, --posx, --posy, --hyp
+   ══════════════════════════════════════════════════════════════════ */
+
+.bcard {
+  --mx: 50%;
+  --my: 50%;
+  --posx: 50%;
+  --posy: 50%;
+  --hyp: 0;
+  --neon: #69d1e9;
+  --radius: 14px;
+
+  position: relative;
+  width: 280px;
+  height: 400px;
+  perspective: 1200px;
+  cursor: pointer;
+  transform-style: preserve-3d;
+  user-select: none;
+}
+
+.bcard__inner {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius);
+  transform-style: preserve-3d;
+  transition: transform 1.6s cubic-bezier(.2,.85,.3,1);
+  box-shadow: 0 18px 38px -12px #000, 0 0 0 1px rgba(255,255,255,0.04);
+}
+
+.bcard.spinning .bcard__inner {
+  transition: transform 1.6s cubic-bezier(.2,.85,.3,1);
+}
+
+.bcard__face {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius);
+  overflow: hidden;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  background: #04060f;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+.bcard__front {
+  z-index: 2;
+}
+
+.bcard__back {
+  transform: rotateY(180deg);
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(160deg, #050912 0%, #0a0f1f 100%);
+  padding: 0;
+}
+
+/* ── IMAGE (front) ── */
+.bcard__img-wrap {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+.bcard__img-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.bcard__img-wrap::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(2,7,19,0.78) 0%, rgba(2,7,19,0) 18%, rgba(2,7,19,0) 60%, rgba(2,7,19,0.92) 100%);
+  pointer-events: none;
+}
+
+/* ── HOLO LAYER (shine) ── */
+.bcard__shine,
+.bcard__shine::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  border-radius: var(--radius);
+  mix-blend-mode: color-dodge;
+  opacity: 0;
+  transition: opacity .35s ease;
+}
+.bcard__shine { opacity: 0; }
+.bcard.interacting .bcard__shine { opacity: 1; }
+
+/* Glare radial highlight (suit la souris) */
+.bcard__glare {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  border-radius: var(--radius);
+  background: radial-gradient(
+    farthest-corner circle at var(--mx) var(--my),
+    rgba(255,255,255,0.55) 5%,
+    rgba(255,255,255,0.18) 18%,
+    rgba(0,0,0,0.55) 80%
+  );
+  mix-blend-mode: overlay;
+  opacity: 0;
+  transition: opacity .35s ease;
+}
+.bcard.interacting .bcard__glare { opacity: 1; }
+
+/* ── OVERLAYS NAME / STARS ── */
+.bcard__top {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  z-index: 5;
+  padding: 14px 16px 18px;
+  pointer-events: none;
+}
+.bcard__name {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 800;
+  font-size: 1rem;
+  letter-spacing: .08em;
+  color: #fff;
+  text-transform: uppercase;
+  text-shadow:
+    0 0 6px var(--neon),
+    0 0 14px var(--neon),
+    0 2px 4px #000;
+  line-height: 1.12;
+}
+
+.bcard__bottom {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  z-index: 5;
+  padding: 14px 16px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  pointer-events: none;
+}
+.bcard__stars {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.05rem;
+  letter-spacing: .12em;
+  color: var(--neon);
+  text-shadow: 0 0 8px var(--neon), 0 0 16px var(--neon), 0 2px 4px #000;
+}
+.bcard__stars .off { color: rgba(255,255,255,0.18); text-shadow: none; }
+.bcard__danger-lbl {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: .48rem;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.55);
+}
+
+/* Border glow */
+.bcard__inner::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius);
+  pointer-events: none;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06), 0 0 0 1px transparent;
+  transition: box-shadow .35s;
+  z-index: 6;
+}
+.bcard.interacting .bcard__inner::after {
+  box-shadow:
+    inset 0 0 0 1px var(--neon),
+    0 0 22px -4px var(--neon),
+    0 0 60px -10px var(--neon);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   HOLO STYLES
+   Adaptés du zip — clip-paths supprimés pour couvrir toute la carte
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── HOLO basique (cosmos rayé) ── */
+.bcard[data-style="holo"] .bcard__shine {
+  --space: 2px;
+  --h: 21;
+  --s: 70%;
+  --l: 50%;
+  --bars: 24px;
+  --bar-color: rgba(255, 255, 255, 0.6);
+  --bar-bg: rgb(10, 10, 10);
+  background-image:
+    repeating-linear-gradient(90deg,
+      hsl(calc(var(--h) * 0), var(--s), var(--l)) 0,
+      hsl(calc(var(--h) * 0), var(--s), var(--l)) calc(var(--space) * 1),
+      black calc(var(--space) * 1.001), black calc(var(--space) * 1.999),
+      hsl(calc(var(--h) * 3), var(--s), var(--l)) calc(var(--space) * 2),
+      hsl(calc(var(--h) * 3), var(--s), var(--l)) calc(var(--space) * 3),
+      black calc(var(--space) * 3.001), black calc(var(--space) * 3.999),
+      hsl(calc(var(--h) * 6), var(--s), var(--l)) calc(var(--space) * 4),
+      hsl(calc(var(--h) * 6), var(--s), var(--l)) calc(var(--space) * 5),
+      black calc(var(--space) * 5.001), black calc(var(--space) * 5.999),
+      hsl(calc(var(--h) * 9), var(--s), var(--l)) calc(var(--space) * 6),
+      hsl(calc(var(--h) * 9), var(--s), var(--l)) calc(var(--space) * 7)
+    ),
+    repeating-linear-gradient(90deg, #c929f1, #0dbde9, #21e985, #eedf10, #f80e7b, #c929f1),
+    radial-gradient(farthest-corner circle at var(--mx) var(--my),
+      rgba(230,230,230,0.85) 0%, rgba(200,200,200,0.1) 25%, black 90%);
+  background-blend-mode: soft-light, soft-light, screen;
+  background-position: center, calc(((50% - var(--posx)) * 25) + 50%) center, var(--posx) var(--posy);
+  background-size: 100% 100%, 200% 200%, 195% 195%;
+  filter: brightness(calc((var(--hyp) + 0.7) * 0.7)) contrast(2.2) saturate(0.85);
+}
+
+/* ── GALAXY ── */
+.bcard[data-style="galaxy"] .bcard__shine {
+  --space: 80px;
+  background-image:
+    repeating-linear-gradient(82deg,
+      #da3832 calc(var(--space) * 1),
+      #dbcc56 calc(var(--space) * 2),
+      #79c73a calc(var(--space) * 3),
+      #3ac0b7 calc(var(--space) * 4),
+      #4762cf calc(var(--space) * 5),
+      #aa45d1 calc(var(--space) * 6),
+      #da3832 calc(var(--space) * 10)
+    ),
+    radial-gradient(farthest-corner circle at var(--mx) var(--my),
+      rgba(255,255,255,0.6) 5%, rgba(150,150,150,0.3) 40%, black 100%);
+  background-blend-mode: color-dodge, screen;
+  background-position: calc(((50% - var(--posx)) * 2.5) + 50%) calc(((50% - var(--posy)) * 2.5) + 50%), center;
+  background-size: 600% 1200%, cover;
+  filter: brightness(0.85) contrast(1.3) saturate(1.5);
+}
+
+/* ── V (rare holo v) ── */
+.bcard[data-style="v"] .bcard__shine,
+.bcard[data-style="v"] .bcard__shine::after {
+  --space: 5%;
+  --angle: 133deg;
+  background-image:
+    repeating-linear-gradient(0deg,
+      #ff7773 calc(var(--space) * 1),
+      #ffed5f calc(var(--space) * 2),
+      #a8ff5f calc(var(--space) * 3),
+      #83fff7 calc(var(--space) * 4),
+      #7894ff calc(var(--space) * 5),
+      #d875ff calc(var(--space) * 6),
+      #ff7773 calc(var(--space) * 7)
+    ),
+    repeating-linear-gradient(var(--angle),
+      #0e152e 0%, #8fa3a3 3.8%, #8fc1c1 4.5%, #8fa3a3 5.2%,
+      #0e152e 10%, #0e152e 12%
+    ),
+    radial-gradient(farthest-corner circle at var(--mx) var(--my),
+      rgba(0,0,0,0.1) 12%, rgba(0,0,0,0.15) 20%, rgba(0,0,0,0.25) 120%);
+  background-blend-mode: screen, hue, hard-light;
+  background-size: 200% 700%, 300%, 200%;
+  background-position: 0% var(--posy), var(--posx) var(--posy), var(--posx) var(--posy);
+  filter: brightness(0.85) contrast(2.6) saturate(0.8);
+}
+.bcard[data-style="v"] .bcard__shine::after {
+  background-position: 0% var(--posy), calc(var(--posx) * -1) calc(var(--posy) * -1), var(--posx) var(--posy);
+  background-size: 200% 400%, 195%, 200%;
+  filter: brightness(1) contrast(2.2) saturate(1.5);
+  mix-blend-mode: soft-light;
+  opacity: inherit;
+}
+
+/* ── VMAX ── */
+.bcard[data-style="vmax"] .bcard__shine {
+  --space: 6%;
+  --angle: 133deg;
+  background-image:
+    repeating-linear-gradient(-33deg,
+      #ce2a24 calc(var(--space) * 1),
+      #9daadf calc(var(--space) * 2),
+      #2d9992 calc(var(--space) * 3),
+      #1d9724 calc(var(--space) * 4),
+      #b540e4 calc(var(--space) * 5),
+      #ce2a24 calc(var(--space) * 6)
+    ),
+    repeating-linear-gradient(var(--angle),
+      rgba(14,21,46,0.5) 0%, #738c8c 2.5%, #64862d 5%, #738c8c 7.5%,
+      rgba(14,21,46,0.5) 10%, rgba(14,21,46,0.5) 15%
+    ),
+    radial-gradient(farthest-corner circle at var(--mx) var(--my),
+      rgba(6,218,255,0.6) 0%, rgba(38,235,127,0.6) 25%, rgba(155,78,228,0.6) 50%, rgba(228,78,90,0.6) 75%);
+  background-blend-mode: color-burn, screen, soft-light;
+  background-size: 1100% 1100%, 600% 600%, 200% 200%;
+  background-position: 0% var(--posy), var(--posx) var(--posy), var(--posx) var(--posy);
+  filter: brightness(calc((var(--hyp) * 0.3) + 0.55)) contrast(2.4) saturate(0.7);
+}
+
+/* ── VSTAR ── */
+.bcard[data-style="vstar"] .bcard__shine,
+.bcard[data-style="vstar"] .bcard__shine::after {
+  --space: 5%;
+  --angle: 133deg;
+  background-image:
+    repeating-linear-gradient(0deg,
+      #ff7773 calc(var(--space) * 1),
+      #ffed5f calc(var(--space) * 2),
+      #a8ff5f calc(var(--space) * 3),
+      #83fff7 calc(var(--space) * 4),
+      #7894ff calc(var(--space) * 5),
+      #d875ff calc(var(--space) * 6),
+      #ff7773 calc(var(--space) * 7)
+    ),
+    repeating-linear-gradient(var(--angle),
+      #0e152e 0%, #8fa3a3 3.8%, #8fc1c1 4.5%, #8fa3a3 5.2%,
+      #0e152e 10%, #0e152e 12%
+    );
+  background-blend-mode: soft-light, hue;
+  background-size: 200% 700%, 300%;
+  background-position: 0% var(--posy), var(--posx) var(--posy);
+  filter: brightness(0.9) contrast(2) saturate(0.85);
+}
+.bcard[data-style="vstar"] .bcard__shine::after {
+  background-position: 0% var(--posy), calc(var(--posx) * -1) calc(var(--posy) * -1);
+  filter: brightness(1.2) contrast(1.5) saturate(1.6);
+  mix-blend-mode: exclusion;
+}
+
+/* ── ULTRA (Full Art) ── */
+.bcard[data-style="ultra"] .bcard__shine,
+.bcard[data-style="ultra"] .bcard__shine::after {
+  --space: 5%;
+  --angle: 133deg;
+  background-image:
+    repeating-linear-gradient(0deg,
+      #ff7773 calc(var(--space) * 1),
+      #ffed5f calc(var(--space) * 2),
+      #a8ff5f calc(var(--space) * 3),
+      #83fff7 calc(var(--space) * 4),
+      #7894ff calc(var(--space) * 5),
+      #d875ff calc(var(--space) * 6),
+      #ff7773 calc(var(--space) * 7)
+    ),
+    repeating-linear-gradient(var(--angle),
+      #0e152e 0%, #8fa3a3 3.8%, #8fc1c1 4.5%, #8fa3a3 5.2%,
+      #0e152e 10%, #0e152e 12%
+    );
+  background-blend-mode: exclusion, hue;
+  background-size: 200% 700%, 300%;
+  background-position: 0% var(--posy), var(--posx) var(--posy);
+  filter: brightness(calc((var(--hyp) * 0.3) + 0.55)) contrast(2) saturate(1.4);
+}
+.bcard[data-style="ultra"] .bcard__shine::after {
+  background-position: 0% var(--posy), calc(var(--posx) * -1) calc(var(--posy) * -1);
+  filter: brightness(calc((var(--hyp) * 0.5) + 0.8)) contrast(1.6) saturate(1.4);
+  mix-blend-mode: exclusion;
+}
+
+/* ── RAINBOW SECRET ── */
+.bcard[data-style="rainbow"] .bcard__shine,
+.bcard[data-style="rainbow"] .bcard__shine::after {
+  --space: 7%;
+  --angle: -20deg;
+  --angle2: 130deg;
+  background-image:
+    repeating-linear-gradient(var(--angle),
+      #fd4741 calc(var(--space) * 1),
+      #fff397 calc(var(--space) * 2),
+      #a8ff5f calc(var(--space) * 3),
+      #83fff7 calc(var(--space) * 4),
+      #4bc6ff calc(var(--space) * 5),
+      #ff49f6 calc(var(--space) * 6),
+      #ff3831 calc(var(--space) * 7)
+    ),
+    repeating-linear-gradient(var(--angle2),
+      rgba(89,46,80,0.5) 0%, #a9dca7 2.5%, #df60ca 5%, #4fcfcf 7.5%,
+      rgba(14,21,46,0.5) 10%, rgba(14,21,46,0.5) 15%
+    );
+  background-size: 500% 500%, 1000% 1000%;
+  background-position: 0% calc(var(--posy) * 1.5), var(--posx) var(--posy);
+  background-blend-mode: color-burn, soft-light;
+  filter: brightness(calc((var(--hyp) * 0.25) + 0.7)) contrast(2.1) saturate(1.05);
+}
+.bcard[data-style="rainbow"] .bcard__shine::after {
+  background-position: 0% calc(var(--posy) * -1), calc(var(--posx) * -1) calc(var(--posy) * -1);
+  mix-blend-mode: exclusion;
+}
+
+/* ── GOLD SECRET ── */
+.bcard[data-style="secret"] .bcard__shine,
+.bcard[data-style="secret"] .bcard__shine::after {
+  --angle: 110deg;
+  background-image:
+    repeating-linear-gradient(var(--angle),
+      rgba(89,46,80,0.5) 0%, #bfa473 2.5%, #d8b75c 5%, #bfa473 7.5%,
+      rgba(14,21,46,0.5) 10%, rgba(14,21,46,0.5) 15%
+    ),
+    radial-gradient(farthest-corner circle at var(--mx) var(--my),
+      #d8b75c 0%, #6d5a2c 40%, #1a1408 90%);
+  background-size: 600% 600%, 200% 200%;
+  background-position: var(--posx) var(--posy), center;
+  background-blend-mode: color-burn;
+  filter: brightness(calc((var(--hyp) * 0.4) + 0.75)) contrast(2.6) saturate(0.8);
+}
+.bcard[data-style="secret"] .bcard__shine::after {
+  background-position: calc(var(--posx) * -1) calc(var(--posy) * -1), center;
+  filter: brightness(calc((var(--hyp) * 0.3) + 0.7)) contrast(2.2) saturate(0.7);
+  mix-blend-mode: exclusion;
+}
+
+/* ── RADIANT ── */
+.bcard[data-style="radiant"] .bcard__shine {
+  --barwidth: 1.2%;
+  --space: 200px;
+  background-image:
+    repeating-linear-gradient(55deg,
+      #ffa19e calc(var(--space) * 1),
+      #55b2ff calc(var(--space) * 2),
+      #ffc792 calc(var(--space) * 3),
+      #82ffd5 calc(var(--space) * 4),
+      #fdaaf0 calc(var(--space) * 5),
+      #94f1ff calc(var(--space) * 6),
+      #ffa19e calc(var(--space) * 7)
+    ),
+    repeating-linear-gradient(45deg,
+      #1a1a1a 0%, #1a1a1a var(--barwidth),
+      #595959 calc(var(--barwidth) + 0.01%), #595959 calc(var(--barwidth) * 2),
+      gray calc(var(--barwidth) * 2 + 0.01%), gray calc(var(--barwidth) * 3),
+      #595959 calc(var(--barwidth) * 3 + 0.01%), #595959 calc(var(--barwidth) * 4),
+      #1a1a1a calc(var(--barwidth) * 4 + 0.01%), #1a1a1a calc(var(--barwidth) * 5)
+    );
+  background-size: 400% 400%, 210% 210%;
+  background-position:
+    calc(((var(--posx) - 50%) * -2.5) + 50%) calc(((var(--posy) - 50%) * -2.5) + 50%),
+    calc(((var(--posx) - 50%) * 1.5) + 50%) calc(((var(--posy) - 50%) * 1.5) + 50%);
+  background-blend-mode: exclusion;
+  filter: brightness(0.95) contrast(3.5) saturate(0.85);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   BACK FACE (markdown content)
+   ══════════════════════════════════════════════════════════════════ */
+
+.bcard__back-img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  display: block;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  filter: saturate(1.05);
+}
+.bcard__back-img-mask {
+  position: relative;
+}
+.bcard__back-img-mask::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(2,7,19,0) 0%, rgba(2,7,19,0) 60%, rgba(5,9,18,0.95) 100%);
+  pointer-events: none;
+}
+
+.bcard__back-content {
+  flex: 1;
+  padding: 18px 18px 20px;
+  overflow-y: auto;
+  font-family: 'Exo 2', sans-serif;
+  font-size: .78rem;
+  line-height: 1.55;
+  color: #c8d6e8;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.15) transparent;
+}
+.bcard__back-content::-webkit-scrollbar { width: 5px; }
+.bcard__back-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.18); border-radius: 3px; }
+
+.bcard__back-content .bcard-h1 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: .95rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  margin: 6px 0 8px;
+  text-transform: uppercase;
+  /* color & text-shadow set inline using --neon */
+}
+.bcard__back-content .bcard-h2 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: .82rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  margin: 8px 0 6px;
+  color: #fff;
+  text-shadow:
+    0 0 6px rgba(255,255,255,0.85),
+    0 0 14px rgba(255,255,255,0.55),
+    0 0 24px rgba(255,255,255,0.25);
+}
+.bcard__back-content .bcard-h3 {
+  font-family: 'Exo 2', sans-serif;
+  font-size: .76rem;
+  font-weight: 600;
+  font-style: italic;
+  letter-spacing: .04em;
+  margin: 6px 0 4px;
+  color: #fff;
+  text-shadow:
+    0 0 5px rgba(255,255,255,0.85),
+    0 0 12px rgba(255,255,255,0.5);
+}
+.bcard__back-content .bcard-p {
+  margin: 0 0 7px;
+  color: #b6c4d8;
+}
+.bcard__back-content .bcard-sep {
+  border: none;
+  height: 1px;
+  margin: 12px 0;
+  background: linear-gradient(90deg, transparent, var(--neon), transparent);
+  opacity: .55;
+}
+
+/* Admin actions on the card */
+.bcard__admin {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 10;
+  display: none;
+  gap: 6px;
+}
+.bcard.is-admin .bcard__admin { display: flex; }
+.bcard__admin button {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: .55rem;
+  letter-spacing: .12em;
+  padding: 5px 9px;
+  border-radius: 4px;
+  cursor: pointer;
+  background: rgba(2,7,19,0.78);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.18);
+  transition: all .2s;
+}
+.bcard__admin .bcard__edit:hover { border-color: var(--neon); color: var(--neon); }
+.bcard__admin .bcard__del:hover { border-color: #ff3b5c; color: #ff3b5c; }
+
+/* Grid layout */
+.bestiaire-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 36px 28px;
+  justify-items: center;
+  padding: 14px 0 60px;
+}

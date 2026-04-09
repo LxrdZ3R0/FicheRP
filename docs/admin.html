@@ -16,18 +16,39 @@ import{getFirestore,collection,doc,getDoc,getDocFromServer,addDoc,deleteDoc,quer
 import{getAuth,onAuthStateChanged,signOut,GoogleAuthProvider,signInWithPopup}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 const firebaseConfig={apiKey:"AIzaSyAru7qZX8Gu_b8Y3oNDV-a5PmkrrkRjkcs",authDomain:"jaharta-rp.firebaseapp.com",projectId:"jaharta-rp",storageBucket:"jaharta-rp.firebasestorage.app",messagingSenderId:"217075417489",appId:"1:217075417489:web:4d1e2df422a5cd42411a30"};
 const app=initializeApp(firebaseConfig);const db=getFirestore(app);const auth=getAuth(app);
-enableIndexedDbPersistence(db).catch(e=>{if(e.code!=='failed-precondition'&&e.code!=='unimplemented')window._dbg?.warn('[offline]',e.code);});
+enableIndexedDbPersistence(db).catch(e=>{if(e.code!=='failed-precondition'&&e.code!=='unimplemented')console.warn('[offline]',e.code);});
 let currentAdmin=null;
 onAuthStateChanged(auth,async user=>{
-  if(!user){showScreen('login');currentAdmin=null;return;}showScreen('loading');try{const snap=await getDocFromServer(doc(db,'admins',user.uid));if(!snap.exists()){await signOut(auth);showScreen('login');document.getElementById('login-error').textContent='⚠ Accès refusé. Votre compte n\'est pas dans la whitelist admin.';return;}const data=snap.data();currentAdmin={uid:user.uid,email:user.email,name:data.name||user.displayName||user.email,role:data.role||'admin'};window._adminRole=currentAdmin.role;window._adminEmail=currentAdmin.email;window._adminName=currentAdmin.name;renderAdminHeader();showScreen('panel');setTimeout(()=>window._setAdminTab?.({role:currentAdmin.role}),50);loadAllFiches();loadPNJ();loadLore();if(currentAdmin.role==='admin')loadLogs();}catch(err){window._dbg?.error('[ADMIN] auth',err);document.getElementById('login-error').textContent='⚠ '+err.message;showScreen('login');}});
+  if(!user){showScreen('login');currentAdmin=null;return;}showScreen('loading');try{const snap=await getDocFromServer(doc(db,'admins',user.uid));if(!snap.exists()){await signOut(auth);showScreen('login');document.getElementById('login-error').textContent='⚠ Accès refusé. Votre compte n\'est pas dans la whitelist admin.';return;}const data=snap.data();currentAdmin={uid:user.uid,email:user.email,name:data.name||user.displayName||user.email,role:data.role||'admin'};window._adminRole=currentAdmin.role;window._adminEmail=currentAdmin.email;window._adminName=currentAdmin.name;renderAdminHeader();showScreen('panel');setTimeout(()=>window._setAdminTab?.({role:currentAdmin.role}),50);loadAllFiches();loadPNJ();loadLore();loadBestiaire();if(currentAdmin.role==='admin')loadLogs();}catch(err){console.error('[ADMIN] ERREUR auth:', err);document.getElementById('login-error').textContent='⚠ '+err.message;showScreen('login');}});
 window.loginGoogle=async function(){const errEl=document.getElementById('login-error');errEl.textContent='';try{await signInWithPopup(auth,new GoogleAuthProvider());}catch(e){if(e.code!=='auth/popup-closed-by-user')errEl.textContent='⚠ Erreur Google : '+e.message;}};
 window.adminLogout=async function(){currentAdmin=null;window._adminRole=null;await signOut(auth);};
-async function writeLog(action,targetId,targetName){if(!currentAdmin)return;try{const d={action,targetId,targetName,byEmail:currentAdmin.email,byUid:currentAdmin.uid,byName:currentAdmin.name,role:currentAdmin.role,at:serverTimestamp()};await addDoc(collection(db,'logs'),d);}catch(e){window._dbg?.warn('[log]',e.message);}}
-function loadLogs(){const q=query(collection(db,'logs'),orderBy('at','desc'));onSnapshot(q,snap=>{const logs=[];snap.forEach(d=>logs.push({id:d.id,...d.data()}));document.getElementById('cnt-logs').textContent=logs.length;renderLogs(logs);},err=>window._dbg?.warn('[logs]',err.message));}
-function loadAllFiches(){const q=query(collection(db,'fiches'),orderBy('createdAt','desc'));onSnapshot(q,snap=>{const fiches=[];snap.forEach(d=>fiches.push({id:d.id,...d.data()}));document.getElementById('cnt-total').textContent=fiches.length;renderTable('table-fiches',fiches);},err=>window._dbg?.warn('[fiches]',err.message));}
+async function writeLog(action,targetId,targetName){if(!currentAdmin)return;try{const d={action,targetId,targetName,byEmail:currentAdmin.email,byUid:currentAdmin.uid,byName:currentAdmin.name,role:currentAdmin.role,at:serverTimestamp()};await addDoc(collection(db,'logs'),d);}catch(e){console.warn('[log]',e.message);}}
+function loadLogs(){const q=query(collection(db,'logs'),orderBy('at','desc'));onSnapshot(q,snap=>{const logs=[];snap.forEach(d=>logs.push({id:d.id,...d.data()}));document.getElementById('cnt-logs').textContent=logs.length;renderLogs(logs);},err=>console.warn('[logs]',err.message));}
+function loadAllFiches(){const q=query(collection(db,'fiches'),orderBy('createdAt','desc'));onSnapshot(q,snap=>{const fiches=[];snap.forEach(d=>fiches.push({id:d.id,...d.data()}));document.getElementById('cnt-total').textContent=fiches.length;renderTable('table-fiches',fiches);},err=>console.warn('[fiches]',err.message));}
 window.deleteFiche=async function(id,name){if(!confirm('Supprimer définitivement cette fiche ?'))return;await deleteDoc(doc(db,'fiches',id));await writeLog('delete',id,name);showToast('Fiche supprimée.','error');};
-function loadPNJ(){const q=query(collection(db,'pnj'),orderBy('createdAt','desc'));onSnapshot(q,snap=>{const pnjs=[];snap.forEach(d=>pnjs.push({id:d.id,...d.data()}));document.getElementById('cnt-pnj').textContent=pnjs.length;const bp=document.getElementById('badge-pnj');bp.textContent=pnjs.length||'';bp.style.display=pnjs.length?'inline':'none';renderPNJTable(pnjs);},err=>window._dbg?.warn('[pnj]',err.message));}
+function loadPNJ(){const q=query(collection(db,'pnj'),orderBy('createdAt','desc'));onSnapshot(q,snap=>{const pnjs=[];snap.forEach(d=>pnjs.push({id:d.id,...d.data()}));document.getElementById('cnt-pnj').textContent=pnjs.length;const bp=document.getElementById('badge-pnj');bp.textContent=pnjs.length||'';bp.style.display=pnjs.length?'inline':'none';renderPNJTable(pnjs);},err=>console.warn('[pnj]',err.message));}
 window.deletePNJ=async function(id,name){if(!confirm('Supprimer définitivement ce PNJ ?'))return;await deleteDoc(doc(db,'pnj',id));await writeLog('delete_pnj',id,name);showToast('PNJ supprimé.','error');};
+function loadBestiaire(){const q=query(collection(db,'bestiaire'),orderBy('createdAt','desc'));onSnapshot(q,snap=>{const arr=[];snap.forEach(d=>arr.push({id:d.id,...d.data()}));const ce=document.getElementById('cnt-best');if(ce)ce.textContent=arr.length;renderBestTable(arr);},err=>console.warn('[best]',err.message));}
+window.deleteBestiaire=async function(id,name){if(!confirm('Supprimer "'+(name||'cette bête')+'" ?'))return;await deleteDoc(doc(db,'bestiaire',id));await writeLog('delete_best',id,name);showToast('Bête supprimée.','error');};
+window.submitBestiaireAdmin=async function(){
+  const v=id=>document.getElementById(id).value.trim();
+  const name=v('ab-name');if(!name){showToast('Nom requis','error');return;}
+  const section=document.getElementById('ab-section').value;
+  const style=document.getElementById('ab-style').value;
+  const danger=Math.max(1,Math.min(5,parseInt(v('ab-danger'))||1));
+  const color=v('ab-color')||'#00e5ff';
+  const image=v('ab-image');
+  const image2=v('ab-image2');
+  const info=document.getElementById('ab-info').value;
+  const data={name,section,style,danger,color,image,info,createdAt:serverTimestamp()};
+  if(section==='compagnon')data.image2=image2;
+  try{
+    const ref=await addDoc(collection(db,'bestiaire'),data);
+    await writeLog('add_best',ref.id,name);
+    showToast('✓ Bête créée !','success');
+    ['ab-name','ab-image','ab-image2','ab-info'].forEach(id=>document.getElementById(id).value='');
+  }catch(e){showToast('Erreur: '+e.message,'error');}
+};
 function showScreen(name){
   document.getElementById('login-screen').style.display=name==='login'?'flex':'none';
   document.getElementById('loading-screen').style.display=name==='loading'?'flex':'none';
@@ -50,7 +71,7 @@ function loadLore(){
     const ce=document.getElementById('cnt-lore');if(ce)ce.textContent=t;
     const as=document.querySelector('.lore-subtab.active');
     if(as)window._renderLoreList(as.dataset.cat);
-  },err=>window._dbg?.warn('[lore]',err.message));
+  },err=>console.warn('[lore]',err.message));
 }
 window._renderLoreList=function(cat){
   const el=document.getElementById('lore-list-'+cat);if(!el)return;
@@ -273,6 +294,7 @@ function renderAdminHeader(){if(!currentAdmin)return;document.getElementById('ad
     <button class="admin-tab active" data-tab="fiches" onclick="switchAdminTab('fiches')">Fiches</button>
     <button class="admin-tab" data-tab="pnj" onclick="switchAdminTab('pnj')">PNJ <span class="tab-badge" id="badge-pnj" style="background:#b06eff"></span></button>
     <button class="admin-tab" data-tab="lore" onclick="switchAdminTab('lore')">Lore</button>
+    <button class="admin-tab" data-tab="bestiaire" onclick="switchAdminTab('bestiaire')">Bestiaire <span class="tab-badge" id="cnt-best" style="background:#00e5ff;color:#04060f;display:inline">0</span></button>
     <button class="admin-tab" data-tab="logs" id="tab-btn-logs" style="display:none" onclick="switchAdminTab('logs')">Logs</button>
   </div>
 
@@ -304,6 +326,24 @@ function renderAdminHeader(){if(!currentAdmin)return;document.getElementById('ad
     <div class="lore-panel" id="lore-panel-pantheon"><div class="lore-form-title">Ajouter un Primordial</div><div class="lore-form"><div class="lf-row"><label>Nom *</label><input type="text" id="lp-name"></div><div class="lf-row"><label>Domaine</label><input type="text" id="lp-domain"></div><div class="lf-row lf-half"><label>Icône</label><input type="text" id="lp-ico" maxlength="4"></div><div class="lf-row lf-half"><label>Couleur</label><input type="color" id="lp-color" value="#8B5CF6"></div><div class="lf-row"><label>Desc *</label><textarea id="lp-desc" rows="3"></textarea></div><div class="lf-row"><label>Détails JSON</label><textarea id="lp-details" rows="3"></textarea></div><button class="lore-submit" onclick="submitLore('pantheon')">+ Ajouter</button></div><div class="lore-list" id="lore-list-pantheon"><div class="empty-list"><span class="empty-list-icon">✨</span>Aucun.</div></div></div>
     <div class="lore-panel" id="lore-panel-chronologie"><div class="lore-form-title">Ajouter une Ère</div><div class="lore-form"><div class="lf-row"><label>Titre *</label><input type="text" id="lc-title"></div><div class="lf-row"><label>Tag ère</label><input type="text" id="lc-era"></div><div class="lf-row lf-half"><label>Couleur</label><input type="color" id="lc-color" value="#00e5cc"></div><div class="lf-row lf-half"><label>Ordre</label><input type="number" id="lc-order" value="0"></div><div class="lf-row"><label>Desc *</label><textarea id="lc-desc" rows="3"></textarea></div><div class="lf-row"><label>Événements (1/ligne)</label><textarea id="lc-events" rows="3"></textarea></div><button class="lore-submit" onclick="submitLore('chronologie')">+ Ajouter</button></div><div class="lore-list" id="lore-list-chronologie"><div class="empty-list"><span class="empty-list-icon">⏳</span>Aucune.</div></div></div>
     <div class="lore-panel" id="lore-panel-glossaire"><div class="lore-form-title">Ajouter un Terme</div><div class="lore-form"><div class="lf-row"><label>Terme *</label><input type="text" id="lg-term"></div><div class="lf-row"><label>Définition *</label><textarea id="lg-def" rows="3"></textarea></div><div class="lf-row"><label>Catégorie</label><input type="text" id="lg-cat"></div><button class="lore-submit" onclick="submitLore('glossaire')">+ Ajouter</button></div><div class="lore-list" id="lore-list-glossaire"><div class="empty-list"><span class="empty-list-icon">📖</span>Aucun.</div></div></div>
+  </div>
+
+  <div class="tab-content" id="tab-bestiaire" data-tab="bestiaire">
+    <div class="tab-header"><div class="tab-title">◈ Bestiaire — Sauvages & Compagnons</div><a href="bestiaire.html" target="_blank" class="action-btn view">↗ Page Bestiaire</a></div>
+    <div class="lore-form-title">Ajouter une bête</div>
+    <div class="lore-form">
+      <div class="lf-row lf-half"><label>Section</label><select id="ab-section"><option value="sauvage">Sauvage</option><option value="compagnon">Compagnon</option></select></div>
+      <div class="lf-row lf-half"><label>Style</label><select id="ab-style"><option value="holo">Holographique</option><option value="galaxy">Galaxie</option><option value="v">Rare V</option><option value="vmax">VMAX</option><option value="vstar">VStar</option><option value="ultra">Ultra Rare</option><option value="rainbow">Rainbow Secret</option><option value="secret">Or Secret</option><option value="radiant">Radiant</option></select></div>
+      <div class="lf-row lf-half"><label>Nom *</label><input type="text" id="ab-name" placeholder="Drakar des Cendres"></div>
+      <div class="lf-row lf-half"><label>Dangerosité (1-5)</label><input type="number" id="ab-danger" min="1" max="5" value="3"></div>
+      <div class="lf-row lf-half"><label>Couleur néon</label><input type="color" id="ab-color" value="#00e5ff"></div>
+      <div class="lf-row lf-half"><label>&nbsp;</label><span style="font-family:'Share Tech Mono',monospace;font-size:.5rem;color:var(--muted);letter-spacing:.1em">Sert pour la lueur + titres "#"</span></div>
+      <div class="lf-row"><label>Image principale (URL)</label><input type="url" id="ab-image" placeholder="https://..."></div>
+      <div class="lf-row"><label>Image dos (Compagnons uniquement)</label><input type="url" id="ab-image2" placeholder="https://..."></div>
+      <div class="lf-row"><label>Informations (markdown : # ## ### ------)</label><textarea id="ab-info" rows="6" placeholder="# Titre principal&#10;## Sous-titre&#10;### Note italique&#10;------&#10;Texte libre…"></textarea></div>
+      <button class="lore-submit" onclick="submitBestiaireAdmin()">+ Ajouter</button>
+    </div>
+    <div class="fiche-list" id="table-bestiaire" style="margin-top:24px"><div class="empty-list"><span class="empty-list-icon">⟳</span>Chargement...</div></div>
   </div>
 
   <div class="tab-content" id="tab-logs" data-tab="logs">
@@ -511,6 +551,63 @@ window.renderPNJTable = function(pnjs) {
     el.appendChild(row);
   });
 }
+
+window.renderBestTable = function(items) {
+  const el = document.getElementById('table-bestiaire');
+  if (!el) return;
+  const role = window._adminRole || 'modo';
+  const STYLE_LABEL = { holo:'Holographique', galaxy:'Galaxie', v:'Rare V', vmax:'VMAX', vstar:'VStar', ultra:'Ultra', rainbow:'Rainbow', secret:'Or Secret', radiant:'Radiant' };
+  if (!items.length) { el.innerHTML = '<div class="empty-list"><span class="empty-list-icon">◈</span>Aucune bête.</div>'; return; }
+  el.innerHTML = '';
+  items.forEach(b => {
+    const c = b.color || '#00e5ff';
+    const sec = b.section === 'compagnon' ? 'Compagnon' : 'Sauvage';
+    const stars = '★'.repeat(Math.max(1, Math.min(5, b.danger || 1)));
+    const date = b.createdAt?.toDate ? b.createdAt.toDate().toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric' }) : '–';
+
+    const row = document.createElement('div');
+    row.className = 'fiche-row';
+
+    const thumb = document.createElement('div');
+    thumb.className = 'fiche-thumb';
+    if (b.image) {
+      const img = document.createElement('img');
+      img.src = b.image; img.loading = 'lazy';
+      img.onerror = () => { thumb.innerHTML = '<div class="fiche-thumb-ph" style="background:'+c+'18;color:'+c+'">'+(b.name||'?')[0]+'</div>'; };
+      thumb.appendChild(img);
+    } else {
+      thumb.innerHTML = '<div class="fiche-thumb-ph" style="background:'+c+'18;color:'+c+'">'+escHtml((b.name||'?')[0])+'</div>';
+    }
+    row.appendChild(thumb);
+
+    const info = document.createElement('div');
+    info.className = 'fiche-info';
+    info.innerHTML = '' +
+      '<div class="fiche-name">' + escHtml(b.name || '(sans nom)') + '</div>' +
+      '<div class="fiche-meta">' +
+        '<span class="fiche-tag" style="color:' + c + ';border-color:' + c + '44;background:' + c + '0e">' + sec + '</span>' +
+        '<span class="fiche-tag" style="color:var(--muted);border-color:rgba(90,122,144,0.3)">' + escHtml(STYLE_LABEL[b.style] || b.style || '?') + '</span>' +
+        '<span class="fiche-tag" style="color:' + c + ';border-color:' + c + '44">' + stars + '</span>' +
+      '</div>' +
+      '<div class="fiche-date">Créé le ' + escHtml(date) + '</div>';
+    row.appendChild(info);
+
+    const actions = document.createElement('div');
+    actions.className = 'fiche-actions';
+    const actRow = document.createElement('div');
+    actRow.className = 'fiche-actions-row';
+    if (role === 'admin') {
+      const del = document.createElement('button');
+      del.className = 'action-btn delete';
+      del.textContent = '✕ Suppr.';
+      del.addEventListener('click', () => window.deleteBestiaire(b.id, b.name));
+      actRow.appendChild(del);
+    }
+    actions.appendChild(actRow);
+    row.appendChild(actions);
+    el.appendChild(row);
+  });
+};
 
 window.renderLogs = function(logs) {
   const el = document.getElementById('table-logs');
