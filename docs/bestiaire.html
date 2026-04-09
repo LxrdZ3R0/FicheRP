@@ -403,6 +403,7 @@ function bindBestCard(card, b) {
   const inner = card.querySelector('.bcard__inner');
   let rot = 0;
   let flipped = false;
+  let adminClick = false;
 
   card.addEventListener('mousemove', e => {
     if (flipped) return;
@@ -426,20 +427,28 @@ function bindBestCard(card, b) {
     card.style.setProperty('--hyp', 0);
   });
 
-  /* Flip on click — 2.5 tours (900°) pour atterrir sur la face opposée */
+  /* Flip on click — 2.5 tours (900°) + zoom avant pendant la rotation */
   card.addEventListener('click', e => {
-    if (e.target.closest('.bcard__admin')) return; /* boutons admin */
+    if (adminClick) { adminClick = false; return; }
+    if (e.target.closest('.bcard__admin')) return;
     flipped = !flipped;
-    rot += 900; /* 900° = 2.5 tours → alterne toujours front/back */
+    rot += 900;
     card.classList.remove('interacting');
+    /* Zoom : la carte s'avance vers le lecteur pendant le flip */
+    if (flipped) {
+      card.style.transition = 'transform 1.6s cubic-bezier(.2,.85,.3,1)';
+      card.style.transform = 'scale(1.08)';
+    } else {
+      card.style.transform = 'scale(1)';
+    }
     inner.style.transform = 'rotateY(' + rot + 'deg)';
   });
 
-  /* Admin actions */
+  /* Admin actions — flag + stopPropagation pour empêcher le flip */
   const editBtn = card.querySelector('.bcard__edit');
   const delBtn  = card.querySelector('.bcard__del');
-  if (editBtn) editBtn.addEventListener('click', ev => { ev.stopPropagation(); openEditBest(b.id); });
-  if (delBtn)  delBtn.addEventListener('click',  ev => { ev.stopPropagation(); deleteBest(b.id, b.name); });
+  if (editBtn) editBtn.addEventListener('click', ev => { ev.stopPropagation(); adminClick = true; openEditBest(b.id); });
+  if (delBtn)  delBtn.addEventListener('click',  ev => { ev.stopPropagation(); adminClick = true; deleteBest(b.id, b.name); });
 }
 
 /* ── Render section ── */

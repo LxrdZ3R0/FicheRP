@@ -20,6 +20,7 @@
   cursor: pointer;
   transform-style: preserve-3d;
   user-select: none;
+  transition: transform 1.6s cubic-bezier(.2,.85,.3,1);
 }
 
 .bcard__inner {
