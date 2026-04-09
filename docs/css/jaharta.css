@@ -166,6 +166,14 @@ body::before {
   text-shadow: var(--glow-md);
 }
 
+.nav-logo img {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  vertical-align: middle;
+  margin-right: 10px;
+}
+
 .nav-cta {
   font-family: var(--font-heading);
   font-size: 0.85rem;
