@@ -125,7 +125,7 @@ async function loadUser(){
       },
     };
     return U;
-  }catch(e){console.error('[LOAD_USER]',e);return null}
+  }catch(e){window._dbg?.error('[LOAD_USER]',e);return null}
 }
 
 async function loadBanners(){
@@ -142,7 +142,7 @@ async function loadBanners(){
       if(rot.manual_override)ri.textContent='Rotation manuelle active';
       else ri.textContent='Prochaine rotation dans '+(rot.days_until_next||'?')+' jour(s)';
     }
-  }catch(e){console.error('[LOAD_BANNERS]',e)}
+  }catch(e){window._dbg?.error('[LOAD_BANNERS]',e)}
 }
 
 // ═══ GACHA BANNER IMAGE (admin-managed, stored in Firestore) ═══
@@ -162,11 +162,11 @@ async function loadGachaBannerImg(){
       img.style.display='none';
       wrap.style.display='none';
     }
-  }catch(e){console.error('[BANNER_IMG]',e)}
+  }catch(e){window._dbg?.error('[BANNER_IMG]',e)}
 }
 async function saveGachaBannerImg(){
   const url=(document.getElementById('gacha-banner-img-url').value||'').trim();
-  if(!U||!window._isAdmin){alert('Accès refusé.');return;}
+  if(!U||!window._isAdmin){showToast('Accès refusé.','error');return;}
   try{
     await db.collection('gacha_config').doc('banner_image').set({url:url,updated_at:new Date().toISOString()});
     const wrap=document.getElementById('gacha-banner-img-wrap');
@@ -177,8 +177,8 @@ async function saveGachaBannerImg(){
       img.style.display='none';wrap.style.display='none';
     }
     JCache.invalidate('gacha_config','banner_image');
-    alert('Image de bannière mise à jour !');
-  }catch(e){console.error('[SAVE_BANNER_IMG]',e);alert('Erreur : '+e.message)}
+    showToast('Image de bannière mise à jour !','success');
+  }catch(e){window._dbg?.error('[SAVE_BANNER_IMG]',e);showToast('Erreur : '+e.message,'error')}
 }
 function showAdminBannerEditor(){
   const editor=document.getElementById('gacha-admin-banner-editor');
@@ -213,7 +213,7 @@ function closeBannerImgEditor(bid){
 async function saveBannerImg(bid){
   const inp=document.getElementById('bie-url-'+bid);
   if(!inp)return;
-  if(!U||!window._isAdmin){alert('Accès refusé.');return;}
+  if(!U||!window._isAdmin){showToast('Accès refusé.','error');return;}
   const url=inp.value.trim();
   try{
     await db.collection('gacha_config').doc('banner_images').set(
@@ -247,8 +247,8 @@ async function saveBannerImg(bid){
     closeBannerImgEditor(bid);
     JCache.invalidate('gacha_config','banner_images');
   }catch(e){
-    console.error('[SAVE_BANNER_IMG]',e);
-    alert('Erreur : '+e.message);
+    window._dbg?.error('[SAVE_BANNER_IMG]',e);
+    showToast('Erreur : '+e.message,'error');
   }
 }
 
@@ -263,7 +263,7 @@ async function loadBannerImages(){
         b.image=data[b.id].url;
       }
     }
-  }catch(e){console.error('[LOAD_BANNER_IMAGES]',e)}
+  }catch(e){window._dbg?.error('[LOAD_BANNER_IMAGES]',e)}
 }
 
 // ═══ UI STATE ═══
@@ -398,7 +398,7 @@ function renderBanners(banners){
               <div class="banner-name" style="color:${c}">${b.name}</div>
               <div class="banner-subtitle">${live?'BANNIÈRE ACTIVE':'EN ATTENTE'}</div>
             </div>
-            <button class="banner-admin-edit" data-bid="${b.id}" onclick="event.stopPropagation();openBannerImgEditor('${b.id}')" title="Modifier l'image">✏️</button>
+            <button class="banner-admin-edit" data-bid="${b.id}" onclick="event.stopPropagation();openBannerImgEditor('${b.id}')" title="Modifier l'image" aria-label="Modifier l'image de la bannière ${b.name}">✏️</button>
           </div>
           <div class="banner-body">
             <div class="banner-desc">${b.description||''}</div>
@@ -412,11 +412,11 @@ function renderBanners(banners){
           <!-- Per-banner image editor (admin only) -->
           <div class="banner-img-editor" id="bie-${b.id}">
             <div class="banner-img-editor-title">⚙ IMAGE — ${b.name}</div>
-            <img class="banner-img-editor-preview" id="bie-prev-${b.id}">
-            <input class="banner-img-editor-input" id="bie-url-${b.id}" placeholder="URL de l'image (PNG, JPG, WEBP…)" value="${b.image||''}" spellcheck="false" autocomplete="off">
+            <img class="banner-img-editor-preview" id="bie-prev-${b.id}" alt="Aperçu image bannière ${b.name}">
+            <input class="banner-img-editor-input" id="bie-url-${b.id}" placeholder="URL de l'image (PNG, JPG, WEBP…)" value="${b.image||''}" spellcheck="false" autocomplete="off" aria-label="URL de l'image pour la bannière ${b.name}">
             <div class="banner-img-editor-actions">
-              <button class="btn-save-img" onclick="event.stopPropagation();saveBannerImg('${b.id}')">SAUVEGARDER</button>
-              <button class="btn-cancel-img" onclick="event.stopPropagation();closeBannerImgEditor('${b.id}')">ANNULER</button>
+              <button class="btn-save-img" onclick="event.stopPropagation();saveBannerImg('${b.id}')" aria-label="Sauvegarder l'image de la bannière ${b.name}">SAUVEGARDER</button>
+              <button class="btn-cancel-img" onclick="event.stopPropagation();closeBannerImgEditor('${b.id}')" aria-label="Annuler la modification de l'image">ANNULER</button>
             </div>
           </div>
         </div>
@@ -509,6 +509,8 @@ async function doPull(count){
   let pullRef;
   const specialzActive = window.GACHA_SPECIALZ_ACTIVE && count === 10 && !window.GACHA_SPECIALZ_FIRST_PULL_USED;
   try{
+    /* Re-vérifier U après l'await précédent — un logout async peut l'avoir mis à null */
+    if(!U||!U.id){showToast('Session expirée — reconnecte-toi','error');_pullBusy=false;updNV();return;}
     pullRef=await db.collection('gacha_pulls').add({
       user_id:U.id,
       banner_id:SB,
@@ -517,23 +519,27 @@ async function doPull(count){
       created_at:new Date().toISOString(),
     });
   }catch(e){
-    console.error('[PULL]',e);
-    alert('Erreur réseau — réessaye');
+    window._dbg?.error('[PULL]',e);
+    showToast('Erreur réseau — réessaye','error');
     _pullBusy=false;updNV();return;
   }
 
   // Start animation + wait for bot result in parallel
   const resultPromise=new Promise((resolve,reject)=>{
-    let timeout=setTimeout(()=>{unsub();reject(new Error('Timeout — le bot n\'a pas répondu'))},30000);
-    const unsub=db.collection('gacha_pulls').doc(pullRef.id).onSnapshot(snap=>{
-      const d=snap.data();
-      if(!d)return;
-      if(d.status==='completed'){
-        clearTimeout(timeout);unsub();resolve(d);
-      }else if(d.status==='error'){
-        clearTimeout(timeout);unsub();reject(new Error(d.error||'Erreur du bot'));
-      }
-    });
+    let unsub=()=>{};
+    const timeout=setTimeout(()=>{unsub();reject(new Error('Timeout — le bot n\'a pas répondu'))},30000);
+    unsub=db.collection('gacha_pulls').doc(pullRef.id).onSnapshot(
+      snap=>{
+        const d=snap.data();
+        if(!d)return;
+        if(d.status==='completed'){
+          clearTimeout(timeout);unsub();resolve(d);
+        }else if(d.status==='error'){
+          clearTimeout(timeout);unsub();reject(new Error(d.error||'Erreur du bot'));
+        }
+      },
+      err=>{clearTimeout(timeout);reject(err);}  /* listener error → cleanup immédiat */
+    );
   });
 
   try{
@@ -555,9 +561,9 @@ async function doPull(count){
     await loadUser();
     showMainUI();
   }catch(e){
-    console.error('[PULL]',e);
+    window._dbg?.error('[PULL]',e);
     dismiss();
-    alert(e.message||'Erreur lors du pull');
+    showToast(e.message||'Erreur lors du pull','error');
     JCache.invalidate('players',U?U.id:'');JCache.invalidate('gacha_pity',U?U.id:'');
     await loadUser();
     showMainUI();

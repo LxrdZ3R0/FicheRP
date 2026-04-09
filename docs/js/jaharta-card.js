@@ -305,6 +305,13 @@ class JahartaCard extends HTMLElement {
     bindScramble(card);
   }
 
+  disconnectedCallback() {
+    /* Nettoyer les intervals de scramble pour éviter les fuites mémoire */
+    this.querySelectorAll("[data-orig]").forEach(el => {
+      if (el._scrI) { clearInterval(el._scrI); el._scrI = null; }
+    });
+  }
+
   updateAdminVisibility(isAdmin) {
     const row = this.querySelector(".card-admin-row");
     if (row) row.style.display = isAdmin ? "flex" : "none";
