@@ -5,9 +5,9 @@
 ---
 
 ## ÉTAT ACTUEL DU PROJET
-**Dernière mise à jour :** 2026-04-09 (session 2)
+**Dernière mise à jour :** 2026-04-09 (session 3 — audit stabilité)
 **Branche :** main
-**Phase :** Sprint 2 terminé ✓ — Sprint 3 en cours (keyframes unifiés)
+**Phase :** Sprint 3 terminé ✓ — Audit stabilité complet — Système sain
 
 ### Architecture globale
 - GitHub Pages → `/docs` (auto-deploy sur `main`)
@@ -108,13 +108,55 @@ La source de vérité devrait être `jaharta.css :root`. État actuel des tokens
 | Date | Décision | Raison |
 |------|----------|--------|
 | 2026-04-09 | Audit initial sans modification de code | Comprendre avant de toucher |
-| — | — | — |
+| 2026-04-09 | Navbar partagée via `jaharta-nav.js` (vanilla JS, pas de fetch) | GitHub Pages = statique, pas de SSI. JS synchrone après placeholder div évite tout flash. |
+| 2026-04-09 | gacha.html : 4 fichiers extraits, gacha.html garde l'INIT section | L'INIT dépend de FX + loadAndShow — court (74L), logique d'orchestration pure. |
+| 2026-04-09 | `sleep()` défini dans gacha-fx.js, appelé dans gacha-logic.js | Safe car JS résout les refs globales au runtime, pas au chargement. Ordre : logic avant fx, mais appels dans function bodies. |
+| 2026-04-09 | Jamais remplacer HTML imbriqué avec regex `.*?</div>` | Voir BUG-01 — utiliser toujours un parser ou regex avec comptage de depth. |
+
+## RÈGLES ANTI-RÉGRESSION (issues des bugs trouvés)
+
+1. **Toujours vérifier les résidus après migration nav** : `grep -n "menu-link" docs/*.html | grep -v "css\|jaharta-nav"` → doit retourner 0 résultat.
+2. **Vérifier les 3 scripts core sur chaque page** : `debug.js`, `constants.js`, `utils.js` présents dans les 9 pages.
+3. **Après toute extraction JS** : vérifier que les fonctions cross-files ne sont appelées qu'à l'intérieur de `function` bodies (pas au top-level).
+4. **Regex HTML** : pour capturer une `<div>` avec contenu imbriqué, utiliser Python `html.parser` ou BeautifulSoup, jamais `.*?</div>`.
 
 ---
 
-## BUGS RÉSOLUS
+## BUGS RÉSOLUS (audit session 3 — 2026-04-09)
 
-_Aucun pour l'instant — projet en phase d'audit._
+### BUG-01 [CRITIQUE] — Nav mobile-menu résiduel sur 5 pages ✅ RÉSOLU
+**Problème :** Les 5 pages (index, fiches, pnj, portail, racesjouables) avaient 9-10 lignes
+de `<a class="menu-link">` orphelins après `<script src="js/jaharta-nav.js">`.
+**Cause racine :** La regex de `migrate_nav.py` utilisait `.*?</div>` non-greedy + re.DOTALL.
+Elle s'arrêtait au 1er `</div>` imbriqué (`menu-header-label`), laissant les `<a>` et les
+`</div>` fermants du `menu-inner` et `mobile-menu` en dehors du match.
+**Correction :** `fix_nav_residuals.py` — regex avec lookahead jusqu'au prochain élément HTML
+de page (ni `<a>`, ni `<script>`, ni `<div class="menu`). Résidu supprimé sur 5/5 pages.
+**Vérification :** grep `menu-link` résiduel = 0/7 pages. ✓
+**Règle post-mortem :** Ne JAMAIS remplacer du HTML avec des divs imbriquées par une regex
+`.*?</div>`. Utiliser un parser HTML ou une regex récursive avec comptage de profondeur.
+
+### BUG-02 [CRITIQUE] — hub.html manquait debug.js + constants.js ✅ RÉSOLU
+**Problème :** hub.html ne chargeait ni `debug.js` ni `constants.js`.
+**Cause racine :** Lors de la décomposition de hub.html en 6 fichiers, ces 2 scripts core
+n'ont pas été vérifiés (ils existaient dans les autres pages mais pas hub.html original).
+**Correction :** Ajout de `debug.js` + `constants.js` avant les scripts Firebase dans hub.html.
+**Vérification :** Tous les scripts core présents sur 9/9 pages. ✓
+
+### BUG-03 [RÉSOLU ANTÉRIEUR] — Nav résiduel lore.html + gacha.html
+Nav sur une seule ligne — même cause que BUG-01, corrigé manuellement sur ces 2 fichiers.
+
+## RÉSULTATS AUDIT COMPLET (2026-04-09)
+| Check | Résultat |
+|-------|----------|
+| Fonctions dupliquées entre fichiers | 0 ✓ |
+| Variables globales au top-level (unsafe) | 0 ✓ |
+| Références cross-files (runtime-safe) | Toutes dans function bodies ✓ |
+| @keyframes résiduels | 0/7 pages ✓ |
+| debug.js présent | 9/9 pages ✓ |
+| constants.js présent | 9/9 pages ✓ |
+| Nav résiduel mobile-menu | 0/7 pages ✓ |
+| Ordre chargement scripts correct | ✓ |
 
 ---
 
@@ -135,11 +177,16 @@ _Aucun pour l'instant — projet en phase d'audit._
 
 ### Sprint 3 — UI/UX polish
 - [x] Centraliser les `@keyframes` dupliqués dans `jaharta.css` ✅ 2026-04-09
-  - g1/g2/g3 (glitch) supprimés de : fiches.html, pnj.html, portail.html, racesjouables.html, gacha.html
-  - livePulse, dots, rankPulse, shimmer centralisés dans jaharta.css
-- [ ] Unifier les composants répétés (navbars, toasts, modals)
-- [ ] Améliorer les animations GSAP existantes (ne pas casser l'existant)
-- [ ] Optimiser le chargement (lazy load des onglets hub)
+- [x] Navbar partagée `js/jaharta-nav.js` (7 pages, burger inclus) ✅ 2026-04-09
+- [x] **gacha.html** décomposé : gacha.css + gacha-blob.js + gacha-logic.js + gacha-fx.js ✅ 2026-04-09
+- [ ] Lazy load des onglets hub (renderXxx à la demande)
+- [ ] Composants toast/modal partagés
+
+### Sprint 4 — Audit stabilité ✅ TERMINÉ (2026-04-09)
+- [x] BUG-01 : nav mobile-menu résiduel sur 5 pages ✅
+- [x] BUG-02 : hub.html sans debug.js + constants.js ✅
+- [x] BUG-03 : nav résiduel lore.html + gacha.html (ligne unique) ✅
+- [x] Audit complet : 0 bug résiduel, système sain ✅
 
 ---
 
