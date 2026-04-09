@@ -20,7 +20,39 @@
   cursor: pointer;
   transform-style: preserve-3d;
   user-select: none;
-  transition: transform 1.6s cubic-bezier(.2,.85,.3,1);
+  transition: transform 1.6s cubic-bezier(.2,.85,.3,1), opacity .4s;
+  z-index: 1;
+}
+
+/* ── Backdrop flou quand une carte est retournée ── */
+.flip-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 8000;
+  background: rgba(2,5,15,0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .5s ease, visibility .5s;
+  cursor: pointer;
+}
+.flip-backdrop.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* ── Carte en mode focus (retournée, centrée) ── */
+.bcard--focused {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) scale(1.25) !important;
+  z-index: 8001 !important;
+  transition: transform 1.6s cubic-bezier(.2,.85,.3,1),
+              top .6s cubic-bezier(.2,.85,.3,1),
+              left .6s cubic-bezier(.2,.85,.3,1),
+              opacity .4s;
 }
 
 .bcard__inner {
