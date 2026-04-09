@@ -371,6 +371,10 @@ function buildBestCard(b) {
     : '';
 
   card.innerHTML =
+    '<div class="bcard__admin">' +
+      '<button class="bcard__edit" type="button">Éditer</button>' +
+      '<button class="bcard__del" type="button">Suppr.</button>' +
+    '</div>' +
     '<div class="bcard__inner">' +
       '<div class="bcard__face bcard__front">' +
         '<div class="bcard__img-wrap">' +
@@ -382,10 +386,6 @@ function buildBestCard(b) {
         '<div class="bcard__bottom">' +
           '<div class="bcard__danger-lbl">DANGER</div>' +
           '<div class="bcard__stars">' + renderStars(b.danger) + '</div>' +
-        '</div>' +
-        '<div class="bcard__admin">' +
-          '<button class="bcard__edit" type="button">Éditer</button>' +
-          '<button class="bcard__del" type="button">Suppr.</button>' +
         '</div>' +
       '</div>' +
       '<div class="bcard__face bcard__back">' +
@@ -434,30 +434,53 @@ function bindBestCard(card, b) {
   });
 
   card.addEventListener('mouseleave', () => {
+    if (flipped) return;
     card.classList.remove('interacting');
     inner.style.transform = 'rotateY(' + rot + 'deg)';
     card.style.setProperty('--hyp', 0);
   });
 
-  /* ── Flip : carte au centre de l'écran + backdrop flou ── */
+  /* ── Flip : la carte vole de sa position vers le centre de l'écran ── */
   function openFlip() {
     if (activeFlipCard && activeFlipCard !== card) activeFlipCard._closeFlip();
+
+    /* Calcul du delta entre la position actuelle de la carte et le centre du viewport */
+    const rect = card.getBoundingClientRect();
+    const cardCX = rect.left + rect.width / 2;
+    const cardCY = rect.top + rect.height / 2;
+    const vpCX = window.innerWidth / 2;
+    const vpCY = window.innerHeight / 2;
+    const dx = vpCX - cardCX;
+    const dy = vpCY - cardCY;
+
     flipped = true;
     rot += 900;
     card.classList.remove('interacting');
     card.classList.add('bcard--focused');
     flipBackdrop.classList.add('active');
     activeFlipCard = card;
+
+    card.style.transform = 'translate(' + dx.toFixed(1) + 'px, ' + dy.toFixed(1) + 'px) scale(1.2)';
     inner.style.transform = 'rotateY(' + rot + 'deg)';
   }
 
   function closeFlip() {
     flipped = false;
     rot += 900;
-    card.classList.remove('bcard--focused');
-    flipBackdrop.classList.remove('active');
-    activeFlipCard = null;
+
+    /* Retour à la position initiale */
+    card.style.transform = 'translate(0px, 0px) scale(1)';
     inner.style.transform = 'rotateY(' + rot + 'deg)';
+
+    flipBackdrop.classList.remove('active');
+
+    /* Retirer la classe focused après la fin de l'animation */
+    const onEnd = () => {
+      card.classList.remove('bcard--focused');
+      card.removeEventListener('transitionend', onEnd);
+    };
+    card.addEventListener('transitionend', onEnd);
+    activeFlipCard = null;
   }
   card._closeFlip = closeFlip;
 

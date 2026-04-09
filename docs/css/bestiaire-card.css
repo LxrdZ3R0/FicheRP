@@ -20,7 +20,7 @@
   cursor: pointer;
   transform-style: preserve-3d;
   user-select: none;
-  transition: transform 1.6s cubic-bezier(.2,.85,.3,1), opacity .4s;
+  transition: transform 1.6s cubic-bezier(.2,.85,.3,1);
   z-index: 1;
 }
 
@@ -42,17 +42,9 @@
   visibility: visible;
 }
 
-/* ── Carte en mode focus (retournée, centrée) ── */
+/* ── Carte en mode focus (retournée, centrée via translate JS) ── */
 .bcard--focused {
-  position: fixed !important;
-  top: 50% !important;
-  left: 50% !important;
-  transform: translate(-50%, -50%) scale(1.25) !important;
   z-index: 8001 !important;
-  transition: transform 1.6s cubic-bezier(.2,.85,.3,1),
-              top .6s cubic-bezier(.2,.85,.3,1),
-              left .6s cubic-bezier(.2,.85,.3,1),
-              opacity .4s;
 }
 
 .bcard__inner {
@@ -598,14 +590,15 @@
   opacity: .55;
 }
 
-/* Admin actions on the card */
+/* Admin actions on the card — hors du contexte 3D */
 .bcard__admin {
   position: absolute;
   top: 10px;
   right: 10px;
-  z-index: 10;
+  z-index: 20;
   display: none;
   gap: 6px;
+  pointer-events: auto;
 }
 .bcard.is-admin .bcard__admin { display: flex; }
 .bcard__admin button {
