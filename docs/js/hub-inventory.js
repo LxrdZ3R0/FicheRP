@@ -373,7 +373,7 @@ async function equipWholeSet(setId){
     cacheInvalidate('_inventory');
     renderInventory();
   }catch(err){
-    console.error('[EQUIP_SET]',err);
+    window._dbg?.error('[EQUIP_SET]',err);
     showEquipToast('❌ Erreur — réessaye',true);
   }
 }
@@ -662,7 +662,7 @@ async function toggleEquip(itemId){
     cacheInvalidate('_inventory');
     renderInventory();
   }catch(err){
-    console.error('[EQUIP]',err);
+    window._dbg?.error('[EQUIP]',err);
     showEquipToast('❌ Erreur — réessaye',true);
     // Forcer re-render pour resynchroniser le DOM
     renderInventory();
@@ -756,7 +756,7 @@ async function confirmDelete(){
     cacheInvalidate('_inventory');
     renderInventory();
   }catch(err){
-    console.error('[DELETE]',err);
+    window._dbg?.error('[DELETE]',err);
     showEquipToast('❌ Erreur lors de la suppression',true);
   }
 }
