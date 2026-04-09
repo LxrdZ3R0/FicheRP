@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -n \"TODO\\\\|FIXME\\\\|HACK\\\\|XXX\\\\|console\\\\.log\\\\|debugger\" /c/Users/Matys/Project/JahartaRP/docs/js/*.js /c/Users/Matys/Project/JahartaRP/docs/*.html)",
+      "Bash(grep -n \"console\\\\.log\" /c/Users/Matys/Project/JahartaRP/docs/js/*.js /c/Users/Matys/Project/JahartaRP/docs/*.html)",
+      "Bash(grep -n \"console\\\\.log\" /c/Users/Matys/Project/JahartaRP/docs/*.html /c/Users/Matys/Project/JahartaRP/docs/js/*.js)",
+      "Bash(grep -c \"--blue\\\\|--font-h\\\\|--font-b\\\\|--font-m\\\\|--bg:#020713\\\\|--text:#e2\" /c/Users/Matys/Project/JahartaRP/docs/index.html /c/Users/Matys/Project/JahartaRP/docs/hub.html /c/Users/Matys/Project/JahartaRP/docs/fiches.html /c/Users/Matys/Project/JahartaRP/docs/pnj.html /c/Users/Matys/Project/JahartaRP/docs/portail.html /c/Users/Matys/Project/JahartaRP/docs/lore.html)",
+      "Bash(grep -rn \"console\\\\.log\" /c/Users/Matys/Project/JahartaRP/docs/*.html /c/Users/Matys/Project/JahartaRP/docs/js/*.js)",
+      "Bash(grep -n \":root\" /c/Users/Matys/Project/JahartaRP/docs/*.html)",
+      "Bash(mv hub_tmp.html hub.html)",
+      "Bash(git commit -m ':*)"
+    ]
+  }
+}
