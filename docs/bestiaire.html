@@ -399,14 +399,26 @@ function buildBestCard(b) {
 }
 
 /* ── Interactivité (tilt + flip + admin) ── */
+
+/* Backdrop global pour le mode flip */
+const flipBackdrop = document.createElement('div');
+flipBackdrop.className = 'flip-backdrop';
+document.body.appendChild(flipBackdrop);
+let activeFlipCard = null;
+
+flipBackdrop.addEventListener('click', () => {
+  if (activeFlipCard) activeFlipCard._closeFlip();
+});
+
 function bindBestCard(card, b) {
   const inner = card.querySelector('.bcard__inner');
   let rot = 0;
   let flipped = false;
-  let adminClick = false;
 
+  /* ── Tilt 3D (front uniquement, pas sur les boutons admin) ── */
   card.addEventListener('mousemove', e => {
     if (flipped) return;
+    if (e.target.closest('.bcard__admin')) return;
     const r = card.getBoundingClientRect();
     const px = (e.clientX - r.left) / r.width;
     const py = (e.clientY - r.top) / r.height;
@@ -427,28 +439,42 @@ function bindBestCard(card, b) {
     card.style.setProperty('--hyp', 0);
   });
 
-  /* Flip on click — 2.5 tours (900°) + zoom avant pendant la rotation */
-  card.addEventListener('click', e => {
-    if (adminClick) { adminClick = false; return; }
-    if (e.target.closest('.bcard__admin')) return;
-    flipped = !flipped;
+  /* ── Flip : carte au centre de l'écran + backdrop flou ── */
+  function openFlip() {
+    if (activeFlipCard && activeFlipCard !== card) activeFlipCard._closeFlip();
+    flipped = true;
     rot += 900;
     card.classList.remove('interacting');
-    /* Zoom : la carte s'avance vers le lecteur pendant le flip */
-    if (flipped) {
-      card.style.transition = 'transform 1.6s cubic-bezier(.2,.85,.3,1)';
-      card.style.transform = 'scale(1.08)';
-    } else {
-      card.style.transform = 'scale(1)';
-    }
+    card.classList.add('bcard--focused');
+    flipBackdrop.classList.add('active');
+    activeFlipCard = card;
     inner.style.transform = 'rotateY(' + rot + 'deg)';
+  }
+
+  function closeFlip() {
+    flipped = false;
+    rot += 900;
+    card.classList.remove('bcard--focused');
+    flipBackdrop.classList.remove('active');
+    activeFlipCard = null;
+    inner.style.transform = 'rotateY(' + rot + 'deg)';
+  }
+  card._closeFlip = closeFlip;
+
+  card.addEventListener('click', e => {
+    if (e.target.closest('.bcard__admin')) return;
+    if (!flipped) {
+      openFlip();
+    } else {
+      closeFlip();
+    }
   });
 
-  /* Admin actions — flag + stopPropagation pour empêcher le flip */
+  /* ── Admin actions — stopPropagation bloque flip ET tilt ── */
   const editBtn = card.querySelector('.bcard__edit');
   const delBtn  = card.querySelector('.bcard__del');
-  if (editBtn) editBtn.addEventListener('click', ev => { ev.stopPropagation(); adminClick = true; openEditBest(b.id); });
-  if (delBtn)  delBtn.addEventListener('click',  ev => { ev.stopPropagation(); adminClick = true; deleteBest(b.id, b.name); });
+  if (editBtn) editBtn.addEventListener('click', ev => { ev.stopPropagation(); openEditBest(b.id); });
+  if (delBtn)  delBtn.addEventListener('click',  ev => { ev.stopPropagation(); deleteBest(b.id, b.name); });
 }
 
 /* ── Render section ── */
