@@ -238,8 +238,8 @@ footer{border-top:1px solid rgba(255,255,255,0.04);padding:3rem clamp(1.5rem,4vw
         <input type="text" id="best-name" placeholder="Ex: Drakar des Cendres">
       </div>
       <div class="fg">
-        <label>Dangerosité (1–5)</label>
-        <input type="number" id="best-danger" min="1" max="5" value="3">
+        <label>Dangerosité (1–10)</label>
+        <input type="number" id="best-danger" min="1" max="10" value="3">
       </div>
     </div>
 
@@ -333,11 +333,25 @@ function renderBestMD(text, neon) {
   return html;
 }
 
-/* ── Render stars (1–5) ── */
+/* ── Render stars (1–10) — 10e étoile plus grande, italique + holo ── */
 function renderStars(n) {
-  const v = Math.max(1, Math.min(5, parseInt(n) || 1));
+  const v = Math.max(1, Math.min(10, parseInt(n) || 1));
   let s = '';
-  for (let i = 0; i < 5; i++) s += i < v ? '★' : '<span class="off">★</span>';
+  for (let i = 0; i < 10; i++) {
+    if (i < v) {
+      if (i === 9) {
+        s += '<span class="star10">★</span>';
+      } else {
+        s += '★';
+      }
+    } else {
+      if (i === 9) {
+        s += '<span class="off star10">★</span>';
+      } else {
+        s += '<span class="off">★</span>';
+      }
+    }
+  }
   return s;
 }
 
@@ -412,11 +426,11 @@ function bindBestCard(card, b) {
     card.style.setProperty('--hyp', 0);
   });
 
-  /* Flip on click — 720° spin, alterne front/back */
+  /* Flip on click — 2.5 tours (900°) pour atterrir sur la face opposée */
   card.addEventListener('click', e => {
     if (e.target.closest('.bcard__admin')) return; /* boutons admin */
     flipped = !flipped;
-    rot += flipped ? 900 : 720; /* 900 = 2.5 tours pour atterrir au dos, 720 retour au front */
+    rot += 900; /* 900° = 2.5 tours → alterne toujours front/back */
     card.classList.remove('interacting');
     inner.style.transform = 'rotateY(' + rot + 'deg)';
   });
@@ -582,7 +596,7 @@ function collectBestForm() {
   const section = document.getElementById('best-section').value;
   const style = document.getElementById('best-style').value;
   const dangerRaw = parseInt(document.getElementById('best-danger').value, 10);
-  const danger = Math.max(1, Math.min(5, isNaN(dangerRaw) ? 1 : dangerRaw));
+  const danger = Math.max(1, Math.min(10, isNaN(dangerRaw) ? 1 : dangerRaw));
   const color = document.getElementById('best-color-hex').value || STYLE_DEFAULT_NEON[style] || '#00e5ff';
   const image = document.getElementById('best-image').value.trim();
   const image2 = document.getElementById('best-image2').value.trim();

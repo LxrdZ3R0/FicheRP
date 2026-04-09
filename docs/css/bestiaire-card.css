@@ -149,12 +149,56 @@
 }
 .bcard__stars {
   font-family: 'Orbitron', sans-serif;
-  font-size: 1.05rem;
-  letter-spacing: .12em;
+  font-size: .72rem;
+  font-style: italic;
+  letter-spacing: .05em;
   color: var(--neon);
   text-shadow: 0 0 8px var(--neon), 0 0 16px var(--neon), 0 2px 4px #000;
+  display: flex;
+  align-items: center;
+  gap: 1px;
 }
-.bcard__stars .off { color: rgba(255,255,255,0.18); text-shadow: none; }
+.bcard__stars .off { color: rgba(255,255,255,0.12); text-shadow: none; }
+
+/* 10e étoile — plus grande + effet holographique */
+.bcard__stars .star10 {
+  font-size: 1.3rem;
+  margin-left: 3px;
+  position: relative;
+  display: inline-block;
+  background: linear-gradient(
+    135deg,
+    #ff6b9d 0%,
+    #ffd60a 16%,
+    #82ffd5 33%,
+    #00e5ff 50%,
+    #8B5CF6 66%,
+    #ff49f6 83%,
+    #ff6b9d 100%
+  );
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: star10-holo 3s ease infinite;
+  filter: drop-shadow(0 0 6px var(--neon)) drop-shadow(0 0 14px var(--neon));
+}
+.bcard__stars .star10.off {
+  background: none;
+  -webkit-background-clip: unset;
+  -webkit-text-fill-color: unset;
+  background-clip: unset;
+  color: rgba(255,255,255,0.12);
+  text-shadow: none;
+  filter: none;
+  animation: none;
+}
+
+@keyframes star10-holo {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
 .bcard__danger-lbl {
   font-family: 'Share Tech Mono', monospace;
   font-size: .48rem;
