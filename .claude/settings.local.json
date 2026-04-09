@@ -35,7 +35,9 @@
       "Bash(sed -n '2495,2515p' docs/gacha.html)",
       "Bash(sed -n '1172,1175p' docs/gacha.html)",
       "Bash(sed -n '1430,1445p' docs/gacha.html)",
-      "Bash(python3 split_gacha.py)"
+      "Bash(python3 split_gacha.py)",
+      "Bash(python3 -c ':*)",
+      "Bash(python3 audit.py)"
     ]
   }
 }
