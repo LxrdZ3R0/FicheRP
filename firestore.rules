@@ -79,6 +79,13 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
+    // ── BESTIAIRE ─────────────────────────────────────────────────────────────
+    // Cartes du bestiaire (Sauvages + Compagnons). Lecture publique, écriture admin.
+    match /bestiaire/{id} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
     // ── LOGS ─────────────────────────────────────────────────────────────────
     // Lecture : admins. Création : admins (le panel crée des logs après chaque action).
     // Pas de modification ni suppression pour garantir l'intégrité de l'audit trail.
