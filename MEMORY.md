@@ -5,9 +5,9 @@
 ---
 
 ## ÉTAT ACTUEL DU PROJET
-**Dernière mise à jour :** 2026-04-09
+**Dernière mise à jour :** 2026-04-09 (session 2)
 **Branche :** main
-**Phase :** Sprint 1 — Stabilisation — P3 + P2 résolus ✓
+**Phase :** Sprint 2 terminé ✓ — Sprint 3 en cours (keyframes unifiés)
 
 ### Architecture globale
 - GitHub Pages → `/docs` (auto-deploy sur `main`)
@@ -19,29 +19,37 @@
 ### Fichiers clés et tailles (lignes)
 | Fichier | Lignes | Statut |
 |---------|--------|--------|
-| `hub.html` | 4042 | CRITIQUE — monolithe |
-| `gacha.html` | 2662 | GRAVE |
-| `css/jaharta.css` | 2450 | Gonflé mais acceptable |
-| `fiches.html` | 1363 | Limite haute |
+| `hub.html` | 1073 | −74% ✓ (était 4042) |
+| `css/hub.css` | 878 | Extrait de hub.html ✓ |
+| `js/hub-inventory.js` | 763 | Extrait ✓ |
+| `js/hub-shops.js` | 736 | Extrait ✓ |
+| `js/hub-renders.js` | 300 | Extrait ✓ |
+| `js/hub-character.js` | 200 | Extrait ✓ |
+| `js/hub-dashboard.js` | 121 | Extrait ✓ |
+| `gacha.html` | 2638 | GRAVE — à découper Sprint 4 |
+| `css/jaharta.css` | 2500 | Source de vérité + keyframes partagés |
+| `fiches.html` | 1349 | Limite haute |
+| `racesjouables.html` | 1127 | OK |
 | `lore.html` | 1296 | Limite haute |
-| `racesjouables.html` | 1137 | OK |
-| `index.html` | 851 | OK |
-| `pnj.html` | 793 | OK |
+| `pnj.html` | 782 | OK |
+| `portail.html` | 386 | OK |
 | `admin.html` | 559 | OK |
 
 ---
 
 ## PROBLÈMES CRITIQUES IDENTIFIÉS
 
-### P1 — hub.html : monolithe de 4042 lignes ✅ PARTIELLEMENT RÉSOLU (2026-04-09)
+### P1 — hub.html : monolithe de 4042 lignes ✅ RÉSOLU (2026-04-09)
 **Avant :** 4042 lignes tout dans un seul fichier.
-**Après décomposition :**
-- `hub.html` : 1670 lignes (−59% ✓)
+**Après décomposition complète :**
+- `hub.html` : 1073 lignes (−74% ✓)
 - `css/hub.css` : 878 lignes (CSS extrait)
 - `js/hub-inventory.js` : 763 lignes (23 fonctions inventaire : drag/drop, slots, tooltips, equip, delete)
 - `js/hub-shops.js` : 736 lignes (26 fonctions Mon Shop + Alloc + Shops + Universal Shop)
-**Ordre de chargement :** jaharta.css → hub.css → CDNs → Firebase → hub-inventory.js → hub-shops.js → `<script>` principal
-**Reste à extraire (Sprint 2 suite) :** renderDashChar + renderPlayerWidgets → hub-dashboard.js (~100 lignes), renderFullChar → hub-character.js (~200 lignes)
+- `js/hub-renders.js` : 300 lignes (renderGacha, renderParty, renderProgression, renderTitles, renderCompanions, renderShop, renderSettings, setTheme)
+- `js/hub-character.js` : 200 lignes (renderFullChar + calcul stats/bonus)
+- `js/hub-dashboard.js` : 121 lignes (renderDashChar, renderNoChar, renderPlayerWidgets, loadWallet)
+**Ordre de chargement :** jaharta.css → hub.css → CDNs → Firebase → hub-dashboard.js → hub-character.js → hub-renders.js → hub-inventory.js → hub-shops.js → `<script>` principal
 
 ### P2 — Design system fragmenté ✅ RÉSOLU (2026-04-09)
 **Fix appliqué :** `jaharta.css :root` est maintenant la source unique de vérité.
@@ -121,10 +129,14 @@ _Aucun pour l'instant — projet en phase d'audit._
 - [x] Extraire `hub-inventory.js` ✅ 763 lignes
 - [x] Extraire `hub-shops.js` ✅ 736 lignes (Mon Shop + Alloc + Shops + Universal Shop)
 - [x] Extraire `hub.css` ✅ 878 lignes
-- [ ] Extraire `hub-character.js` (renderFullChar, ~200 lignes)
-- [ ] Extraire `hub-dashboard.js` (renderDashChar, renderPlayerWidgets, ~100 lignes)
+- [x] Extraire `hub-character.js` ✅ 200 lignes
+- [x] Extraire `hub-dashboard.js` ✅ 121 lignes
+- [x] Extraire `hub-renders.js` ✅ 300 lignes
 
 ### Sprint 3 — UI/UX polish
+- [x] Centraliser les `@keyframes` dupliqués dans `jaharta.css` ✅ 2026-04-09
+  - g1/g2/g3 (glitch) supprimés de : fiches.html, pnj.html, portail.html, racesjouables.html, gacha.html
+  - livePulse, dots, rankPulse, shimmer centralisés dans jaharta.css
 - [ ] Unifier les composants répétés (navbars, toasts, modals)
 - [ ] Améliorer les animations GSAP existantes (ne pas casser l'existant)
 - [ ] Optimiser le chargement (lazy load des onglets hub)

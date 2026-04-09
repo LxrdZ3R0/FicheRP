@@ -291,9 +291,6 @@ body::before{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;
 .glitch-title::before{color:var(--red)}
 .glitch-title::after{color:var(--violet)}
 /* 3 glitch keyframes that chain */
-@keyframes g1{0%,100%{opacity:0;transform:translate(0)}3%{opacity:.8;transform:translate(-3px,-1px);clip-path:inset(20% 0 60% 0)}5%{opacity:0}6%{opacity:.6;transform:translate(2px,1px);clip-path:inset(50% 0 20% 0)}8%{opacity:0;transform:translate(0)}}
-@keyframes g2{0%,100%{opacity:0;transform:translate(0)}3%{opacity:.7;transform:translate(3px,2px);clip-path:inset(70% 0 5% 0)}4.5%{opacity:0}5.5%{opacity:.5;transform:translate(-2px,-1px);clip-path:inset(10% 0 80% 0)}7%{opacity:0;transform:translate(0)}}
-@keyframes g3{0%,100%{opacity:0;transform:translate(0)}2%{opacity:.9;transform:translate(-1px,2px);clip-path:inset(40% 0 30% 0)}4%{opacity:.3;transform:translate(2px,-2px);clip-path:inset(5% 0 70% 0)}6%{opacity:0;transform:translate(0)}}
 .glitch-title::before{animation:g1 3s infinite,g2 3s 1s infinite,g3 3s 2s infinite}
 .glitch-title::after{animation:g2 3s 0.5s infinite,g3 3s 1.5s infinite,g1 3s 2.5s infinite}
 
@@ -304,12 +301,10 @@ body::before{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;
 .hero-stat-lbl{font-family:var(--font-m);font-size:.5rem;letter-spacing:.15em;text-transform:uppercase;color:var(--text3)}
 /* Live pulse */
 .live-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#44ff88;box-shadow:0 0 8px #44ff88;margin-right:6px;animation:livePulse 1.8s infinite}
-@keyframes livePulse{0%,100%{opacity:1;box-shadow:0 0 8px #44ff88}50%{opacity:.4;box-shadow:0 0 3px #44ff88}}
 .live-text{color:#44ff88;font-family:var(--font-h);font-size:.8rem;font-weight:700;letter-spacing:.12em}
 /* Loading state for status */
 .status-loading{font-family:var(--font-m);font-size:.6rem;color:var(--text3);letter-spacing:.15em}
 .status-loading::after{content:'...';animation:dots 1.5s infinite}
-@keyframes dots{0%{content:'.'}33%{content:'..'}66%{content:'...'}}
 
 /* PAGE WRAP */
 .page-wrap{max-width:1380px;margin:0 auto;padding:48px clamp(1.5rem,4vw,3rem)}
@@ -370,7 +365,6 @@ body::before{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;
 .rb-val{font-family:var(--font-h);font-size:1.1rem;font-weight:900;line-height:1;text-shadow:0 0 12px currentColor,0 0 24px currentColor}
 .rb-lbl{font-family:var(--font-b);font-size:.36rem;font-weight:700;letter-spacing:.3em;text-transform:uppercase;opacity:.5}
 .rb-level{font-family:var(--font-h);font-size:.48rem;font-weight:700;margin-top:2px;padding-top:3px;border-top:1px solid rgba(255,255,255,0.08);text-shadow:0 0 6px currentColor}
-@keyframes rankPulse{0%,100%{text-shadow:0 0 12px currentColor,0 0 24px currentColor;box-shadow:0 0 16px rgba(0,0,0,0.5),inset 0 0 10px currentColor}50%{text-shadow:0 0 20px currentColor,0 0 40px currentColor,0 0 60px currentColor;box-shadow:0 0 16px rgba(0,0,0,0.5),inset 0 0 20px currentColor,0 0 25px currentColor}}
 
 /* Stats bar */
 .stats-bar{position:absolute;bottom:0;left:0;right:0;z-index:4;background:linear-gradient(0deg,rgba(2,7,19,0.65),rgba(2,7,19,0.40));backdrop-filter:blur(8px);padding:7px 8px 6px;display:grid;grid-template-columns:repeat(8,1fr);gap:3px}

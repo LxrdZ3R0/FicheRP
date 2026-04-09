@@ -2447,6 +2447,25 @@ a.admin-badge:hover { border-color: rgba(0,255,136,0.6); box-shadow: 0 0 12px rg
 /* PNJ card hover shows scanlines */
 .pnj-card:hover .hpx-ov{opacity:1!important;}
 
+/* ══ ANIMATIONS PARTAGÉES ══ */
+
+/* Glitch titre — utilisé sur les hero-titles de fiches/pnj/portail/gacha/races */
+@keyframes g1{0%,100%{opacity:0;transform:translate(0)}3%{opacity:.8;transform:translate(-3px,-1px);clip-path:inset(20% 0 60% 0)}5%{opacity:0}6%{opacity:.6;transform:translate(2px,1px);clip-path:inset(50% 0 20% 0)}8%{opacity:0;transform:translate(0)}}
+@keyframes g2{0%,100%{opacity:0;transform:translate(0)}3%{opacity:.7;transform:translate(3px,2px);clip-path:inset(70% 0 5% 0)}4.5%{opacity:0}5.5%{opacity:.5;transform:translate(-2px,-1px);clip-path:inset(10% 0 80% 0)}7%{opacity:0;transform:translate(0)}}
+@keyframes g3{0%,100%{opacity:0;transform:translate(0)}2%{opacity:.9;transform:translate(-1px,2px);clip-path:inset(40% 0 30% 0)}4%{opacity:.3;transform:translate(2px,-2px);clip-path:inset(5% 0 70% 0)}6%{opacity:0;transform:translate(0)}}
+
+/* Pulse vie (badge live vert) */
+@keyframes livePulse{0%,100%{opacity:1;box-shadow:0 0 8px #44ff88}50%{opacity:.4;box-shadow:0 0 3px #44ff88}}
+
+/* Points de chargement ... */
+@keyframes dots{0%{content:'.'}33%{content:'..'}66%{content:'...'}}
+
+/* Rang prismatique S+/X/Z */
+@keyframes rankPulse{0%,100%{text-shadow:0 0 12px currentColor,0 0 24px currentColor;box-shadow:0 0 16px rgba(0,0,0,0.5),inset 0 0 10px currentColor}50%{text-shadow:0 0 20px currentColor,0 0 40px currentColor,0 0 60px currentColor;box-shadow:0 0 16px rgba(0,0,0,0.5),inset 0 0 20px currentColor,0 0 25px currentColor}}
+
+/* Shimmer skeleton */
+@keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+
 /* ═══ BURGER NAV GLOBAL OVERRIDE ═══ */
 .nav-links{display:none!important}
 .nav-toggle{display:none!important}
