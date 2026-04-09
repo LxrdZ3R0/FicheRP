@@ -5,9 +5,9 @@
 ---
 
 ## ÉTAT ACTUEL DU PROJET
-**Dernière mise à jour :** 2026-04-09 (session 3 — audit stabilité)
+**Dernière mise à jour :** 2026-04-09 (session 4 — fix display + lazy tabs)
 **Branche :** main
-**Phase :** Sprint 3 terminé ✓ — Audit stabilité complet — Système sain
+**Phase :** Sprint 3 terminé ✓ — Audit stabilité complet — Lazy hub tabs ✓
 
 ### Architecture globale
 - GitHub Pages → `/docs` (auto-deploy sur `main`)
@@ -146,6 +146,15 @@ n'ont pas été vérifiés (ils existaient dans les autres pages mais pas hub.ht
 ### BUG-03 [RÉSOLU ANTÉRIEUR] — Nav résiduel lore.html + gacha.html
 Nav sur une seule ligne — même cause que BUG-01, corrigé manuellement sur ces 2 fichiers.
 
+### BUG-05 [VISUAL] — racesjouables.html CSS block dupliqué ✅ RÉSOLU (2026-04-09)
+**Problème :** Le fichier avait deux blocs `<style>` fusionnés (/* PREVIEW */ + /* ORIGINAL */).
+Le bloc ORIGINAL (après) overridait `.nav-logo` sans `display:flex` → logo image + texte mal alignés.
+**Correction :** Suppression du bloc ORIGINAL (lignes 63-113). Seul le bloc PREVIEW est conservé.
+
+### BUG-06 [VISUAL] — html element sans background ✅ RÉSOLU (2026-04-09)
+**Problème :** jaharta.css `body { background: var(--bg-deep) }` overridé par inline `body { background:transparent }` sur toutes les pages. html sans background → canvas blanc avant kanji-blob.js.
+**Correction :** `html { background: var(--bg-deep) }` ajouté dans jaharta.css — fallback si WebGL échoue.
+
 ## RÉSULTATS AUDIT COMPLET (2026-04-09)
 | Check | Résultat |
 |-------|----------|
@@ -179,7 +188,7 @@ Nav sur une seule ligne — même cause que BUG-01, corrigé manuellement sur ce
 - [x] Centraliser les `@keyframes` dupliqués dans `jaharta.css` ✅ 2026-04-09
 - [x] Navbar partagée `js/jaharta-nav.js` (7 pages, burger inclus) ✅ 2026-04-09
 - [x] **gacha.html** décomposé : gacha.css + gacha-blob.js + gacha-logic.js + gacha-fx.js ✅ 2026-04-09
-- [ ] Lazy load des onglets hub (renderXxx à la demande)
+- [x] **Lazy load onglets hub** : `CURRENT_TAB` + `_refreshCurrentTab()` — seul le dashboard charge au boot ✅ 2026-04-09
 - [ ] Composants toast/modal partagés
 
 ### Sprint 4 — Audit stabilité ✅ TERMINÉ (2026-04-09)
@@ -203,6 +212,13 @@ Nav sur une seule ligne — même cause que BUG-01, corrigé manuellement sur ce
 - Tippy.js 6 + Popper.js 2 (hub.html — tooltips)
 - Alpine.js 3.14 (admin.html uniquement)
 - Three.js (gacha.html — blob)
+
+### Lazy loading onglets hub (Sprint 3 Piste 3)
+- `CURRENT_TAB='dashboard'` — variable globale dans hub.html
+- `showTab(id)` met à jour `CURRENT_TAB=id` avant d'appeler `LAZY[id]()`
+- `_refreshCurrentTab()` — appelé à la fin de `loadCharacter()` et `loadPlayer()` pour re-rendre l'onglet actif si non-dashboard
+- `LAZY{}` map : seuls dashboard + personnage se chargent selon l'onglet actif au boot
+- **Règle** : ne jamais appeler `renderFullChar()`, `renderProgression()`, `renderGacha()`, `renderSettings()` directement dans loadCharacter/loadPlayer — laisser LAZY le faire
 
 ### Ordre d'inclusion des scripts (OBLIGATOIRE)
 ```

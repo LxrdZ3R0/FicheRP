@@ -728,6 +728,7 @@ const prefersReducedMotion=window.matchMedia('(prefers-reduced-motion:reduce)').
 let CHAR=null,PLAYER=null,PITY=null,INV_DATA=null,CHAR_ID=null,UID=null,ALL_ITEMS_DATA={};
 let PARTY_DATA=null,TITLES_DATA=null,TITLES_DEF=null,BUFFS_DATA=null;
 let COMP_USER=null,COMP_CFG=null; // compagnon data for stats
+let CURRENT_TAB='dashboard'; // onglet actif — lazy render
 
 /* ── SIGNATURE ITEMS (port from signature_items.py) ── */
 const SIGNATURE_ITEMS={
@@ -856,7 +857,8 @@ async function loadCharacter(){
       const pData=await cachedGet(C.PARTIES,pmData.party_id,'_party',60);
       PARTY_DATA=pData||null;
     }
-    renderDashChar();renderFullChar();renderProgression();initAlloc();
+    renderDashChar();
+    _refreshCurrentTab();
   }catch(e){console.error('[CHAR]',e);renderNoChar()}
 }
 
@@ -868,7 +870,8 @@ async function loadPlayer(){
     ]);
     PLAYER=pData||{};
     PITY=pityData||{};
-    renderPlayerWidgets();renderGacha();renderSettings();
+    renderPlayerWidgets();
+    _refreshCurrentTab();
   }catch(e){console.error('[PLAYER]',e);}
 }
 
@@ -953,6 +956,7 @@ const LAZY={
   parametres:renderSettings,
 };
 function showTab(id){
+  CURRENT_TAB=id;
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   const panel=document.getElementById('panel-'+id);
@@ -966,6 +970,11 @@ function showTab(id){
       if(result&&result.catch)result.catch(err=>console.error('[TAB] '+id+' error:',err));
     }catch(err){console.error('[TAB] '+id+' sync error:',err);}
   }
+}
+function _refreshCurrentTab(){
+  if(CURRENT_TAB==='dashboard')return;
+  if(!LAZY[CURRENT_TAB])return;
+  try{const r=LAZY[CURRENT_TAB]();if(r&&r.catch)r.catch(()=>{});}catch(_){}
 }
 
 // ── UTILS ──

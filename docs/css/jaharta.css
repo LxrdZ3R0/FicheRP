@@ -74,6 +74,7 @@
 }
 
 html {
+  background: var(--bg-deep);
   scroll-behavior: smooth;
   scrollbar-width: thin;
   scrollbar-color: var(--cyan-dim) var(--bg-deep);
