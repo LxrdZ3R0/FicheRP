@@ -8,8 +8,9 @@
     { href: 'portail.html',        label: 'Portail',   short: 'Portail',  num: '04' },
     { href: 'racesjouables.html',  label: 'Races',     short: 'Races',    num: '05' },
     { href: 'bestiaire.html',      label: 'Bestiaire', short: 'Bestiaire',num: '06' },
-    { href: 'gacha.html',          label: 'Gacha',     short: 'Gacha',    num: '07' },
-    { href: 'hub.html',            label: 'Hub',       short: 'Hub',      num: '08' }
+    { href: 'lore.html',           label: 'Lore',      short: 'Lore',     num: '07' },
+    { href: 'gacha.html',          label: 'Gacha',     short: 'Gacha',    num: '08' },
+    { href: 'hub.html',            label: 'Hub',       short: 'Hub',      num: '09' }
   ];
 
   var current = window.location.pathname.split('/').pop() || 'index.html';

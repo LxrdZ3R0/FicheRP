@@ -279,7 +279,7 @@ window.parseDiscordMarkdown = function(text, accentColor) {
   /* Inline code */
   s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
   /* Spoiler ||text|| */
-  s = s.replace(/\|\|([^|]+)\|\|/g, '<span class="jmd-spoiler" onclick="this.classList.toggle(\'revealed\')">$1</span>');
+  s = s.replace(/\|\|([^|]+)\|\|/g, '<span class="jmd-spoiler">$1</span>');
   /* Headers # ## ### — must be at line start */
   s = s.replace(/^### (.+)$/gm, '<div class="jmd-h jmd-h3">$1</div>');
   s = s.replace(/^## (.+)$/gm, '<div class="jmd-h jmd-h2">$1</div>');
@@ -309,3 +309,11 @@ window.parseDiscordMarkdown = function(text, accentColor) {
   s = s.replace(/(<\/ul>)<br>/g, '$1');
   return '<div class="jmd" style="--jmd-accent:'+(accentColor||'#00f0ff')+'">'+s+'</div>';
 };
+
+/* ── Event delegation pour les spoilers Discord (.jmd-spoiler) ──
+   Un seul listener global au lieu d'un onclick inline par spoiler. */
+document.addEventListener('click', function(e) {
+  if (e.target.classList.contains('jmd-spoiler')) {
+    e.target.classList.toggle('revealed');
+  }
+});
