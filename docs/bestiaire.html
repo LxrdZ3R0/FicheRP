@@ -37,7 +37,7 @@ window._loadBestiaire=function(){
     const docs=[];snap.forEach(d=>docs.push({id:d.id,...d.data()}));
     window._bestiaireData=docs;
     renderBestiaire();
-  },err=>console.warn('[bestiaire]',err.message));
+  },err=>window._dbg?.warn('[bestiaire]',err.message));
 };
 </script>
 

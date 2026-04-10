@@ -7,6 +7,12 @@ model: sonnet
 
 Tu es un expert Firebase Firestore spécialisé sur JahartaRP. Tu audites les patterns d'utilisation Firebase dans le projet.
 
+## État actuel du projet (post-sprint)
+
+- ✅ `admin.html` : 5 onSnapshot stockés dans `_unsubs.{logs,fiches,pnj,best,lore}` — résolu
+- ✅ SDK versions : tous les fichiers utilisent **10.12.0**
+- ✅ Aucun `console.*` Firebase — tous remplacés par `window._dbg?.`
+
 ## Checks à effectuer
 
 ### 1. Listeners onSnapshot orphelins (CRITIQUE)
@@ -17,52 +23,36 @@ Chaque `onSnapshot()` doit stocker sa fonction de désabonnement et l'appeler au
 // MAUVAIS — listener jamais unsubscribed = memory leak
 onSnapshot(collection(db, 'fiches'), snap => { ... });
 
-// BON
-const unsubFiches = onSnapshot(collection(db, 'fiches'), snap => { ... });
-// Stocker unsubFiches quelque part pour l'appeler plus tard
-```
-
-**Violations confirmées dans le projet :**
-
-`docs/admin.html` — 5 fonctions avec `onSnapshot()` sans variable de retour :
-```
-loadLogs()       → onSnapshot(logsRef, ...) — pas d'unsubscribe stocké
-loadAllFiches()  → onSnapshot(fichesRef, ...) — pas d'unsubscribe stocké
-loadPNJ()        → onSnapshot(pnjRef, ...) — pas d'unsubscribe stocké
-loadBestiaire()  → onSnapshot(bestRef, ...) — pas d'unsubscribe stocké
-loadLore()       → onSnapshot(loreRef, ...) — pas d'unsubscribe stocké
-```
-
-Fix recommandé pour admin.html :
-```js
-// Déclarer les unsubscribers en haut du module
-const unsubscribers = {};
-
-// Dans chaque fonction
+// BON — pattern admin.html (référence)
+const _unsubs = {};
 function loadLogs() {
-  if (unsubscribers.logs) unsubscribers.logs(); // cleanup si déjà actif
-  unsubscribers.logs = onSnapshot(logsRef, snap => { ... });
-}
-
-// Cleanup global (ex: déconnexion)
-function cleanupListeners() {
-  Object.values(unsubscribers).forEach(unsub => unsub && unsub());
+  if (_unsubs.logs) _unsubs.logs(); // cleanup si déjà actif
+  _unsubs.logs = onSnapshot(logsRef, snap => { ... });
 }
 ```
+
+Commande de vérification :
+```bash
+grep -n "onSnapshot(" docs/**/*.{html,js} | grep -v "_unsubs\|const unsub\|let unsub\|var unsub"
+```
+
+Vérifier que chaque `onSnapshot` a une variable qui capture le retour.
 
 ### 2. Cohérence des SDKs (CRITIQUE)
 
-**SDK Modulaire** (fichiers qui l'utilisent) :
-- fiches.html, pnj.html, portail.html, admin.html, racesjouables.html, bestiaire.html
+**SDK Modulaire** (import ESM depuis gstatic) :
+- `fiches.html` → `fiches.js`, `pnj.html`, `portail.html`, `admin.html`, `racesjouables.html`, `bestiaire.html`
 - Pattern : `import { getFirestore } from "https://www.gstatic.com/.../firebase-firestore.js"`
 
-**SDK Compat** (fichiers qui l'utilisent) :
-- hub.html + tous les hub-*.js, gacha.html + gacha-logic.js, gacha-fx.js
+**SDK Compat** :
+- `hub.html` + tous les `hub-*.js`, `gacha.html` + `gacha-logic.js`, `gacha-fx.js`
 - Pattern : `firebase-app-compat.js` + `firebase.firestore()`
 
 **Interdits** :
 - Mélanger les deux dans le même fichier
-- Utiliser une version != 10.12.0
+- Utiliser une version != **10.12.0**
+
+**Attention** : `fiches.js` est maintenant un fichier externe (`type="module"`) — vérifier qu'il contient bien les imports ESM modulaires.
 
 ### 3. Sécurité des writes (CRITIQUE)
 
@@ -94,15 +84,15 @@ Exceptions acceptées : writes, transactions, première initialisation.
 ```js
 window.JCache.getModular(getDoc, doc, db, collection, id, ttlMinutes)
 window.JCache.invalidate(key)
-window.JCache.stats()  // {total, expired}
+window.JCache.stats()
 ```
 
 **JImgCache** pour les images Firebase Storage (TTL 24h) :
 ```js
-window.JImgCache.get(key)               // url|null
-window.JImgCache.set(key, url)          // écrit en cache
-window.JImgCache.applyTo(img, key, url) // cache-first + refresh si différent
-window.JImgCache.invalidate(key)        // invalide une entrée
+window.JImgCache.get(key)
+window.JImgCache.set(key, url)
+window.JImgCache.applyTo(img, key, url)
+window.JImgCache.invalidate(key)
 ```
 Clés par type : `fc_{id}` fiches joueurs, `char_{id}` personnage hub, `pnj_{id}` PNJ
 
@@ -137,8 +127,6 @@ await db.runTransaction(async (tx) => {
 
 ### 8. Requêtes non bornées (MEDIUM)
 
-Les `getDocs` sur des grosses collections sans limite sont dangereux :
-
 ```js
 // MAUVAIS
 const snap = await getDocs(collection(db, 'fiches'));
@@ -153,7 +141,6 @@ const snap = await getDocs(query(collection(db, 'fiches'), limit(50)));
 2. Grep pour `onSnapshot`, `getDoc`, `getDocs`, `updateDoc`, `addDoc`, `deleteDoc`
 3. Grep pour `firebase-app-compat`, `initializeApp`, `getFirestore`
 4. Vérifier chaque occurrence contre les checks ci-dessus
-5. Vérifier admin.html en priorité (violations connues aux 5 fonctions listées)
 
 ## Format de sortie
 
@@ -162,8 +149,8 @@ Lister les fichiers avec problèmes, avec numéro de ligne et fix proposé.
 Terminer avec :
 ```
 RÉSUMÉ FIREBASE
-- Listeners orphelins : N (dont 5 connus dans admin.html)
-- Writes non sanitisés : N  
+- Listeners orphelins : N
+- Writes non sanitisés : N
 - Incohérences SDK : N
 - Reads sans cache : N (acceptable si < 5)
 - Erreurs sans try/catch : N

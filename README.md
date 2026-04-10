@@ -62,13 +62,23 @@ JahartaRP/
 │   │   └── jaharta.css            ← STYLES PARTAGÉS — inclus par toutes les pages
 │   │
 │   ├── js/
-│   │   ├── constants.js           ← RACES, RANKS, RACES_SPECIFIC (partagé)
-│   │   ├── utils.js               ← sanitize, compressImage, AntiSpam, Skeleton, showToast
-│   │   ├── jaharta-card.js        ← Web Component <jaharta-card> (cartes personnages)
-│   │   ├── jaharta-img-cache.js   ← Cache localStorage URLs images Firebase (TTL 24h)
-│   │   ├── kanji-blob.js          ← Blob Three.js pour gacha (morphing 3D)
-│   │   ├── page-transition.js     ← Overlay de chargement entre pages
-│   │   └── debug.js               ← Logger d'erreurs flottant (dev)
+│   │   ├── constants.js             ← RACES, RANKS, RACES_SPECIFIC (partagé)
+│   │   ├── utils.js                 ← sanitize, compressImage, AntiSpam, Skeleton, showToast
+│   │   ├── jaharta-card.js          ← Web Component <jaharta-card> (cartes personnages)
+│   │   ├── jaharta-img-cache.js     ← Cache localStorage URLs images Firebase (TTL 24h)
+│   │   ├── kanji-blob.js            ← Blob Three.js pour gacha (morphing 3D)
+│   │   ├── page-transition.js       ← Overlay de chargement entre pages
+│   │   ├── debug.js                 ← Logger d'erreurs flottant (dev)
+│   │   ├── fiches.js                ← Module Firebase fiches joueurs
+│   │   ├── lore.js                  ← Logique page lore
+│   │   ├── racesjouables-logic.js   ← Popup races + filtres
+│   │   ├── hub-core.js              ← Logique centrale hub
+│   │   ├── hub-dashboard.js         ← Onglet Dashboard
+│   │   ├── hub-inventory.js         ← Onglet Inventaire (UI Cyberpunk)
+│   │   ├── hub-renders.js           ← Rendu cartes hub
+│   │   ├── hub-shops.js             ← Onglets Shops
+│   │   ├── music-player.js          ← Lecteur audio flottant
+│   │   └── race-popup.js            ← Popup race (hub)
 │   │
 │   └── img/
 │       ├── banner.png             ← Image Open Graph (Discord embed)
@@ -345,15 +355,27 @@ Dans `docs/css/jaharta.css`, section `1. VARIABLES GLOBALES` :
 
 ```css
 :root {
-  --cyan:    #00f5ff;   /* couleur principale */
-  --magenta: #ff006e;   /* accent secondaire */
-  --gold:    #ffd60a;   /* accent tertiaire (admin, portail) */
-  --dark:    #04060f;   /* fond principal */
-  --dark2:   #080d1a;   /* fond cartes */
-  --text:    #c8e0f0;   /* texte normal */
-  --muted:   #5a7a90;   /* texte atténué */
+  /* Fonds */
+  --bg:       #020713;   /* fond principal */
+  --bg2:      #070d1e;   /* fond secondaire */
+  --surface:  #0c1228;   /* surface carte */
+  --surface2: #0a0f22;   /* surface secondaire */
+
+  /* Couleurs accent */
+  --cyan:    #00f5ff;   /* accent fiches + gacha */
+  --magenta: #ff006e;   /* accent PNJ */
+  --gold:    #ffd60a;   /* accent portail + admin */
+  /* + --blue, --violet, --purple, --red, --green, --orange */
+
+  /* Texte */
+  --text:   #e2e6f0;   /* texte principal */
+  --text2:  #7c84a0;   /* texte secondaire */
+  --text3:  #3a4060;   /* texte tertiaire */
+  --muted:  #5a7a90;   /* texte atténué */
 }
 ```
+
+> **⚠ Variables supprimées** : `--dark`, `--dark2`, `--bg-deep`, `--bg-dark`, `--bg-surface`, `--bg-card`, `--text-primary`, `--text-secondary`, `--text-dim`, `--font-display`, `--font-heading` — ces alias legacy ont été retirés du `:root`. Ne plus les utiliser.
 
 ### Accent par page
 

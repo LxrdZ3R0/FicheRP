@@ -14,12 +14,6 @@
   --surface2: #0a0f22;
   --border:   rgba(77, 163, 255, 0.1);
 
-  /* Aliases legacy (utilisés par jaharta.css en interne) */
-  --bg-deep:    #030612;
-  --bg-dark:    #0a0a14;
-  --bg-surface: #0f0f1a;
-  --bg-card:    rgba(18, 18, 32, 0.5);
-
   /* ── Couleurs ── */
   --blue:    #4DA3FF;   /* accent bleu principal */
   --cyan:    #00e5ff;   /* cyan vif */
@@ -50,20 +44,12 @@
   --text3: #3a4060;
   --muted: #5a7a90;
 
-  /* Aliases legacy */
-  --text-primary:   #e8eaf0;
-  --text-secondary: #8a8fa8;
-  --text-dim:       #70769a;
-
   /* ── Polices ── */
   --font-h:    'Orbitron', sans-serif;
   --font-b:    'Rajdhani', sans-serif;
   --font-body: 'Exo 2', sans-serif;
   --font-m:    'Share Tech Mono', monospace;
 
-  /* Aliases legacy */
-  --font-display: 'Orbitron', sans-serif;
-  --font-heading: 'Rajdhani', sans-serif;
 }
 
 /* --- Reset & Base --- */
@@ -74,15 +60,15 @@
 }
 
 html {
-  background: var(--bg-deep);
+  background: var(--bg);
   scroll-behavior: smooth;
   scrollbar-width: thin;
-  scrollbar-color: var(--cyan-dim) var(--bg-deep);
+  scrollbar-color: var(--cyan-dim) var(--bg);
 }
 
 body {
-  background: var(--bg-deep);
-  color: var(--text-primary);
+  background: var(--bg);
+  color: var(--text);
   font-family: var(--font-body);
   font-weight: 300;
   line-height: 1.7;
@@ -92,7 +78,7 @@ body {
 
 ::selection {
   background: var(--cyan);
-  color: var(--bg-deep);
+  color: var(--bg);
 }
 
 /* --- Focus visible (accessibilité clavier) --- */
@@ -104,7 +90,7 @@ body {
 
 /* --- Scrollbar --- */
 ::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: var(--bg-deep); }
+::-webkit-scrollbar-track { background: var(--bg); }
 ::-webkit-scrollbar-thumb {
   background: var(--cyan-dim);
   border-radius: 3px;
@@ -160,7 +146,7 @@ body::before {
 }
 
 .nav-logo {
-  font-family: var(--font-display);
+  font-family: var(--font-h);
   font-size: 1.3rem;
   font-weight: 700;
   letter-spacing: 0.3em;
@@ -183,7 +169,7 @@ body::before {
 }
 
 .nav-cta {
-  font-family: var(--font-heading);
+  font-family: var(--font-b);
   font-size: 0.85rem;
   font-weight: 600;
   letter-spacing: 0.15em;
@@ -208,7 +194,7 @@ body::before {
 }
 
 .nav-cta:hover {
-  color: var(--bg-deep);
+  color: var(--bg);
   border-color: var(--cyan);
   box-shadow: var(--glow-md);
 }
@@ -271,7 +257,7 @@ body::before {
 
 /* Pre-title line */
 .hero-pretitle {
-  font-family: var(--font-heading);
+  font-family: var(--font-b);
   font-size: 0.8rem;
   font-weight: 500;
   letter-spacing: 0.5em;
@@ -284,12 +270,12 @@ body::before {
 
 /* Main title */
 .hero-title {
-  font-family: var(--font-display);
+  font-family: var(--font-h);
   font-size: clamp(3.5rem, 10vw, 8rem);
   font-weight: 900;
   letter-spacing: 0.2em;
   line-height: 1;
-  color: var(--text-primary);
+  color: var(--text);
   position: relative;
   margin-bottom: 1.5rem;
   opacity: 0;
@@ -349,7 +335,7 @@ body::before {
   font-size: 1.05rem;
   font-weight: 300;
   font-style: italic;
-  color: var(--text-secondary);
+  color: var(--text2);
   max-width: 550px;
   margin: 0 auto 2.5rem;
   opacity: 0;
@@ -361,13 +347,13 @@ body::before {
   display: inline-flex;
   align-items: center;
   gap: 0.75rem;
-  font-family: var(--font-heading);
+  font-family: var(--font-b);
   font-size: 1rem;
   font-weight: 600;
   letter-spacing: 0.15em;
   text-transform: uppercase;
   text-decoration: none;
-  color: var(--bg-deep);
+  color: var(--bg);
   background: linear-gradient(135deg, var(--cyan) 0%, #80ffea 100%);
   padding: 0.9rem 2.5rem;
   border: none;
@@ -419,12 +405,12 @@ body::before {
 }
 
 .hero-scroll span {
-  font-family: var(--font-heading);
+  font-family: var(--font-b);
   font-size: 0.65rem;
   font-weight: 500;
   letter-spacing: 0.3em;
   text-transform: uppercase;
-  color: var(--text-dim);
+  color: var(--muted);
 }
 
 .hero-scroll .line {
@@ -462,7 +448,7 @@ body::before {
 }
 
 .section-label {
-  font-family: var(--font-display);
+  font-family: var(--font-h);
   font-size: 0.65rem;
   font-weight: 600;
   letter-spacing: 0.5em;
@@ -475,7 +461,7 @@ body::before {
 .lore-text {
   font-size: 1.1rem;
   line-height: 1.9;
-  color: var(--text-secondary);
+  color: var(--text2);
   text-align: center;
 }
 
@@ -489,15 +475,15 @@ body::before {
 }
 
 .lore-text strong {
-  color: var(--text-primary);
+  color: var(--text);
   font-weight: 500;
 }
 
 .lore-highlight {
-  font-family: var(--font-heading);
+  font-family: var(--font-b);
   font-size: 1.5rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--text);
   text-align: center;
   margin: 3rem 0;
   padding: 2rem;
@@ -544,7 +530,7 @@ body::before {
   position: absolute;
   bottom: 1rem;
   right: 1.5rem;
-  font-family: var(--font-display);
+  font-family: var(--font-h);
   font-size: 0.6rem;
   letter-spacing: 0.3em;
   text-transform: uppercase;
@@ -565,7 +551,7 @@ body::before {
 }
 
 .feature-card {
-  background: var(--bg-card);
+  background: var(--surface);
   border: 1px solid #ffffff08;
   border-radius: 4px;
   padding: 2rem 1.8rem;
@@ -604,17 +590,17 @@ body::before {
 }
 
 .feature-card h3 {
-  font-family: var(--font-heading);
+  font-family: var(--font-b);
   font-size: 1.15rem;
   font-weight: 600;
   letter-spacing: 0.08em;
-  color: var(--text-primary);
+  color: var(--text);
   margin-bottom: 0.6rem;
 }
 
 .feature-card p {
   font-size: 0.9rem;
-  color: var(--text-secondary);
+  color: var(--text2);
   line-height: 1.6;
 }
 
@@ -628,18 +614,18 @@ body::before {
 }
 
 .final-cta-title {
-  font-family: var(--font-display);
+  font-family: var(--font-h);
   font-size: clamp(1.5rem, 4vw, 2.5rem);
   font-weight: 700;
   letter-spacing: 0.15em;
-  color: var(--text-primary);
+  color: var(--text);
   margin-bottom: 1rem;
 }
 
 .final-cta-sub {
   font-family: var(--font-body);
   font-size: 1rem;
-  color: var(--text-secondary);
+  color: var(--text2);
   margin-bottom: 2.5rem;
   font-weight: 300;
 }
@@ -651,10 +637,10 @@ body::before {
   border-top: 1px solid #ffffff08;
   padding: 2rem;
   text-align: center;
-  font-family: var(--font-heading);
+  font-family: var(--font-b);
   font-size: 0.75rem;
   letter-spacing: 0.2em;
-  color: var(--text-dim);
+  color: var(--muted);
 }
 
 /* ============================================
@@ -791,12 +777,12 @@ body::before {
 }
 
 .nav-links a {
-  font-family: var(--font-heading);
+  font-family: var(--font-b);
   font-size: 0.7rem;
   font-weight: 600;
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: var(--text-secondary);
+  color: var(--text2);
   text-decoration: none;
   padding: 6px 12px;
   border: 1px solid transparent;
@@ -830,7 +816,7 @@ body::before {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-family: var(--font-heading);
+  font-family: var(--font-b);
   font-size: 0.6rem;
   font-weight: 600;
   letter-spacing: 0.12em;
@@ -928,7 +914,7 @@ body::before {
 }
 
 .nav-card {
-  background: var(--bg-card);
+  background: var(--surface);
   border: 1px solid #ffffff08;
   border-radius: 4px;
   padding: 2rem 1.8rem;
@@ -974,24 +960,24 @@ body::before {
 }
 
 .nav-card h3 {
-  font-family: var(--font-display);
+  font-family: var(--font-h);
   font-size: 0.85rem;
   font-weight: 700;
   letter-spacing: 0.12em;
-  color: var(--text-primary);
+  color: var(--text);
   margin-bottom: 0.6rem;
 }
 
 .nav-card p {
   font-size: 0.88rem;
-  color: var(--text-secondary);
+  color: var(--text2);
   line-height: 1.7;
   flex: 1;
   margin-bottom: 1.2rem;
 }
 
 .nav-card-arrow {
-  font-family: var(--font-heading);
+  font-family: var(--font-b);
   font-size: 0.7rem;
   font-weight: 600;
   letter-spacing: 0.18em;
@@ -1040,7 +1026,7 @@ body::before {
 }
 
 .discord-banner-title {
-  font-family: var(--font-display);
+  font-family: var(--font-h);
   font-size: 0.88rem;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -1049,15 +1035,15 @@ body::before {
 }
 
 .discord-banner-sub {
-  font-family: var(--font-heading);
+  font-family: var(--font-b);
   font-size: 0.7rem;
   font-weight: 500;
-  color: var(--text-secondary);
+  color: var(--text2);
   letter-spacing: 0.08em;
 }
 
 .discord-banner-btn {
-  font-family: var(--font-display);
+  font-family: var(--font-h);
   font-size: 0.65rem;
   font-weight: 700;
   letter-spacing: 0.18em;
@@ -1111,7 +1097,7 @@ body::before {
 
 .f-brand {}
 .f-logo {
-  font-family: var(--font-display);
+  font-family: var(--font-h);
   font-size: 0.8rem;
   font-weight: 800;
   letter-spacing: 0.25em;
@@ -1119,10 +1105,10 @@ body::before {
   margin-bottom: 4px;
 }
 .f-tagline {
-  font-family: var(--font-heading);
+  font-family: var(--font-b);
   font-size: 0.65rem;
   font-weight: 500;
-  color: var(--text-dim);
+  color: var(--muted);
   letter-spacing: 0.12em;
 }
 
@@ -1132,10 +1118,10 @@ body::before {
   flex-wrap: wrap;
 }
 .f-links a {
-  font-family: var(--font-heading);
+  font-family: var(--font-b);
   font-size: 0.65rem;
   font-weight: 500;
-  color: var(--text-secondary);
+  color: var(--text2);
   text-decoration: none;
   letter-spacing: 0.1em;
   transition: color 0.2s;
@@ -1146,11 +1132,11 @@ body::before {
   text-align: center;
   padding-top: 1.5rem;
   border-top: 1px solid #ffffff06;
-  font-family: var(--font-heading);
+  font-family: var(--font-b);
   font-size: 0.6rem;
   font-weight: 500;
   letter-spacing: 0.2em;
-  color: var(--text-dim);
+  color: var(--muted);
 }
 
 @media (max-width: 768px) {
@@ -1166,7 +1152,7 @@ body::before {
   position: fixed;
   inset: 0;
   z-index: 99999;
-  background: var(--bg-deep);
+  background: var(--bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1258,7 +1244,7 @@ body::before {
 
 .pt-text {
   margin-top: 10px;
-  font-family: var(--font-heading);
+  font-family: var(--font-b);
   font-size: 0.55rem;
   font-weight: 500;
   letter-spacing: 0.4em;
@@ -1318,7 +1304,7 @@ header {
 }
 
 .logo {
-  font-family: var(--font-display);
+  font-family: var(--font-h);
   font-weight: 900;
   font-size: 1.35rem;
   letter-spacing: 0.32em;
@@ -1330,10 +1316,10 @@ header {
 .logo:hover { text-shadow: 0 0 20px var(--cyan-glow), 0 0 40px #00f0ff20; }
 .logo-slash { color: var(--magenta); text-shadow: 0 0 18px var(--magenta); }
 .logo-sub {
-  font-family: var(--font-heading);
+  font-family: var(--font-b);
   font-size: 0.46rem;
   font-weight: 500;
-  color: var(--text-secondary);
+  color: var(--text2);
   letter-spacing: 0.2em;
   display: block;
   margin-top: 2px;
@@ -1342,10 +1328,10 @@ header {
 /* Sub-page nav links */
 header nav { display: flex; gap: 2px; align-items: center; }
 header nav a {
-  font-family: var(--font-heading);
+  font-family: var(--font-b);
   font-size: 0.7rem;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--text2);
   text-decoration: none;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -1379,7 +1365,7 @@ header nav a.active::after {
 .nav-admin {
   color: #ffd60a !important;
   border-color: rgba(255,214,10,0.22) !important;
-  font-family: var(--font-display) !important;
+  font-family: var(--font-h) !important;
   font-weight: 700 !important;
   font-size: 0.58rem !important;
   letter-spacing: 0.18em !important;
@@ -1477,13 +1463,13 @@ header nav a.active::after {
   bottom: 28px;
   left: 50%;
   transform: translateX(-50%) translateY(80px);
-  background: var(--bg-dark);
+  background: var(--bg2);
   border: 1px solid var(--border);
-  font-family: var(--font-heading);
+  font-family: var(--font-b);
   font-size: 0.875rem;
   font-weight: 600;
   letter-spacing: 0.12em;
-  color: var(--text-primary);
+  color: var(--text);
   padding: 13px 26px;
   z-index: 9000;
   transition: transform 0.35s, opacity 0.35s;
@@ -1505,14 +1491,14 @@ header nav a.active::after {
 }
 .section-head.revealed { opacity: 1; transform: translateY(0); transition: all 0.6s ease; }
 .sh-num {
-  font-family: var(--font-display);
+  font-family: var(--font-h);
   font-size: 0.68rem;
   font-weight: 700;
   color: #ffd60a;
   letter-spacing: 0.1em;
 }
 .sh-title {
-  font-family: var(--font-display);
+  font-family: var(--font-h);
   font-weight: 700;
   font-size: clamp(0.85rem, 2vw, 1.05rem);
   letter-spacing: 0.25em;
@@ -1538,7 +1524,7 @@ footer .footer-inner {
   gap: 40px;
 }
 footer .f-logo {
-  font-family: var(--font-display);
+  font-family: var(--font-h);
   font-weight: 900;
   font-size: 0.9rem;
   letter-spacing: 0.28em;
@@ -1546,10 +1532,10 @@ footer .f-logo {
   margin-bottom: 8px;
 }
 footer .f-tagline {
-  font-family: var(--font-heading);
+  font-family: var(--font-b);
   font-size: 0.7rem;
   font-weight: 500;
-  color: var(--text-secondary);
+  color: var(--text2);
   letter-spacing: 0.14em;
 }
 footer .f-status { text-align: center; }
@@ -1557,10 +1543,10 @@ footer .f-status-dot {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  font-family: var(--font-heading);
+  font-family: var(--font-b);
   font-size: 0.7rem;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--text2);
   letter-spacing: 0.15em;
 }
 .hdot {
@@ -1573,10 +1559,10 @@ footer .f-status-dot {
   0%, 100% { opacity: 1; } 50% { opacity: 0.4; }
 }
 footer .f-version {
-  font-family: var(--font-heading);
+  font-family: var(--font-b);
   font-size: 0.65rem;
   font-weight: 500;
-  color: var(--text-dim);
+  color: var(--muted);
   letter-spacing: 0.12em;
   margin-top: 6px;
 }
@@ -1588,10 +1574,10 @@ footer .f-links {
   flex-wrap: wrap;
 }
 footer .f-links a {
-  font-family: var(--font-heading);
+  font-family: var(--font-b);
   font-size: 0.6rem;
   font-weight: 500;
-  color: var(--text-secondary);
+  color: var(--text2);
   text-decoration: none;
   letter-spacing: 0.1em;
   transition: color 0.2s;
@@ -1605,10 +1591,10 @@ footer .f-bottom {
   text-align: center;
 }
 footer .f-copy {
-  font-family: var(--font-heading);
+  font-family: var(--font-b);
   font-size: 0.65rem;
   font-weight: 500;
-  color: var(--text-dim);
+  color: var(--muted);
   letter-spacing: 0.16em;
 }
 
@@ -1655,16 +1641,16 @@ footer .f-copy {
 }
 .db-l { display: flex; align-items: center; gap: 16px; }
 .db-sub {
-  font-family: var(--font-heading);
+  font-family: var(--font-b);
   font-size: 0.62rem;
   font-weight: 500;
-  color: var(--text-secondary);
+  color: var(--text2);
   letter-spacing: 0.1em;
 }
 .db-title {
   position: relative;
   display: inline-block;
-  font-family: var(--font-display);
+  font-family: var(--font-h);
   font-weight: 700;
   font-size: 0.9rem;
   letter-spacing: 0.14em;
@@ -1672,7 +1658,7 @@ footer .f-copy {
   margin-bottom: 3px;
 }
 .db-btn {
-  font-family: var(--font-display);
+  font-family: var(--font-h);
   font-weight: 700;
   font-size: 0.66rem;
   letter-spacing: 0.2em;
@@ -1708,7 +1694,7 @@ footer .f-copy {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-family: var(--font-heading);
+  font-family: var(--font-b);
   font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.14em;
@@ -1770,7 +1756,7 @@ a.admin-badge:hover { border-color: rgba(0,255,136,0.6); box-shadow: 0 0 12px rg
   pointer-events: none;
 }
 .ph-tag {
-  font-family: var(--font-heading) !important;
+  font-family: var(--font-b) !important;
   font-size: 0.8rem !important;
   font-weight: 500;
   letter-spacing: 0.4em !important;
@@ -1779,7 +1765,7 @@ a.admin-badge:hover { border-color: rgba(0,255,136,0.6); box-shadow: 0 0 12px rg
   margin-bottom: 10px;
 }
 .ph-title {
-  font-family: var(--font-display) !important;
+  font-family: var(--font-h) !important;
   font-weight: 900 !important;
   font-size: clamp(2rem, 5vw, 3.4rem) !important;
   color: #fff !important;
@@ -1798,7 +1784,7 @@ a.admin-badge:hover { border-color: rgba(0,255,136,0.6); box-shadow: 0 0 12px rg
   font-family: var(--font-body) !important;
   font-size: 0.9rem !important;
   font-weight: 300;
-  color: var(--text-secondary) !important;
+  color: var(--text2) !important;
   letter-spacing: 0.12em !important;
   margin-top: 10px;
 }
@@ -1817,14 +1803,14 @@ a.admin-badge:hover { border-color: rgba(0,255,136,0.6); box-shadow: 0 0 12px rg
   box-shadow: 0 0 20px rgba(0,240,255,0.08);
 }
 .phs-num {
-  font-family: var(--font-display) !important;
+  font-family: var(--font-h) !important;
   color: var(--cyan) !important;
   text-shadow: 0 0 16px rgba(0,240,255,0.4);
 }
 .phs-lbl {
-  font-family: var(--font-heading) !important;
+  font-family: var(--font-b) !important;
   font-weight: 500;
-  color: var(--text-secondary) !important;
+  color: var(--text2) !important;
 }
 
 /* ── Section headings — clean style ── */
@@ -1835,18 +1821,18 @@ a.admin-badge:hover { border-color: rgba(0,255,136,0.6); box-shadow: 0 0 12px rg
   margin-bottom: 32px;
 }
 .sh-num {
-  font-family: var(--font-display) !important;
+  font-family: var(--font-h) !important;
   font-size: 0.72rem !important;
   font-weight: 600 !important;
   color: var(--cyan-dim) !important;
   letter-spacing: 0.12em !important;
 }
 .sh-title {
-  font-family: var(--font-display) !important;
+  font-family: var(--font-h) !important;
   font-weight: 700 !important;
   font-size: clamp(0.9rem, 2vw, 1.1rem) !important;
   letter-spacing: 0.2em !important;
-  color: var(--text-primary) !important;
+  color: var(--text) !important;
 }
 .sh-line {
   flex: 1;
@@ -1881,8 +1867,8 @@ a.admin-badge:hover { border-color: rgba(0,255,136,0.6); box-shadow: 0 0 12px rg
   clip-path: none !important;
   border-radius: 3px !important;
   background: linear-gradient(135deg, var(--cyan), #80ffea) !important;
-  color: var(--bg-deep) !important;
-  font-family: var(--font-heading) !important;
+  color: var(--bg) !important;
+  font-family: var(--font-b) !important;
   font-weight: 700 !important;
   font-size: 0.65rem !important;
   letter-spacing: 0.15em !important;
@@ -1904,8 +1890,8 @@ a.admin-badge:hover { border-color: rgba(0,255,136,0.6); box-shadow: 0 0 12px rg
   clip-path: none !important;
   border-radius: 3px !important;
   background: linear-gradient(135deg, var(--cyan), #80ffea) !important;
-  color: var(--bg-deep) !important;
-  font-family: var(--font-heading) !important;
+  color: var(--bg) !important;
+  font-family: var(--font-b) !important;
   font-weight: 700 !important;
   box-shadow: 0 0 12px rgba(0,240,255,0.2);
 }
@@ -1951,11 +1937,11 @@ a.admin-badge:hover { border-color: rgba(0,255,136,0.6); box-shadow: 0 0 12px rg
 }
 .login-title {
   color: var(--cyan) !important;
-  font-family: var(--font-display) !important;
+  font-family: var(--font-h) !important;
 }
 .login-sub {
-  font-family: var(--font-heading) !important;
-  color: var(--text-secondary) !important;
+  font-family: var(--font-b) !important;
+  color: var(--text2) !important;
 }
 .login-input {
   background: rgba(0,240,255,0.03) !important;
@@ -1971,8 +1957,8 @@ a.admin-badge:hover { border-color: rgba(0,255,136,0.6); box-shadow: 0 0 12px rg
   clip-path: none !important;
   border-radius: 3px !important;
   background: linear-gradient(135deg, var(--cyan), #80ffea) !important;
-  color: var(--bg-deep) !important;
-  font-family: var(--font-heading) !important;
+  color: var(--bg) !important;
+  font-family: var(--font-b) !important;
   font-weight: 700 !important;
 }
 .login-btn:hover {
@@ -1980,14 +1966,14 @@ a.admin-badge:hover { border-color: rgba(0,255,136,0.6); box-shadow: 0 0 12px rg
   box-shadow: 0 0 24px rgba(0,240,255,0.3) !important;
 }
 .login-hint {
-  font-family: var(--font-heading) !important;
-  color: var(--text-dim) !important;
+  font-family: var(--font-b) !important;
+  color: var(--muted) !important;
 }
 
 /* Role badges */
 .role-badge {
   border-radius: 3px !important;
-  font-family: var(--font-heading) !important;
+  font-family: var(--font-b) !important;
   font-weight: 600 !important;
 }
 .role-admin {
@@ -2005,7 +1991,7 @@ a.admin-badge:hover { border-color: rgba(0,255,136,0.6); box-shadow: 0 0 12px rg
 .nav-admin {
   color: var(--cyan) !important;
   border-color: rgba(0,240,255,0.22) !important;
-  font-family: var(--font-display) !important;
+  font-family: var(--font-h) !important;
 }
 .nav-admin:hover {
   border-color: var(--cyan) !important;
@@ -2014,7 +2000,7 @@ a.admin-badge:hover { border-color: rgba(0,255,136,0.6); box-shadow: 0 0 12px rg
 
 /* Admin tab content */
 .tab-title {
-  font-family: var(--font-display) !important;
+  font-family: var(--font-h) !important;
   letter-spacing: 0.18em !important;
 }
 
@@ -2024,15 +2010,15 @@ a.admin-badge:hover { border-color: rgba(0,255,136,0.6); box-shadow: 0 0 12px rg
   overflow: hidden;
 }
 .fiche-name {
-  font-family: var(--font-display) !important;
+  font-family: var(--font-h) !important;
 }
 .fiche-tag {
-  font-family: var(--font-heading) !important;
+  font-family: var(--font-b) !important;
   font-weight: 600 !important;
   border-radius: 2px !important;
 }
 .action-btn {
-  font-family: var(--font-heading) !important;
+  font-family: var(--font-b) !important;
   font-weight: 600 !important;
   border-radius: 2px !important;
 }
@@ -2074,7 +2060,7 @@ a.admin-badge:hover { border-color: rgba(0,255,136,0.6); box-shadow: 0 0 12px rg
 
 /* ── Page hero titles — full gradient, no single-word coloring ── */
 .ph-title {
-  font-family: var(--font-display) !important;
+  font-family: var(--font-h) !important;
   font-weight: 900 !important;
   font-size: clamp(2rem, 5vw, 3.4rem) !important;
   letter-spacing: 0.08em !important;
@@ -2094,7 +2080,7 @@ a.admin-badge:hover { border-color: rgba(0,255,136,0.6); box-shadow: 0 0 12px rg
 
 /* ── Page hero tags — unified cyan-dim ── */
 .ph-tag {
-  font-family: var(--font-heading) !important;
+  font-family: var(--font-b) !important;
   font-size: 0.8rem !important;
   font-weight: 500 !important;
   letter-spacing: 0.4em !important;
@@ -2132,7 +2118,7 @@ a.admin-badge:hover { border-color: rgba(0,255,136,0.6); box-shadow: 0 0 12px rg
   text-shadow: 0 0 14px rgba(0,240,255,0.4) !important;
 }
 .phs-lbl {
-  color: var(--text-secondary) !important;
+  color: var(--text2) !important;
 }
 
 /* ── Section numbers — cyan-dim instead of gold ── */
@@ -2262,7 +2248,7 @@ a.admin-badge:hover { border-color: rgba(0,255,136,0.6); box-shadow: 0 0 12px rg
   gap: 12px;
 }
 .hero-stat-num {
-  font-family: var(--font-display);
+  font-family: var(--font-h);
   font-size: 1.3rem;
   font-weight: 800;
   color: var(--cyan);
@@ -2272,10 +2258,10 @@ a.admin-badge:hover { border-color: rgba(0,255,136,0.6); box-shadow: 0 0 12px rg
   gap: 8px;
 }
 .hero-stat-lbl {
-  font-family: var(--font-heading);
+  font-family: var(--font-b);
   font-size: 0.75rem;
   font-weight: 500;
-  color: var(--text-secondary);
+  color: var(--text2);
   letter-spacing: 0.15em;
   text-transform: uppercase;
 }
@@ -2312,18 +2298,18 @@ a.admin-badge:hover { border-color: rgba(0,255,136,0.6); box-shadow: 0 0 12px rg
 }
 
 .rl-title {
-  font-family: var(--font-display) !important;
+  font-family: var(--font-h) !important;
   font-size: 0.7rem !important;
   font-weight: 600 !important;
   letter-spacing: 0.25em !important;
-  color: var(--text-secondary) !important;
+  color: var(--text2) !important;
   margin-right: 16px !important;
   padding-right: 16px;
   border-right: 1px solid rgba(0,240,255,0.1);
 }
 
 .rl-pill {
-  font-family: var(--font-display) !important;
+  font-family: var(--font-h) !important;
   font-weight: 800 !important;
   font-size: 0.75rem !important;
   letter-spacing: 0.1em !important;
@@ -2353,10 +2339,10 @@ a.admin-badge:hover { border-color: rgba(0,255,136,0.6); box-shadow: 0 0 12px rg
 }
 
 .rl-note {
-  font-family: var(--font-heading) !important;
+  font-family: var(--font-b) !important;
   font-size: 0.7rem !important;
   font-weight: 500 !important;
-  color: var(--text-dim) !important;
+  color: var(--muted) !important;
   margin-left: auto !important;
   letter-spacing: 0.2em !important;
   padding-left: 16px;
@@ -2369,14 +2355,14 @@ a.admin-badge:hover { border-color: rgba(0,255,136,0.6); box-shadow: 0 0 12px rg
   content: '';
   width: 40px;
   height: 1px;
-  background: linear-gradient(90deg, transparent, var(--text-dim));
+  background: linear-gradient(90deg, transparent, var(--muted));
 }
 
 /* Filter buttons — ethereal dark style */
 .race-btn {
   clip-path: none !important;
   border-radius: 4px !important;
-  font-family: var(--font-heading) !important;
+  font-family: var(--font-b) !important;
   font-size: 0.75rem !important;
   font-weight: 600 !important;
   letter-spacing: 0.12em !important;
@@ -2403,7 +2389,7 @@ a.admin-badge:hover { border-color: rgba(0,255,136,0.6); box-shadow: 0 0 12px rg
   opacity: 0.8 !important;
 }
 .rcnt {
-  font-family: var(--font-display) !important;
+  font-family: var(--font-h) !important;
   font-size: 0.62rem !important;
   border-radius: 3px !important;
   background: rgba(255,255,255,0.06) !important;
@@ -2427,11 +2413,11 @@ a.admin-badge:hover { border-color: rgba(0,255,136,0.6); box-shadow: 0 0 12px rg
 
 /* Filter group labels */
 .filter-group-label {
-  font-family: var(--font-heading) !important;
+  font-family: var(--font-b) !important;
   font-size: 0.55rem !important;
   font-weight: 600 !important;
   letter-spacing: 0.22em !important;
-  color: var(--text-dim) !important;
+  color: var(--muted) !important;
   text-transform: uppercase !important;
 }
 

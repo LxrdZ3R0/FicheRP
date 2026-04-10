@@ -37,13 +37,23 @@ docs/
 │   └── jaharta.css      Thème global partagé (variables CSS)
 │
 └── js/
-    ├── constants.js         window.RACES / window.RANKS / window.RACES_SPECIFIC
-    ├── utils.js             sanitize(), compressImage(), AntiSpam, Skeleton, showToast()
-    ├── jaharta-card.js      Web Component <jaharta-card> (tilt 3D, scramble, sparkle)
-    ├── jaharta-img-cache.js Cache localStorage des URLs d'images Firestore (TTL 24h)
-    ├── debug.js             Logger flottant (localStorage, bas-droit)
-    ├── kanji-blob.js        Blob Three.js pour gacha
-    └── page-transition.js   Overlay de chargement
+    ├── constants.js             window.RACES / window.RANKS / window.RACES_SPECIFIC
+    ├── utils.js                 sanitize(), compressImage(), AntiSpam, Skeleton, showToast()
+    ├── jaharta-card.js          Web Component <jaharta-card> (tilt 3D, scramble, sparkle)
+    ├── jaharta-img-cache.js     Cache localStorage des URLs d'images Firestore (TTL 24h)
+    ├── debug.js                 Logger flottant (localStorage, bas-droit)
+    ├── kanji-blob.js            Blob Three.js pour gacha
+    ├── page-transition.js       Overlay de chargement
+    ├── fiches.js                Module Firebase fiches joueurs (extrait de fiches.html)
+    ├── lore.js                  Logique page lore (extrait de lore.html)
+    ├── racesjouables-logic.js   Popup races + filtres (extrait de racesjouables.html)
+    ├── hub-core.js              Logique centrale hub (extrait de hub.html)
+    ├── hub-dashboard.js         Onglet Dashboard
+    ├── hub-inventory.js         Onglet Inventaire (UI Cyberpunk)
+    ├── hub-renders.js           Rendu des cartes hub
+    ├── hub-shops.js             Onglets Shops
+    ├── music-player.js          Lecteur audio flottant
+    └── race-popup.js            Popup race (hub)
 ```
 
 ---
@@ -158,18 +168,31 @@ window.JImgCache.stats()                // {total, expired}
 
 **Variables CSS globales** (`jaharta.css` `:root`) :
 ```css
+/* Fonds */
+--bg:       #020713   /* fond principal */
+--bg2:      #070d1e   /* fond secondaire */
+--surface:  #0c1228   /* surface carte */
+--surface2: #0a0f22   /* surface secondaire */
+
+/* Couleurs accent */
 --cyan:    #00f5ff   /* accent fiches + gacha */
 --magenta: #ff006e   /* accent PNJ */
 --gold:    #ffd60a   /* accent portail + admin */
---dark:    #04060f   /* fond principal */
---dark2:   #080d1a   /* fond cartes */
---text:    #c8e0f0
---muted:   #5a7a90
+--blue, --violet, --purple, --red, --green, --orange
+
+/* Texte */
+--text:   #e2e6f0   /* texte principal */
+--text2:  #7c84a0   /* texte secondaire */
+--text3:  #3a4060   /* texte tertiaire */
+--muted:  #5a7a90   /* texte atténué */
 ```
+
+**Variables INTERDITES (legacy — supprimées du `:root`)** :
+`--dark`, `--dark2`, `--bg-deep`, `--bg-dark`, `--bg-surface`, `--bg-card`, `--text-primary`, `--text-secondary`, `--text-dim`, `--font-display`, `--font-heading`
 
 Chaque page surcharge `--accent` dans son `<style>` inline.
 
-**Polices** : Orbitron (titres) · Exo 2 (corps) · Share Tech Mono (UI/mono)
+**Polices** (via variables) : `--font-h` Orbitron (titres) · `--font-b` Rajdhani (sous-titres) · `--font-body` Exo 2 (corps) · `--font-m` Share Tech Mono (UI/mono)
 
 **Rangs** (14 niveaux, F → Z) : rangs S+ ont une animation CSS prismatique pulsante.
 
@@ -187,7 +210,9 @@ Chaque page surcharge `--accent` dans son `<style>` inline.
 - **Sections commentées** CSS : `/* ══ Titre ══ */` · JS : `/* ── Titre ── */`
 - **Nommage** : variables et commentaires en **français** (adapté communauté FR).
 - **Taille fichiers** : < 800 lignes par fichier, fonctions < 50 lignes.
-- **Pas de logs** : `showToast()` pour feedback UX, `debug.js` pour erreurs dev.
+- **Pas de `console.*`** : utiliser exclusivement `window._dbg?.log/warn/error()` (jamais `console.log/warn/error` en production).
+- **onSnapshot** : chaque appel `onSnapshot()` DOIT stocker sa fonction de désabonnement (`const unsub = onSnapshot(...)` ou `_unsubs.key = onSnapshot(...)`).
+- **Pas de logs** : `showToast()` pour feedback UX, `window._dbg?.` pour erreurs dev.
 
 ---
 

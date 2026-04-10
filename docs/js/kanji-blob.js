@@ -191,7 +191,7 @@
   function rnd(s){return Math.abs(Math.sin(s*127.1)*43758.5453%1);}
   function mkS(type,src){
     var sh=gl.createShader(type);gl.shaderSource(sh,src);gl.compileShader(sh);
-    if(!gl.getShaderParameter(sh,gl.COMPILE_STATUS)){console.error(src.slice(0,80),gl.getShaderInfoLog(sh));return null;}
+    if(!gl.getShaderParameter(sh,gl.COMPILE_STATUS)){window._dbg?.error(src.slice(0,80),gl.getShaderInfoLog(sh));return null;}
     return sh;
   }
   function mkP(vs,fs){
@@ -199,7 +199,7 @@
     gl.attachShader(pr,mkS(gl.VERTEX_SHADER,vs));
     gl.attachShader(pr,mkS(gl.FRAGMENT_SHADER,fs));
     gl.linkProgram(pr);
-    if(!gl.getProgramParameter(pr,gl.LINK_STATUS)){console.error(gl.getProgramInfoLog(pr));return null;}
+    if(!gl.getProgramParameter(pr,gl.LINK_STATUS)){window._dbg?.error(gl.getProgramInfoLog(pr));return null;}
     return pr;
   }
   function mkFB(cw,ch){

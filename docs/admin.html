@@ -18,19 +18,20 @@ import{getFirestore,collection,doc,getDoc,getDocFromServer,addDoc,deleteDoc,quer
 import{getAuth,onAuthStateChanged,signOut,GoogleAuthProvider,signInWithPopup}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 const firebaseConfig={apiKey:"AIzaSyAru7qZX8Gu_b8Y3oNDV-a5PmkrrkRjkcs",authDomain:"jaharta-rp.firebaseapp.com",projectId:"jaharta-rp",storageBucket:"jaharta-rp.firebasestorage.app",messagingSenderId:"217075417489",appId:"1:217075417489:web:4d1e2df422a5cd42411a30"};
 const app=initializeApp(firebaseConfig);const db=getFirestore(app);const auth=getAuth(app);
-enableIndexedDbPersistence(db).catch(e=>{if(e.code!=='failed-precondition'&&e.code!=='unimplemented')console.warn('[offline]',e.code);});
+enableIndexedDbPersistence(db).catch(e=>{if(e.code!=='failed-precondition'&&e.code!=='unimplemented')window._dbg?.warn('[offline]',e.code);});
 let currentAdmin=null;
+const _unsubs={};
 onAuthStateChanged(auth,async user=>{
-  if(!user){showScreen('login');currentAdmin=null;return;}showScreen('loading');try{const snap=await getDocFromServer(doc(db,'admins',user.uid));if(!snap.exists()){await signOut(auth);showScreen('login');document.getElementById('login-error').textContent='⚠ Accès refusé. Votre compte n\'est pas dans la whitelist admin.';return;}const data=snap.data();currentAdmin={uid:user.uid,email:user.email,name:data.name||user.displayName||user.email,role:data.role||'admin'};window._adminRole=currentAdmin.role;window._adminEmail=currentAdmin.email;window._adminName=currentAdmin.name;renderAdminHeader();showScreen('panel');setTimeout(()=>window._setAdminTab?.({role:currentAdmin.role}),50);loadAllFiches();loadPNJ();loadLore();loadBestiaire();if(currentAdmin.role==='admin')loadLogs();}catch(err){console.error('[ADMIN] ERREUR auth:', err);document.getElementById('login-error').textContent='⚠ '+err.message;showScreen('login');}});
+  if(!user){showScreen('login');currentAdmin=null;return;}showScreen('loading');try{const snap=await getDocFromServer(doc(db,'admins',user.uid));if(!snap.exists()){await signOut(auth);showScreen('login');document.getElementById('login-error').textContent='⚠ Accès refusé. Votre compte n\'est pas dans la whitelist admin.';return;}const data=snap.data();currentAdmin={uid:user.uid,email:user.email,name:data.name||user.displayName||user.email,role:data.role||'admin'};window._adminRole=currentAdmin.role;window._adminEmail=currentAdmin.email;window._adminName=currentAdmin.name;renderAdminHeader();showScreen('panel');setTimeout(()=>window._setAdminTab?.({role:currentAdmin.role}),50);loadAllFiches();loadPNJ();loadLore();loadBestiaire();if(currentAdmin.role==='admin')loadLogs();}catch(err){window._dbg?.error('[ADMIN] ERREUR auth:', err);document.getElementById('login-error').textContent='⚠ '+err.message;showScreen('login');}});
 window.loginGoogle=async function(){const errEl=document.getElementById('login-error');errEl.textContent='';try{await signInWithPopup(auth,new GoogleAuthProvider());}catch(e){if(e.code!=='auth/popup-closed-by-user')errEl.textContent='⚠ Erreur Google : '+e.message;}};
 window.adminLogout=async function(){currentAdmin=null;window._adminRole=null;await signOut(auth);};
-async function writeLog(action,targetId,targetName){if(!currentAdmin)return;try{const d={action,targetId,targetName,byEmail:currentAdmin.email,byUid:currentAdmin.uid,byName:currentAdmin.name,role:currentAdmin.role,at:serverTimestamp()};await addDoc(collection(db,'logs'),d);}catch(e){console.warn('[log]',e.message);}}
-function loadLogs(){const q=query(collection(db,'logs'),orderBy('at','desc'));onSnapshot(q,snap=>{const logs=[];snap.forEach(d=>logs.push({id:d.id,...d.data()}));document.getElementById('cnt-logs').textContent=logs.length;renderLogs(logs);},err=>console.warn('[logs]',err.message));}
-function loadAllFiches(){const q=query(collection(db,'fiches'),orderBy('createdAt','desc'));onSnapshot(q,snap=>{const fiches=[];snap.forEach(d=>fiches.push({id:d.id,...d.data()}));document.getElementById('cnt-total').textContent=fiches.length;renderTable('table-fiches',fiches);},err=>console.warn('[fiches]',err.message));}
+async function writeLog(action,targetId,targetName){if(!currentAdmin)return;try{const d={action,targetId,targetName,byEmail:currentAdmin.email,byUid:currentAdmin.uid,byName:currentAdmin.name,role:currentAdmin.role,at:serverTimestamp()};await addDoc(collection(db,'logs'),d);}catch(e){window._dbg?.warn('[log]',e.message);}}
+function loadLogs(){if(_unsubs.logs)_unsubs.logs();const q=query(collection(db,'logs'),orderBy('at','desc'));_unsubs.logs=onSnapshot(q,snap=>{const logs=[];snap.forEach(d=>logs.push({id:d.id,...d.data()}));document.getElementById('cnt-logs').textContent=logs.length;renderLogs(logs);},err=>window._dbg?.warn('[logs]',err.message));}
+function loadAllFiches(){if(_unsubs.fiches)_unsubs.fiches();const q=query(collection(db,'fiches'),orderBy('createdAt','desc'));_unsubs.fiches=onSnapshot(q,snap=>{const fiches=[];snap.forEach(d=>fiches.push({id:d.id,...d.data()}));document.getElementById('cnt-total').textContent=fiches.length;renderTable('table-fiches',fiches);},err=>window._dbg?.warn('[fiches]',err.message));}
 window.deleteFiche=async function(id,name){if(!confirm('Supprimer définitivement cette fiche ?'))return;await deleteDoc(doc(db,'fiches',id));await writeLog('delete',id,name);showToast('Fiche supprimée.','error');};
-function loadPNJ(){const q=query(collection(db,'pnj'),orderBy('createdAt','desc'));onSnapshot(q,snap=>{const pnjs=[];snap.forEach(d=>pnjs.push({id:d.id,...d.data()}));document.getElementById('cnt-pnj').textContent=pnjs.length;const bp=document.getElementById('badge-pnj');bp.textContent=pnjs.length||'';bp.style.display=pnjs.length?'inline':'none';renderPNJTable(pnjs);},err=>console.warn('[pnj]',err.message));}
+function loadPNJ(){if(_unsubs.pnj)_unsubs.pnj();const q=query(collection(db,'pnj'),orderBy('createdAt','desc'));_unsubs.pnj=onSnapshot(q,snap=>{const pnjs=[];snap.forEach(d=>pnjs.push({id:d.id,...d.data()}));document.getElementById('cnt-pnj').textContent=pnjs.length;const bp=document.getElementById('badge-pnj');bp.textContent=pnjs.length||'';bp.style.display=pnjs.length?'inline':'none';renderPNJTable(pnjs);},err=>window._dbg?.warn('[pnj]',err.message));}
 window.deletePNJ=async function(id,name){if(!confirm('Supprimer définitivement ce PNJ ?'))return;await deleteDoc(doc(db,'pnj',id));await writeLog('delete_pnj',id,name);showToast('PNJ supprimé.','error');};
-function loadBestiaire(){const q=query(collection(db,'bestiaire'),orderBy('createdAt','desc'));onSnapshot(q,snap=>{const arr=[];snap.forEach(d=>arr.push({id:d.id,...d.data()}));const ce=document.getElementById('cnt-best');if(ce)ce.textContent=arr.length;renderBestTable(arr);},err=>console.warn('[best]',err.message));}
+function loadBestiaire(){if(_unsubs.best)_unsubs.best();const q=query(collection(db,'bestiaire'),orderBy('createdAt','desc'));_unsubs.best=onSnapshot(q,snap=>{const arr=[];snap.forEach(d=>arr.push({id:d.id,...d.data()}));const ce=document.getElementById('cnt-best');if(ce)ce.textContent=arr.length;renderBestTable(arr);},err=>window._dbg?.warn('[best]',err.message));}
 window.deleteBestiaire=async function(id,name){if(!confirm('Supprimer "'+(name||'cette bête')+'" ?'))return;await deleteDoc(doc(db,'bestiaire',id));await writeLog('delete_best',id,name);showToast('Bête supprimée.','error');};
 window.submitBestiaireAdmin=async function(){
   const v=id=>document.getElementById(id).value.trim();
@@ -65,7 +66,8 @@ window._setAdminTab=(data)=>{const btn=document.getElementById('tab-btn-logs');i
 /* ═══ LORE ═══ */
 const _ld={empires:[],organisations:[],dynasties:[],histoire:[],pantheon:[],chronologie:[],glossaire:[]};
 function loadLore(){
-  onSnapshot(collection(db,'lore'),snap=>{
+  if(_unsubs.lore)_unsubs.lore();
+  _unsubs.lore=onSnapshot(collection(db,'lore'),snap=>{
     Object.keys(_ld).forEach(k=>{_ld[k]=[];});
     snap.forEach(d=>{const x={id:d.id,...d.data()};const c=x.category;if(_ld[c])_ld[c].push(x);});
     Object.keys(_ld).forEach(k=>{_ld[k].sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));});
@@ -73,7 +75,7 @@ function loadLore(){
     const ce=document.getElementById('cnt-lore');if(ce)ce.textContent=t;
     const as=document.querySelector('.lore-subtab.active');
     if(as)window._renderLoreList(as.dataset.cat);
-  },err=>console.warn('[lore]',err.message));
+  },err=>window._dbg?.warn('[lore]',err.message));
 }
 window._renderLoreList=function(cat){
   const el=document.getElementById('lore-list-'+cat);if(!el)return;

@@ -116,7 +116,7 @@
   function doPlay() {
     muted = false; syncMute(); retries = 0;
     return audio.play().then(function() { setPlaying(true); }).catch(function(e) {
-      if (e.name !== 'NotAllowedError') console.warn('[JMP]', e.message);
+      if (e.name !== 'NotAllowedError') window._dbg?.warn('[JMP]', e.message);
     });
   }
 
