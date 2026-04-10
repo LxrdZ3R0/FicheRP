@@ -219,17 +219,34 @@ footer{border-top:1px solid rgba(255,255,255,0.04);padding:3rem clamp(1.5rem,4vw
         </select>
       </div>
       <div class="fg">
-        <label>Style de carte</label>
+        <label>Couleur</label>
+        <select id="best-color-sel">
+          <option value="red">Rouge</option>
+          <option value="blue">Bleu</option>
+          <option value="purple">Violet</option>
+          <option value="orange">Orange</option>
+          <option value="green">Vert</option>
+          <option value="cyan" selected>Cyan</option>
+          <option value="pink">Rose</option>
+          <option value="yellow">Jaune</option>
+          <option value="black">Noir</option>
+          <option value="white">Blanc</option>
+          <option value="prismatic">Prismatique</option>
+          <option value="gold">Or</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="fg-row">
+      <div class="fg">
+        <label>Pattern de carte</label>
         <select id="best-style">
-          <option value="holo">Holographique</option>
-          <option value="galaxy">Galaxie</option>
-          <option value="v">Rare V</option>
-          <option value="vmax">VMAX</option>
-          <option value="vstar">VStar</option>
-          <option value="ultra">Ultra Rare</option>
-          <option value="rainbow">Rainbow Secret</option>
-          <option value="secret">Or Secret</option>
-          <option value="radiant">Radiant</option>
+          <option value="galaxy">Galaxy</option>
+          <option value="glitch">Glitch</option>
+          <option value="thunder">Thunder</option>
+          <option value="aura">Aura</option>
+          <option value="legendary">Legendary</option>
+          <option value="apex">Apex</option>
         </select>
       </div>
     </div>
@@ -246,15 +263,6 @@ footer{border-top:1px solid rgba(255,255,255,0.04);padding:3rem clamp(1.5rem,4vw
     </div>
 
     <div class="fg">
-      <label>Couleur néon de la carte</label>
-      <div class="color-picker-wrap">
-        <input type="color" id="best-color" value="#00e5ff">
-        <input type="text" id="best-color-hex" value="#00e5ff" style="flex:1">
-      </div>
-      <div class="style-help">Sert pour la lueur et les titres "#" en markdown.</div>
-    </div>
-
-    <div class="fg">
       <label>Image principale (URL)</label>
       <input type="url" id="best-image" placeholder="https://...">
     </div>
@@ -266,9 +274,11 @@ footer{border-top:1px solid rgba(255,255,255,0.04);padding:3rem clamp(1.5rem,4vw
 
     <div class="fg">
       <label>Informations (dos de la carte)</label>
-      <textarea id="best-info" placeholder="# Titre principal&#10;## Sous-titre&#10;### Note italique&#10;------&#10;Texte libre…"></textarea>
+      <textarea id="best-info" placeholder="# Titre principal&#10;## Sous-titre&#10;### Note italique&#10;------&#10;**texte en gras néon**&#10;*italique*&#10;- élément de liste"></textarea>
       <div class="md-help">
-        <b># Titre</b> → couleur néon · <b>## Titre</b> → blanc néon · <b>### Titre</b> → italique blanc néon · <b>------</b> → séparateur
+        <b># Titre</b> → couleur néon · <b>## Titre</b> → blanc néon · <b>### Titre</b> → italique blanc néon<br>
+        <b>**texte**</b> → gras + néon · <b>*texte*</b> → italique · <b>***texte***</b> → gras italique néon<br>
+        <b>__texte__</b> → souligné · <b>~~texte~~</b> → barré · <b>------</b> → séparateur · <b>- texte</b> → liste
       </div>
     </div>
 
@@ -288,89 +298,179 @@ footer{border-top:1px solid rgba(255,255,255,0.04);padding:3rem clamp(1.5rem,4vw
 </footer>
 
 <script>
-/* ═══ BESTIAIRE — logique page (non-module) ═══ */
+/* ═══ BESTIAIRE v2 — Couleur × Pattern ═══ */
 
 window._bestSection = 'sauvage';
 window._bestiaireData = [];
 
-const STYLE_DEFAULT_NEON = {
-  holo:    '#69d1e9',
-  galaxy:  '#b06eff',
-  v:       '#ff6b9d',
-  vmax:    '#ff4757',
-  vstar:   '#ffd60a',
-  ultra:   '#00e5cc',
-  rainbow: '#ff49f6',
-  secret:  '#d8b75c',
-  radiant: '#82ffd5'
+const COLOR_NEONS = {
+  red:'#ff3b3b', blue:'#3b8bff', purple:'#a855f7', orange:'#ff8c00',
+  green:'#22c55e', cyan:'#00e5ff', pink:'#f472b6', yellow:'#facc15',
+  black:'#8b95a5', white:'#f0f4ff', prismatic:'#e0aaff', gold:'#d4a017'
 };
 
 function escHtml(s) {
   return String(s == null ? '' : s)
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
-/* ── Markdown discord-like → HTML ── */
+/* ── Inline markdown: **bold neon**, *italic*, ***bolditalic***, __underline__, ~~strike~~ ── */
+function renderInline(text, neon) {
+  let s = escHtml(text);
+  // ***bold italic neon***
+  s = s.replace(/\*\*\*(.+?)\*\*\*/g, '<span class="bcard-bolditalic" style="color:'+neon+';text-shadow:0 0 6px '+neon+',0 0 14px '+neon+'">$1</span>');
+  // **bold neon**
+  s = s.replace(/\*\*(.+?)\*\*/g, '<span class="bcard-bold" style="color:'+neon+';text-shadow:0 0 6px '+neon+',0 0 14px '+neon+'">$1</span>');
+  // *italic*
+  s = s.replace(/\*(.+?)\*/g, '<span class="bcard-italic">$1</span>');
+  // __underline__
+  s = s.replace(/__(.+?)__/g, '<span class="bcard-underline">$1</span>');
+  // ~~strikethrough~~
+  s = s.replace(/~~(.+?)~~/g, '<span class="bcard-strike">$1</span>');
+  return s;
+}
+
+/* ── Full markdown → HTML ── */
 function renderBestMD(text, neon) {
   const lines = String(text || '').split(/\r?\n/);
   let html = '';
+  let inList = false;
   let m;
   for (const raw of lines) {
     const line = raw.replace(/\s+$/, '');
+    // End list if line is not a list item
+    if (inList && !/^\s*-\s+/.test(line)) {
+      html += '</ul>';
+      inList = false;
+    }
     if (!line.trim()) { html += '<div style="height:6px"></div>'; continue; }
     if (/^-{6,}$/.test(line.trim())) { html += '<hr class="bcard-sep">'; continue; }
-    if ((m = line.match(/^\s*###\s+(.*)$/))) {
-      html += '<h3 class="bcard-h3">' + escHtml(m[1]) + '</h3>'; continue;
-    }
-    if ((m = line.match(/^\s*##\s+(.*)$/))) {
-      html += '<h2 class="bcard-h2">' + escHtml(m[1]) + '</h2>'; continue;
-    }
-    if ((m = line.match(/^\s*#\s+(.*)$/))) {
-      html += '<h1 class="bcard-h1" style="color:' + neon + ';text-shadow:0 0 6px ' + neon + ',0 0 14px ' + neon + ',0 0 24px ' + neon + '">' + escHtml(m[1]) + '</h1>';
+    // List item
+    if ((m = line.match(/^\s*-\s+(.*)$/))) {
+      if (!inList) { html += '<ul class="bcard-ul">'; inList = true; }
+      html += '<li class="bcard-li">' + renderInline(m[1], neon) + '</li>';
       continue;
     }
-    html += '<p class="bcard-p">' + escHtml(line) + '</p>';
+    if ((m = line.match(/^\s*###\s+(.*)$/))) {
+      html += '<h3 class="bcard-h3">' + renderInline(m[1], neon) + '</h3>'; continue;
+    }
+    if ((m = line.match(/^\s*##\s+(.*)$/))) {
+      html += '<h2 class="bcard-h2">' + renderInline(m[1], neon) + '</h2>'; continue;
+    }
+    if ((m = line.match(/^\s*#\s+(.*)$/))) {
+      html += '<h1 class="bcard-h1" style="color:'+neon+';text-shadow:0 0 6px '+neon+',0 0 14px '+neon+',0 0 24px '+neon+'">' + renderInline(m[1], neon) + '</h1>';
+      continue;
+    }
+    html += '<p class="bcard-p">' + renderInline(line, neon) + '</p>';
   }
+  if (inList) html += '</ul>';
   return html;
 }
 
-/* ── Render stars (1–10) — 10e étoile plus grande, italique + holo ── */
+/* ── Stars ── */
 function renderStars(n) {
   const v = Math.max(1, Math.min(10, parseInt(n) || 1));
   let s = '';
   for (let i = 0; i < 10; i++) {
     if (i < v) {
-      if (i === 9) {
-        s += '<span class="star10">★</span>';
-      } else {
-        s += '★';
-      }
+      s += i === 9 ? '<span class="star10">★</span>' : '★';
     } else {
-      if (i === 9) {
-        s += '<span class="off star10">★</span>';
-      } else {
-        s += '<span class="off">★</span>';
-      }
+      s += i === 9 ? '<span class="off star10">★</span>' : '<span class="off">★</span>';
     }
   }
   return s;
 }
 
+/* ═══ PARTICLE SYSTEM (Legendary + Apex) ═══ */
+function initParticles(canvas, neon, isApex) {
+  const ctx = canvas.getContext('2d');
+  const particles = [];
+  const COUNT = isApex ? 28 : 18;
+
+  function resize() {
+    const r = canvas.parentElement.getBoundingClientRect();
+    canvas.width = r.width;
+    canvas.height = r.height;
+  }
+  resize();
+
+  // Parse neon color
+  const tmp = document.createElement('div');
+  tmp.style.color = neon; document.body.appendChild(tmp);
+  const rgb = getComputedStyle(tmp).color; document.body.removeChild(tmp);
+  const [cr, cg, cb] = rgb.match(/\d+/g).map(Number);
+
+  for (let i = 0; i < COUNT; i++) {
+    particles.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      r: Math.random() * 1.8 + 0.5,
+      vx: (Math.random() - 0.5) * 0.3,
+      vy: -Math.random() * 0.4 - 0.1,
+      a: Math.random() * 0.6 + 0.2,
+      phase: Math.random() * Math.PI * 2
+    });
+  }
+
+  let hovering = false;
+  const card = canvas.closest('.bcard');
+  card.addEventListener('mouseenter', () => hovering = true);
+  card.addEventListener('mouseleave', () => hovering = false);
+
+  let raf;
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const baseAlpha = hovering ? 1 : (isApex ? 0.5 : 0.3);
+    const t = performance.now() / 1000;
+    for (const p of particles) {
+      p.x += p.vx;
+      p.y += p.vy;
+      if (p.y < -5) { p.y = canvas.height + 5; p.x = Math.random() * canvas.width; }
+      if (p.x < -5) p.x = canvas.width + 5;
+      if (p.x > canvas.width + 5) p.x = -5;
+      const flicker = 0.5 + 0.5 * Math.sin(t * 2 + p.phase);
+      const alpha = p.a * baseAlpha * flicker;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba('+cr+','+cg+','+cb+','+alpha.toFixed(3)+')';
+      ctx.fill();
+      // Glow
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r * 3, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba('+cr+','+cg+','+cb+','+(alpha * 0.15).toFixed(3)+')';
+      ctx.fill();
+    }
+    raf = requestAnimationFrame(draw);
+  }
+  draw();
+
+  // Cleanup observer
+  const obs = new MutationObserver(() => {
+    if (!document.contains(canvas)) { cancelAnimationFrame(raf); obs.disconnect(); }
+  });
+  obs.observe(document.body, { childList: true, subtree: true });
+}
+
 /* ── Build single card DOM ── */
 function buildBestCard(b) {
-  const neon = b.color || STYLE_DEFAULT_NEON[b.style] || '#69d1e9';
+  const colorKey = b.color || 'cyan';
+  const neon = COLOR_NEONS[colorKey] || COLOR_NEONS.cyan;
+  const style = b.style || 'galaxy';
   const card = document.createElement('div');
   card.className = 'bcard';
-  card.dataset.style = b.style || 'holo';
+  card.dataset.style = style;
+  card.dataset.color = colorKey;
   card.dataset.id = b.id;
   card.style.setProperty('--neon', neon);
   if (window._isAdmin) card.classList.add('is-admin');
 
   const isComp = b.section === 'compagnon';
   const backImgHTML = (isComp && b.image2)
-    ? '<div class="bcard__back-img-mask"><img class="bcard__back-img" src="' + escHtml(b.image2) + '" alt=""></div>'
+    ? '<div class="bcard__back-img-mask"><img class="bcard__back-img" src="'+escHtml(b.image2)+'" alt=""></div>'
     : '';
+
+  const needsParticles = (style === 'legendary' || style === 'apex');
 
   card.innerHTML =
     '<div class="bcard__admin">' +
@@ -380,44 +480,47 @@ function buildBestCard(b) {
     '<div class="bcard__inner">' +
       '<div class="bcard__face bcard__front">' +
         '<div class="bcard__img-wrap">' +
-          (b.image ? '<img src="' + escHtml(b.image) + '" alt="' + escHtml(b.name || '') + '" loading="lazy">' : '') +
+          (b.image ? '<img src="'+escHtml(b.image)+'" alt="'+escHtml(b.name||'')+'" loading="lazy">' : '') +
         '</div>' +
         '<div class="bcard__shine"></div>' +
         '<div class="bcard__glare"></div>' +
-        '<div class="bcard__top"><div class="bcard__name">' + escHtml(b.name || '?') + '</div></div>' +
+        (needsParticles ? '<canvas class="bcard__particles"></canvas>' : '') +
+        '<div class="bcard__top"><div class="bcard__name">'+escHtml(b.name||'?')+'</div></div>' +
         '<div class="bcard__bottom">' +
           '<div class="bcard__danger-lbl">DANGER</div>' +
-          '<div class="bcard__stars">' + renderStars(b.danger) + '</div>' +
+          '<div class="bcard__stars">'+renderStars(b.danger)+'</div>' +
         '</div>' +
       '</div>' +
       '<div class="bcard__face bcard__back">' +
         backImgHTML +
-        '<div class="bcard__back-content">' + renderBestMD(b.info, neon) + '</div>' +
+        '<div class="bcard__back-content">'+renderBestMD(b.info, neon)+'</div>' +
       '</div>' +
     '</div>';
 
   bindBestCard(card, b);
+
+  // Init particles after DOM insert
+  if (needsParticles) {
+    requestAnimationFrame(() => {
+      const cvs = card.querySelector('.bcard__particles');
+      if (cvs) initParticles(cvs, neon, style === 'apex');
+    });
+  }
+
   return card;
 }
 
 /* ── Interactivité (tilt + flip + admin) ── */
-
-/* Backdrop global pour le mode flip */
 const flipBackdrop = document.createElement('div');
 flipBackdrop.className = 'flip-backdrop';
 document.body.appendChild(flipBackdrop);
 let activeFlipCard = null;
-
-flipBackdrop.addEventListener('click', () => {
-  if (activeFlipCard) activeFlipCard._closeFlip();
-});
+flipBackdrop.addEventListener('click', () => { if (activeFlipCard) activeFlipCard._closeFlip(); });
 
 function bindBestCard(card, b) {
   const inner = card.querySelector('.bcard__inner');
-  let rot = 0;
-  let flipped = false;
+  let rot = 0, flipped = false;
 
-  /* ── Tilt 3D (front uniquement, pas sur les boutons admin) ── */
   card.addEventListener('mousemove', e => {
     if (flipped) return;
     if (e.target.closest('.bcard__admin')) return;
@@ -426,61 +529,42 @@ function bindBestCard(card, b) {
     const py = (e.clientY - r.top) / r.height;
     const rx = (py - 0.5) * -16;
     const ry = (px - 0.5) * 16;
-    card.style.setProperty('--mx', (px * 100) + '%');
-    card.style.setProperty('--my', (py * 100) + '%');
-    card.style.setProperty('--posx', (px * 100) + '%');
-    card.style.setProperty('--posy', (py * 100) + '%');
-    card.style.setProperty('--hyp', Math.min(1, Math.hypot(px - 0.5, py - 0.5) * 2));
+    card.style.setProperty('--mx', (px*100)+'%');
+    card.style.setProperty('--my', (py*100)+'%');
+    card.style.setProperty('--posx', (px*100)+'%');
+    card.style.setProperty('--posy', (py*100)+'%');
+    card.style.setProperty('--hyp', Math.min(1, Math.hypot(px-0.5,py-0.5)*2));
     card.classList.add('interacting');
-    inner.style.transform = 'rotateY(' + (rot + ry).toFixed(2) + 'deg) rotateX(' + (rx).toFixed(2) + 'deg)';
+    inner.style.transform = 'rotateY('+(rot+ry).toFixed(2)+'deg) rotateX('+(rx).toFixed(2)+'deg)';
   });
 
   card.addEventListener('mouseleave', () => {
     if (flipped) return;
     card.classList.remove('interacting');
-    inner.style.transform = 'rotateY(' + rot + 'deg)';
+    inner.style.transform = 'rotateY('+rot+'deg)';
     card.style.setProperty('--hyp', 0);
   });
 
-  /* ── Flip : la carte vole de sa position vers le centre de l'écran ── */
   function openFlip() {
     if (activeFlipCard && activeFlipCard !== card) activeFlipCard._closeFlip();
-
-    /* Calcul du delta entre la position actuelle de la carte et le centre du viewport */
     const rect = card.getBoundingClientRect();
-    const cardCX = rect.left + rect.width / 2;
-    const cardCY = rect.top + rect.height / 2;
-    const vpCX = window.innerWidth / 2;
-    const vpCY = window.innerHeight / 2;
-    const dx = vpCX - cardCX;
-    const dy = vpCY - cardCY;
-
-    flipped = true;
-    rot += 900;
+    const dx = window.innerWidth/2 - (rect.left + rect.width/2);
+    const dy = window.innerHeight/2 - (rect.top + rect.height/2);
+    flipped = true; rot += 900;
     card.classList.remove('interacting');
     card.classList.add('bcard--focused');
     flipBackdrop.classList.add('active');
     activeFlipCard = card;
-
-    card.style.transform = 'translate(' + dx.toFixed(1) + 'px, ' + dy.toFixed(1) + 'px) scale(1.2)';
-    inner.style.transform = 'rotateY(' + rot + 'deg)';
+    card.style.transform = 'translate('+dx.toFixed(1)+'px,'+dy.toFixed(1)+'px) scale(1.2)';
+    inner.style.transform = 'rotateY('+rot+'deg)';
   }
 
   function closeFlip() {
-    flipped = false;
-    rot += 900;
-
-    /* Retour à la position initiale */
-    card.style.transform = 'translate(0px, 0px) scale(1)';
-    inner.style.transform = 'rotateY(' + rot + 'deg)';
-
+    flipped = false; rot += 900;
+    card.style.transform = 'translate(0px,0px) scale(1)';
+    inner.style.transform = 'rotateY('+rot+'deg)';
     flipBackdrop.classList.remove('active');
-
-    /* Retirer la classe focused après la fin de l'animation */
-    const onEnd = () => {
-      card.classList.remove('bcard--focused');
-      card.removeEventListener('transitionend', onEnd);
-    };
+    const onEnd = () => { card.classList.remove('bcard--focused'); card.removeEventListener('transitionend', onEnd); };
     card.addEventListener('transitionend', onEnd);
     activeFlipCard = null;
   }
@@ -488,31 +572,28 @@ function bindBestCard(card, b) {
 
   card.addEventListener('click', e => {
     if (e.target.closest('.bcard__admin')) return;
-    if (!flipped) {
-      openFlip();
-    } else {
-      closeFlip();
-    }
+    if (!flipped) openFlip(); else closeFlip();
   });
 
-  /* ── Admin actions — stopPropagation bloque flip ET tilt ── */
   const editBtn = card.querySelector('.bcard__edit');
   const delBtn  = card.querySelector('.bcard__del');
   if (editBtn) editBtn.addEventListener('click', ev => { ev.stopPropagation(); openEditBest(b.id); });
   if (delBtn)  delBtn.addEventListener('click',  ev => { ev.stopPropagation(); deleteBest(b.id, b.name); });
 }
 
-/* ── Render section ── */
+/* ── Render section (tri alphabétique) ── */
 function renderBestiaire() {
   const grid = document.getElementById('best-grid');
   const empty = document.getElementById('best-empty');
   grid.innerHTML = '';
   const all = window._bestiaireData || [];
-  const sauv = all.filter(b => (b.section || 'sauvage') === 'sauvage');
+  const sauv = all.filter(b => (b.section||'sauvage') === 'sauvage');
   const comp = all.filter(b => b.section === 'compagnon');
   document.getElementById('cnt-sauvage').textContent = sauv.length;
   document.getElementById('cnt-compagnon').textContent = comp.length;
-  const items = window._bestSection === 'compagnon' ? comp : sauv;
+  const items = (window._bestSection === 'compagnon' ? comp : sauv)
+    .slice()
+    .sort((a,b) => (a.name||'').localeCompare(b.name||'', 'fr', {sensitivity:'base'}));
   if (!items.length) {
     empty.style.display = 'block';
     empty.textContent = '◈ Aucune bête dans cette section.';
@@ -533,11 +614,10 @@ window.openBestModal = function() {
   if (!window._isAdmin) return;
   document.getElementById('best-modal-title').textContent = '◆ Nouvelle Bête';
   document.getElementById('best-section').value = window._bestSection;
-  document.getElementById('best-style').value = 'holo';
+  document.getElementById('best-style').value = 'galaxy';
+  document.getElementById('best-color-sel').value = 'cyan';
   document.getElementById('best-name').value = '';
   document.getElementById('best-danger').value = 3;
-  document.getElementById('best-color').value = STYLE_DEFAULT_NEON.holo;
-  document.getElementById('best-color-hex').value = STYLE_DEFAULT_NEON.holo;
   document.getElementById('best-image').value = '';
   document.getElementById('best-image2').value = '';
   document.getElementById('best-info').value = '';
@@ -555,30 +635,17 @@ window.closeBestModal = function() {
 };
 
 document.addEventListener('click', e => {
-  const m = document.getElementById('best-modal');
-  if (e.target === m) closeBestModal();
+  if (e.target === document.getElementById('best-modal')) closeBestModal();
 });
 
 function toggleImage2Wrap() {
-  const sec = document.getElementById('best-section').value;
-  document.getElementById('best-image2-wrap').style.display = sec === 'compagnon' ? 'block' : 'none';
+  document.getElementById('best-image2-wrap').style.display =
+    document.getElementById('best-section').value === 'compagnon' ? 'block' : 'none';
 }
 
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('best-section').addEventListener('change', toggleImage2Wrap);
-  document.getElementById('best-style').addEventListener('change', e => {
-    const def = STYLE_DEFAULT_NEON[e.target.value] || '#69d1e9';
-    document.getElementById('best-color').value = def;
-    document.getElementById('best-color-hex').value = def;
-  });
-  document.getElementById('best-color').addEventListener('input', e => {
-    document.getElementById('best-color-hex').value = e.target.value;
-  });
-  document.getElementById('best-color-hex').addEventListener('input', e => {
-    if (/^#[0-9a-fA-F]{6}$/.test(e.target.value)) document.getElementById('best-color').value = e.target.value;
-  });
 
-  /* Démarrer le chargement */
   if (typeof window._loadBestiaire === 'function') window._loadBestiaire();
   else {
     const iv = setInterval(() => {
@@ -598,9 +665,7 @@ window.submitBest = async function() {
     data.createdAt = window._serverTimestamp();
     await window._addDoc(window._collection(window._db, 'bestiaire'), data);
     closeBestModal();
-  } catch (e) {
-    alert('Erreur: ' + e.message);
-  }
+  } catch (e) { alert('Erreur: ' + e.message); }
   btn.disabled = false; btn.textContent = '◆ Créer la bête';
 };
 
@@ -611,12 +676,10 @@ window.openEditBest = async function(id) {
   const b = snap.data();
   document.getElementById('best-modal-title').textContent = '✎ Éditer la bête';
   document.getElementById('best-section').value = b.section || 'sauvage';
-  document.getElementById('best-style').value = b.style || 'holo';
+  document.getElementById('best-style').value = b.style || 'galaxy';
+  document.getElementById('best-color-sel').value = b.color || 'cyan';
   document.getElementById('best-name').value = b.name || '';
   document.getElementById('best-danger').value = b.danger || 1;
-  const c = b.color || STYLE_DEFAULT_NEON[b.style || 'holo'];
-  document.getElementById('best-color').value = c;
-  document.getElementById('best-color-hex').value = c;
   document.getElementById('best-image').value = b.image || '';
   document.getElementById('best-image2').value = b.image2 || '';
   document.getElementById('best-info').value = b.info || '';
@@ -637,9 +700,7 @@ window.updateBest = async function(id) {
   try {
     await window._updateDoc(window._doc(window._db, 'bestiaire', id), data);
     closeBestModal();
-  } catch (e) {
-    alert('Erreur: ' + e.message);
-  }
+  } catch (e) { alert('Erreur: ' + e.message); }
   btn.disabled = false; btn.textContent = '✎ Mettre à jour';
 };
 
@@ -655,13 +716,13 @@ function collectBestForm() {
   if (!name) { alert('Le nom est obligatoire'); return null; }
   const section = document.getElementById('best-section').value;
   const style = document.getElementById('best-style').value;
+  const color = document.getElementById('best-color-sel').value;
   const dangerRaw = parseInt(document.getElementById('best-danger').value, 10);
   const danger = Math.max(1, Math.min(10, isNaN(dangerRaw) ? 1 : dangerRaw));
-  const color = document.getElementById('best-color-hex').value || STYLE_DEFAULT_NEON[style] || '#00e5ff';
   const image = document.getElementById('best-image').value.trim();
   const image2 = document.getElementById('best-image2').value.trim();
   const info = document.getElementById('best-info').value;
-  const data = { name, section, style, danger, color, image, info };
+  const data = { name, section, style, color, danger, image, info };
   if (section === 'compagnon') data.image2 = image2;
   return data;
 }
