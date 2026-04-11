@@ -175,17 +175,26 @@ window.JImgCache.stats()                // {total, expired}
 --surface2: #0a0f22   /* surface secondaire */
 
 /* Couleurs accent */
---cyan:    #00f5ff   /* accent fiches + gacha */
+--cyan:    #00e5ff   /* accent fiches + gacha */
 --magenta: #ff006e   /* accent PNJ */
 --gold:    #ffd60a   /* accent portail + admin */
 --blue, --violet, --purple, --red, --green, --orange
 
 /* Texte */
 --text:   #e2e6f0   /* texte principal */
---text2:  #7c84a0   /* texte secondaire */
---text3:  #3a4060   /* texte tertiaire */
+--text2:  #c8cde0   /* texte secondaire — surchargé dans hub.css */
+--text3:  #9aa0b8   /* texte tertiaire — surchargé dans hub.css */
 --muted:  #5a7a90   /* texte atténué */
 ```
+
+**Canaux RGB (hub.css `:root`) — pour `rgba()` thémables** :
+```css
+--cyan-rgb:       0,229,255    --blue-rgb:   77,163,255
+--violet-rgb:     139,92,246   --red-rgb:    255,71,87
+--green-rgb:      68,255,136   --gold-rgb:   255,214,10
+--surface-dk-rgb: 8,12,28      --bg-dk-rgb:  4,8,20
+```
+→ Utiliser `rgba(var(--cyan-rgb), 0.2)` plutôt que `rgba(0,229,255,0.2)` dans hub.css.
 
 **Variables INTERDITES (legacy — supprimées du `:root`)** :
 `--dark`, `--dark2`, `--bg-deep`, `--bg-dark`, `--bg-surface`, `--bg-card`, `--text-primary`, `--text-secondary`, `--text-dim`, `--font-display`, `--font-heading`
@@ -203,7 +212,7 @@ Chaque page surcharge `--accent` dans son `<style>` inline.
 ## Conventions
 
 - **Immutabilité** : créer de nouveaux objets, ne pas muter.
-- **Sanitize** : appeler `sanitize()` sur tout input avant Firestore.
+- **Sanitize** : appeler `sanitize()` sur tout input avant Firestore ET avant tout `innerHTML` / insertion DOM.
 - **Pas de `<form>`** : tout est géré via `onclick` + JS.
 - **Pas de bundler** : imports ESM directs depuis CDN gstatic.
 - **Real-time first** : préférer `onSnapshot()` à `getDocs()` pour l'UI.
@@ -213,6 +222,10 @@ Chaque page surcharge `--accent` dans son `<style>` inline.
 - **Pas de `console.*`** : utiliser exclusivement `window._dbg?.log/warn/error()` (jamais `console.log/warn/error` en production).
 - **onSnapshot** : chaque appel `onSnapshot()` DOIT stocker sa fonction de désabonnement (`const unsub = onSnapshot(...)` ou `_unsubs.key = onSnapshot(...)`).
 - **Pas de logs** : `showToast()` pour feedback UX, `window._dbg?.` pour erreurs dev.
+- **Pas de `transition:all`** : toujours lister les propriétés explicitement (`transform`, `opacity`, `border-color`, `box-shadow`, `background`…). Jamais de propriétés layout (`width`, `height`, `padding`, `top`, `left`).
+- **CSS rgba()** : utiliser `rgba(var(--cyan-rgb), 0.2)` — ne jamais hardcoder les triplets RGB dans hub.css.
+- **Images fiches** : `buildCard(ch, idx)` — les 4 premières cartes (idx < 4) utilisent `loading='eager'` + `fetchPriority='high'` pour le LCP ; le reste `loading='lazy'`.
+- **Toast** : `showToast()` ajoute `.show` (déclenche `jh-toast-in` via jaharta.css) puis remplace par `.jh-out` (déclenche `jh-toast-out`) avant de nettoyer.
 
 ---
 

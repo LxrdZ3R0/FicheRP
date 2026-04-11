@@ -370,15 +370,15 @@ Dans `docs/css/jaharta.css`, section `1. VARIABLES GLOBALES` :
   --surface2: #0a0f22;   /* surface secondaire */
 
   /* Couleurs accent */
-  --cyan:    #00f5ff;   /* accent fiches + gacha */
+  --cyan:    #00e5ff;   /* accent fiches + gacha */
   --magenta: #ff006e;   /* accent PNJ */
   --gold:    #ffd60a;   /* accent portail + admin */
   /* + --blue, --violet, --purple, --red, --green, --orange */
 
   /* Texte */
   --text:   #e2e6f0;   /* texte principal */
-  --text2:  #7c84a0;   /* texte secondaire */
-  --text3:  #3a4060;   /* texte tertiaire */
+  --text2:  #7c84a0;   /* texte secondaire (hub surcharge → #c8cde0) */
+  --text3:  #3a4060;   /* texte tertiaire  (hub surcharge → #9aa0b8) */
   --muted:  #5a7a90;   /* texte atténué */
 }
 ```
@@ -399,6 +399,22 @@ Dans `docs/css/jaharta.css`, section `1. VARIABLES GLOBALES` :
 ```
 
 Utiliser ces variables dans **tous** les nouveaux `transition:` ou `animation:` pour garder une cohérence de timing sur tout le site.
+
+> **⚠ Interdit** : `transition: all` — toujours lister les propriétés explicitement (ex: `transition: transform .3s, border-color .3s`). Ne jamais animer `width`, `height`, `padding`, `top`, `left` (causes des reflows).
+
+### Variables RGB canaux (hub.css uniquement)
+
+Pour les couleurs alpha dans `hub.css`, utiliser les canaux RGB :
+
+```css
+/* Dans hub.css — rgba thémables */
+rgba(var(--cyan-rgb),   0.2)   /* au lieu de rgba(0,229,255,0.2)   */
+rgba(var(--blue-rgb),   0.1)   /* au lieu de rgba(77,163,255,0.1)  */
+rgba(var(--red-rgb),    0.15)  /* au lieu de rgba(255,71,87,0.15)  */
+rgba(var(--bg-dk-rgb),  0.95)  /* au lieu de rgba(4,8,20,0.95)     */
+```
+
+Variables disponibles : `--cyan-rgb`, `--blue-rgb`, `--violet-rgb`, `--red-rgb`, `--green-rgb`, `--gold-rgb`, `--surface-dk-rgb`, `--bg-dk-rgb`.
 
 ### Accent par page
 

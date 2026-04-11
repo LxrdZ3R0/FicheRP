@@ -750,8 +750,7 @@ body::after{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;o
 .logout-btn:hover{background:rgba(var(--red-rgb),0.12);border-color:rgba(var(--red-rgb),0.4);box-shadow:0 0 20px rgba(var(--red-rgb),0.15)}
 
 /* ═══ TOAST — CYBERPUNK ═══ */
-.toast{position:fixed;bottom:-60px;left:50%;transform:translateX(-50%);font-family:var(--font-m);font-size:.52rem;letter-spacing:.08em;padding:10px 24px;border-radius:4px;background:rgba(var(--bg-dk-rgb),0.95);border:1px solid var(--border);z-index:10000;transition:bottom .3s ease;white-space:nowrap;backdrop-filter:blur(12px)}
-.toast.show{bottom:24px}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);font-family:var(--font-m);font-size:.52rem;letter-spacing:.08em;padding:10px 24px;border-radius:4px;background:rgba(var(--bg-dk-rgb),0.95);border:1px solid var(--border);z-index:10000;white-space:nowrap;backdrop-filter:blur(12px);opacity:0;pointer-events:none}
 .toast.success{border-color:rgba(var(--green-rgb),0.3);color:var(--green);box-shadow:0 0 20px rgba(var(--green-rgb),0.1)}
 .toast.error{border-color:rgba(var(--red-rgb),0.3);color:var(--red);box-shadow:0 0 20px rgba(var(--red-rgb),0.1)}
 .toast.info{border-color:rgba(var(--cyan-rgb),0.3);color:var(--cyan);box-shadow:0 0 20px rgba(var(--cyan-rgb),0.1)}

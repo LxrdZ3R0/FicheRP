@@ -257,7 +257,10 @@ window.showToast = function(msg, type = 'success', duration = 4000) {
   t.textContent = msg;
   t.className   = `toast ${type} show`;
   clearTimeout(t._timer);
-  t._timer = setTimeout(() => { t.className = 'toast'; }, duration);
+  t._timer = setTimeout(() => {
+    t.classList.replace('show', 'jh-out');
+    setTimeout(() => { t.className = 'toast'; }, 220);
+  }, duration);
 };
 
 

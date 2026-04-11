@@ -2577,15 +2577,17 @@ a, button, [role="button"], [onclick],
   to   { opacity: 1; transform: none; }
 }
 
-/* Toast — entrée depuis le bas */
+/* Toast — entrée/sortie depuis le bas */
 @keyframes jh-toast-in {
-  from { opacity: 0; transform: translateY(20px) scale(0.95); }
-  to   { opacity: 1; transform: none; }
+  from { opacity: 0; transform: translateX(-50%) translateY(16px) scale(0.96); }
+  to   { opacity: 1; transform: translateX(-50%); }
 }
 @keyframes jh-toast-out {
-  from { opacity: 1; transform: none; }
-  to   { opacity: 0; transform: translateY(10px) scale(0.95); }
+  from { opacity: 1; transform: translateX(-50%); }
+  to   { opacity: 0; transform: translateX(-50%) translateY(10px) scale(0.96); }
 }
+.toast.show   { animation: jh-toast-in  .25s ease-out forwards; }
+.toast.jh-out { animation: jh-toast-out .2s  ease-in  forwards; }
 
 /* Notification badge pulse */
 @keyframes jh-badge-pulse {
