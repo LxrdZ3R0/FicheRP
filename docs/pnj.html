@@ -254,6 +254,40 @@ function revealCards() {
 window.bindTilt     = bindTilt;
 window.revealCards  = revealCards;
 
+/* ── IRP Mode — charge les PNJ IRP en plus ── */
+let _irpPnjLoaded=false;
+window._loadIRPPNJ=function(){
+  if(_irpPnjLoaded)return;
+  if(!window._irpMode)return;
+  _irpPnjLoaded=true;
+  try{
+    onSnapshot(collection(db,'irp_pnj'),snap=>{
+      const container=document.getElementById('pnj-container');
+      if(!container)return;
+      container.querySelectorAll('[data-irp-pnj="true"]').forEach(c=>c.remove());
+      const docs=[];
+      snap.forEach(d=>docs.push({id:d.id,...d.data()}));
+      docs.sort((a,b)=>{
+        const ta=a.createdAt?.toMillis?.()??(a.syncedAt?new Date(a.syncedAt).getTime():0);
+        const tb=b.createdAt?.toMillis?.()??(b.syncedAt?new Date(b.syncedAt).getTime():0);
+        return tb-ta;
+      });
+      docs.forEach(p=>{
+        const card=buildPNJCard(p);
+        card.dataset.irpPnj='true';
+        /* Badge IRP */
+        const badge=document.createElement('div');
+        badge.style.cssText='position:absolute;top:8px;right:8px;z-index:20;background:rgba(220,20,60,0.85);color:#fff;font-family:var(--font-h);font-size:0.45rem;letter-spacing:0.1em;padding:3px 8px;border-radius:4px;';
+        badge.textContent='IRP';
+        card.style.position='relative';
+        card.appendChild(badge);
+        container.appendChild(card);
+      });
+      setTimeout(revealCards,80);
+    },err=>window._dbg?.warn('IRP PNJ load:',err.message));
+  }catch(e){window._dbg?.warn('IRP PNJ error:',e.message);}
+};
+
 
 </script>
 
@@ -637,6 +671,7 @@ const _origSaveFilter=window.saveFilter;window.saveFilter=async function(){await
 
 <script src="js/page-transition.js"></script>
 <script src="js/jaharta-motion.js"></script>
+<script src="js/irp-mode.js"></script>
 <script src="js/kanji-blob.js"></script>
 <script src="js/music-player.js"></script>
 
