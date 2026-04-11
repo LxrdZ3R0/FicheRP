@@ -88,23 +88,19 @@ let _allBuffs={};      // buffs/{discordId} → {buffs:[]}
 let _allCompUsers={};  // companions_user/{discordId_charId} → {owned_companions,active_companion}
 let _compCfg={companions:{},evolutions:{}};
 let _itemSets={};
-let _allParties={};    // parties/{party_id} → {name, members[], ...}
-let _allPartyMem={};   // party_membership/{charKey} → {party_id}
 
 async function loadBonusData(){
   if(_bonusDataLoaded)return;
   _bonusDataLoaded=true;
   try{
-    const [itemsCfgSnap,activesSnap,invsSnap,buffsSnap,compUsersSnap,compCfgSnap,setsCfgSnap,partiesSnap,partyMemSnap]=await Promise.all([
+    const [itemsCfgSnap,activesSnap,invsSnap,buffsSnap,compUsersSnap,compCfgSnap,setsCfgSnap]=await Promise.all([
       getDoc(doc(db,'config','items')),
       getDocs(collection(db,'active_characters')),
       getDocs(collection(db,'inventories')),
       getDocs(collection(db,'buffs')),
       getDocs(collection(db,'companions_user')),
       getDoc(doc(db,'config','companions_data')),
-      getDoc(doc(db,'config','item_sets')),
-      getDocs(collection(db,'parties')),
-      getDocs(collection(db,'party_membership'))
+      getDoc(doc(db,'config','item_sets'))
     ]);
     if(itemsCfgSnap.exists()){
       const d=itemsCfgSnap.data();
@@ -118,8 +114,6 @@ async function loadBonusData(){
     compUsersSnap.forEach(d=>{_allCompUsers[d.id]=d.data();});
     if(compCfgSnap.exists())_compCfg=compCfgSnap.data();
     if(setsCfgSnap.exists())_itemSets=setsCfgSnap.data();
-    partiesSnap.forEach(d=>{_allParties[d.id]=d.data();});
-    partyMemSnap.forEach(d=>{_allPartyMem[d.id]=d.data();});
   }catch(err){window._dbg?.warn('[Fiches] bonus data load:',err.message);}
 }
 
@@ -231,30 +225,6 @@ function computeCharBonuses(charId,charStats){
   const sigB=calcSigBonuses(eqList,charStats,aura,existBuf);
   Object.entries(sigB).forEach(([s,v])=>add(s,v));
 
-  // 5b) Cape Sombre XIII party bonus
-  let _ficheCapeGlobalPct=0;
-  if(eqList.includes('cape_sombre_xiii')){
-    // Find party for this character
-    const _capeCharKey=key; // discordId_charId
-    const _capeMem=_allPartyMem[_capeCharKey];
-    if(_capeMem&&_capeMem.party_id){
-      const _capeParty=_allParties[_capeMem.party_id];
-      if(_capeParty&&_capeParty.members){
-        let _capeCnt=0;
-        for(const m of _capeParty.members){
-          const mInv=_allInvs[m.char_key]||{};
-          if((mInv.equipped_assets||[]).includes('cape_sombre_xiii'))_capeCnt++;
-        }
-        if(_capeCnt>1){
-          const _capeExtraStats=SK8.filter(s=>s!=='resistance');
-          const _capeNbExtra=Math.min(_capeCnt-1,_capeExtraStats.length);
-          for(let i=0;i<_capeNbExtra;i++)add(_capeExtraStats[i],45);
-          if(_capeCnt>6)_ficheCapeGlobalPct=Math.min(_capeCnt-6,6)*3;
-        }
-      }
-    }
-  }
-
   // 6) Mythic+ effects
   const _ficheBS=s=>parseInt((charStats||{})[s]||0)||0;
   const _ficheMythicBuffMult={};
@@ -327,15 +297,6 @@ function computeCharBonuses(charId,charStats){
     SK8.forEach(s=>{
       const current=_ficheBS(s)+(bonuses[s]||0);
       if(current<target)bonuses[s]=(bonuses[s]||0)+(target-current);
-    });
-  }
-
-  // 9) Cape Sombre global % buff (7+ porters)
-  if(_ficheCapeGlobalPct>0){
-    SK8.forEach(s=>{
-      const current=_ficheBS(s)+(bonuses[s]||0);
-      const bonus=Math.floor(current*_ficheCapeGlobalPct/100);
-      if(bonus>0)add(s,bonus);
     });
   }
 
