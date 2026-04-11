@@ -112,7 +112,7 @@ function renderParty(p){
       // Powers preview
       const powers=charData.powers||[];
       if(powers.length){
-        const QCOL={common:'var(--text3)',uncommon:'#22c55e',rare:'#3b82f6',epic:'#a855f7',legendary:'var(--gold)',mythic:'var(--red)',unique:'var(--cyan)'};
+        const QCOL={common:'var(--text3)',uncommon:'#22c55e',rare:'#3b82f6',epic:'#a855f7',legendary:'var(--gold)',mythic:'var(--red)',unique:'var(--cyan)',ultimate:'#aa44ff',ender:'#ff3232',sync:'#00ffee'};
         info+=`<div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap">${powers.slice(0,4).map(p=>{
           const q=(typeof p==='string'?'common':(p.quality||'common')).toLowerCase();
           const nm=typeof p==='string'?p.replace(/_/g,' '):(p.name||p.id||'?');

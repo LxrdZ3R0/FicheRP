@@ -37,7 +37,7 @@ onAuthStateChanged(auth,async user=>{
 const HIGH_RANKS=['S','SS','SSS','X','T','G','G+','Z'];
 const GOLD_RANKS=['A','S','SS','SSS','X'];   /* reflet doré */
 const PRISM_RANKS=['T','G','G+','Z'];         /* reflet prismatique */
-const RARITY_COLORS={Common:'#8a8fa8',Uncommon:'#44ff88',Rare:'#4DA3FF',Epic:'#8B5CF6',Legendary:'#ffd60a',Mythic:'#ff8800',Unique:'#00ffcc',Artifact:'#ff006e',Mastercraft:'#ffffff'};
+const RARITY_COLORS={Common:'#8a8fa8',Uncommon:'#44ff88',Rare:'#4DA3FF',Epic:'#8B5CF6',Legendary:'#ffd60a',Mythic:'#ff8800',Unique:'#00ffcc',Artifact:'#ff006e',Mastercraft:'#ffffff',Ultimate:'#aa44ff',Ender:'#ff3232',Sync:'#00ffee'};
 const STATS=[{k:'str',l:'STR',c:'sb-str'},{k:'agi',l:'AGI',c:'sb-agi'},{k:'spd',l:'SPD',c:'sb-spd'},{k:'int',l:'INT',c:'sb-int'},{k:'mana',l:'MNA',c:'sb-mana'},{k:'res',l:'RES',c:'sb-res'},{k:'cha',l:'CHA',c:'sb-cha'},{k:'aura',l:'AUR',c:'sb-aura'}];
 
 /* ── Mapping short → long stat keys ── */
@@ -48,8 +48,10 @@ const SIGNATURE_ITEMS_F={
   cyclo_arcana:{name:"Cyclo-Arcana"},fake_twins:{name:"Fake Twins"},kings_jewel:{name:"King's Jewel"},
   real_twins:{name:"Real Twins"},diademe_du_nexus:{name:"Diadème du Nexus"},faux_modele_0:{name:"Faux, Modèle 0"},
   epee_de_damocles:{name:"Épée de Damoclès"},blitz_runners:{name:"Blitz Runners"},
-  survivai_kit:{name:"Survivai Kit"},riviere_dopalines:{name:"Rivière d'Opalines"},
-  faux_ongles_tisserand:{name:"Faux-Ongles du Tisserand"}
+  survivai_kit:{name:"Survivai Kit, Premium Edition"},riviere_dopalines:{name:"Rivière d'Opalines"},
+  faux_ongles_tisserand:{name:"Faux-Ongles du Tisserand de Rêves"},
+  cape_sombre_xiii:{name:"Cape Sombre, Modèle XIII"},
+  lame_sang_sushel:{name:"Lame-Sang de Sushel"}
 };
 const SIG_ALL=["strength","agility","speed","intelligence","mana","resistance","charisma"];
 function calcSigBonuses(eqIds,cs,aura,eb){
@@ -57,20 +59,26 @@ function calcSigBonuses(eqIds,cs,aura,eb){
   function a(s,v){b[s]=(b[s]||0)+Math.floor(v);}
   function bs(s){return parseInt((cs||{})[s]||0)||0;}
   for(const id of eqIds.filter(i=>SIGNATURE_ITEMS_F[i])){
-    if(id==='cyclo_arcana'){a('speed',(bs('speed')+(eb.speed||0))*0.5);}
+    if(id==='cyclo_arcana'){
+      // Fix précédence opérateur : parenthèses explicites
+      const spdTotal=bs('speed')+((eb||{}).speed||0);
+      a('speed',spdTotal*0.5);
+    }
     else if(id==='fake_twins'){a('agility',20);a('charisma',50);if(aura){SIG_ALL.forEach(s=>a(s,50));a('aura',100);}}
     else if(id==='kings_jewel'){a('mana',50);if(aura)a('mana',50);}
-    else if(id==='real_twins'){Object.entries(eb).forEach(([s,v])=>{if(v>0)a(s,v*0.75);});}
+    else if(id==='real_twins'){Object.entries(eb||{}).forEach(([s,v])=>{if(v>0)a(s,v*0.75);});}
     else if(id==='diademe_du_nexus'){a('agility',50);a('intelligence',50);if(bs('mana')>300)a('mana',100);}
     else if(id==='faux_modele_0'){a('intelligence',75);if(bs('mana')>300)a('mana',100);}
     else if(id==='epee_de_damocles'){a('agility',50);}
     else if(id==='blitz_runners'){a('agility',75);a('speed',75);a('mana',75);}
     else if(id==='survivai_kit'){
       if(cs){const h=SIG_ALL.reduce((x,s)=>bs(s)>bs(x)?s:x,SIG_ALL[0]);SIG_ALL.forEach(s=>a(s,s===h?75:50));}
-      if(bs('agility')>600)Object.entries(eb).forEach(([s,v])=>{if(v>0)a(s,v*0.5);});
+      if(bs('agility')>600)Object.entries(eb||{}).forEach(([s,v])=>{if(v>0)a(s,v*0.5);});
     }
     else if(id==='riviere_dopalines'){SIG_ALL.forEach(s=>a(s,50));if(bs('mana')>300){SIG_ALL.forEach(s=>a(s,25));a('mana',100);}}
     else if(id==='faux_ongles_tisserand'){a('mana',150);if(bs('mana')>700)SIG_ALL.forEach(s=>a(s,150));}
+    else if(id==='cape_sombre_xiii'){a('resistance',45);}
+    else if(id==='lame_sang_sushel'){SIG_ALL.forEach(s=>a(s,65));}
   }
   return b;
 }
@@ -520,7 +528,7 @@ function buildCard(ch,idx){
     const pl=document.createElement('div');pl.className='powers-list';
     powers.forEach(pw=>{
       const pi=document.createElement('div');pi.className='power-item';
-      const pc=pw.rarity?(RARITY_COLORS[pw.rarity]||'#8a8fa8'):C;
+      const _rc=pw.rarity;const pc=_rc?(RARITY_COLORS[_rc]||RARITY_COLORS[_rc.charAt(0).toUpperCase()+_rc.slice(1)]||'#8a8fa8'):C;
       pi.style.cssText=`border-color:${pc}88;background:${pc}08`;
       const ph=document.createElement('div');ph.className='power-header';
       const pn=document.createElement('div');pn.className='power-name';pn.style.color=pc;pn.textContent=pw.name||pw;ph.appendChild(pn);

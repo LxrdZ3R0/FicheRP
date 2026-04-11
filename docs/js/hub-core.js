@@ -146,7 +146,9 @@ const SIGNATURE_ITEMS={
   blitz_runners:{name:"Blitz Runners",icon:"👟",slot:"pieds"},
   survivai_kit:{name:"Survivai Kit, Premium Edition",icon:"🧰",slot:"mains"},
   riviere_dopalines:{name:"Rivière d'Opalines",icon:"📿",slot:"cou"},
-  faux_ongles_tisserand:{name:"Faux-Ongles du Tisserand",icon:"💅",slot:"cou"}
+  faux_ongles_tisserand:{name:"Faux-Ongles du Tisserand de Rêves",icon:"💅",slot:"cou"},
+  cape_sombre_xiii:{name:"Cape Sombre, Modèle XIII",icon:"🧥",slot:"dos"},
+  lame_sang_sushel:{name:"Lame-Sang de Sushel",icon:"🗡️",slot:"armes_h"}
 };
 const SIG_ALL_STATS=["strength","agility","speed","intelligence","mana","resistance","charisma"];
 
@@ -157,7 +159,8 @@ function calculateSignatureBonuses(equippedIds,charStats,auraEnabled,existingBuf
   const sigIds=equippedIds.filter(id=>SIGNATURE_ITEMS[id]);
   for(const id of sigIds){
     if(id==='cyclo_arcana'){
-      const spdTotal=base('speed')+(existingBuffs||{}).speed||0;
+      // Fix: parenthèses explicites pour éviter le bug de précédence opérateur
+      const spdTotal=base('speed')+((existingBuffs||{}).speed||0);
       add('speed',spdTotal*0.50);
     }else if(id==='fake_twins'){
       add('agility',20);add('charisma',50);
@@ -191,6 +194,12 @@ function calculateSignatureBonuses(equippedIds,charStats,auraEnabled,existingBuf
     }else if(id==='faux_ongles_tisserand'){
       add('mana',150);
       if(base('mana')>700){SIG_ALL_STATS.forEach(s=>add(s,150));}
+    }else if(id==='cape_sombre_xiii'){
+      // Bonus de base : +45 RES (bonus party calculé séparément côté Discord)
+      add('resistance',45);
+    }else if(id==='lame_sang_sushel'){
+      // +65 à toutes les stats (fixe)
+      SIG_ALL_STATS.forEach(s=>add(s,65));
     }
   }
   return b;
