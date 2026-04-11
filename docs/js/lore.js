@@ -448,10 +448,10 @@ function makeCard(d,type){
   var catMap={empire:'empires',org:'organisations',dynastie:'dynasties',dynasty:'dynasties',histoire:'histoire'};
   var cat=catMap[type]||type;
   var nm=d.name||d.title||d.term||'?';
-  var tagsHtml=d.tags&&d.tags.length?'<div class="lc-tags">'+d.tags.map(function(t){return '<span class="lc-tag">'+t+'</span>'}).join('')+'</div>':'';
-  var imgHtml=d.imageUrl?'<div class="lc-img" style="background-image:url(\''+d.imageUrl+'\')"><div class="lc-img-ov" style="background:linear-gradient(180deg,transparent 30%,rgba(6,10,24,0.95) 100%)"></div></div>':'';
+  var tagsHtml=d.tags&&d.tags.length?'<div class="lc-tags">'+d.tags.map(function(t){return '<span class="lc-tag">'+esc(t)+'</span>'}).join('')+'</div>':'';
+  var imgHtml=d.imageUrl?'<div class="lc-img" style="background-image:url(\''+esc(d.imageUrl)+'\')"><div class="lc-img-ov" style="background:linear-gradient(180deg,transparent 30%,rgba(6,10,24,0.95) 100%)"></div></div>':'';
   var logoHtml=d.imageUrl?'':'<div class="lc-logo"><div class="lc-ico-wrap">'+d.ico+'</div><span class="lc-trail"></span></div>';
-  return '<div class="lore-card rv'+(d.imageUrl?' has-img':'')+'" style="--lc:'+d.color+'" data-type="'+type+'" data-id="'+d.id+'">'+adminBtns(cat,d.id,nm)+'<div class="lc-border"></div>'+imgHtml+'<div class="lc-content">'+logoHtml+'<div class="lc-title">'+nm+'</div><div class="lc-subtitle">'+(d.sub||'')+'</div><p class="lc-desc">'+(d.desc||'')+'</p>'+tagsHtml+'<div class="lc-footer"><span class="lc-status"><span class="lc-dot" style="background:'+d.color+';box-shadow:0 0 6px '+d.color+'"></span>'+(d.status||'')+'</span><span class="lc-arrow">&rarr;</span></div></div></div>';
+  return '<div class="lore-card rv'+(d.imageUrl?' has-img':'')+'" style="--lc:'+esc(d.color)+'" data-type="'+esc(type)+'" data-id="'+esc(d.id)+'">'+adminBtns(cat,d.id,nm)+'<div class="lc-border"></div>'+imgHtml+'<div class="lc-content">'+logoHtml+'<div class="lc-title">'+esc(nm)+'</div><div class="lc-subtitle">'+esc(d.sub||'')+'</div><p class="lc-desc">'+esc(d.desc||'')+'</p>'+tagsHtml+'<div class="lc-footer"><span class="lc-status"><span class="lc-dot" style="background:'+esc(d.color)+';box-shadow:0 0 6px '+esc(d.color)+'"></span>'+esc(d.status||'')+'</span><span class="lc-arrow">&rarr;</span></div></div></div>';
 }
 function renderGrid(id,items,type){var g=document.getElementById(id);if(!g)return;g.innerHTML=items.map(function(d){return makeCard(d,type)}).join('');revealCards(g)}
 function revealCards(c){var cards=c.querySelectorAll('.rv,.chrono-era,.pth-flip');cards.forEach(function(el,i){el.classList.remove('visible');el.style.animationDelay=(.05+i*.1)+'s';setTimeout(function(){el.classList.add('visible')},80+i*100)})}
@@ -539,10 +539,10 @@ function showDynastyMembers(id){
   var d=DATA.dynasties.find(function(x){return x.id===id});if(!d||!d.members)return;
   var grid=document.getElementById('dynasties-grid');var membersDiv=document.getElementById('dynasty-members');
   grid.style.display='none';membersDiv.style.display='block';
-  var html='<div class="back-nav" onclick="hideDynastyMembers()">Retour aux Dynasties</div><div class="section-head"><span class="sh-num">\u25C6</span><h2 class="sh-title">'+d.name+'</h2><div class="sh-line"></div></div>';
+  var html='<div class="back-nav" onclick="hideDynastyMembers()">Retour aux Dynasties</div><div class="section-head"><span class="sh-num">\u25C6</span><h2 class="sh-title">'+esc(d.name)+'</h2><div class="sh-line"></div></div>';
   d.members.forEach(function(gen,gi){
-    html+='<div class="dynasty-gen-sep" style="--lc:'+d.color+'"><span class="dynasty-gen-label">'+gen.gen+'</span></div>';
-    if(gi>0)html+='<div class="dynasty-connector" style="background:linear-gradient(180deg,'+d.color+',transparent)"></div>';
+    html+='<div class="dynasty-gen-sep" style="--lc:'+esc(d.color)+'"><span class="dynasty-gen-label">'+esc(gen.gen)+'</span></div>';
+    if(gi>0)html+='<div class="dynasty-connector" style="background:linear-gradient(180deg,'+esc(d.color)+',transparent)"></div>';
     html+='<div class="lore-grid">';gen.members.forEach(function(m){
       html+=makeCard({id:m.name,name:m.name,sub:m.title,ico:d.ico,color:d.color,imageUrl:m.imageUrl,desc:m.desc,tags:[],status:'Membre'},'dynasty-member');
     });html+='</div>';

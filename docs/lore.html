@@ -603,7 +603,7 @@ window._loreAddDoc=async function(data){try{data.createdAt=serverTimestamp();con
 window._loreDeleteDoc=async function(id){try{await deleteDoc(doc(db,'lore',id));return true;}catch(e){window._dbg?.error('[lore] delete error:',e);return false;}};
 
 const CS=["empires","organisations","dynasties","histoire","pantheon","chronologie","glossaire"];
-onSnapshot(collection(db,"lore"),snap=>{
+window._loreUnsub=onSnapshot(collection(db,"lore"),snap=>{
   CS.forEach(c=>{window.DATA[c]=[];});
   snap.forEach(d=>{const x={id:d.id,...d.data()};const c=x.category;if(window.DATA[c])window.DATA[c].push(x);});
   CS.forEach(c=>{

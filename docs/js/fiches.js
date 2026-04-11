@@ -408,7 +408,7 @@ function bindScramble(card){
 }
 
 /* ── Build card ── */
-function buildCard(ch){
+function buildCard(ch,idx){
   const RACES=window.RACES||{}, RANKS=window.RANKS||{};
   const rc=RACES[ch.race]||{color:'#4DA3FF'};
   const rk=RANKS[ch.rank]||{color:'#6b7280'};
@@ -443,7 +443,9 @@ function buildCard(ch){
 
   if(ch.photoUrl||ch.photo){
     const img=document.createElement('img');
-    img.alt=ch.firstname||'';img.loading='lazy';
+    img.alt=ch.firstname||'';
+    if(idx<4){img.loading='eager';img.fetchPriority='high';}
+    else{img.loading='lazy';}
     if(window.JImgCache&&ch.id){window.JImgCache.applyTo(img,'fc_'+ch.id,ch.photoUrl||ch.photo);}
     else{img.src=ch.photoUrl||ch.photo;}
     photo.appendChild(img);
@@ -611,6 +613,7 @@ window.sortCards=function(mode,btn){
 
 /* ── Firebase loader ── */
 let _cardsLoaded=false;
+let _unsubChars=null,_unsubFiches=null;
 window._loadCards=function(){
   if(_cardsLoaded)return; // Déjà abonné — pas de double snapshot
   _cardsLoaded=true;
@@ -658,7 +661,7 @@ window._loadCards=function(){
       });
 
       all.forEach((d,idx)=>{
-        const el=buildCard(d);
+        const el=buildCard(d,idx);
         el.querySelector('.rp-card').dataset.index=idx;
         ctn.insertBefore(el,noRes);
       });
@@ -671,7 +674,7 @@ window._loadCards=function(){
     }
 
     // Charger characters (snapshot live)
-    onSnapshot(collection(db,'characters'),snap=>{
+    _unsubChars=onSnapshot(collection(db,'characters'),snap=>{
       charDocs=[];
       snap.forEach(d=>charDocs.push({id:d.id,...d.data()}));
       charLoaded=true;
@@ -683,7 +686,7 @@ window._loadCards=function(){
     });
 
     // Charger fiches manuelles (snapshot live)
-    onSnapshot(collection(db,'fiches'),snap=>{
+    _unsubFiches=onSnapshot(collection(db,'fiches'),snap=>{
       ficheDocs=[];
       snap.forEach(d=>ficheDocs.push({id:d.id,...d.data()}));
       ficheLoaded=true;

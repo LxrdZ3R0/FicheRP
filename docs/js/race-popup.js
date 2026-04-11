@@ -183,7 +183,7 @@
           field('rp-ed-affinity', 'Affinité', d.affinity || '') +
           '<div class="rp-fg"><label class="rp-fl">Accès</label><select class="rp-fi" id="rp-ed-access"><option value="Ouverte"' + (d.access==='Ouverte'?' selected':'') + '>Ouverte</option><option value="Sous conditions"' + (d.access!=='Ouverte'?' selected':'') + '>Sous conditions</option></select></div>' +
         '</div>' +
-        '<div class="rp-fg"><label class="rp-fl">Description</label><textarea class="rp-fta" id="rp-ed-desc" rows="3" placeholder="Supporte le **markdown** Discord">' + (d.description||'') + '</textarea></div>' +
+        '<div class="rp-fg"><label class="rp-fl">Description</label><textarea class="rp-fta" id="rp-ed-desc" rows="3" placeholder="Supporte le **markdown** Discord">' + sanitize(d.description||'') + '</textarea></div>' +
         '<div class="rp-fg"><label class="rp-fl">Stats de base</label><div class="rp-stats-edit-grid" id="rp-stats-edit">' + statsRepHTML + '</div></div>' +
         '<div class="rp-fg"><label class="rp-fl">Pouvoirs de base</label><div id="rp-powers-edit">' + powersRepHTML + '</div>' +
         '<button type="button" class="rp-power-add" onclick="window._addRacePower()">+ Ajouter un pouvoir</button></div>' +

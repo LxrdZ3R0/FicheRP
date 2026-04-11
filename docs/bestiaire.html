@@ -33,7 +33,7 @@ onAuthStateChanged(auth,user=>{
 window._loadBestiaire=function(){
   if(window._bestLoaded)return;window._bestLoaded=true;
   const q=query(collection(db,'bestiaire'),orderBy('createdAt','desc'));
-  onSnapshot(q,snap=>{
+  window._bestUnsub=onSnapshot(q,snap=>{
     const docs=[];snap.forEach(d=>docs.push({id:d.id,...d.data()}));
     window._bestiaireData=docs;
     renderBestiaire();

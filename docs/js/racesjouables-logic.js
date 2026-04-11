@@ -208,7 +208,7 @@
         +'<option value="Sous conditions"'+(d.access!=='Ouverte'?' selected':'')+'>Sous conditions</option>'
         +'</select></div></div>'
         +'<div class="rp4-fg"><label class="rp4-fl">Image (URL)</label><input class="rp4-fi" id="rp-ed-image" value="'+(d.imageUrl||'').replace(/"/g,'&quot;')+'" placeholder="https://..."></div>'
-        +'<div class="rp4-fg"><label class="rp4-fl">Description</label><textarea class="rp4-fta" id="rp-ed-desc" placeholder="Supporte le **markdown** Discord">'+(d.description||'')+'</textarea></div>'
+        +'<div class="rp4-fg"><label class="rp4-fl">Description</label><textarea class="rp4-fta" id="rp-ed-desc" placeholder="Supporte le **markdown** Discord">'+sanitize(d.description||'')+'</textarea></div>'
         +'<div class="rp4-fg"><label class="rp4-fl">Stats de base</label><div class="rp4-stats-edit" id="rp4-stats-edit">'
         +(function(){var SK=['str','agi','spd','int','mana','res','cha','aura'],SL=['STR','AGI','SPD','INT','MNA','RES','CHA','AUR'],bs=d.baseStats||{};return SK.map(function(k,i){return '<div class="rp4-stat-ed"><span class="rp4-stat-ed-lbl">'+SL[i]+'</span><input class="rp4-fi rp4-stat-input" type="number" value="'+(bs[k]||0)+'" data-stat="'+k+'"></div>'}).join('')})()
         +'</div></div>'
