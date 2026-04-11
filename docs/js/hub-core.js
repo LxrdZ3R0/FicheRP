@@ -202,6 +202,48 @@ function calculateSignatureBonuses(equippedIds,charStats,auraEnabled,existingBuf
   return b;
 }
 
+/**
+ * Calculate Cape Sombre XIII party bonus.
+ * Mirrors bot signature_items.py calculate_cape_sombre_party_bonus().
+ * Counts how many party members have cape_sombre_xiii equipped,
+ * then grants +45 per extra stat (up to 6 stats), then +3% global per extra porter (7+).
+ * @param {string[]} equippedIds - current player's equipped items
+ * @returns {Promise<{bonuses:object, globalPct:number}>}
+ */
+async function calculateCapeSombrePartyBonus(equippedIds){
+  const result={bonuses:{},globalPct:0};
+  if(!equippedIds.includes('cape_sombre_xiii'))return result;
+  if(!PARTY_DATA||!PARTY_DATA.members)return result;
+  const CAPE_STATS=['strength','agility','speed','intelligence','mana','resistance','charisma'];
+  const members=PARTY_DATA.members||[];
+  let capeCount=0;
+  // Load each member's inventory and check for cape
+  const checks=members.map(async m=>{
+    const ck=m.char_key;
+    if(!ck)return;
+    try{
+      const snap=await db.collection(C.INV).doc(ck).get();
+      if(snap.exists()){
+        const eq=snap.data().equipped_assets||[];
+        if(eq.includes('cape_sombre_xiii'))capeCount++;
+      }
+    }catch(_){}
+  });
+  await Promise.all(checks);
+  if(capeCount<=1)return result;
+  // Extra stats beyond resistance (which is already +45 from base sig bonus)
+  const extraStats=CAPE_STATS.filter(s=>s!=='resistance');
+  const nbExtra=Math.min(capeCount-1,extraStats.length);
+  for(let i=0;i<nbExtra;i++){
+    result.bonuses[extraStats[i]]=(result.bonuses[extraStats[i]]||0)+45;
+  }
+  // 7+ porters: +3% global per extra
+  if(capeCount>6){
+    result.globalPct=Math.min(capeCount-6,6)*3;
+  }
+  return result;
+}
+
 /* ══════════════════════════════════════════════════════════════════════
    Mythic+ / Unique / Artifact / Mastercraft special item effects
    Port from bot inventory_system.py → mythic_effects dict

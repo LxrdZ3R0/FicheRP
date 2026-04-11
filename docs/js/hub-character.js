@@ -5,7 +5,7 @@
    ═══════════════════════════════════════════════════════════════════════ */
 
 // ── RENDER PERSONNAGE ──
-function renderFullChar(){
+async function renderFullChar(){
   const c=CHAR,fn=c.first_name||'',ln=c.last_name||'';
   const name=[fn,ln].filter(Boolean).join(' ')||'Personnage';
   const stats=c.stats||{},powers=c.powers||[];
@@ -105,6 +105,15 @@ function renderFullChar(){
   const sigBonuses=calculateSignatureBonuses(eqList,stats,auraEnabled,existingBuffsForSig);
   Object.entries(sigBonuses).forEach(([s,v])=>{addTo(bSig,s,v);});
 
+  // 7b) Cape Sombre XIII party bonus (async — counts party members with cape equipped)
+  const bCape={};
+  try{
+    const capeResult=await calculateCapeSombrePartyBonus(eqList);
+    Object.entries(capeResult.bonuses).forEach(([s,v])=>{addTo(bCape,s,v);});
+    // globalPct is applied after all bonuses (step 10)
+    var _capeGlobalPct=capeResult.globalPct||0;
+  }catch(_){var _capeGlobalPct=0;}
+
   // 8) Mythic+ effects (pct_base, conditional, nerf_reduction tracked in bMythic)
   const _mythicTemp={};
   const mythicResult=calculateMythicEffects(eqList,stats,_mythicTemp,auraEnabled);
@@ -119,6 +128,16 @@ function renderFullChar(){
     const diff=(bonuses[s]||0)-(_preMultBonuses[s]||0);
     if(diff>0)bMythic[s]=(bMythic[s]||0)+diff;
   });
+
+  // 10) Cape Sombre global % buff (7+ porters in party)
+  if(_capeGlobalPct>0){
+    const _allS=SIG_ALL_STATS||SK;
+    _allS.forEach(s=>{
+      const current=parseInt(stats[s]||0)+(bonuses[s]||0);
+      const bonus=Math.floor(current*_capeGlobalPct/100);
+      if(bonus>0)addTo(bCape,s,bonus);
+    });
+  }
 
   // ── True Self: INT locked at 10, no bonuses apply ──
   const _hasTrueSelf=(()=>{
@@ -139,10 +158,10 @@ function renderFullChar(){
     stats.intelligence=10;
     bonuses.intelligence=0;
     bEquip.intelligence=0; bSets.intelligence=0; bParty.intelligence=0;
-    bTitles.intelligence=0; bBuffs.intelligence=0; bComp.intelligence=0; bSig.intelligence=0; bMythic.intelligence=0;
+    bTitles.intelligence=0; bBuffs.intelligence=0; bComp.intelligence=0; bSig.intelligence=0; bMythic.intelligence=0; bCape.intelligence=0;
     delete bonuses.intelligence;
     delete bEquip.intelligence; delete bSets.intelligence; delete bParty.intelligence;
-    delete bTitles.intelligence; delete bBuffs.intelligence; delete bComp.intelligence; delete bSig.intelligence; delete bMythic.intelligence;
+    delete bTitles.intelligence; delete bBuffs.intelligence; delete bComp.intelligence; delete bSig.intelligence; delete bMythic.intelligence; delete bCape.intelligence;
   }
 
   // ── Stats display (with companion buff_mult) ──
@@ -196,6 +215,7 @@ function renderFullChar(){
     html+=renderBonusSection('🧩','SETS','sets',bSets);
     if(sigEquipped.length) html+=renderBonusSection('⭐','SIGNATURE','sig',bSig,sigTags);
     html+=renderBonusSection('🔮','MYTHIC+','equip',bMythic);
+    html+=renderBonusSection('🧥','CAPE SOMBRE','sig',bCape);
     if(activeCompName) html+=renderBonusSection('🐾','COMPAGNON','comp',bComp,compTag);
     html+=renderBonusSection('👥','PARTY','party',bParty);
     html+=renderBonusSection('🏷️','TITRES','titles',bTitles);
