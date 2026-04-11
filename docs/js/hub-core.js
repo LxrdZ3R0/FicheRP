@@ -360,19 +360,47 @@ const LAZY={
   parametres:renderSettings,
 };
 function showTab(id){
+  if(CURRENT_TAB===id)return; /* évite re-render si déjà actif */
   CURRENT_TAB=id;
-  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+
+  /* ── Transition fade entre les panels ── */
+  const prevPanel=document.querySelector('.tab-panel.active');
   const panel=document.getElementById('panel-'+id);
   const btn=document.getElementById('tab-'+id);
   if(!panel){window._dbg?.warn('[TAB]','panel-'+id+' introuvable !');return;}
-  panel.classList.add('active');
+
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   if(btn)btn.classList.add('active');
-  if(LAZY[id]){
-    try{
-      const result=LAZY[id]();
-      if(result&&result.catch)result.catch(err=>window._dbg?.error('[TAB] '+id,err));
-    }catch(err){window._dbg?.error('[TAB] '+id+' sync',err);}
+
+  const doSwitch=()=>{
+    if(prevPanel&&prevPanel!==panel)prevPanel.classList.remove('active');
+    panel.classList.add('active');
+    /* Animation d'entrée du panel */
+    if(!prefersReducedMotion){
+      panel.style.animation='none';
+      panel.offsetHeight; /* force reflow pour relancer */
+      panel.style.animation='';
+      panel.classList.add('jh-tab-panel');
+      panel.addEventListener('animationend',()=>panel.classList.remove('jh-tab-panel'),{once:true});
+    }
+    if(LAZY[id]){
+      try{
+        const result=LAZY[id]();
+        if(result&&result.catch)result.catch(err=>window._dbg?.error('[TAB] '+id,err));
+      }catch(err){window._dbg?.error('[TAB] '+id+' sync',err);}
+    }
+  };
+
+  if(prevPanel&&prevPanel!==panel&&!prefersReducedMotion){
+    prevPanel.style.transition='opacity 0.12s ease';
+    prevPanel.style.opacity='0';
+    setTimeout(()=>{
+      prevPanel.style.opacity='';
+      prevPanel.style.transition='';
+      doSwitch();
+    },120);
+  }else{
+    doSwitch();
   }
 }
 function _refreshCurrentTab(){

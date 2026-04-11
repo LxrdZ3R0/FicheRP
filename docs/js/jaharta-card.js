@@ -14,25 +14,44 @@ const SCRAMBLE   = "アイウエオカキクケコΨΩΣΔЯЖЩЦABCDEFGHIJKLMN
 
 function bindTilt(card) {
   const isPrismatic = HIGH_RANKS.includes(card.dataset.rank);
-  card.addEventListener("mousemove", e => {
-    const r  = card.getBoundingClientRect();
-    const nx = (e.clientX - r.left  - r.width  / 2) / (r.width  / 2);
-    const ny = (r.height / 2 - (e.clientY - r.top)) / (r.height / 2);
-    card.style.transform =
-      "perspective(800px) rotateX("+(ny*MAX_TILT).toFixed(2)+"deg) "+
-      "rotateY("+(nx*MAX_TILT).toFixed(2)+"deg) scale(1.02)";
-    const reflet = card.querySelector(".card-reflet");
-    if (reflet) {
-      const lx = 50 + nx * 35;
-      const ly = 50 - ny * 35;
-      reflet.style.background = isPrismatic
-        ? "radial-gradient(ellipse 55% 40% at "+lx+"% "+ly+"%,rgba(255,80,80,.08) 0%,rgba(255,200,50,.07) 22%,rgba(80,255,130,.06) 44%,rgba(77,163,255,.08) 66%,rgba(180,80,255,.07) 88%,transparent 100%)"
-        : "radial-gradient(ellipse 55% 40% at "+lx+"% "+ly+"%,rgba(255,255,255,.10) 0%,rgba(255,255,255,.04) 45%,transparent 75%)";
-    }
+  const reflet = card.querySelector(".card-reflet"); /* cache querySelector */
+  let _rafId = 0;
+  let _cachedRect = null;
+  let _lastE = null;
+
+  /* Cache le rect à l'entrée — getBoundingClientRect() est un reflow,
+     l'appeler sur chaque mousemove thrash le layout à ~60/s par carte. */
+  card.addEventListener("mouseenter", () => {
+    _cachedRect = card.getBoundingClientRect();
   });
+
+  card.addEventListener("mousemove", e => {
+    _lastE = e;
+    if (_rafId) return; /* déjà un frame en attente */
+    _rafId = requestAnimationFrame(() => {
+      _rafId = 0;
+      const r = _cachedRect;
+      if (!r || !_lastE) return;
+      const nx = (_lastE.clientX - r.left - r.width  / 2) / (r.width  / 2);
+      const ny = (r.height / 2 - (_lastE.clientY - r.top)) / (r.height / 2);
+      card.style.transform =
+        "perspective(800px) rotateX("+(ny*MAX_TILT).toFixed(2)+"deg) "+
+        "rotateY("+(nx*MAX_TILT).toFixed(2)+"deg) scale(1.02)";
+      if (reflet) {
+        const lx = 50 + nx * 35;
+        const ly = 50 - ny * 35;
+        reflet.style.background = isPrismatic
+          ? "radial-gradient(ellipse 55% 40% at "+lx+"% "+ly+"%,rgba(255,80,80,.08) 0%,rgba(255,200,50,.07) 22%,rgba(80,255,130,.06) 44%,rgba(77,163,255,.08) 66%,rgba(180,80,255,.07) 88%,transparent 100%)"
+          : "radial-gradient(ellipse 55% 40% at "+lx+"% "+ly+"%,rgba(255,255,255,.10) 0%,rgba(255,255,255,.04) 45%,transparent 75%)";
+      }
+    });
+  });
+
   card.addEventListener("mouseleave", () => {
+    if (_rafId) { cancelAnimationFrame(_rafId); _rafId = 0; }
+    _cachedRect = null;
+    _lastE = null;
     card.style.transform = "";
-    const reflet = card.querySelector(".card-reflet");
     if (reflet) reflet.style.background = "";
   });
 }

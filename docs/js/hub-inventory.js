@@ -31,15 +31,22 @@ let _tippyInstances=[];
 let _sortableGrid=null;
 let _sortableSlots={};
 
+/* ── Optimisation rendu ── */
+let _invLastHash='';      /* hash des ids+qtés pour éviter re-render inutile */
+let _invFirstRender=true; /* GSAP stagger uniquement au 1er affichage ou après filtre */
+let _invFilterChanged=false; /* signalé par setInvFilter / invSearchDebounce */
+
 // ── FILTRE CATÉGORIE ──
 function setInvFilter(cat){
   INV_TAB=cat;
+  _invFilterChanged=true; /* force l'animation GSAP au prochain render */
   document.querySelectorAll('.inv-cat').forEach(b=>b.classList.toggle('active',b.dataset.cat===cat));
   renderItemsGrid();
 }
 
 // Recherche avec debounce 200ms
 function invSearchDebounce(){
+  _invFilterChanged=true;
   clearTimeout(_invSearchTimer);
   _invSearchTimer=setTimeout(()=>renderItemsGrid(),200);
 }
@@ -168,34 +175,57 @@ function renderItemsGrid(){
   });
 
   const grid=document.getElementById('inv-grid');
-  if(!entries.length){grid.innerHTML='<div class="inv-empty-msg">Aucun item trouvé</div>';return;}
+  if(!entries.length){grid.innerHTML='<div class="inv-empty-msg">Aucun item trouvé</div>';_invLastHash='';return;}
 
-  // Détruire anciens tooltips avant de reconstruire le DOM
-  _destroyTooltips();
+  /* ── Dirty check : évite de reconstruire le DOM si les données n'ont pas changé ── */
+  const newHash=entries.map(([id,qty])=>id+':'+qty).join('|');
+  const dataChanged=newHash!==_invLastHash;
+  _invLastHash=newHash;
 
-  grid.innerHTML=entries.map(([id,qty])=>{
-    const it=ALL_ITEMS_DATA[id]||{};
-    const isEq=equipped.has(id);
-    const rarity=(it.rarity||'common').toLowerCase();
-    const rc=RARITY_COLORS[rarity]||'#6b7280';
-    const slotLabel=it.slot?SLOT_LIMITS[it.slot]?.label||it.slot:'';
-    return `<div class="inv-item rarity-${rarity}${isEq?' equipped':''}${_invDetailOpen===id?' selected':''}"
-      data-item-id="${id}" data-rarity="${rarity}" data-slot="${it.slot||''}"
-      onclick="showItemDetail('${id}')"
-      draggable="true">
-      ${isEq?'<span class="inv-badge-equipped"></span>':''}
-      ${qty>0?`<button class="inv-item-delete" onclick="openDeleteModal('${id}',event)" title="Supprimer de l'inventaire" aria-label="Supprimer ${e(it.name||id)}"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" width="10" height="10"><path d="M2 4h12M6 4V2h4v2M5 4l1 9h4l1-9"/></svg></button>`:''}
-      <span class="inv-item-emoji">${it.emoji||'📦'}</span>
-      <div class="inv-item-name" style="color:${rc}">${e(it.name||id)}</div>
-      ${slotLabel?`<div class="inv-item-slot">${slotLabel}</div>`:''}
-      ${qty>1?`<span class="inv-badge-qty">×${qty}</span>`:''}
-    </div>`;
-  }).join('');
+  if(dataChanged){
+    /* Détruire anciens tooltips avant de reconstruire le DOM */
+    _destroyTooltips();
 
-  // Animation GSAP entrée items
-  if(typeof gsap!=='undefined'&&!prefersReducedMotion){
-    gsap.from('#inv-grid .inv-item',{opacity:0,y:16,duration:0.28,stagger:{each:0.025,from:'start',amount:0.4},ease:'power2.out',clearProps:'opacity,transform'});
+    /* DocumentFragment — batch insertion, un seul reflow */
+    const frag=document.createDocumentFragment();
+    entries.forEach(([id,qty])=>{
+      const it=ALL_ITEMS_DATA[id]||{};
+      const isEq=equipped.has(id);
+      const rarity=(it.rarity||'common').toLowerCase();
+      const rc=RARITY_COLORS[rarity]||'#6b7280';
+      const slotLabel=it.slot?SLOT_LIMITS[it.slot]?.label||it.slot:'';
+      const div=document.createElement('div');
+      div.className='inv-item rarity-'+rarity+(isEq?' equipped':'')+((_invDetailOpen===id)?' selected':'');
+      div.dataset.itemId=id;
+      div.dataset.rarity=rarity;
+      div.dataset.slot=it.slot||'';
+      div.draggable=true;
+      div.setAttribute('onclick',"showItemDetail('"+id+"')");
+      div.innerHTML=
+        (isEq?'<span class="inv-badge-equipped"></span>':'')+
+        (qty>0?'<button class="inv-item-delete" onclick="openDeleteModal(\''+id+'\',event)" title="Supprimer de l\'inventaire" aria-label="Supprimer '+e(it.name||id)+'"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" width="10" height="10"><path d="M2 4h12M6 4V2h4v2M5 4l1 9h4l1-9"/></svg></button>':'')+
+        '<span class="inv-item-emoji">'+(it.emoji||'📦')+'</span>'+
+        '<div class="inv-item-name" style="color:'+rc+'">'+e(it.name||id)+'</div>'+
+        (slotLabel?'<div class="inv-item-slot">'+slotLabel+'</div>':'')+
+        (qty>1?'<span class="inv-badge-qty">×'+qty+'</span>':'');
+      frag.appendChild(div);
+    });
+    grid.innerHTML='';
+    grid.appendChild(frag);
+  } else {
+    /* Données identiques — seul le selected change (ouverture panneau détail) */
+    grid.querySelectorAll('.inv-item').forEach(el=>{
+      el.classList.toggle('selected',el.dataset.itemId===_invDetailOpen);
+    });
   }
+
+  /* ── GSAP stagger — uniquement au premier render ou après changement de filtre/données ── */
+  const shouldAnimate=(_invFirstRender||_invFilterChanged||dataChanged)&&!prefersReducedMotion;
+  if(shouldAnimate&&typeof gsap!=='undefined'){
+    gsap.from('#inv-grid .inv-item',{opacity:0,y:14,duration:0.24,stagger:{each:0.018,from:'start',amount:0.35},ease:'power2.out',clearProps:'opacity,transform'});
+  }
+  _invFirstRender=false;
+  _invFilterChanged=false;
 }
 
 // ── RENDER STATS SUMMARY ──
