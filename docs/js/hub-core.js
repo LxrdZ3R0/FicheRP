@@ -136,19 +136,19 @@ let CURRENT_TAB='dashboard'; // onglet actif — lazy render
 
 /* ── SIGNATURE ITEMS (port from signature_items.py) ── */
 const SIGNATURE_ITEMS={
-  cyclo_arcana:{name:"Cyclo-Arcana",icon:"⚔️",slot:"armes_h"},
-  fake_twins:{name:"Fake Twins",icon:"🔫",slot:"armes_h"},
-  kings_jewel:{name:"King's Jewel",icon:"💎",slot:"mains"},
-  real_twins:{name:"Real Twins",icon:"🧤",slot:"armes_h"},
-  diademe_du_nexus:{name:"Diadème du Nexus",icon:"👑",slot:"cou"},
-  faux_modele_0:{name:"Faux, Modèle 0",icon:"🪓",slot:"armes_h"},
-  epee_de_damocles:{name:"Épée de Damoclès",icon:"🗡️",slot:"armes_h"},
-  blitz_runners:{name:"Blitz Runners",icon:"👟",slot:"pieds"},
-  survivai_kit:{name:"Survivai Kit, Premium Edition",icon:"🧰",slot:"mains"},
-  riviere_dopalines:{name:"Rivière d'Opalines",icon:"📿",slot:"cou"},
-  faux_ongles_tisserand:{name:"Faux-Ongles du Tisserand",icon:"💅",slot:"cou"},
-  cape_sombre_xiii:{name:"Cape Sombre, Modèle XIII",icon:"🧥",slot:"dos"},
-  lame_sang_sushel:{name:"Lame-Sang de Sushel",icon:"🗡️",slot:"armes_h"}
+  cyclo_arcana:{name:"Cyclo-Arcana",icon:"⚔️",emoji:"⚔️",slot:"armes_h",type:"equipment",rarity:"signature",description:"Un Grand Espadon lié à son utilisateur. Les runes frappées sur son pommeau indique que la lame serait capable de trancher à même le temps."},
+  fake_twins:{name:"Fake Twins",icon:"🔫",emoji:"🔫",slot:"armes_h",type:"equipment",rarity:"signature",description:"Un duo surprenant. Un pistolet et un fusil sniper métamorphes, changeant de forme pour respectivement une dague et un sabre."},
+  kings_jewel:{name:"King's Jewel",icon:"💎",emoji:"💎",slot:"mains",type:"equipment",rarity:"signature",description:"Une arme basique en apparence, mais qui est en réalité le B.A. Ba d'un roi digne de ce nom."},
+  real_twins:{name:"Real Twins",icon:"🧤",emoji:"🧤",slot:"armes_h",type:"equipment",rarity:"signature",description:"Une paire de gants forgée d'un tissu si léger qu'il semble irréel et pourtant, il est plus dur que du titane."},
+  diademe_du_nexus:{name:"Diadème du Nexus",icon:"👑",emoji:"👑",slot:"cou",type:"equipment",rarity:"signature",description:"Une coiffe si translucide qu'elle semble faite de données."},
+  faux_modele_0:{name:"Faux, Modèle 0",icon:"🪓",emoji:"🪓",slot:"armes_h",type:"equipment",rarity:"signature",description:"D'après la base de données, il s'agit de la première faux jamais créée."},
+  epee_de_damocles:{name:"Épée de Damoclès",icon:"🗡️",emoji:"🗡️",slot:"armes_h",type:"equipment",rarity:"signature",description:"Une arme étrangère à ce monde."},
+  blitz_runners:{name:"Blitz Runners",icon:"👟",emoji:"👟",slot:"pieds",type:"equipment",rarity:"signature",description:"Des bottines plus rapides que le mot lui même."},
+  survivai_kit:{name:"Survivai Kit, Premium Edition",icon:"🧰",emoji:"🧰",slot:"mains",type:"equipment",rarity:"signature",description:"Riez tant que vous le voulez, cet item vous le fera regretter."},
+  riviere_dopalines:{name:"Rivière d'Opalines",icon:"📿",emoji:"📿",slot:"cou",type:"equipment",rarity:"signature",description:"Le collier le plus prisé de tous les temps. Pour les bonnes et les mauvaises raisons."},
+  faux_ongles_tisserand:{name:"Faux-Ongles du Tisserand de Rêves",icon:"💅",emoji:"💅",slot:"cou",type:"equipment",rarity:"signature",description:"Les rêves et la réalité ne font qu'un. C'est ce qu'il disait, en tout cas."},
+  cape_sombre_xiii:{name:"Cape Sombre, Modèle XIII",icon:"🧥",emoji:"🧥",slot:"dos",type:"equipment",rarity:"signature",description:"Une cape d'un noir absolu, modèle XIII. Ses effets se renforcent lorsque plusieurs membres d'une même party la portent."},
+  lame_sang_sushel:{name:"Lame-Sang de Sushel",icon:"🗡️",emoji:"🗡️",slot:"armes_h",type:"equipment",rarity:"signature",description:"Une lame maudite liée au sang de son porteur. Elle grandit avec le temps, dévorant l'essence vitale du monde autour d'elle."}
 };
 const SIG_ALL_STATS=["strength","agility","speed","intelligence","mana","resistance","charisma"];
 
@@ -430,6 +430,8 @@ async function loadCharacter(){
     INV_DATA=invData||{items:{},equipped_assets:[]};
     if(cfgData){
       ALL_ITEMS_DATA={...cfgData.items||{},...cfgData.equipment||{},...cfgData.food_items||{},...cfgData.consumable_items||{}};
+      // Merge signature items (defined in code, not in Firestore config)
+      for(const[sid,sdata] of Object.entries(SIGNATURE_ITEMS)){if(!ALL_ITEMS_DATA[sid])ALL_ITEMS_DATA[sid]=sdata;}
     }
     BUFFS_DATA=bufData?(bufData.buffs||[]):[];
     // Charger compagnons pour bonus stats (Personnage tab)
@@ -476,6 +478,8 @@ async function loadInventory(){
     ]);
     INV_DATA=invData||{items:{},equipped_assets:[]};
     if(cfgData) ALL_ITEMS_DATA={...cfgData.items||{},...cfgData.equipment||{},...cfgData.food_items||{},...cfgData.consumable_items||{}};
+    // Merge signature items (defined in code, not in Firestore config)
+    for(const[sid,sdata] of Object.entries(SIGNATURE_ITEMS)){if(!ALL_ITEMS_DATA[sid])ALL_ITEMS_DATA[sid]=sdata;}
     if(window.Skeleton) window.Skeleton.hide('inv-grid');
     renderInventory();
   }catch(e){window._dbg?.error('[INV]',e);if(window.Skeleton) window.Skeleton.hide('inv-grid');grid.innerHTML='<div class="empty">Erreur de chargement</div>'}

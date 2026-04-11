@@ -105,6 +105,8 @@ async function loadBonusData(){
     if(itemsCfgSnap.exists()){
       const d=itemsCfgSnap.data();
       _allItemsDef={...d.items||{},...d.equipment||{},...d.food_items||{},...d.consumable_items||{}};
+      // Merge signature items (defined in code, not in Firestore config)
+      for(const[sid,sdata] of Object.entries(SIGNATURE_ITEMS_F)){if(!_allItemsDef[sid])_allItemsDef[sid]={...sdata,type:'equipment',rarity:'signature'};}
     }
     activesSnap.forEach(d=>{_allActives[d.id]=d.data();});
     invsSnap.forEach(d=>{_allInvs[d.id]=d.data();});
