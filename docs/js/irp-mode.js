@@ -11,28 +11,116 @@
 
   /* ── CSS du mode IRP (injecté dynamiquement) ── */
   var IRP_THEME_CSS = [
+    /* ── Palette complète IRP : violine / rouge écarlate / violet sombre ── */
     ':root.irp-mode {',
-    '  --cyan: #dc143c;',         /* Scarlet (remplace cyan) */
-    '  --blue: #8B008B;',         /* Violine (remplace blue) */
-    '  --violet: #800020;',       /* Burgundy */
-    '  --magenta: #dc143c;',      /* Scarlet */
-    '  --gold: #c41e3a;',         /* Cardinal */
-    '  --green: #cc5577;',        /* Rose foncé */
-    '  --cyan-rgb: 220,20,60;',   /* Scarlet RGB */
-    '  --blue-rgb: 139,0,139;',   /* Violine RGB */
-    '  --violet-rgb: 128,0,32;',
-    '  --glow-blue: 0 0 20px rgba(220,20,60,0.3);',
-    '  --glow-gold: 0 0 20px rgba(139,0,139,0.4);',
+    /* Fonds — tons sombres violacés */
+    '  --bg:       #0a0410;',        /* fond principal — violet très sombre */
+    '  --bg2:      #100818;',        /* fond secondaire */
+    '  --surface:  #1a0c28;',        /* surface carte */
+    '  --surface2: #140a20;',        /* surface secondaire */
+    '  --border:   rgba(220,20,60,0.12);',
+    /* Accents — tout en rouge/violine/violet */
+    '  --cyan:     #dc143c;',        /* Scarlet (remplace cyan partout) */
+    '  --blue:     #8B008B;',        /* Violine */
+    '  --violet:   #800020;',        /* Burgundy */
+    '  --magenta:  #dc143c;',        /* Scarlet */
+    '  --purple:   #6A0DAD;',        /* Violet profond */
+    '  --gold:     #c41e3a;',        /* Cardinal */
+    '  --green:    #cc3366;',        /* Rose foncé (remplace vert) */
+    '  --orange:   #b8336a;',        /* Mauve-rose */
+    '  --red:      #ff1744;',        /* Rouge vif */
+    /* RGB channels */
+    '  --cyan-rgb:       220,20,60;',
+    '  --blue-rgb:       139,0,139;',
+    '  --violet-rgb:     128,0,32;',
+    '  --red-rgb:        255,23,68;',
+    '  --green-rgb:      204,51,102;',
+    '  --gold-rgb:       196,30,58;',
+    '  --surface-dk-rgb: 20,10,32;',
+    '  --bg-dk-rgb:      10,4,16;',
+    /* Lueurs — tout en rouge/violine */
+    '  --cyan-dim:    #8B0000;',
+    '  --cyan-glow:   rgba(220,20,60,0.38);',
+    '  --violet-glow: rgba(139,0,139,0.3);',
+    '  --glow-sm:     0 0 8px rgba(220,20,60,0.38);',
+    '  --glow-md:     0 0 20px rgba(220,20,60,0.38), 0 0 40px rgba(139,0,139,0.15);',
+    '  --glow-lg:     0 0 30px rgba(220,20,60,0.35), 0 0 80px rgba(139,0,139,0.1), 0 0 120px rgba(106,13,173,0.06);',
+    '  --glow-violet: 0 0 20px rgba(139,0,139,0.3), 0 0 50px rgba(106,13,173,0.1);',
+    '  --glow-blue:   rgba(220,20,60,0.35);',
+    '  --glow-gold:   rgba(139,0,139,0.4);',
+    /* Texte — légèrement rosé */
+    '  --text:  #e8dce6;',
+    '  --text2: #8a7090;',
+    '  --text3: #4a3060;',
+    '  --muted: #6a4070;',
     '}',
-    '.irp-mode .nav-logo img { filter: hue-rotate(280deg) saturate(1.5); }',
+    /* Background html & body */
+    '.irp-mode, .irp-mode body { background: #0a0410 !important; }',
+    'html.irp-mode { background: #0a0410 !important; }',
+    /* Scrollbar */
+    '.irp-mode body { scrollbar-color: #8B0000 #0a0410; }',
+    '.irp-mode ::-webkit-scrollbar-track { background: #100818; }',
+    '.irp-mode ::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #8B0000, #6A0DAD); }',
+    '.irp-mode ::-webkit-scrollbar-thumb:hover { box-shadow: 0 0 6px rgba(220,20,60,0.38); }',
+    /* Nav */
+    '.irp-mode .nav { background: rgba(10,4,16,0.92) !important; border-bottom-color: rgba(220,20,60,0.1) !important; }',
+    '.irp-mode .nav-links a { color: #8a7090 !important; }',
+    '.irp-mode .nav-links a:hover, .irp-mode .nav-links a.active { color: #dc143c !important; }',
+    '.irp-mode .nav-logo { color: #dc143c !important; }',
+    '.irp-mode .nav-logo img { filter: hue-rotate(280deg) saturate(1.5) brightness(0.9); }',
+    /* Burger / mobile menu */
+    '.irp-mode .burger { background: rgba(220,20,60,0.06) !important; border-color: rgba(220,20,60,0.15) !important; }',
+    '.irp-mode .burger-line { background: #dc143c !important; }',
+    '.irp-mode .mobile-menu { background: rgba(10,4,16,0.97) !important; }',
+    '.irp-mode .menu-link { color: #8a7090 !important; border-bottom-color: rgba(220,20,60,0.08) !important; }',
+    '.irp-mode .menu-link:hover, .irp-mode .menu-link.active { color: #dc143c !important; }',
+    '.irp-mode .menu-link-index { color: #dc143c !important; }',
+    /* Footer */
+    '.irp-mode .footer { border-top-color: rgba(220,20,60,0.08) !important; }',
     '.irp-mode .footer-brand { color: #dc143c !important; }',
+    '.irp-mode .footer-links a { color: #8a7090 !important; }',
+    '.irp-mode .footer-links a:hover { color: #dc143c !important; }',
+    '.irp-mode .footer-copy { color: #4a3060 !important; }',
+    /* Titres et textes */
     '.irp-mode .hero-title,',
-    '.irp-mode .section-title { ',
+    '.irp-mode .section-title {',
     '  background: linear-gradient(135deg, #8B008B, #dc143c) !important;',
     '  -webkit-background-clip: text !important;',
     '  -webkit-text-fill-color: transparent !important;',
     '  background-clip: text !important;',
     '}',
+    /* Cartes / surfaces */
+    '.irp-mode .rp-card, .irp-mode .pnj-card, .irp-mode .sys-card,',
+    '.irp-mode .lore-card, .irp-mode .race-card {',
+    '  background: #1a0c28 !important;',
+    '  border-color: rgba(220,20,60,0.12) !important;',
+    '}',
+    '.irp-mode .rp-card:hover, .irp-mode .pnj-card:hover {',
+    '  border-color: rgba(220,20,60,0.3) !important;',
+    '  box-shadow: 0 0 20px rgba(220,20,60,0.15) !important;',
+    '}',
+    /* Boutons / filtres */
+    '.irp-mode .fbtn, .irp-mode .cat-btn {',
+    '  border-color: rgba(220,20,60,0.15) !important;',
+    '  color: #8a7090 !important;',
+    '}',
+    '.irp-mode .fbtn:hover, .irp-mode .fbtn.active,',
+    '.irp-mode .cat-btn:hover, .irp-mode .cat-btn.active {',
+    '  border-color: rgba(220,20,60,0.4) !important;',
+    '  color: #dc143c !important;',
+    '  background: rgba(220,20,60,0.08) !important;',
+    '}',
+    /* Hero section */
+    '.irp-mode .hero { background: radial-gradient(ellipse at 50% 0%, rgba(139,0,139,0.12) 0%, transparent 60%) !important; }',
+    /* Scan line / grain overlay */
+    '.irp-mode .scroll-line { background: linear-gradient(90deg, #8B008B, #dc143c) !important; }',
+    /* Live dot */
+    '.irp-mode .live-dot { background: #dc143c !important; box-shadow: 0 0 8px #dc143c !important; }',
+    '.irp-mode .live-text { color: #dc143c !important; }',
+    /* Stats bars */
+    '.irp-mode .sb-fill { background: linear-gradient(90deg, #8B008B, #dc143c) !important; }',
+    /* Rank badges — prismatic override */
+    '.irp-mode [data-rank] { --rank-color: #dc143c; }',
     /* Badge IRP flottant */
     '.irp-badge {',
     '  position: fixed; bottom: 1rem; right: 1rem;',
