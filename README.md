@@ -39,6 +39,7 @@ Le site permet à tout visiteur de consulter les informations de l'univers Jahar
 | Constantes | RACES, RANKS, RACES_SPECIFIC | js/constants.js |
 | Utilitaires | sanitize, compressImage, AntiSpam, Skeleton, showToast | js/utils.js |
 | Cache images | localStorage URL cache (TTL 24h) — `window.JImgCache` | js/jaharta-img-cache.js |
+| Micro-interactions | Ripple, IntersectionObserver reveal, scroll-progress, press | js/jaharta-motion.js |
 | Debug logger | Panneau d'erreurs flottant | js/debug.js |
 
 ---
@@ -66,13 +67,14 @@ JahartaRP/
 │   │   ├── utils.js                 ← sanitize, compressImage, AntiSpam, Skeleton, showToast
 │   │   ├── jaharta-card.js          ← Web Component <jaharta-card> (cartes personnages)
 │   │   ├── jaharta-img-cache.js     ← Cache localStorage URLs images Firebase (TTL 24h)
+│   │   ├── jaharta-motion.js        ← Micro-interactions globales (ripple, reveal, scroll-progress)
 │   │   ├── kanji-blob.js            ← Blob Three.js pour gacha (morphing 3D)
 │   │   ├── page-transition.js       ← Overlay de chargement entre pages
 │   │   ├── debug.js                 ← Logger d'erreurs flottant (dev)
 │   │   ├── fiches.js                ← Module Firebase fiches joueurs
 │   │   ├── lore.js                  ← Logique page lore
 │   │   ├── racesjouables-logic.js   ← Popup races + filtres
-│   │   ├── hub-core.js              ← Logique centrale hub
+│   │   ├── hub-core.js              ← Logique centrale hub (tabs + fade transitions)
 │   │   ├── hub-dashboard.js         ← Onglet Dashboard
 │   │   ├── hub-inventory.js         ← Onglet Inventaire (UI Cyberpunk)
 │   │   ├── hub-renders.js           ← Rendu cartes hub
@@ -109,7 +111,13 @@ Dans chaque page, les scripts doivent être inclus dans cet ordre :
 
 <!-- 4. Module Firebase (type="module", ESM) -->
 <script type="module"> ... </script>
+
+<!-- 5. Transition de page + micro-interactions (en fin de <body>) -->
+<script src="js/page-transition.js"></script>
+<script src="js/jaharta-motion.js"></script>
 ```
+
+> `jaharta-motion.js` doit toujours être **après** `page-transition.js` et en fin de `<body>`. Il s'auto-initialise au `DOMContentLoaded` et ne dépend d'aucun autre script.
 
 Pour `fiches.html`, le Web Component est importé depuis le module Firebase :
 ```js
@@ -376,6 +384,21 @@ Dans `docs/css/jaharta.css`, section `1. VARIABLES GLOBALES` :
 ```
 
 > **⚠ Variables supprimées** : `--dark`, `--dark2`, `--bg-deep`, `--bg-dark`, `--bg-surface`, `--bg-card`, `--text-primary`, `--text-secondary`, `--text-dim`, `--font-display`, `--font-heading` — ces alias legacy ont été retirés du `:root`. Ne plus les utiliser.
+
+### Variables d'animation (ajoutées sprint 5)
+
+```css
+/* Durées */
+--dur-instant: 80ms   --dur-fast: 150ms   --dur-normal: 250ms
+--dur-slow: 400ms     --dur-xslow: 600ms
+
+/* Courbes d'accélération */
+--ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1)   /* entrée fluide */
+--ease-spring:   cubic-bezier(0.34, 1.56, 0.64, 1) /* rebond léger */
+--ease-in-out:   cubic-bezier(0.4, 0, 0.2, 1)
+```
+
+Utiliser ces variables dans **tous** les nouveaux `transition:` ou `animation:` pour garder une cohérence de timing sur tout le site.
 
 ### Accent par page
 

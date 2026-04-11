@@ -5,9 +5,9 @@
 ---
 
 ## ÉTAT ACTUEL DU PROJET
-**Dernière mise à jour :** 2026-04-09 (session 4 — fix display + lazy tabs)
+**Dernière mise à jour :** 2026-04-11 (sprints 5 + 5b — fluidité AAA + micro-interactions)
 **Branche :** main
-**Phase :** Sprint 3 terminé ✓ — Audit stabilité complet — Lazy hub tabs ✓
+**Phase :** Sprints 1→5b terminés ✓ — Projet stabilisé et fluide
 
 ### Architecture globale
 - GitHub Pages → `/docs` (auto-deploy sur `main`)
@@ -19,21 +19,27 @@
 ### Fichiers clés et tailles (lignes)
 | Fichier | Lignes | Statut |
 |---------|--------|--------|
-| `hub.html` | 1073 | −74% ✓ (était 4042) |
-| `css/hub.css` | 878 | Extrait de hub.html ✓ |
-| `js/hub-inventory.js` | 763 | Extrait ✓ |
+| `hub.html` | ~681 | ✓ (était 4042) |
+| `css/hub.css` | ~898 | Extrait ✓ |
+| `css/jaharta.css` | ~2600 | Source de vérité — exception justifiée |
+| `css/gacha.css` | ~1043 | CSS page-spécifique |
+| `js/hub-inventory.js` | 763 | Extrait ✓ + dirty-check + DocumentFragment |
 | `js/hub-shops.js` | 736 | Extrait ✓ |
 | `js/hub-renders.js` | 300 | Extrait ✓ |
 | `js/hub-character.js` | 200 | Extrait ✓ |
 | `js/hub-dashboard.js` | 121 | Extrait ✓ |
-| `gacha.html` | 2638 | GRAVE — à découper Sprint 4 |
-| `css/jaharta.css` | 2500 | Source de vérité + keyframes partagés |
-| `fiches.html` | 1349 | Limite haute |
-| `racesjouables.html` | 1127 | OK |
-| `lore.html` | 1296 | Limite haute |
-| `pnj.html` | 782 | OK |
-| `portail.html` | 386 | OK |
-| `admin.html` | 559 | OK |
+| `js/hub-core.js` | ~406 | Extrait ✓ + showTab() fade transition |
+| `js/jaharta-motion.js` | ~160 | NOUVEAU — ripple, reveal, scroll-progress |
+| `js/jaharta-card.js` | 321 | RAF throttle tilt ✓ |
+| `js/fiches.js` | 701 | Extrait ✓ |
+| `js/lore.js` | 675 | Extrait ✓ |
+| `js/racesjouables-logic.js` | 711 | Extrait ✓ |
+| `fiches.html` | 599 | ✓ |
+| `lore.html` | 620 | ✓ |
+| `racesjouables.html` | 313 | ✓ |
+| `pnj.html` | ~640 | ✓ |
+| `portail.html` | ~330 | ✓ |
+| `admin.html` | ~560 | ✓ |
 
 ---
 
@@ -74,32 +80,54 @@
 
 ---
 
-## DESIGN SYSTEM — TOKENS OFFICIELS (à consolider)
+## DESIGN SYSTEM — TOKENS OFFICIELS ✅ CONSOLIDÉS (post-sprint 5)
 
-La source de vérité devrait être `jaharta.css :root`. État actuel des tokens vs doc :
+Source unique de vérité : `jaharta.css :root`
 
 ```css
-/* OBJECTIF — tokens à unifier dans jaharta.css */
-:root {
-  /* Fonds — nommage à consolider */
-  --dark:    #04060f;   /* fond principal (CLAUDE.md) */
-  --dark2:   #080d1a;   /* fond cartes */
+/* Fonds */
+--bg: #020713  --bg2: #070d1e  --surface: #0c1228  --surface2: #0a0f22
 
-  /* Accents — 3 couleurs piliers */
-  --cyan:    #00f5ff;   /* accent fiches (CLAUDE.md) */
-  --magenta: #ff006e;   /* accent PNJ (CLAUDE.md) */
-  --gold:    #ffd60a;   /* accent portail + admin (CLAUDE.md) */
+/* Accents */
+--cyan: #00e5ff  --magenta: #ff006e  --gold: #ffd60a
+--blue: #4DA3FF  --violet: #8B5CF6  --purple: #6C5CE7
+--red: #FF4757  --green: #44ff88  --orange: #ff9800
 
-  /* Textes */
-  --text:    #c8e0f0;
-  --muted:   #5a7a90;
+/* Lueurs */
+--glow-sm  --glow-md  --glow-lg  --glow-violet
+--cyan-glow  --violet-glow  --glow-blue  --glow-gold
 
-  /* Polices */
-  --font-display: 'Orbitron', sans-serif;
-  --font-body:    'Exo 2', sans-serif;
-  --font-mono:    'Share Tech Mono', monospace;
-}
+/* Texte */
+--text: #e2e6f0  --text2: #7c84a0  --text3: #3a4060  --muted: #5a7a90
+
+/* Polices */
+--font-h: Orbitron  --font-b: Rajdhani
+--font-body: Exo 2  --font-m: Share Tech Mono
+
+/* Animations (NOUVEAUX — sprint 5) */
+--dur-instant: 80ms   --dur-fast: 150ms   --dur-normal: 250ms
+--dur-slow: 400ms     --dur-xslow: 600ms
+--ease-out-expo: cubic-bezier(0.16,1,0.3,1)
+--ease-in-out:   cubic-bezier(0.4,0,0.2,1)
+--ease-spring:   cubic-bezier(0.34,1.56,0.64,1)
+--ease-decel:    cubic-bezier(0,0,0.2,1)
+--ease-sharp:    cubic-bezier(0.4,0,0.6,1)
 ```
+
+**Variables INTERDITES** (supprimées du `:root`, ne plus utiliser) :
+`--dark`, `--dark2`, `--bg-deep`, `--bg-dark`, `--bg-surface`, `--bg-card`,
+`--text-primary`, `--text-secondary`, `--text-dim`, `--font-display`, `--font-heading`
+
+### Classes utilitaires `.jh-*` (jaharta.css + jaharta-motion.js)
+| Classe | Effet |
+|--------|-------|
+| `.jh-press` | scale 0.95 au clic (CSS pur, appliqué par jaharta-motion.js) |
+| `.jh-ripple` / `.jh-ripple-wave` | onde radiale au clic (JS) |
+| `.jh-glass` | glassmorphism backdrop-filter blur(18px) |
+| `.jh-reveal` + `.revealed` | IntersectionObserver fade-in depuis le bas |
+| `.jh-hover-glow` | box-shadow cyan au hover |
+| `.jh-tab-panel` | animation fade-in 250ms changement d'onglet |
+| `.jh-skeleton-pulse` | pulse opacity pour skeletons |
 
 ---
 
@@ -169,33 +197,24 @@ Le bloc ORIGINAL (après) overridait `.nav-logo` sans `display:flex` → logo im
 
 ---
 
-## PROCHAINES ÉTAPES (roadmap proposée)
+## SPRINTS TERMINÉS
 
-### Sprint 1 — Stabilisation (priorité max)
-- [x] **P3** Nettoyer les `console.log` de prod ✅ 2026-04-09
-- [x] **P2** Unifier les tokens CSS dans `jaharta.css` (1 source de vérité) ✅ 2026-04-09
-- [ ] Documenter le schéma Firestore complet (ce qui manque dans CLAUDE.md)
+| Sprint | Contenu | Date |
+|--------|---------|------|
+| 1 | console.* → _dbg, alert → showToast, fuites mémoire, race conditions | 2026-04-09/10 |
+| 2 | hub.html décomposé (4042 → 681L), CSS tokens unifiés, onSnapshot orphelins corrigés | 2026-04-09/10 |
+| 3 | fiches.html (1301→599L), lore.html (1296→620L), racesjouables.html (1025→313L) extraits | 2026-04-10 |
+| 4 | Typographie Crystal Clear — variables `--fs-*` dans hub.css | 2026-04-10 |
+| 5 | RAF throttle tilt (jaharta-card.js), dirty-check + DocumentFragment (hub-inventory.js), token system animation (jaharta.css) | 2026-04-11 |
+| 5b | jaharta-motion.js créé + 9 pages, showTab() fade transition + guard re-render (hub-core.js) | 2026-04-11 |
 
-### Sprint 2 — Découpage hub.html
-- [x] Extraire `hub-inventory.js` ✅ 763 lignes
-- [x] Extraire `hub-shops.js` ✅ 736 lignes (Mon Shop + Alloc + Shops + Universal Shop)
-- [x] Extraire `hub.css` ✅ 878 lignes
-- [x] Extraire `hub-character.js` ✅ 200 lignes
-- [x] Extraire `hub-dashboard.js` ✅ 121 lignes
-- [x] Extraire `hub-renders.js` ✅ 300 lignes
+## PROCHAINES ÉTAPES
 
-### Sprint 3 — UI/UX polish
-- [x] Centraliser les `@keyframes` dupliqués dans `jaharta.css` ✅ 2026-04-09
-- [x] Navbar partagée `js/jaharta-nav.js` (7 pages, burger inclus) ✅ 2026-04-09
-- [x] **gacha.html** décomposé : gacha.css + gacha-blob.js + gacha-logic.js + gacha-fx.js ✅ 2026-04-09
-- [x] **Lazy load onglets hub** : `CURRENT_TAB` + `_refreshCurrentTab()` — seul le dashboard charge au boot ✅ 2026-04-09
-- [ ] Composants toast/modal partagés
-
-### Sprint 4 — Audit stabilité ✅ TERMINÉ (2026-04-09)
-- [x] BUG-01 : nav mobile-menu résiduel sur 5 pages ✅
-- [x] BUG-02 : hub.html sans debug.js + constants.js ✅
-- [x] BUG-03 : nav résiduel lore.html + gacha.html (ligne unique) ✅
-- [x] Audit complet : 0 bug résiduel, système sain ✅
+1. **Skeleton inventory** — remplacer le vide du chargement initial de l'inventaire par des `.inv-item` skeleton pulsants (`.jh-skeleton-pulse`)
+2. **Lazy-load images cartes** — IntersectionObserver sur les `<jaharta-card>` pour ne charger Firebase Storage qu'au scroll
+3. **Toast animations** — câbler les keyframes `jh-toast-in/out` dans `showToast()` de `utils.js`
+4. **Lore cards unification** — migrer `.lore-card.visible` vers `.jh-reveal` pour uniformiser les systèmes de reveal
+5. **Features UI** — nouvelles fonctionnalités demandées
 
 ---
 
