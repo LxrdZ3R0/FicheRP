@@ -94,7 +94,7 @@ function renderCharacterPanel(){
       const itemId=occupants[i]||null;
       const it=itemId?ALL_ITEMS_DATA[itemId]||{}:{};
       if(itemId){
-        html+=`<div class="slot-cell occupied" data-item-id="${itemId}" data-slot="${slotId}" onclick="showItemDetail('${itemId}')" title="${e(it.name||itemId)}">${it.emoji||'📦'}</div>`;
+        html+=`<div class="slot-cell occupied" data-item-id="${itemId}" data-slot="${slotId}" onclick="showItemDetail('${itemId}')" title="${e(it.name||itemId)}">${it.image?`<img src="${e(it.image)}" alt="${e(it.name||itemId)}" class="slot-cell-img">`:(it.emoji||'📦')}</div>`;
       } else {
         html+=`<div class="slot-cell empty-cell" data-slot="${slotId}" data-index="${i}"></div>`;
       }
@@ -204,7 +204,7 @@ function renderItemsGrid(){
       div.innerHTML=
         (isEq?'<span class="inv-badge-equipped"></span>':'')+
         (qty>0?'<button class="inv-item-delete" onclick="openDeleteModal(\''+id+'\',event)" title="Supprimer de l\'inventaire" aria-label="Supprimer '+e(it.name||id)+'"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" width="10" height="10"><path d="M2 4h12M6 4V2h4v2M5 4l1 9h4l1-9"/></svg></button>':'')+
-        '<span class="inv-item-emoji">'+(it.emoji||'📦')+'</span>'+
+        '<span class="inv-item-emoji">'+(it.image?'<img src="'+e(it.image)+'" alt="'+e(it.name||id)+'" class="inv-item-img">':(it.emoji||'📦'))+'</span>'+
         '<div class="inv-item-name" style="color:'+rc+'">'+e(it.name||id)+'</div>'+
         (slotLabel?'<div class="inv-item-slot">'+slotLabel+'</div>':'')+
         (qty>1?'<span class="inv-badge-qty">×'+qty+'</span>':'');
@@ -449,10 +449,11 @@ function showItemDetail(itemId,animate=true){
   +(qty>0?`<button class="inv-detail-btn delete" onclick="openDeleteModal('${itemId}',event)">⊗ Supprimer</button>`:'');
 
   document.getElementById('inv-detail-content').innerHTML=`
-    <span class="inv-detail-emoji" style="color:${rc}">${it.emoji||'📦'}</span>
+    ${it.image?`<img src="${e(it.image)}" alt="${e(it.name||itemId)}" class="inv-detail-img" style="width:64px;height:64px;object-fit:contain;border-radius:8px;margin-bottom:8px">`:`<span class="inv-detail-emoji" style="color:${rc}">${it.emoji||'📦'}</span>`}
     <div class="inv-detail-name" style="color:${rc}">${e(it.name||itemId)}</div>
     <div class="inv-detail-rarity" style="color:${rc}">${rarity}</div>
     ${slotLabel?`<div class="inv-detail-slot-tag">📍 ${slotLabel}</div>`:''}
+    ${it.description?`<div class="inv-detail-desc" style="font-size:.38rem;color:var(--text3);margin:6px 0;line-height:1.4;font-style:italic">${e(it.description)}</div>`:''}
     <div class="inv-detail-sep"></div>
     ${statsHtml}
     ${qty>0?`<div class="inv-detail-qty-info">Quantité en inventaire : ×${qty}</div>`:''}

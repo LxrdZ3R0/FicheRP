@@ -147,8 +147,8 @@ const SIGNATURE_ITEMS={
   survivai_kit:{name:"Survivai Kit, Premium Edition",icon:"🧰",emoji:"🧰",slot:"mains",type:"equipment",rarity:"signature",description:"Riez tant que vous le voulez, cet item vous le fera regretter."},
   riviere_dopalines:{name:"Rivière d'Opalines",icon:"📿",emoji:"📿",slot:"cou",type:"equipment",rarity:"signature",description:"Le collier le plus prisé de tous les temps. Pour les bonnes et les mauvaises raisons."},
   faux_ongles_tisserand:{name:"Faux-Ongles du Tisserand de Rêves",icon:"💅",emoji:"💅",slot:"cou",type:"equipment",rarity:"signature",description:"Les rêves et la réalité ne font qu'un. C'est ce qu'il disait, en tout cas."},
-  cape_sombre_xiii:{name:"Cape Sombre, Modèle XIII",icon:"🧥",emoji:"🧥",slot:"dos",type:"equipment",rarity:"signature",description:"Une cape d'un noir absolu, modèle XIII. Ses effets se renforcent lorsque plusieurs membres d'une même party la portent."},
-  lame_sang_sushel:{name:"Lame-Sang de Sushel",icon:"🗡️",emoji:"🗡️",slot:"armes_h",type:"equipment",rarity:"signature",description:"Une lame maudite liée au sang de son porteur. Elle grandit avec le temps, dévorant l'essence vitale du monde autour d'elle."}
+  cape_sombre_xiii:{name:"Cape Sombre, Modèle XIII",icon:"🧥",emoji:"🧥",slot:"dos",type:"equipment",rarity:"signature",description:"Une cape d'un noir absolu, modèle XIII. Ses effets se renforcent lorsque plusieurs membres d'une même party la portent.",image:"https://firebasestorage.googleapis.com/v0/b/jaharta-rp.firebasestorage.app/o/icons%2F205.png?alt=media&token=aad4f798-3e58-4a69-a608-34f858e49aa9"},
+  lame_sang_sushel:{name:"Lame-Sang de Sushel",icon:"🗡️",emoji:"🗡️",slot:"armes_h",type:"equipment",rarity:"signature",description:"Une lame maudite liée au sang de son porteur. Elle grandit avec le temps, dévorant l'essence vitale du monde autour d'elle.",image:"https://firebasestorage.googleapis.com/v0/b/jaharta-rp.firebasestorage.app/o/icons%2FKatana%20en%20flammes%20rouges%20et%20noires.png?alt=media&token=4d9db77a-9493-4ae4-a213-e5469f536864"}
 };
 const SIG_ALL_STATS=["strength","agility","speed","intelligence","mana","resistance","charisma"];
 
