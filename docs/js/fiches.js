@@ -793,3 +793,60 @@ window._loadCards=function(){
     if(el)el.textContent='⚠ Firebase: '+e.message;
   }
 };
+
+/* ── IRP Mode — charge les personnages IRP en plus ── */
+let _irpCardsLoaded=false;
+let _unsubIRPChars=null;
+window._loadIRPCards=function(){
+  if(_irpCardsLoaded)return;
+  if(!window._irpMode)return;
+  _irpCardsLoaded=true;
+  try{
+    _unsubIRPChars=onSnapshot(collection(db,'irp_characters'),snap=>{
+      const ctn=document.getElementById('cards-container');
+      const noRes=document.getElementById('no-results');
+      if(!ctn)return;
+      /* Retirer les anciennes cartes IRP */
+      ctn.querySelectorAll('[data-irp="true"]').forEach(el=>el.remove());
+      const irpDocs=[];
+      snap.forEach(d=>irpDocs.push({id:d.id,...d.data()}));
+      const irpCards=irpDocs
+        .filter(c=>c.status!=='graveyard')
+        .map(c=>{
+          const f=charToFiche(c.id,c);
+          f._isIRP=true;
+          return f;
+        });
+      irpCards.sort((a,b)=>{
+        const ta=a.createdAt?.toMillis?.()??(a.created_at?new Date(a.created_at).getTime():0);
+        const tb=b.createdAt?.toMillis?.()??(b.created_at?new Date(b.created_at).getTime():0);
+        return tb-ta;
+      });
+      const startIdx=ctn.querySelectorAll('div[style*="contents"]').length;
+      irpCards.forEach((d,i)=>{
+        const el=buildCard(d,startIdx+i);
+        el.dataset.irp='true';
+        /* Badge IRP sur la carte */
+        const card=el.querySelector('.rp-card');
+        if(card){
+          card.dataset.index=startIdx+i;
+          const badge=document.createElement('div');
+          badge.style.cssText='position:absolute;top:8px;right:8px;z-index:20;background:rgba(220,20,60,0.85);color:#fff;font-family:var(--font-h);font-size:0.45rem;letter-spacing:0.1em;padding:3px 8px;border-radius:4px;';
+          badge.textContent='IRP';
+          card.style.position='relative';
+          card.appendChild(badge);
+        }
+        ctn.insertBefore(el,noRes);
+      });
+      /* Update count */
+      const total=ctn.querySelectorAll('div[style*="contents"]').length;
+      window.animateCount(total);
+      window.updateCounts();
+      setTimeout(window.revealCards,120);
+    },err=>{
+      window._dbg?.warn('[Fiches] irp_characters load:',err.message);
+    });
+  }catch(e){
+    window._dbg?.warn('[Fiches] IRP load error:',e.message);
+  }
+};
