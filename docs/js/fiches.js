@@ -37,7 +37,7 @@ onAuthStateChanged(auth,async user=>{
 const HIGH_RANKS=['S','SS','SSS','X','T','G','G+','Z'];
 const GOLD_RANKS=['A','S','SS','SSS','X'];   /* reflet doré */
 const PRISM_RANKS=['T','G','G+','Z'];         /* reflet prismatique */
-const RARITY_COLORS={Common:'#8a8fa8',Uncommon:'#44ff88',Rare:'#4DA3FF',Epic:'#8B5CF6',Legendary:'#ffd60a',Mythic:'#ff8800',Unique:'#00ffcc',Artifact:'#ff006e',Mastercraft:'#ffffff',Ultimate:'#aa44ff',Ender:'#ff3232',Sync:'#00ffee'};
+const RARITY_COLORS={Common:'#8a8fa8',Uncommon:'#44ff88',Rare:'#4DA3FF',Epic:'#8B5CF6',Legendary:'#ffd60a',Mythic:'#ff8800',Unique:'#00ffcc',Artifact:'#ff006e',Mastercraft:'#ffffff'};
 const STATS=[{k:'str',l:'STR',c:'sb-str'},{k:'agi',l:'AGI',c:'sb-agi'},{k:'spd',l:'SPD',c:'sb-spd'},{k:'int',l:'INT',c:'sb-int'},{k:'mana',l:'MNA',c:'sb-mana'},{k:'res',l:'RES',c:'sb-res'},{k:'cha',l:'CHA',c:'sb-cha'},{k:'aura',l:'AUR',c:'sb-aura'}];
 
 /* ── Mapping short → long stat keys ── */
@@ -48,8 +48,8 @@ const SIGNATURE_ITEMS_F={
   cyclo_arcana:{name:"Cyclo-Arcana"},fake_twins:{name:"Fake Twins"},kings_jewel:{name:"King's Jewel"},
   real_twins:{name:"Real Twins"},diademe_du_nexus:{name:"Diadème du Nexus"},faux_modele_0:{name:"Faux, Modèle 0"},
   epee_de_damocles:{name:"Épée de Damoclès"},blitz_runners:{name:"Blitz Runners"},
-  survivai_kit:{name:"Survivai Kit, Premium Edition"},riviere_dopalines:{name:"Rivière d'Opalines"},
-  faux_ongles_tisserand:{name:"Faux-Ongles du Tisserand de Rêves"},
+  survivai_kit:{name:"Survivai Kit"},riviere_dopalines:{name:"Rivière d'Opalines"},
+  faux_ongles_tisserand:{name:"Faux-Ongles du Tisserand"},
   cape_sombre_xiii:{name:"Cape Sombre, Modèle XIII"},
   lame_sang_sushel:{name:"Lame-Sang de Sushel"}
 };
@@ -59,21 +59,17 @@ function calcSigBonuses(eqIds,cs,aura,eb){
   function a(s,v){b[s]=(b[s]||0)+Math.floor(v);}
   function bs(s){return parseInt((cs||{})[s]||0)||0;}
   for(const id of eqIds.filter(i=>SIGNATURE_ITEMS_F[i])){
-    if(id==='cyclo_arcana'){
-      // Fix précédence opérateur : parenthèses explicites
-      const spdTotal=bs('speed')+((eb||{}).speed||0);
-      a('speed',spdTotal*0.5);
-    }
+    if(id==='cyclo_arcana'){a('speed',(bs('speed')+(eb.speed||0))*0.5);}
     else if(id==='fake_twins'){a('agility',20);a('charisma',50);if(aura){SIG_ALL.forEach(s=>a(s,50));a('aura',100);}}
     else if(id==='kings_jewel'){a('mana',50);if(aura)a('mana',50);}
-    else if(id==='real_twins'){Object.entries(eb||{}).forEach(([s,v])=>{if(v>0)a(s,v*0.75);});}
+    else if(id==='real_twins'){Object.entries(eb).forEach(([s,v])=>{if(v>0)a(s,v*0.75);});}
     else if(id==='diademe_du_nexus'){a('agility',50);a('intelligence',50);if(bs('mana')>300)a('mana',100);}
     else if(id==='faux_modele_0'){a('intelligence',75);if(bs('mana')>300)a('mana',100);}
     else if(id==='epee_de_damocles'){a('agility',50);}
     else if(id==='blitz_runners'){a('agility',75);a('speed',75);a('mana',75);}
     else if(id==='survivai_kit'){
       if(cs){const h=SIG_ALL.reduce((x,s)=>bs(s)>bs(x)?s:x,SIG_ALL[0]);SIG_ALL.forEach(s=>a(s,s===h?75:50));}
-      if(bs('agility')>600)Object.entries(eb||{}).forEach(([s,v])=>{if(v>0)a(s,v*0.5);});
+      if(bs('agility')>600)Object.entries(eb).forEach(([s,v])=>{if(v>0)a(s,v*0.5);});
     }
     else if(id==='riviere_dopalines'){SIG_ALL.forEach(s=>a(s,50));if(bs('mana')>300){SIG_ALL.forEach(s=>a(s,25));a('mana',100);}}
     else if(id==='faux_ongles_tisserand'){a('mana',150);if(bs('mana')>700)SIG_ALL.forEach(s=>a(s,150));}
@@ -163,34 +159,44 @@ function computeCharBonuses(charId,charStats){
   const bonuses={};
   function add(s,v){v=parseInt(v)||0;if(v)bonuses[s]=(bonuses[s]||0)+v;}
 
-  // Equipment stats
+  // 1) Equipment stats (skip signature + equalizer)
   eqList.forEach(id=>{
     const it=_allItemsDef[id]||{};
+    if((it.rarity||'').toLowerCase()==='signature')return;
+    if(id==='equalizer')return;
     Object.entries(it.stat_effects||it.stats||{}).forEach(([s,v])=>{
       try{add(s,parseInt(String(v).replace('+','')));}catch(_){}
     });
   });
-  // Sets (use hub-embedded ITEM_SETS if config not available)
+  // 2) Sets — highest threshold only (mirrors bot)
   const sets=_itemSets&&Object.keys(_itemSets).length?_itemSets:(window._ITEM_SETS_FALLBACK||{});
   const eqSet=new Set(eqList);
-  const SK8=['strength','agility','speed','intelligence','mana','resistance','charisma','aura'];
+  const SK8=['strength','agility','speed','intelligence','mana','resistance','charisma'];
+  let _ficheSetSpecial=null;
+  const _ficheSetBuffMult={};
+  let _ficheSetBuffMultAll=1;
   Object.values(sets).forEach(sd=>{
     if(!sd||!sd.items||!sd.bonuses)return;
     const cnt=sd.items.filter(i=>eqSet.has(i)).length;
     if(cnt<2)return;
-    Object.keys(sd.bonuses).map(Number).sort((a,b)=>a-b).forEach(t=>{
+    const thresholds=Object.keys(sd.bonuses).map(Number).sort((a,b)=>b-a); // descending
+    for(const t of thresholds){
       if(cnt>=t){
         const b=sd.bonuses[String(t)]||sd.bonuses[t]||{};
         if(b.stats)Object.entries(b.stats).forEach(([s,v])=>add(s,v));
         if(b.stats_all)SK8.forEach(s=>add(s,b.stats_all));
+        if(b.buff_mult)Object.entries(b.buff_mult).forEach(([s,m])=>{_ficheSetBuffMult[s]=Math.max(_ficheSetBuffMult[s]||1,m);});
+        if(b.buff_mult_all)_ficheSetBuffMultAll=Math.max(_ficheSetBuffMultAll,b.buff_mult_all);
+        if(b.special)_ficheSetSpecial=b.special;
+        break; // only highest threshold per set
       }
-    });
+    }
   });
-  // Buffs
+  // 3) Buffs
   (bufData.buffs||[]).forEach(b=>{
     if(b.effects)Object.entries(b.effects).forEach(([s,v])=>add(s,v));
   });
-  // Companion (active + synchronized)
+  // 4) Companion (active + synchronized)
   const owned=compUser.owned_companions||{};
   const activeComp=compUser.active_companion;
   let _compBuffMult={};
@@ -211,11 +217,86 @@ function computeCharBonuses(charId,charStats){
       _compBuffMult=info.buff_mult||{};
     }
   }
-  // Signature items
+  // 5) Signature items
   const aura=parseInt(charStats.aura||0)>0;
   const existBuf={...bonuses};
   const sigB=calcSigBonuses(eqList,charStats,aura,existBuf);
   Object.entries(sigB).forEach(([s,v])=>add(s,v));
+
+  // 6) Mythic+ effects
+  const _ficheBS=s=>parseInt((charStats||{})[s]||0)||0;
+  const _ficheMythicBuffMult={};
+  let _ficheMythicNerfRed=0;
+  const MYTHIC_FX={
+    diademe_eveil_primordial:{buff_mult:{mana:1.5}},heaume_jugement_final:{pct_base:{resistance:0.15}},
+    manteau_neant_absolu:{nerf_reduction:0.30},anneau_apocalypse:{buff_mult:{strength:1.5}},
+    bague_eternel_retour:{pct_base:{speed:0.20}},
+    anneau_unique_systeme:{conditional:()=>_ficheBS('mana')>500?{mana:100}:{}},
+    poignes_destructeur_code:{buff_mult:{strength:2.0}},
+    bracelets_horizon_evenements:{conditional:()=>_ficheBS('speed')>300?{speed:50}:{}},
+    bottes_transcendance:{buff_mult:{speed:1.5}},manteau_gravite_zero:{buff_mult:{agility:1.5}},
+    coeur_supernova:{buff_mult:{mana:2.0}},
+    excalibur_neon:{buff_mult:{strength:1.5},pct_base:{charisma:0.05}},
+    auroras_mythril_hammer:{conditional:()=>_ficheBS('strength')>400?{strength:50}:{}},
+    dagues_fin_temps:{buff_mult:{agility:1.5}},
+    pistolet_singularite:{conditional:()=>_ficheBS('intelligence')>300?{mana:50}:{}},
+    ia_conscience_gaia:{nerf_reduction:0.20},
+    original_fragment_core_nexus:{conditional:()=>['fragment_of_reality','birth_of_the_imaginary','ia_conscience_gaia'].some(i=>eqSet.has(i))?{mana:100}:{}},
+    ethereal_halo:{buff_mult:{intelligence:1.5,mana:1.25}},quantum_mirror_coat:{nerf_reduction:0.40},
+    time_paradox_ring:{pct_base_all:0.10},
+    silver_ring_nexus:{conditional:()=>_ficheBS('agility')>400?{agility:50}:{}},
+    silver_tear_nexus:{conditional:()=>({mana:100})},
+    wings_principle_speed:{buff_mult:{speed:2.0}},kang_soos_great_sword:{buff_mult:{strength:2.0}},
+    dagger_principle_reality:{buff_mult:{agility:1.75}},
+    destinys_cuffs:{conditional:()=>_ficheBS('resistance')>_ficheBS('strength')?{strength:Math.floor(_ficheBS('strength')*0.5)}:{}},
+    omega_nexus:{pct_base_all:0.15},
+    invisi_gloves:{conditional:()=>_ficheBS('charisma')>300?{agility:75}:{}},
+    old_chaos_mask:{buff_mult:{intelligence:2.0}},
+    forgotten_kings_crown:{conditional:()=>_ficheBS('charisma')>500?{charisma:100}:{}},
+    origins_chestplate:{nerf_reduction:0.50},old_chaos_ring:{buff_mult:{strength:2.0}},
+    origins_ring:{buff_mult:{mana:2.0}},destinys_gauntelet:{buff_mult:{agility:2.0}},
+    destinys_chains:{conditional:()=>_ficheBS('speed')>500?{speed:100}:{}},
+    stars_devourer:{conditional:()=>_ficheBS('mana')>300?{strength:100}:{}},
+    the_betrayer:{conditional:()=>_ficheBS('strength')<_ficheBS('agility')?{agility:100}:{}},
+    inertia_bracelets:{buff_mult:{resistance:2.0}},lost_entitys_core:{pct_base_all:0.15},
+    balduns_crown:{buff_mult:{intelligence:3.0}},balduns_chivalery:{buff_mult:{agility:3.0}},
+    balduns_gauntelet:{buff_mult:{charisma:3.0}},balduns_chains:{pct_base_all:0.25},
+    balduns_cape:{conditional:()=>eqSet.has('balduns_chestplate')?{resistance:600}:{}},
+    balduns_executionner:{buff_mult:{strength:3.0}},balduns_claws:{buff_mult:{strength:3.0}},
+    balduns_bracelet:{buff_mult:{mana:3.0}},balduns_god_shoes:{buff_mult:{speed:3.0}},
+    balduns_ring:{conditional:()=>{if(!aura)return {};const r={};SK8.forEach(s=>{r[s]=_ficheBS(s)*2;});return r;}},
+  };
+  for(const id of eqList){
+    const fx=MYTHIC_FX[id];if(!fx)continue;
+    if(fx.buff_mult)Object.entries(fx.buff_mult).forEach(([s,m])=>{_ficheMythicBuffMult[s]=Math.max(_ficheMythicBuffMult[s]||1,m);});
+    if(fx.pct_base)Object.entries(fx.pct_base).forEach(([s,pct])=>{add(s,Math.floor(_ficheBS(s)*pct));});
+    if(fx.pct_base_all)SK8.forEach(s=>{add(s,Math.floor(_ficheBS(s)*fx.pct_base_all));});
+    if(fx.conditional){try{const cb=fx.conditional();if(cb)Object.entries(cb).forEach(([s,v])=>{add(s,Math.floor(v));});}catch(_){}}
+    if(fx.nerf_reduction)_ficheMythicNerfRed=Math.max(_ficheMythicNerfRed,fx.nerf_reduction);
+  }
+
+  // 7) Apply buff multipliers (set + item, take max per stat)
+  const finalMult={};
+  for(const s of new Set([...Object.keys(_ficheMythicBuffMult),...Object.keys(_ficheSetBuffMult)])){
+    finalMult[s]=Math.max(_ficheMythicBuffMult[s]||1,_ficheSetBuffMult[s]||1);
+  }
+  if(_ficheSetBuffMultAll>1)SK8.forEach(s=>{if(!finalMult[s]||finalMult[s]<_ficheSetBuffMultAll)finalMult[s]=_ficheSetBuffMultAll;});
+  Object.entries(finalMult).forEach(([s,mult])=>{
+    if(mult>1&&(bonuses[s]||0)>0)bonuses[s]=Math.floor(bonuses[s]*mult);
+  });
+
+  // 8) Equalizer
+  if(eqSet.has('equalizer')&&charStats){
+    const baseVals=SK8.map(s=>_ficheBS(s)).sort((a,b)=>b-a);
+    let target;
+    if(_ficheSetSpecial==='equalize_to_highest_plus_10pct')target=Math.floor(baseVals[0]*1.10);
+    else if(_ficheSetSpecial==='equalize_to_highest')target=baseVals[0];
+    else target=baseVals.length>=4?Math.floor(baseVals.slice(0,4).reduce((a,b)=>a+b,0)/4):Math.floor(baseVals.reduce((a,b)=>a+b,0)/Math.max(1,baseVals.length));
+    SK8.forEach(s=>{
+      const current=_ficheBS(s)+(bonuses[s]||0);
+      if(current<target)bonuses[s]=(bonuses[s]||0)+(target-current);
+    });
+  }
 
   return {bonuses, buff_mult:_compBuffMult};
 }
@@ -528,7 +609,7 @@ function buildCard(ch,idx){
     const pl=document.createElement('div');pl.className='powers-list';
     powers.forEach(pw=>{
       const pi=document.createElement('div');pi.className='power-item';
-      const _rc=pw.rarity;const pc=_rc?(RARITY_COLORS[_rc]||RARITY_COLORS[_rc.charAt(0).toUpperCase()+_rc.slice(1)]||'#8a8fa8'):C;
+      const pc=pw.rarity?(RARITY_COLORS[pw.rarity]||'#8a8fa8'):C;
       pi.style.cssText=`border-color:${pc}88;background:${pc}08`;
       const ph=document.createElement('div');ph.className='power-header';
       const pn=document.createElement('div');pn.className='power-name';pn.style.color=pc;pn.textContent=pw.name||pw;ph.appendChild(pn);

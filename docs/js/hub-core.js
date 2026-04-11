@@ -146,7 +146,7 @@ const SIGNATURE_ITEMS={
   blitz_runners:{name:"Blitz Runners",icon:"👟",slot:"pieds"},
   survivai_kit:{name:"Survivai Kit, Premium Edition",icon:"🧰",slot:"mains"},
   riviere_dopalines:{name:"Rivière d'Opalines",icon:"📿",slot:"cou"},
-  faux_ongles_tisserand:{name:"Faux-Ongles du Tisserand de Rêves",icon:"💅",slot:"cou"},
+  faux_ongles_tisserand:{name:"Faux-Ongles du Tisserand",icon:"💅",slot:"cou"},
   cape_sombre_xiii:{name:"Cape Sombre, Modèle XIII",icon:"🧥",slot:"dos"},
   lame_sang_sushel:{name:"Lame-Sang de Sushel",icon:"🗡️",slot:"armes_h"}
 };
@@ -159,8 +159,7 @@ function calculateSignatureBonuses(equippedIds,charStats,auraEnabled,existingBuf
   const sigIds=equippedIds.filter(id=>SIGNATURE_ITEMS[id]);
   for(const id of sigIds){
     if(id==='cyclo_arcana'){
-      // Fix: parenthèses explicites pour éviter le bug de précédence opérateur
-      const spdTotal=base('speed')+((existingBuffs||{}).speed||0);
+      const spdTotal=base('speed')+(existingBuffs||{}).speed||0;
       add('speed',spdTotal*0.50);
     }else if(id==='fake_twins'){
       add('agility',20);add('charisma',50);
@@ -195,14 +194,190 @@ function calculateSignatureBonuses(equippedIds,charStats,auraEnabled,existingBuf
       add('mana',150);
       if(base('mana')>700){SIG_ALL_STATS.forEach(s=>add(s,150));}
     }else if(id==='cape_sombre_xiii'){
-      // Bonus de base : +45 RES (bonus party calculé séparément côté Discord)
       add('resistance',45);
     }else if(id==='lame_sang_sushel'){
-      // +65 à toutes les stats (fixe)
       SIG_ALL_STATS.forEach(s=>add(s,65));
     }
   }
   return b;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Mythic+ / Unique / Artifact / Mastercraft special item effects
+   Port from bot inventory_system.py → mythic_effects dict
+   ══════════════════════════════════════════════════════════════════════ */
+const MYTHIC_EFFECTS={
+  // Mythic
+  diademe_eveil_primordial:       {buff_mult:{mana:1.5}},
+  heaume_jugement_final:          {pct_base:{resistance:0.15}},
+  manteau_neant_absolu:           {nerf_reduction:0.30},
+  anneau_apocalypse:              {buff_mult:{strength:1.5}},
+  bague_eternel_retour:           {pct_base:{speed:0.20}},
+  anneau_unique_systeme:          {conditional:(bs,eq)=>bs('mana')>500?{mana:100}:{}},
+  poignes_destructeur_code:       {buff_mult:{strength:2.0}},
+  bracelets_horizon_evenements:   {conditional:(bs,eq)=>bs('speed')>300?{speed:50}:{}},
+  bottes_transcendance:           {buff_mult:{speed:1.5}},
+  manteau_gravite_zero:           {buff_mult:{agility:1.5}},
+  coeur_supernova:                {buff_mult:{mana:2.0}},
+  excalibur_neon:                 {buff_mult:{strength:1.5},pct_base:{charisma:0.05}},
+  auroras_mythril_hammer:         {conditional:(bs,eq)=>bs('strength')>400?{strength:50}:{}},
+  dagues_fin_temps:               {buff_mult:{agility:1.5}},
+  pistolet_singularite:           {conditional:(bs,eq)=>bs('intelligence')>300?{mana:50}:{}},
+  ia_conscience_gaia:             {nerf_reduction:0.20},
+  original_fragment_core_nexus:   {conditional:(bs,eq)=>['fragment_of_reality','birth_of_the_imaginary','ia_conscience_gaia'].some(i=>eq.has(i))?{mana:100}:{}},
+  // Unique
+  ethereal_halo:                  {buff_mult:{intelligence:1.5,mana:1.25}},
+  quantum_mirror_coat:            {nerf_reduction:0.40},
+  time_paradox_ring:              {pct_base_all:0.10},
+  silver_ring_nexus:              {conditional:(bs,eq)=>bs('agility')>400?{agility:50}:{}},
+  silver_tear_nexus:              {conditional:(bs,eq)=>({mana:100})},
+  wings_principle_speed:          {buff_mult:{speed:2.0}},
+  kang_soos_great_sword:          {buff_mult:{strength:2.0}},
+  dagger_principle_reality:       {buff_mult:{agility:1.75}},
+  destinys_cuffs:                 {conditional:(bs,eq)=>bs('resistance')>bs('strength')?{strength:Math.floor(bs('strength')*0.5)}:{}},
+  omega_nexus:                    {pct_base_all:0.15},
+  invisi_gloves:                  {conditional:(bs,eq)=>bs('charisma')>300?{agility:75}:{}},
+  // Artifact
+  old_chaos_mask:                 {buff_mult:{intelligence:2.0}},
+  forgotten_kings_crown:          {conditional:(bs,eq)=>bs('charisma')>500?{charisma:100}:{}},
+  origins_chestplate:             {nerf_reduction:0.50},
+  old_chaos_ring:                 {buff_mult:{strength:2.0}},
+  origins_ring:                   {buff_mult:{mana:2.0}},
+  destinys_gauntelet:             {buff_mult:{agility:2.0}},
+  destinys_chains:                {conditional:(bs,eq)=>bs('speed')>500?{speed:100}:{}},
+  stars_devourer:                 {conditional:(bs,eq)=>bs('mana')>300?{strength:100}:{}},
+  the_betrayer:                   {conditional:(bs,eq)=>bs('strength')<bs('agility')?{agility:100}:{}},
+  inertia_bracelets:              {buff_mult:{resistance:2.0}},
+  lost_entitys_core:              {pct_base_all:0.15},
+  // Mastercraft Baldun
+  balduns_crown:                  {buff_mult:{intelligence:3.0}},
+  balduns_chivalery:              {buff_mult:{agility:3.0}},
+  balduns_gauntelet:              {buff_mult:{charisma:3.0}},
+  balduns_chains:                 {pct_base_all:0.25},
+  balduns_cape:                   {conditional:(bs,eq)=>eq.has('balduns_chestplate')?{resistance:600}:{}},
+  balduns_executionner:           {buff_mult:{strength:3.0}},
+  balduns_claws:                  {buff_mult:{strength:3.0}},
+  balduns_bracelet:               {buff_mult:{mana:3.0}},
+  balduns_god_shoes:              {buff_mult:{speed:3.0}},
+  balduns_ring:                   {conditional:(bs,eq,aura)=>{if(!aura)return {};const r={};SIG_ALL_STATS.forEach(s=>{r[s]=bs(s)*2;});return r;}},
+};
+
+/**
+ * Calculate Mythic+ item special effects (buff_mult, pct_base, conditional, nerf_reduction).
+ * Mirrors bot inventory_system.py lines 687-783.
+ * @param {string[]} equippedIds
+ * @param {object} charStats - base character stats
+ * @param {object} totalBonuses - accumulated bonuses so far (will be mutated for pct_base/conditional)
+ * @param {boolean} auraEnabled
+ * @returns {{itemBuffMult:object, itemNerfReduction:number}}
+ */
+function calculateMythicEffects(equippedIds,charStats,totalBonuses,auraEnabled){
+  const ALL=SIG_ALL_STATS;
+  const bs=s=>parseInt((charStats||{})[s]||0)||0;
+  const eqSet=new Set(equippedIds);
+  const itemBuffMult={};
+  let itemNerfReduction=0;
+  for(const id of equippedIds){
+    const fx=MYTHIC_EFFECTS[id];
+    if(!fx)continue;
+    // buff_mult
+    if(fx.buff_mult){
+      for(const[s,m] of Object.entries(fx.buff_mult)){
+        itemBuffMult[s]=Math.max(itemBuffMult[s]||1,m);
+      }
+    }
+    // pct_base
+    if(fx.pct_base){
+      for(const[s,pct] of Object.entries(fx.pct_base)){
+        totalBonuses[s]=(totalBonuses[s]||0)+Math.floor(bs(s)*pct);
+      }
+    }
+    // pct_base_all
+    if(fx.pct_base_all){
+      ALL.forEach(s=>{totalBonuses[s]=(totalBonuses[s]||0)+Math.floor(bs(s)*fx.pct_base_all);});
+    }
+    // conditional
+    if(fx.conditional){
+      try{
+        const cb=fx.conditional(bs,eqSet,auraEnabled);
+        if(cb){for(const[s,v] of Object.entries(cb)){totalBonuses[s]=(totalBonuses[s]||0)+Math.floor(v);}}
+      }catch(_){}
+    }
+    // nerf_reduction
+    if(fx.nerf_reduction){itemNerfReduction=Math.max(itemNerfReduction,fx.nerf_reduction);}
+  }
+  return {itemBuffMult,itemNerfReduction};
+}
+
+/**
+ * Calculate set bonuses — applies ONLY the highest threshold met per set (like the bot).
+ * Mirrors bot item_sets.py calculate_set_bonuses().
+ * @param {string[]} equippedIds
+ * @returns {{stats:object, buffMult:object, buffMultAll:number, nerfReduction:number, special:string|null}}
+ */
+function calculateSetBonuses(equippedIds){
+  const ALL=SIG_ALL_STATS;
+  const result={stats:{},buffMult:{},buffMultAll:1.0,nerfReduction:0,special:null};
+  const eqSet=new Set(equippedIds);
+  for(const[,setDef] of Object.entries(ITEM_SETS)){
+    const count=setDef.items.filter(i=>eqSet.has(i)).length;
+    if(count<2)continue;
+    const thresholds=Object.keys(setDef.bonuses).map(Number).sort((a,b)=>b-a); // descending
+    for(const t of thresholds){
+      if(count>=t){
+        const bonus=setDef.bonuses[String(t)]||setDef.bonuses[t]||{};
+        if(bonus.stats)for(const[s,v] of Object.entries(bonus.stats)){result.stats[s]=(result.stats[s]||0)+v;}
+        if(bonus.stats_all)ALL.forEach(s=>{result.stats[s]=(result.stats[s]||0)+bonus.stats_all;});
+        if(bonus.buff_mult)for(const[s,m] of Object.entries(bonus.buff_mult)){result.buffMult[s]=Math.max(result.buffMult[s]||1,m);}
+        if(bonus.buff_mult_all)result.buffMultAll=Math.max(result.buffMultAll,bonus.buff_mult_all);
+        if(bonus.nerf_reduction)result.nerfReduction=Math.max(result.nerfReduction,bonus.nerf_reduction);
+        if(bonus.special)result.special=bonus.special;
+        break; // only highest threshold per set
+      }
+    }
+  }
+  return result;
+}
+
+/**
+ * Apply buff multipliers to total bonuses + Equalizer logic.
+ * Mirrors bot inventory_system.py lines 784-828.
+ */
+function applyBuffMultipliersAndEqualizer(totalBonuses,charStats,equippedIds,itemBuffMult,setResult,auraEnabled){
+  const ALL=SIG_ALL_STATS;
+  const bs=s=>parseInt((charStats||{})[s]||0)||0;
+  // Merge item + set buff_mult (take max per stat)
+  const finalBuffMult={};
+  for(const s of new Set([...Object.keys(itemBuffMult),...Object.keys(setResult.buffMult)])){
+    finalBuffMult[s]=Math.max(itemBuffMult[s]||1,setResult.buffMult[s]||1);
+  }
+  // Apply global buff_mult_all from sets
+  if(setResult.buffMultAll>1){
+    ALL.forEach(s=>{if(!finalBuffMult[s]||finalBuffMult[s]<setResult.buffMultAll)finalBuffMult[s]=setResult.buffMultAll;});
+  }
+  // Apply multipliers to equipment bonuses (positive only)
+  for(const[s,mult] of Object.entries(finalBuffMult)){
+    if(mult>1 && (totalBonuses[s]||0)>0){
+      totalBonuses[s]=Math.floor(totalBonuses[s]*mult);
+    }
+  }
+  // Equalizer
+  const eqSet=new Set(equippedIds);
+  if(eqSet.has('equalizer')&&charStats){
+    const baseVals=ALL.map(s=>bs(s)).sort((a,b)=>b-a);
+    let target;
+    if(setResult.special==='equalize_to_highest_plus_10pct'){
+      target=Math.floor(baseVals[0]*1.10);
+    }else if(setResult.special==='equalize_to_highest'){
+      target=baseVals[0];
+    }else{
+      target=baseVals.length>=4?Math.floor(baseVals.slice(0,4).reduce((a,b)=>a+b,0)/4):Math.floor(baseVals.reduce((a,b)=>a+b,0)/Math.max(1,baseVals.length));
+    }
+    ALL.forEach(s=>{
+      const current=bs(s)+(totalBonuses[s]||0);
+      if(current<target)totalBonuses[s]=(totalBonuses[s]||0)+(target-current);
+    });
+  }
 }
 
 // ── INIT ──

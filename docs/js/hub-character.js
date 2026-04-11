@@ -39,32 +39,23 @@ function renderFullChar(){
   const sp=parseInt(c.available_stat_points||0);
 
   /* ── Calcul bonus par catégorie ── */
-  const bEquip={},bSets={},bParty={},bTitles={},bBuffs={},bComp={},bSig={};
+  const bEquip={},bSets={},bParty={},bTitles={},bBuffs={},bComp={},bSig={},bMythic={};
   const bonuses={}; // total
   function addTo(cat,s,v){v=parseInt(v)||0;if(!v)return;cat[s]=(cat[s]||0)+v;bonuses[s]=(bonuses[s]||0)+v;}
 
-  // 1) Équipement direct
+  // 1) Équipement direct (skip signature + equalizer)
   const eqList=(INV_DATA&&INV_DATA.equipped_assets)||[];
   eqList.forEach(id=>{
     const it=ALL_ITEMS_DATA[id]||{};
+    if((it.rarity||'').toLowerCase()==='signature')return;
+    if(id==='equalizer')return;
     Object.entries(it.stat_effects||it.stats||{}).forEach(([s,v])=>{
       try{addTo(bEquip,s,parseInt(String(v).replace('+','')));}catch(_){}
     });
   });
-  // 2) Sets
-  const eqSet=new Set(eqList);
-  Object.values(ITEM_SETS).forEach(sd=>{
-    const cnt=sd.items.filter(i=>eqSet.has(i)).length;
-    if(cnt<2)return;
-    const thresholds=Object.keys(sd.bonuses).map(Number).sort((a,b)=>a-b);
-    for(const t of thresholds){
-      if(cnt>=t){
-        const b=sd.bonuses[String(t)]||sd.bonuses[t]||{};
-        if(b.stats)Object.entries(b.stats).forEach(([s,v])=>{addTo(bSets,s,v);});
-        if(b.stats_all)SK.forEach(s=>{addTo(bSets,s,b.stats_all);});
-      }
-    }
-  });
+  // 2) Sets (highest threshold only — mirrors bot)
+  const setResult=calculateSetBonuses(eqList);
+  Object.entries(setResult.stats).forEach(([s,v])=>{addTo(bSets,s,v);});
   // 3) Party
   if(PARTY_DATA&&PARTY_DATA.members){
     const me=(PARTY_DATA.members||[]).find(m=>m.char_key===UID+'_'+CHAR_ID);
@@ -114,6 +105,21 @@ function renderFullChar(){
   const sigBonuses=calculateSignatureBonuses(eqList,stats,auraEnabled,existingBuffsForSig);
   Object.entries(sigBonuses).forEach(([s,v])=>{addTo(bSig,s,v);});
 
+  // 8) Mythic+ effects (pct_base, conditional, nerf_reduction tracked in bMythic)
+  const _mythicTemp={};
+  const mythicResult=calculateMythicEffects(eqList,stats,_mythicTemp,auraEnabled);
+  Object.entries(_mythicTemp).forEach(([s,v])=>{addTo(bMythic,s,v);});
+
+  // 9) Apply buff multipliers (set + item) + Equalizer
+  // We need a copy of bonuses to apply multipliers
+  const _preMultBonuses={...bonuses};
+  applyBuffMultipliersAndEqualizer(bonuses,stats,eqList,mythicResult.itemBuffMult,setResult,auraEnabled);
+  // Compute the diff caused by multipliers/equalizer and add to bMythic for display
+  Object.keys(bonuses).forEach(s=>{
+    const diff=(bonuses[s]||0)-(_preMultBonuses[s]||0);
+    if(diff>0)bMythic[s]=(bMythic[s]||0)+diff;
+  });
+
   // ── True Self: INT locked at 10, no bonuses apply ──
   const _hasTrueSelf=(()=>{
     const pw=(c.powers||[]);
@@ -133,10 +139,10 @@ function renderFullChar(){
     stats.intelligence=10;
     bonuses.intelligence=0;
     bEquip.intelligence=0; bSets.intelligence=0; bParty.intelligence=0;
-    bTitles.intelligence=0; bBuffs.intelligence=0; bComp.intelligence=0; bSig.intelligence=0;
+    bTitles.intelligence=0; bBuffs.intelligence=0; bComp.intelligence=0; bSig.intelligence=0; bMythic.intelligence=0;
     delete bonuses.intelligence;
     delete bEquip.intelligence; delete bSets.intelligence; delete bParty.intelligence;
-    delete bTitles.intelligence; delete bBuffs.intelligence; delete bComp.intelligence; delete bSig.intelligence;
+    delete bTitles.intelligence; delete bBuffs.intelligence; delete bComp.intelligence; delete bSig.intelligence; delete bMythic.intelligence;
   }
 
   // ── Stats display (with companion buff_mult) ──
@@ -189,6 +195,7 @@ function renderFullChar(){
     html+=renderBonusSection('🎒','ÉQUIPEMENT','equip',bEquip,eqList.length+' items');
     html+=renderBonusSection('🧩','SETS','sets',bSets);
     if(sigEquipped.length) html+=renderBonusSection('⭐','SIGNATURE','sig',bSig,sigTags);
+    html+=renderBonusSection('🔮','MYTHIC+','equip',bMythic);
     if(activeCompName) html+=renderBonusSection('🐾','COMPAGNON','comp',bComp,compTag);
     html+=renderBonusSection('👥','PARTY','party',bParty);
     html+=renderBonusSection('🏷️','TITRES','titles',bTitles);

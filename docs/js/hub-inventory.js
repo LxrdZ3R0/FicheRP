@@ -232,30 +232,35 @@ function renderItemsGrid(){
 function renderStatsSummary(){
   const equipped=INV_DATA.equipped_assets||[];
   const totals={};
-  const ALL_STAT_KEYS=['strength','agility','speed','intelligence','mana','resistance','charisma','aura'];
+  const ALL_STAT_KEYS=['strength','agility','speed','intelligence','mana','resistance','charisma'];
+  const charStats=(CHAR&&CHAR.stats)||{};
+  const auraEnabled=parseInt(charStats.aura||0)>0;
 
+  // 1) Standard equipment bonuses (skip signature + equalizer)
   equipped.forEach(id=>{
     const it=ALL_ITEMS_DATA[id]||{};
+    if((it.rarity||'').toLowerCase()==='signature')return;
+    if(id==='equalizer')return;
     const effects=it.stat_effects||it.stats||{};
     Object.entries(effects).forEach(([s,v])=>{
       try{totals[s]=(totals[s]||0)+parseInt(String(v).replace('+',''));}catch(_){}
     });
   });
 
-  // Bonus sets
-  const eqSet=new Set(equipped);
-  Object.entries(ITEM_SETS).forEach(([,setDef])=>{
-    const count=setDef.items.filter(i=>eqSet.has(i)).length;
-    if(count<2)return;
-    const thresholds=Object.keys(setDef.bonuses).map(Number).sort((a,b)=>a-b);
-    for(const t of thresholds){
-      if(count>=t){
-        const bonus=setDef.bonuses[String(t)]||setDef.bonuses[t];
-        if(bonus.stats)Object.entries(bonus.stats).forEach(([s,v])=>{totals[s]=(totals[s]||0)+v;});
-        if(bonus.stats_all)ALL_STAT_KEYS.forEach(s=>{totals[s]=(totals[s]||0)+bonus.stats_all;});
-      }
-    }
-  });
+  // 2) Signature items
+  const existBuf={...totals};
+  const sigB=calculateSignatureBonuses(equipped,charStats,auraEnabled,existBuf);
+  Object.entries(sigB).forEach(([s,v])=>{totals[s]=(totals[s]||0)+v;});
+
+  // 3) Set bonuses (highest threshold only)
+  const setResult=calculateSetBonuses(equipped);
+  Object.entries(setResult.stats).forEach(([s,v])=>{totals[s]=(totals[s]||0)+v;});
+
+  // 4) Mythic+ effects
+  const mythicResult=calculateMythicEffects(equipped,charStats,totals,auraEnabled);
+
+  // 5) Apply buff multipliers + Equalizer
+  applyBuffMultipliersAndEqualizer(totals,charStats,equipped,mythicResult.itemBuffMult,setResult,auraEnabled);
 
   const entries=Object.entries(totals).filter(([,v])=>v>0);
   const el=document.getElementById('equip-bonus-grid');
