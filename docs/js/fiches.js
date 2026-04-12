@@ -762,6 +762,8 @@ window._loadCards=function(){
       setTimeout(window.revealCards,120);
       const e2=document.getElementById('empty-state2');
       if(e2)e2.style.display=all.length===0?'block':'none';
+      /* ── Auto-load IRP si le mode est actif ── */
+      if(window._irpMode&&typeof window._loadIRPCards==='function')window._loadIRPCards();
     }
 
     // Charger characters (snapshot live)
