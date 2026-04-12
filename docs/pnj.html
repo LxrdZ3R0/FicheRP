@@ -755,6 +755,8 @@ const _origSaveFilter=window.saveFilter;window.saveFilter=async function(){await
           var o=document.createElement('option');o.value=f.id;o.textContent=f.label;sel.appendChild(o);
         });}
         window._loadPNJ();
+        /* Auto-load IRP PNJ si le mode est actif */
+        if(window._irpMode&&typeof window._loadIRPPNJ==='function')setTimeout(window._loadIRPPNJ,500);
       });
     } else { setTimeout(tryLoad,30); }
   }
