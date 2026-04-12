@@ -728,7 +728,7 @@ window._loadCards=function(){
       const empty=document.getElementById('empty-state');
       if(empty)empty.remove();
       if(typeof window.Skeleton!=='undefined')Skeleton.hide('cards-container');
-      [...ctn.children].forEach(el=>{if(el!==noRes&&!el.id)el.remove();});
+      [...ctn.children].forEach(el=>{if(el!==noRes&&!el.id&&el.dataset?.irp!=='true')el.remove();});
 
       // Convertir characters → format fiche
       const fromChars=charDocs
