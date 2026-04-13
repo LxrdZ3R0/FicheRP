@@ -61,10 +61,14 @@ function applyIRPGachaLabels(){
   if(pityLbls[2]) pityLbls[2].textContent='STREAK JAHARTITE';
 }
 async function loadIRPBannersPage(){
-  const [snap, cfgSnap] = await Promise.all([
+  const [snap, cfgSnap, imgSnap] = await Promise.all([
     db.collection('irp_gacha_banners').get(),
     db.collection('irp_gacha_config').doc('rotation').get().catch(()=>null),
+    db.collection('gacha_config').doc('banner_images').get().catch(()=>null),
   ]);
+
+  /* Per-banner images from gacha_config/banner_images */
+  const bannerImages = (imgSnap && imgSnap.exists) ? (imgSnap.data() || {}) : {};
 
   const raw=[];
   snap.forEach(function(d){
@@ -118,7 +122,7 @@ async function loadIRPBannersPage(){
       description: data.description || '',
       featured: featuredNames,
       featured_rarity: data.featured_rarity || 'legendary',
-      image: data.image_url || data.image || '',
+      image: data.image_url || data.image || (bannerImages[data.id] && bannerImages[data.id].url) || '',
       status,
       active: status === 'live',
       rarities: normalized,
@@ -445,6 +449,15 @@ async function saveBannerImg(bid){
       {[bid]:{url:url,updated_at:new Date().toISOString()}},
       {merge:true}
     );
+    /* IRP: also write image_url directly into the banner document */
+    if(IS_IRP){
+      try{
+        await db.collection('irp_gacha_banners').doc(bid).set(
+          {image_url:url,image:url},
+          {merge:true}
+        );
+      }catch(_){}
+    }
     // Update local banner data
     const b=BANNERS.find(x=>x.id===bid);
     if(b)b.image=url;
