@@ -39,8 +39,13 @@ function renderNoChar(){
 }
 
 function renderPlayerWidgets(){
-  const nav=PLAYER.navarites||0,streak=PLAYER.consecutive_days||0;
-  document.getElementById('dash-nav-val').innerHTML=`<span>${nav.toLocaleString()}</span><span class="nav-unit">NAV</span>`;
+  /* En IRP, utiliser le solde de jahartites si disponible */
+  const isIRP = window._irpMode;
+  const irpP = window._irpPlayer;
+  const nav = isIRP && irpP ? (irpP.jahartites || 0) : (PLAYER.navarites || 0);
+  const streak = isIRP && irpP ? (irpP.consecutive_days || 0) : (PLAYER.consecutive_days || 0);
+  const unit = isIRP ? 'JAH' : 'NAV';
+  document.getElementById('dash-nav-val').innerHTML=`<span>${nav.toLocaleString()}</span><span class="nav-unit">${unit}</span>`;
   document.getElementById('dash-nav-streak').innerHTML=streak?`<span>${streak}</span> jour${streak>1?'s':''} consécutifs`:'Pas encore de série active';
   // Load wallet after player data is ready
   loadWallet();
@@ -50,7 +55,13 @@ async function loadWallet(){
   const walletEl=document.getElementById('dash-wallet');
   if(!walletEl)return;
   // Gather all currency data
-  const nav=PLAYER.navarites||0;
+  const isIRP = window._irpMode;
+  const irpP = window._irpPlayer;
+  const nav = isIRP && irpP ? (irpP.jahartites || 0) : (PLAYER.navarites || 0);
+  const navLabel = isIRP ? 'Jahartites' : 'Navarites';
+  const navIcon = isIRP
+    ? 'https://firebasestorage.googleapis.com/v0/b/jaharta-rp.firebasestorage.app/o/icons%2FChatGPT%20Image%2013%20avr.%202025%2C%2018_19_29.png?alt=media&token=ac0476c3-965f-4806-aad0-ee6c917e02cd'
+    : 'https://firebasestorage.googleapis.com/v0/b/jaharta-rp.firebasestorage.app/o/icons%2FNavarite.png?alt=media&token=4b19c26d-c28e-426e-89ca-0fe381708ece';
   const notoriety=PLAYER.notoriety||0;
   const _ge=PLAYER.golden_eggs;
   const goldenEggs=typeof _ge==='number'?_ge:(typeof _ge==='object'&&_ge!==null?(Object.values(_ge).find(v=>typeof v==='number')||0):(parseInt(_ge)||0));
@@ -81,7 +92,7 @@ async function loadWallet(){
     platinum:'https://firebasestorage.googleapis.com/v0/b/jaharta-rp.firebasestorage.app/o/icons%2FPlatinum%20Kanite.png?alt=media&token=aceec5d7-9971-4bb5-ab1c-10162c697f00'
   };
   function wimg(url){return `<img src="${url}" alt="" style="width:28px;height:28px;object-fit:contain;filter:drop-shadow(0 0 4px rgba(255,214,10,0.3))">`;}
-  html+=`<div class="wallet-item wi-navarite"><span class="wi-icon">${wimg(IC.nav)}</span><div><div class="wi-val">${nav.toLocaleString()}</div><div class="wi-label">Navarites</div></div></div>`;
+  html+=`<div class="wallet-item wi-navarite"><span class="wi-icon">${wimg(isIRP ? navIcon : IC.nav)}</span><div><div class="wi-val">${nav.toLocaleString()}</div><div class="wi-label">${navLabel}</div></div></div>`;
   html+=`<div class="wallet-item wi-golden-egg"><span class="wi-icon">${wimg(IC.egg)}</span><div><div class="wi-val">${goldenEggs.toLocaleString()}</div><div class="wi-label">Golden Egg</div></div></div>`;
   if(platinum>0)html+=`<div class="wallet-item wi-platinum"><span class="wi-icon">${wimg(IC.platinum)}</span><div><div class="wi-val">${platinum.toLocaleString()}</div><div class="wi-label">Platinum K</div></div></div>`;
   if(gold>0)html+=`<div class="wallet-item wi-gold"><span class="wi-icon">${wimg(IC.gold)}</span><div><div class="wi-val">${gold.toLocaleString()}</div><div class="wi-label">Gold K</div></div></div>`;

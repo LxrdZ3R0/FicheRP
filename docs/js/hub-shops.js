@@ -83,6 +83,7 @@ function renderMonShop(){
           const effects = it.stat_effects || it.stats || {};
           const effStr = Object.entries(effects).slice(0,2).map(([s,v])=>`+${v} ${SI[s]||s}`).join(' ');
           return `<div class="shop-item-card rarity-${rarity}" style="position:relative">
+            ${item_id.startsWith('irp_')?'<span style="position:absolute;top:6px;right:6px;font-family:var(--font-m);font-size:0.38rem;letter-spacing:0.08em;color:#dc143c;background:rgba(220,20,60,0.12);border:1px solid rgba(220,20,60,0.25);border-radius:3px;padding:1px 5px;pointer-events:none;z-index:2;white-space:nowrap">EXCLU IRP</span>':''}
             <div class="shop-item-top">
               <span class="shop-item-icon">${it.emoji||'📦'}</span>
               <div class="shop-item-info">
@@ -106,7 +107,8 @@ function renderMonShop(){
           const it = ALL_ITEMS_DATA[item_id] || {};
           const rarity = (it.rarity||'common').toLowerCase();
           const rc = RARITY_COLORS[rarity]||'#6b7280';
-          return `<div class="shop-item-card rarity-${rarity}">
+          return `<div class="shop-item-card rarity-${rarity}" style="position:relative">
+            ${item_id.startsWith('irp_')?'<span style="position:absolute;top:6px;right:6px;font-family:var(--font-m);font-size:0.38rem;letter-spacing:0.08em;color:#dc143c;background:rgba(220,20,60,0.12);border:1px solid rgba(220,20,60,0.25);border-radius:3px;padding:1px 5px;pointer-events:none;z-index:2;white-space:nowrap">EXCLU IRP</span>':''}
             <div class="shop-item-top">
               <span class="shop-item-icon">${it.emoji||'📦'}</span>
               <div class="shop-item-info">
@@ -426,7 +428,8 @@ function renderShopDetail(shop){
         const price=si.price||{};
         const effects=it.stat_effects||it.stats||{};
         const effStr=Object.entries(effects).slice(0,2).map(([s,v])=>`+${v} ${SI[s]||s}`).join(' ');
-        return`<div class="shop-item-card">
+        return`<div class="shop-item-card" style="position:relative">
+          ${item_id.startsWith('irp_')?'<span style="position:absolute;top:6px;right:6px;font-family:var(--font-m);font-size:0.38rem;letter-spacing:0.08em;color:#dc143c;background:rgba(220,20,60,0.12);border:1px solid rgba(220,20,60,0.25);border-radius:3px;padding:1px 5px;pointer-events:none;z-index:2;white-space:nowrap">EXCLU IRP</span>':''}
           <div class="shop-item-top">
             <span class="shop-item-icon">${it.emoji||'📦'}</span>
             <div class="shop-item-info">

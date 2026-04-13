@@ -49,7 +49,7 @@ function applyIRPGachaLabels(){
   if(gate) gate.innerHTML='Utilise la commande <strong style="color:#dc143c">/link</strong> sur le bot pour ouvrir une session site, y compris pour le Gacha IRP.';
   if(note) note.textContent='Code valable 5 min · usage unique · partage la session du hub et du gacha';
   const badge=document.querySelector('.nv-badge');
-  if(badge) badge.innerHTML='💎 JAHARTITE <span class="nv-val" id="nv-c">0</span>';
+  if(badge) badge.innerHTML='<img src="https://firebasestorage.googleapis.com/v0/b/jaharta-rp.firebasestorage.app/o/icons%2FChatGPT%20Image%2013%20avr.%202025%2C%2018_19_29.png?alt=media&token=ac0476c3-965f-4806-aad0-ee6c917e02cd" alt="" style="width:16px;height:16px;object-fit:contain;vertical-align:middle;margin-right:4px;filter:drop-shadow(0 0 4px rgba(220,20,60,0.3))"> JAHARTITE <span class="nv-val" id="nv-c">0</span>';
   const pull=document.querySelector('.pull-nv');
   if(pull) pull.innerHTML='SOLDE : <span class="nv-count" id="pnv">0</span> JAHARTITE(S)';
   document.querySelectorAll('.btn-cost').forEach(function(el){
@@ -133,6 +133,63 @@ function renderIRPBannersPage(banners){
   if(rot){
     const jours=Number.isFinite(info.days_until_next)?info.days_until_next:'?';
     rot.textContent=banners.length ? 'Mode IRP actif — rotation auto 2 bannières / 7 jours · prochaine rotation dans '+jours+' jour(s)' : 'Mode IRP actif — aucune bannière IRP configurée';
+
+    /* ── Bouton de rotation manuelle (admin uniquement) ── */
+    if(window._isAdmin && !document.getElementById('irp-manual-rot-btn')){
+      const btn=document.createElement('button');
+      btn.id='irp-manual-rot-btn';
+      btn.textContent='⟳ ROTATION MANUELLE';
+      btn.style.cssText='margin-left:12px;padding:6px 14px;border-radius:6px;border:1px solid rgba(220,20,60,0.35);background:linear-gradient(135deg,rgba(220,20,60,0.15),rgba(139,0,0,0.15));color:#dc143c;font-family:var(--font-h);font-size:0.48rem;font-weight:700;letter-spacing:0.1em;cursor:pointer;transition:all 0.3s;vertical-align:middle';
+      btn.addEventListener('mouseenter',function(){btn.style.background='linear-gradient(135deg,rgba(220,20,60,0.3),rgba(139,0,0,0.3))';btn.style.boxShadow='0 0 12px rgba(220,20,60,0.25)';});
+      btn.addEventListener('mouseleave',function(){btn.style.background='linear-gradient(135deg,rgba(220,20,60,0.15),rgba(139,0,0,0.15))';btn.style.boxShadow='none';});
+      btn.addEventListener('click',async function(){
+        if(!confirm('Forcer une rotation manuelle des bannières IRP ?'))return;
+        btn.disabled=true;btn.textContent='⟳ ROTATION...';
+        try{
+          /* Lire l'état actuel, avancer le pointer, persister */
+          const cfgSnap=await db.collection('irp_gacha_config').doc('rotation').get();
+          const state=cfgSnap.exists?cfgSnap.data():{};
+          const order=state.banner_order||[];
+          if(!order.length){showToast('Aucune bannière dans l\'ordre de rotation','error');btn.disabled=false;btn.textContent='⟳ ROTATION MANUELLE';return;}
+          const oldPointer=Number(state.pointer||0);
+          const step=Number(state.active_ids?.length||2);
+          const newPointer=(oldPointer+step)%order.length;
+          const now=new Date().toISOString();
+          const rotDays=Number(state.rotation_days||7);
+          const nextRot=new Date(Date.now()+rotDays*86400000).toISOString();
+          const activeIds=[];for(let i=0;i<Math.min(step,order.length);i++)activeIds.push(order[(newPointer+i)%order.length]);
+          const nextIds=[];for(let i=0;i<Math.min(step,order.length);i++)nextIds.push(order[(newPointer+step+i)%order.length]);
+          await db.collection('irp_gacha_config').doc('rotation').set({
+            ...state,
+            pointer:newPointer,
+            last_rotation:now,
+            next_rotation_at:nextRot,
+            active_ids:activeIds,
+            next_ids:nextIds,
+            manual_override:false,
+            updated_at:now
+          },{merge:false});
+          /* Mettre à jour le statut des bannières */
+          const batch=db.batch();
+          for(const bid of order){
+            const ref=db.collection('irp_gacha_banners').doc(bid);
+            batch.update(ref,{active:activeIds.includes(bid),status:activeIds.includes(bid)?'live':'next',next_rotation_at:nextRot});
+          }
+          await batch.commit();
+          showToast('Rotation effectuée !','success');
+          /* Recharger les bannières */
+          JCache.invalidate('irp_gacha_banners',null);JCache.invalidate('irp_gacha_config','rotation');
+          const newBanners=await loadIRPBannersPage();
+          renderIRPBannersPage(newBanners);
+        }catch(err){
+          window._dbg?.error('[MANUAL_ROTATION]',err);
+          showToast('Erreur : '+err.message,'error');
+        }finally{
+          btn.disabled=false;btn.textContent='⟳ ROTATION MANUELLE';
+        }
+      });
+      rot.appendChild(btn);
+    }
   }
   if(!grid) return;
   if(!banners.length){
@@ -279,7 +336,16 @@ async function loadUser(){
       },
     };
     return U;
-  }catch(e){window._dbg?.error('[LOAD_USER]',e);return null}
+  }catch(e){
+    window._dbg?.error('[LOAD_USER]',e);
+    /* Fallback : utiliser les données de session brutes si Firestore échoue */
+    const sf=getSession();
+    if(sf&&sf.id){
+      U={id:sf.id,username:sf.username||'—',avatar:sf.avatar||'',navarites:0,booster:false,pity:{spent_epic:0,threshold_epic:IS_IRP?60:30,spent_leg:0,threshold_leg:IS_IRP?180:150},streak:{days_in_cycle:0}};
+      return U;
+    }
+    return null;
+  }
 }
 
 async function loadBanners(){

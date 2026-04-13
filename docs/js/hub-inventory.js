@@ -203,6 +203,7 @@ function renderItemsGrid(){
       div.setAttribute('onclick',"showItemDetail('"+id+"')");
       div.innerHTML=
         (isEq?'<span class="inv-badge-equipped"></span>':'')+
+        (id.startsWith('irp_')?'<span class="inv-badge-irp" style="position:absolute;top:4px;right:4px;font-family:var(--font-m);font-size:0.38rem;letter-spacing:0.08em;color:#dc143c;background:rgba(220,20,60,0.12);border:1px solid rgba(220,20,60,0.25);border-radius:3px;padding:1px 5px;pointer-events:none;z-index:2;white-space:nowrap">EXCLU IRP</span>':'')+
         (qty>0?'<button class="inv-item-delete" onclick="openDeleteModal(\''+id+'\',event)" title="Supprimer de l\'inventaire" aria-label="Supprimer '+e(it.name||id)+'"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" width="10" height="10"><path d="M2 4h12M6 4V2h4v2M5 4l1 9h4l1-9"/></svg></button>':'')+
         '<span class="inv-item-emoji">'+(it.image?'<img src="'+e(it.image)+'" alt="'+e(it.name||id)+'" class="inv-item-img">':(it.emoji||'📦'))+'</span>'+
         '<div class="inv-item-name" style="color:'+rc+'">'+e(it.name||id)+'</div>'+

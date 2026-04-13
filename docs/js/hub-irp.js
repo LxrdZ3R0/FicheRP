@@ -485,7 +485,7 @@
 
     /* ── Wallet Jahartites ── */
     h += '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:24px;padding:16px;background:var(--surface);border:1px solid rgba(220,20,60,0.15);border-radius:12px;flex-wrap:wrap">';
-    h += '<div style="display:flex;align-items:center;gap:12px"><div style="font-size:1.8rem">💎</div>';
+    h += '<div style="display:flex;align-items:center;gap:12px"><div><img src="https://firebasestorage.googleapis.com/v0/b/jaharta-rp.firebasestorage.app/o/icons%2FChatGPT%20Image%2013%20avr.%202025%2C%2018_19_29.png?alt=media&token=ac0476c3-965f-4806-aad0-ee6c917e02cd" alt="Jahartite" style="width:32px;height:32px;object-fit:contain;filter:drop-shadow(0 0 6px rgba(220,20,60,0.4))"></div>';
     h += '<div><div style="font-family:var(--font-h);font-size:1.4rem;color:var(--text)">' + jah.toLocaleString() + '</div>';
     h += '<div style="font-family:var(--font-m);font-size:0.55rem;color:var(--text3);letter-spacing:0.08em">JAHARTITES</div></div></div>';
     h += '<button onclick="localStorage.setItem(&quot;jaharta_irp_mode&quot;,&quot;true&quot;);window.location.href=&quot;gacha.html&quot;" style="padding:10px 14px;border-radius:10px;border:1px solid rgba(220,20,60,.25);background:linear-gradient(135deg,rgba(220,20,60,.18),rgba(139,0,0,.18));color:#fff;font-family:var(--font-h);font-size:.55rem;letter-spacing:.1em;cursor:pointer">OUVRIR LE GACHA IRP</button>';
@@ -523,7 +523,7 @@
         h += '<div style="font-family:var(--font-h);font-size:0.75rem;color:var(--text);letter-spacing:0.06em;margin-bottom:4px">' + name + '</div>';
         if (desc) h += '<div style="font-family:var(--font-m);font-size:0.55rem;color:var(--text3);margin-bottom:12px">' + desc + '</div>';
         h += '<div style="display:flex;align-items:center;justify-content:space-between">';
-        h += '<div style="font-family:var(--font-m);font-size:0.6rem;color:' + color + '">💎 ' + cost + ' Jahartites</div>';
+        h += '<div style="font-family:var(--font-m);font-size:0.6rem;color:' + color + '"><img src="https://firebasestorage.googleapis.com/v0/b/jaharta-rp.firebasestorage.app/o/icons%2FChatGPT%20Image%2013%20avr.%202025%2C%2018_19_29.png?alt=media&token=ac0476c3-965f-4806-aad0-ee6c917e02cd" alt="" style="width:14px;height:14px;object-fit:contain;vertical-align:middle;margin-right:3px"> ' + cost + ' Jahartites</div>';
         h += '<div style="font-family:var(--font-h);font-size:0.4rem;letter-spacing:0.1em;color:' + color + ';text-transform:uppercase;padding:4px 10px;border:1px solid ' + color + '44;border-radius:4px">' + rarity + '</div>';
         h += '</div></div></div>';
       });
