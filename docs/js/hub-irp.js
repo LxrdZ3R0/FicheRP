@@ -308,31 +308,47 @@
     if (!invPanel) return;
 
     var obs = new MutationObserver(function () {
-      /* Ne pas dupliquer */
       if (invPanel.querySelector('.irp-slots-section')) return;
 
-      /* Chercher le conteneur principal de l'inventaire */
-      var slotsContainer = invPanel.querySelector('.inv-right, .inv-slots, .slots-grid');
-      if (!slotsContainer) slotsContainer = invPanel.querySelector('.cyb-panel');
-      if (!slotsContainer) return;
+      /* Cibler directement equip-bonus-grid — c'est l'élément fiable */
+      var bonusGrid = invPanel.querySelector('#equip-bonus-grid');
+      if (!bonusGrid) return;
 
-      /* Trouver la section bonus effectifs (set-bonus) et le panneau equip-bonus */
-      var setBonusSection = slotsContainer.querySelector('.set-bonus-list, .set-bonus-section, [class*="set-bonus"]');
-      var equipBonusGrid = slotsContainer.querySelector('#equip-bonus-grid, .equip-bonus-grid');
+      /* ── Wrapper : englobe les stats bonus existantes + IRP slots ── */
+      var wrapper = document.createElement('div');
+      wrapper.className = 'irp-bonus-wrapper';
+      wrapper.style.cssText = 'border:1px solid rgba(220,20,60,0.15);border-radius:12px;overflow:hidden;margin:16px 0;background:rgba(220,20,60,0.02);';
 
-      /* ── Section IRP Slots : bloc indépendant avec sous-catégories ── */
+      /* ── Bloc 1 : Stats Bonus Équipement (encapsulé) ── */
+      var statsBonusBlock = document.createElement('div');
+      statsBonusBlock.className = 'irp-stats-bonus-block';
+      statsBonusBlock.style.cssText = 'padding:14px;border-bottom:1px solid rgba(220,20,60,0.1);';
+      var bonusLabel = bonusGrid.previousElementSibling;
+      /* Cloner le header des bonus s'il y en a un (sh / section-head) */
+      var bonusHeaderClone = null;
+      if (bonusLabel && (bonusLabel.classList.contains('sh') || bonusLabel.tagName === 'H3' || bonusLabel.tagName === 'H4')) {
+        bonusHeaderClone = bonusLabel.cloneNode(true);
+      }
+      if (bonusHeaderClone) {
+        statsBonusBlock.appendChild(bonusHeaderClone);
+        bonusLabel.style.display = 'none';
+      }
+      /* Déplacer equip-bonus-grid dans le wrapper */
+      var bonusGridParent = bonusGrid.parentElement;
+      statsBonusBlock.appendChild(bonusGrid);
+      wrapper.appendChild(statsBonusBlock);
+
+      /* ── Bloc 2 : IRP Slots ── */
       var irpSection = document.createElement('div');
       irpSection.className = 'irp-slots-section';
-      irpSection.style.cssText = 'margin:20px 0;padding:16px;border:1px solid rgba(220,20,60,0.2);border-radius:10px;background:linear-gradient(145deg,rgba(220,20,60,0.04),rgba(139,0,139,0.03));';
+      irpSection.style.cssText = 'padding:16px;';
 
-      /* Header */
       var header = '<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid rgba(220,20,60,0.12)">' +
         '<span style="color:#dc143c;font-size:0.7rem">◆</span>' +
         '<span style="font-family:var(--font-h);font-size:0.6rem;letter-spacing:0.15em;color:#dc143c;font-weight:800">SLOTS BONUS IRP</span>' +
         '<span style="color:#dc143c;font-size:0.7rem">◆</span>' +
       '</div>';
 
-      /* Slot categories with their own sub-sections */
       var IRP_SLOT_CATS = [
         { id: 'erp', label: 'EMPREINTE RITUELLE', tag: 'ERP', count: 3, color: '#dc143c', desc: 'Slots liés aux rituels de domination' },
         { id: 'dom', label: 'DOMINION', tag: 'DOM', count: 3, color: '#8B008B', desc: 'Slots de contrôle et d\'emprise' },
@@ -360,25 +376,11 @@
         slotsHTML += '</div>';
       });
 
-      /* Imbrication forcée : après les bonus effectifs, AVANT les set bonus */
       irpSection.innerHTML = header + slotsHTML;
+      wrapper.appendChild(irpSection);
 
-      /* Insertion : trouver l'endroit exact — après equip-bonus, avant set-bonus */
-      if (equipBonusGrid && equipBonusGrid.parentElement) {
-        /* Insérer après le bloc des bonus équipement */
-        var bonusParent = equipBonusGrid.closest('.card, .cyb-panel, div');
-        if (bonusParent && bonusParent.nextSibling) {
-          bonusParent.parentNode.insertBefore(irpSection, bonusParent.nextSibling);
-        } else if (setBonusSection) {
-          setBonusSection.parentNode.insertBefore(irpSection, setBonusSection);
-        } else {
-          slotsContainer.appendChild(irpSection);
-        }
-      } else if (setBonusSection) {
-        setBonusSection.parentNode.insertBefore(irpSection, setBonusSection);
-      } else {
-        slotsContainer.appendChild(irpSection);
-      }
+      /* Insérer le wrapper là où était le bonus grid */
+      bonusGridParent.appendChild(wrapper);
     });
     obs.observe(invPanel, { childList: true, subtree: true });
   }

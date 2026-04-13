@@ -510,32 +510,62 @@ async function loadUshop(){
         Object.entries(d[sec]).forEach(([id,it])=>{if(it&&it.price)USHOP_ITEMS[id]={...it,_section:sec};});
       }
     }
-    /* ── IRP Mode: also load IRP-exclusive items from irp_items config ── */
+    /* ── IRP Mode: load ALL IRP items, generate prices based on rarity ── */
     if(window._irpMode){
+      const IRP_RARITY_PRICES={
+        common:{bronze_kanite:50},uncommon:{bronze_kanite:200},rare:{bronze_kanite:800},
+        epic:{silver_kanite:50},legendary:{silver_kanite:300},mythic:{gold_kanite:50},
+        unique:{gold_kanite:200},artifact:{gold_kanite:500},mastercraft:{platinum_kanite:100},
+        signature:{platinum_kanite:500}
+      };
       try{
+        /* Load from Firestore config/irp_items */
         const irpCfg=await db.collection('config').doc('irp_items').get();
         if(irpCfg.exists){
           const irpData=irpCfg.data()||{};
-          for(const sec of['items','equipment','food_items','consumable_items']){
-            if(irpData[sec]&&typeof irpData[sec]==='object'){
-              Object.entries(irpData[sec]).forEach(([id,it])=>{
-                if(it&&it.price){
-                  USHOP_ITEMS[id]={...it,_section:sec,_irpExclusive:true};
-                  /* Also register in ALL_ITEMS_DATA for tooltips/inventory */
-                  if(typeof ALL_ITEMS_DATA!=='undefined') ALL_ITEMS_DATA[id]=it;
-                }
-              });
-            }
-          }
+          const irpItems=irpData.items||{};
+          Object.entries(irpItems).forEach(([id,it])=>{
+            if(!it||typeof it!=='object')return;
+            /* Générer un prix basé sur la rareté si absent */
+            const rarity=(it.rarity||'common').toLowerCase();
+            const price=it.price||IRP_RARITY_PRICES[rarity]||{bronze_kanite:100};
+            const section=it.slot?'equipment':(it.type==='consumable'||it.type==='food'?it.type+'_items':'items');
+            USHOP_ITEMS[id]={...it,price,_section:section,_irpExclusive:true};
+            if(typeof ALL_ITEMS_DATA!=='undefined') ALL_ITEMS_DATA[id]={...it,price};
+          });
         }
       }catch(irpErr){window._dbg?.warn('[USHOP_IRP]',irpErr);}
-      /* Also include any items from normal config whose id starts with irp_ */
+      /* Mark any existing irp_ prefixed items */
       Object.entries(USHOP_ITEMS).forEach(([id,it])=>{
         if(id.startsWith('irp_')&&!it._irpExclusive) it._irpExclusive=true;
       });
     }
     renderUshop();renderUshopBalance();
+    /* Injecter le bouton filtre IRP si en mode IRP */
+    if(window._irpMode) _injectIRPFilterButton();
   }catch(err){window._dbg?.error('[USHOP]',err);gridEl.innerHTML='<div class="empty">Erreur chargement</div>';}
+}
+
+/* ── IRP Filter toggle state ── */
+let _ushopIRPOnly=false;
+
+function _injectIRPFilterButton(){
+  const catRow=document.querySelector('#panel-ushop .ushop-cats, .ushop-cat-row');
+  if(!catRow) return;
+  if(catRow.querySelector('.ushop-irp-filter')) return;
+  const btn=document.createElement('button');
+  btn.className='ushop-cat ushop-irp-filter';
+  btn.id='ucatbtn-irp';
+  btn.style.cssText='border:1px solid rgba(220,20,60,0.3);color:#dc143c;background:rgba(220,20,60,0.06);font-family:var(--font-h);font-size:0.5rem;letter-spacing:0.1em;padding:6px 14px;border-radius:6px;cursor:pointer;transition:all 0.2s;margin-left:6px;font-weight:700;';
+  btn.textContent='◆ EXCLU IRP';
+  btn.onclick=function(){
+    _ushopIRPOnly=!_ushopIRPOnly;
+    btn.style.background=_ushopIRPOnly?'rgba(220,20,60,0.2)':'rgba(220,20,60,0.06)';
+    btn.style.borderColor=_ushopIRPOnly?'rgba(220,20,60,0.6)':'rgba(220,20,60,0.3)';
+    btn.style.boxShadow=_ushopIRPOnly?'0 0 12px rgba(220,20,60,0.2)':'none';
+    renderUshop();
+  };
+  catRow.appendChild(btn);
 }
 
 async function renderUshopBalance(){
@@ -562,6 +592,11 @@ function renderUshop(){
   const CAT_SECTIONS={equipment:['equipment'],consumable:['consumable_items'],food:['food_items'],other:['items']};
   const allowed=USHOP_CAT==='all'?null:CAT_SECTIONS[USHOP_CAT]||null;
   let entries=Object.entries(USHOP_ITEMS).filter(([,it])=>!allowed||allowed.includes(it._section));
+
+  /* ── IRP Filter: si activé, ne garder que les items IRP ── */
+  if(_ushopIRPOnly){
+    entries=entries.filter(([id,it])=>it._irpExclusive||id.startsWith('irp_'));
+  }
 
   // Apply rarity + slot filters
   const fRarity=(document.getElementById('ushop-filter-rarity')||{}).value||'';
@@ -643,11 +678,6 @@ function renderUshop(){
   // Food
   const food=entries.filter(([id,it])=>!used.has(id)&&it._section==='food_items');
   if(food.length){groups.push({label:'NOURRITURE',entries:food});food.forEach(([id])=>used.add(id));}
-  // IRP Exclusive items — grouped separately at the end with special styling
-  if(window._irpMode){
-    const irpExclu=entries.filter(([id,it])=>!used.has(id)&&(it._irpExclusive||id.startsWith('irp_')));
-    if(irpExclu.length){groups.push({label:'◆ EXCLUSIFS IRP',entries:irpExclu,isIRP:true});irpExclu.forEach(([id])=>used.add(id));}
-  }
   // Other
   const other=entries.filter(([id])=>!used.has(id));
   if(other.length)groups.push({label:'AUTRES',entries:other});
@@ -655,8 +685,7 @@ function renderUshop(){
   let html='';
   for(const g of groups){
     g.entries.sort(sortByRarity);
-    const headerStyle=g.isIRP?'style="color:#dc143c;border-bottom-color:rgba(220,20,60,0.2)"':'';
-    html+=`<div class="ushop-group-header" ${headerStyle}>${g.label} <span class="ushop-group-count">(${g.entries.length})</span></div>`;
+    html+=`<div class="ushop-group-header">${g.label} <span class="ushop-group-count">(${g.entries.length})</span></div>`;
     html+=`<div class="ushop-grid-sub">${g.entries.map(([id,it])=>shopCard(id,it)).join('')}</div>`;
   }
   gridEl.innerHTML=gateNotice+html;

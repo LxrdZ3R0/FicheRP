@@ -39,11 +39,28 @@ function renderNoChar(){
 }
 
 function renderPlayerWidgets(){
-  /* En IRP, utiliser le solde de jahartites si disponible */
+  /* En IRP, utiliser le solde de jahartites — JAMAIS PLAYER.navarites en fallback */
   const isIRP = window._irpMode;
   const irpP = window._irpPlayer;
-  const nav = isIRP ? (irpP ? (irpP.jahartites || 0) : (PLAYER.navarites || 0)) : (PLAYER.navarites || 0);
-  const streak = isIRP ? (irpP ? (irpP.consecutive_days || 0) : (PLAYER.consecutive_days || 0)) : (PLAYER.consecutive_days || 0);
+  let nav, streak;
+  if(isIRP){
+    /* Si _irpPlayer n'est pas encore chargé, afficher 0 et relancer le chargement */
+    nav = irpP ? (irpP.jahartites || 0) : 0;
+    streak = irpP ? (irpP.consecutive_days || 0) : 0;
+    if(!irpP && typeof db !== 'undefined' && typeof UID !== 'undefined' && UID){
+      /* Chargement async des jahartites si pas encore fait */
+      db.collection('irp_players').doc(String(UID)).get().then(function(snap){
+        if(snap.exists){
+          window._irpPlayer = snap.data();
+          if(window.PLAYER) window.PLAYER.navarites = window._irpPlayer.jahartites || 0;
+          renderPlayerWidgets(); /* re-render avec les bonnes données */
+        }
+      }).catch(function(){});
+    }
+  } else {
+    nav = (PLAYER.navarites || 0);
+    streak = (PLAYER.consecutive_days || 0);
+  }
   const unit = isIRP ? 'JAH' : 'NAV';
   document.getElementById('dash-nav-val').innerHTML=`<span>${nav.toLocaleString()}</span><span class="nav-unit">${unit}</span>`;
   document.getElementById('dash-nav-streak').innerHTML=streak?`<span>${streak}</span> jour${streak>1?'s':''} consécutifs`:'Pas encore de série active';
@@ -57,7 +74,7 @@ async function loadWallet(){
   // Gather all currency data
   const isIRP = window._irpMode;
   const irpP = window._irpPlayer;
-  const nav = isIRP ? (irpP ? (irpP.jahartites || 0) : (PLAYER.navarites || 0)) : (PLAYER.navarites || 0);
+  const nav = isIRP ? (irpP ? (irpP.jahartites || 0) : 0) : (PLAYER.navarites || 0);
   const navLabel = isIRP ? 'Jahartites' : 'Navarites';
   const navIcon = isIRP
     ? 'https://firebasestorage.googleapis.com/v0/b/jaharta-rp.firebasestorage.app/o/icons%2FChatGPT%20Image%2013%20avr.%202026%2C%2018_19_29.png?alt=media&token=ac0476c3-965f-4806-aad0-ee6c917e02cd'
