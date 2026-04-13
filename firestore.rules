@@ -179,6 +179,19 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // Joueurs IRP (Jahartites, streak, activité)
+    match /irp_players/{id} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Bannières gacha IRP
+    match /irp_gacha_banners/{id} {
+      allow read: if true;
+      allow create, update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
     // Bonds IRP (liens relationnels entre personnages)
     match /irp_bonds/{bondId} {
       allow read: if true;
