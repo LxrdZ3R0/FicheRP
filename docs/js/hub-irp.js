@@ -167,7 +167,6 @@
 
     function replaceNavarites(root) {
       if (!root || !root.querySelectorAll) return;
-      /* Text nodes */
       var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false);
       while (walker.nextNode()) {
         var node = walker.currentNode;
@@ -177,7 +176,6 @@
           });
         }
       }
-      /* Alt attributes */
       root.querySelectorAll('[alt]').forEach(function (el) {
         if (el.alt.match(/Navarites?/i)) {
           el.alt = el.alt.replace(/Navarites?/gi, 'Jahartites');
@@ -185,10 +183,18 @@
       });
     }
 
-    /* Initial pass */
+    /* Replace the wallet value with real Jahartites balance */
+    function injectJahartiteBalance() {
+      if (!window._irpPlayer) return;
+      var walletVal = document.querySelector('.wi-navarite .wi-val, .wallet-item:first-child .wi-val');
+      if (walletVal) {
+        var jah = window._irpPlayer.jahartites || 0;
+        walletVal.textContent = jah.toLocaleString();
+      }
+    }
+
     replaceNavarites(document.body);
 
-    /* Observe ongoing changes */
     var obs = new MutationObserver(function (mutations) {
       mutations.forEach(function (m) {
         m.addedNodes.forEach(function (n) {
@@ -203,8 +209,18 @@
           });
         }
       });
+      /* After any DOM change, try to inject the real balance */
+      injectJahartiteBalance();
     });
     obs.observe(document.body, { childList: true, subtree: true, characterData: true });
+
+    /* Also check periodically for the first few seconds */
+    var attempts = 0;
+    var iv = setInterval(function () {
+      injectJahartiteBalance();
+      replaceNavarites(document.body);
+      if (++attempts > 30) clearInterval(iv);
+    }, 500);
   }
 
   /* ══════════════════════════════════════════════════════════════════════════
@@ -311,6 +327,14 @@
       /* Flesh marks on me */
       var marksSnap = await fdb.collection('irp_flesh_marks').doc(charId).get();
       window._irpFleshMarks = marksSnap.exists ? (marksSnap.data().marks || []) : [];
+
+      /* Jahartites from irp_players */
+      var playerSnap = await fdb.collection('irp_players').doc(discordId).get();
+      if (playerSnap.exists) {
+        window._irpPlayer = playerSnap.data();
+      } else {
+        window._irpPlayer = { jahartites: 0, consecutive_days: 0 };
+      }
 
       /* Resolve character names for bonds */
       window._irpCharNames = {};
