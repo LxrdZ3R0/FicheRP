@@ -271,6 +271,10 @@
 
     replaceNavarites(document.body);
 
+    /* Expose to window so loadIRPData can call them */
+    window._irpInjectJahartiteBalance = injectJahartiteBalance;
+    window._irpReplaceNavarites = replaceNavarites;
+
     var obs = new MutationObserver(function (mutations) {
       mutations.forEach(function (m) {
         m.addedNodes.forEach(function (n) {
@@ -430,7 +434,13 @@
       /* Charger bonds */
       var charId = window.CHAR_ID || (window.CHAR && window.CHAR._id);
       if (!charId) {
-        injectJahartiteBalance();
+        if(typeof window._irpInjectJahartiteBalance==='function') window._irpInjectJahartiteBalance();
+        if (typeof window.renderPlayerWidgets === 'function') {
+          try { window.renderPlayerWidgets(); } catch (_) {}
+        }
+        if (typeof window.loadWallet === 'function') {
+          try { window.loadWallet(); } catch (_) {}
+        }
         if (typeof window._refreshCurrentTab === 'function') {
           try { window._refreshCurrentTab(); } catch (_) {}
         }
@@ -484,14 +494,18 @@
         } catch (e) { /* skip */ }
       }
 
-      injectJahartiteBalance();
-      replaceNavarites(document.body);
+      if(typeof window._irpInjectJahartiteBalance==='function') window._irpInjectJahartiteBalance();
+      if(typeof window._irpReplaceNavarites==='function') window._irpReplaceNavarites(document.body);
       /* Force re-render of dashboard widgets with correct Jahartites data */
       if (typeof window.renderPlayerWidgets === 'function') {
         try { window.renderPlayerWidgets(); } catch (_) {}
       }
       if (typeof window.loadWallet === 'function') {
         try { window.loadWallet(); } catch (_) {}
+      }
+      /* Re-render dashboard char to update stats with bonuses */
+      if (typeof window.renderDashChar === 'function' && window.CHAR) {
+        try { window.renderDashChar(); } catch (_) {}
       }
       if (typeof window._refreshCurrentTab === 'function') {
         try { window._refreshCurrentTab(); } catch (_) {}
@@ -570,7 +584,7 @@
         var rarityColors = {
           common: '#888', uncommon: '#22c55e', rare: '#3b82f6',
           epic: '#a855f7', legendary: '#f59e0b', mythic: '#ef4444',
-          unique: '#00bcd4',
+          unique: '#00bcd4', artifact: '#ff6b35', mastercraft: '#e91e63',
         };
         var color = rarityColors[rarity] || '#dc143c';
 
@@ -582,9 +596,22 @@
         }
         h += '<div style="padding:16px">';
         h += '<div style="font-family:var(--font-h);font-size:0.75rem;color:var(--text);letter-spacing:0.06em;margin-bottom:4px">' + name + '</div>';
-        if (desc) h += '<div style="font-family:var(--font-m);font-size:0.55rem;color:var(--text3);margin-bottom:12px">' + desc + '</div>';
+        if (desc) h += '<div style="font-family:var(--font-m);font-size:0.55rem;color:var(--text3);margin-bottom:8px">' + desc + '</div>';
+        /* Featured items */
+        var featured = b.featured || [];
+        if (featured.length > 0) {
+          var featHTML = featured.map(function(fid) {
+            var fi = (window.ALL_ITEMS_DATA || {})[fid] || {};
+            return '<span style="font-size:.5rem;color:' + color + ';background:' + color + '15;border:1px solid ' + color + '30;border-radius:4px;padding:2px 6px;white-space:nowrap">⭐ ' + (fi.name || fid) + '</span>';
+          }).join(' ');
+          h += '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px">' + featHTML + '</div>';
+        }
+        /* Item count */
+        var totalItems = 0;
+        Object.values(b.rarities || {}).forEach(function(rd) { totalItems += (rd.items || []).length; });
+        h += '<div style="font-family:var(--font-m);font-size:0.45rem;color:var(--text3);margin-bottom:8px">' + totalItems + ' items dans cette bannière</div>';
         h += '<div style="display:flex;align-items:center;justify-content:space-between">';
-        h += '<div style="font-family:var(--font-m);font-size:0.6rem;color:' + color + '"><img src="https://firebasestorage.googleapis.com/v0/b/jaharta-rp.firebasestorage.app/o/icons%2FChatGPT%20Image%2013%20avr.%202026%2C%2018_19_29.png?alt=media&token=ac0476c3-965f-4806-aad0-ee6c917e02cd" alt="" style="width:14px;height:14px;object-fit:contain;vertical-align:middle;margin-right:3px"> ' + cost + ' Jahartites</div>';
+        h += '<div style="font-family:var(--font-m);font-size:0.6rem;color:' + color + '"><img src="https://firebasestorage.googleapis.com/v0/b/jaharta-rp.firebasestorage.app/o/icons%2FChatGPT%20Image%2013%20avr.%202026%2C%2018_19_29.png?alt=media&token=ac0476c3-965f-4806-aad0-ee6c917e02cd" alt="" style="width:14px;height:14px;object-fit:contain;vertical-align:middle;margin-right:3px"> ' + cost + ' Jahartite</div>';
         h += '<div style="font-family:var(--font-h);font-size:0.4rem;letter-spacing:0.1em;color:' + color + ';text-transform:uppercase;padding:4px 10px;border:1px solid ' + color + '44;border-radius:4px">' + rarity + '</div>';
         h += '</div></div></div>';
       });

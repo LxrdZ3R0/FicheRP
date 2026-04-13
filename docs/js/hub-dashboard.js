@@ -25,7 +25,37 @@ function renderDashChar(){
       <div class="xp-labels"><span>XP</span><span>${cxpDash.toLocaleString()} / ${nxpDash.toLocaleString()}</span></div>
       <div class="xp-bar"><div class="xp-fill" style="width:${pct}%"></div></div>
     </div>`;
-  document.getElementById('dash-stats-grid').innerHTML=SK.map(k=>`<div class="stat-row"><span class="stat-icon">${SI[k]}</span><span class="stat-name">${SL[k]}</span><span class="stat-val">${stats[k]||0}</span></div>`).join('');
+  // ── Calcul bonus items pour affichage dashboard ──
+  const _dashBonuses={};
+  try{
+    const eqList=(INV_DATA&&INV_DATA.equipped_assets)||[];
+    if(eqList.length>0){
+      // 1) Equipment direct
+      eqList.forEach(id=>{
+        const it=ALL_ITEMS_DATA[id]||{};
+        if((it.rarity||'').toLowerCase()==='signature')return;
+        if(id==='equalizer')return;
+        Object.entries(it.stat_effects||it.stats||{}).forEach(([s,v])=>{
+          try{const n=parseInt(String(v).replace('+',''));if(n)_dashBonuses[s]=(_dashBonuses[s]||0)+n;}catch(_){}
+        });
+      });
+      // 2) Signature
+      const aura=parseInt(stats.aura||0)>0;
+      const sigB=calculateSignatureBonuses(eqList,stats,aura,{..._dashBonuses});
+      Object.entries(sigB).forEach(([s,v])=>{if(!s.startsWith('_'))_dashBonuses[s]=(_dashBonuses[s]||0)+Math.floor(v);});
+      // 3) Sets
+      if(typeof calculateSetBonuses==='function'){
+        const setR=calculateSetBonuses(eqList);
+        Object.entries(setR.stats||{}).forEach(([s,v])=>{_dashBonuses[s]=(_dashBonuses[s]||0)+v;});
+      }
+    }
+  }catch(_){}
+  document.getElementById('dash-stats-grid').innerHTML=SK.map(k=>{
+    const base=parseInt(stats[k]||0);
+    const bon=_dashBonuses[k]||0;
+    const bonusText=bon>0?` <span style="color:var(--gold);font-size:.75em">[+${bon}]</span>`:(bon<0?` <span style="color:#dc143c;font-size:.75em">[${bon}]</span>`:'');
+    return `<div class="stat-row"><span class="stat-icon">${SI[k]}</span><span class="stat-name">${SL[k]}</span><span class="stat-val">${base}${bonusText}</span></div>`;
+  }).join('');
   const powers=c.powers||[];
   document.getElementById('dash-powers-list').innerHTML=powers.length
     ?powers.slice(0,5).map(p=>`<div class="power-item"><div class="pq ${p.quality||'common'}"></div><span class="power-name">${e(p.name||p.id||'—')}</span><span class="power-qual-tag">${e((p.quality||'').toUpperCase())}</span></div>`).join('')+(powers.length>5?`<div class="empty">+${powers.length-5} autres</div>`:'')

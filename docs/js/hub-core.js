@@ -148,7 +148,8 @@ const SIGNATURE_ITEMS={
   riviere_dopalines:{name:"Rivière d'Opalines",icon:"📿",emoji:"📿",slot:"cou",type:"equipment",rarity:"signature",description:"Le collier le plus prisé de tous les temps. Pour les bonnes et les mauvaises raisons."},
   faux_ongles_tisserand:{name:"Faux-Ongles du Tisserand de Rêves",icon:"💅",emoji:"💅",slot:"cou",type:"equipment",rarity:"signature",description:"Les rêves et la réalité ne font qu'un. C'est ce qu'il disait, en tout cas."},
   cape_sombre_xiii:{name:"Cape Sombre, Modèle XIII",icon:"🧥",emoji:"🧥",slot:"dos",type:"equipment",rarity:"signature",description:"Une cape d'un noir absolu, modèle XIII. Ses effets se renforcent lorsque plusieurs membres d'une même party la portent.",image:"https://firebasestorage.googleapis.com/v0/b/jaharta-rp.firebasestorage.app/o/icons%2F205.png?alt=media&token=aad4f798-3e58-4a69-a608-34f858e49aa9"},
-  lame_sang_sushel:{name:"Lame-Sang de Sushel",icon:"🗡️",emoji:"🗡️",slot:"armes_h",type:"equipment",rarity:"signature",description:"Une lame maudite liée au sang de son porteur. Elle grandit avec le temps, dévorant l'essence vitale du monde autour d'elle.",image:"https://firebasestorage.googleapis.com/v0/b/jaharta-rp.firebasestorage.app/o/icons%2FKatana%20en%20flammes%20rouges%20et%20noires.png?alt=media&token=4d9db77a-9493-4ae4-a213-e5469f536864"}
+  lame_sang_sushel:{name:"Lame-Sang de Sushel",icon:"🗡️",emoji:"🗡️",slot:"armes_h",type:"equipment",rarity:"signature",description:"Une lame maudite liée au sang de son porteur. Elle grandit avec le temps, dévorant l'essence vitale du monde autour d'elle.",image:"https://firebasestorage.googleapis.com/v0/b/jaharta-rp.firebasestorage.app/o/icons%2FKatana%20en%20flammes%20rouges%20et%20noires.png?alt=media&token=4d9db77a-9493-4ae4-a213-e5469f536864"},
+  lust_incarnate:{name:"Lust Incarnate",icon:"💜",emoji:"💜",slot:"special",type:"equipment",rarity:"signature",description:"L'incarnation même du désir. Ceux qui la portent deviennent irrésistibles — et irrémédiablement transformés."}
 };
 const SIG_ALL_STATS=["strength","agility","speed","intelligence","mana","resistance","charisma"];
 
@@ -197,6 +198,8 @@ function calculateSignatureBonuses(equippedIds,charStats,auraEnabled,existingBuf
       add('resistance',45);
     }else if(id==='lame_sang_sushel'){
       SIG_ALL_STATS.forEach(s=>add(s,65));
+    }else if(id==='lust_incarnate'){
+      add('mana',100);add('charisma',100);add('agility',100);add('intelligence',100);
     }
   }
   return b;
@@ -436,6 +439,16 @@ async function loadCharacter(){
       // Merge signature items (defined in code, not in Firestore config)
       for(const[sid,sdata] of Object.entries(SIGNATURE_ITEMS)){if(!ALL_ITEMS_DATA[sid])ALL_ITEMS_DATA[sid]=sdata;}
     }
+    // Merge IRP items from Firestore (irp_items_config) so prices/IRP-specific items are available
+    if(window._irpMode){
+      try{
+        const irpCfgSnap=await db.collection('config').doc('irp_items').get();
+        if(irpCfgSnap.exists){
+          const irpItems=(irpCfgSnap.data()||{}).items||{};
+          Object.entries(irpItems).forEach(([k,v])=>{if(!k.startsWith('__'))ALL_ITEMS_DATA[k]=v;});
+        }
+      }catch(_){}
+    }
     BUFFS_DATA=bufData?(bufData.buffs||[]):[];
     // Charger compagnons pour bonus stats (Personnage tab)
     try{
@@ -483,6 +496,16 @@ async function loadInventory(){
     if(cfgData) ALL_ITEMS_DATA={...cfgData.items||{},...cfgData.equipment||{},...cfgData.food_items||{},...cfgData.consumable_items||{}};
     // Merge signature items (defined in code, not in Firestore config)
     for(const[sid,sdata] of Object.entries(SIGNATURE_ITEMS)){if(!ALL_ITEMS_DATA[sid])ALL_ITEMS_DATA[sid]=sdata;}
+    // Merge IRP items from Firestore
+    if(window._irpMode){
+      try{
+        const irpCfgSnap=await db.collection('config').doc('irp_items').get();
+        if(irpCfgSnap.exists){
+          const irpItems=(irpCfgSnap.data()||{}).items||{};
+          Object.entries(irpItems).forEach(([k,v])=>{if(!k.startsWith('__'))ALL_ITEMS_DATA[k]=v;});
+        }
+      }catch(_){}
+    }
     if(window.Skeleton) window.Skeleton.hide('inv-grid');
     renderInventory();
   }catch(e){window._dbg?.error('[INV]',e);if(window.Skeleton) window.Skeleton.hide('inv-grid');grid.innerHTML='<div class="empty">Erreur de chargement</div>'}
