@@ -399,7 +399,7 @@ async function equipWholeSet(setId){
     count++;
   }
   if(count===0){showEquipToast('❌ Aucun item à équiper',true);return;}
-  const key=`${UID}_${CHAR_ID}`;
+  const key=(window._getInventoryKey ? window._getInventoryKey() : `${UID}_${CHAR_ID}`);
   try{
     await db.collection(C.INV).doc(key).update({equipped_assets:newEquipped,items:newItems});
     INV_DATA.equipped_assets=newEquipped;
@@ -632,7 +632,7 @@ async function toggleEquip(itemId){
   const items=INV_DATA.items||{};
   const it=ALL_ITEMS_DATA[itemId]||{};
   const isEq=equipped.includes(itemId);
-  const key=`${UID}_${CHAR_ID}`;
+  const key=(window._getInventoryKey ? window._getInventoryKey() : `${UID}_${CHAR_ID}`);
 
   // Feedback visuel immédiat sur l'item dans la grille
   const itemEl=document.querySelector(`#inv-grid .inv-item[data-item-id="${itemId}"]`);
@@ -784,7 +784,7 @@ async function confirmDelete(){
     const remaining=Math.max(0,current-qtyToDelete);
     if(remaining<=0){delete newItems[itemId];}
     else{newItems[itemId]=remaining;}
-    const key=`${UID}_${CHAR_ID}`;
+    const key=(window._getInventoryKey ? window._getInventoryKey() : `${UID}_${CHAR_ID}`);
     await db.collection(C.INV).doc(key).update({items:newItems});
     INV_DATA.items=newItems;
     showEquipToast(`✓ ×${qtyToDelete} ${it.name||itemId} supprimé${qtyToDelete>1?'s':''}`);

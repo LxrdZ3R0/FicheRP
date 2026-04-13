@@ -41,6 +41,38 @@
      PHASE 2 — Attendre que le hub soit visible, transformer les onglets
      ══════════════════════════════════════════════════════════════════════════ */
 
+  async function _resolveIRPInventoryKey(uid, irpCharId, irpCharData) {
+    try {
+      var fdb = window._db || db;
+      var linkSnap = await fdb.collection('irp_links').doc(String(uid)).get();
+      if (linkSnap.exists) {
+        var linkData = linkSnap.data() || {};
+        if ((!linkData.irp_char_id || linkData.irp_char_id === String(irpCharId)) && linkData.main_char_id) {
+          return String(uid) + '_' + String(linkData.main_char_id);
+        }
+      }
+      var charData = irpCharData || {};
+      var fallback = charData.linked_to || charData.synced_from || null;
+      if (!fallback) {
+        try {
+          var charSnap = await fdb.collection('irp_characters').doc(String(irpCharId)).get();
+          if (charSnap.exists) {
+            var c = charSnap.data() || {};
+            fallback = c.linked_to || c.synced_from || null;
+          }
+        } catch (_) {}
+      }
+      return String(uid) + '_' + String(fallback || irpCharId);
+    } catch (e) {
+      return String(uid) + '_' + String(irpCharId);
+    }
+  }
+  window._resolveIRPInventoryKey = _resolveIRPInventoryKey;
+  window._getInventoryKey = function () {
+    if (window._irpMode && window._inventoryKeyResolved) return window._inventoryKeyResolved;
+    return String(UID) + '_' + String(CHAR_ID);
+  };
+
   function waitForHub() {
     if (!document.getElementById('hub-main')) {
       setTimeout(waitForHub, 50);

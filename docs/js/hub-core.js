@@ -419,7 +419,10 @@ async function loadCharacter(){
     const cData=await cachedGet(C.CHARS,CHAR_ID,'_character',30);
     if(!cData){renderNoChar();return}
     CHAR={_id:CHAR_ID,...cData};
-    const charKey=`${UID}_${CHAR_ID}`;
+    const charKey=(window._resolveIRPInventoryKey && window._irpMode)
+      ? await window._resolveIRPInventoryKey(UID, CHAR_ID, cData)
+      : `${UID}_${CHAR_ID}`;
+    window._inventoryKeyResolved = charKey;
     // Charger en parallèle avec cache
     const[invData,cfgData,bufData,pmData]=await Promise.all([
       cachedGet(C.INV,charKey,'_inventory',15),
@@ -471,7 +474,7 @@ async function loadInventory(){
   if(!CHAR_ID){grid.innerHTML='<div class="empty">Aucun personnage actif</div>';return}
   if(window.Skeleton) window.Skeleton.show('inv-grid',6);
   try{
-    const key=`${UID}_${CHAR_ID}`;
+    const key=(window._getInventoryKey ? window._getInventoryKey() : `${UID}_${CHAR_ID}`);
     const[invData,cfgData]=await Promise.all([
       cachedGet(C.INV,key,'_inventory',15),
       cachedGet(C.CFG,'items','config/items',600)

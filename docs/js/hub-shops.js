@@ -18,7 +18,7 @@ async function loadMonShop(){
   if(!UID || !CHAR_ID){ el.innerHTML='<div class="empty">Aucun personnage actif</div>'; return; }
   el.innerHTML='<div class="empty">Chargement...</div>';
   try{
-    MY_SHOP_DATA = await cachedGet(C.SHOPS,`${UID}_${CHAR_ID}`,'_monshop',60);
+    MY_SHOP_DATA = await cachedGet(C.SHOPS,(window._getInventoryKey ? window._getInventoryKey() : `${UID}_${CHAR_ID}`),'_monshop',60);
     _monshopLoaded = true;
     renderMonShop();
   }catch(err){ window._dbg?.error('[MONSHOP]',err); el.innerHTML='<div class="empty">Erreur de chargement</div>'; }
@@ -148,7 +148,7 @@ async function toggleShopOpen(){
   if(!UID||!CHAR_ID||!MY_SHOP_DATA) return;
   const newState = !MY_SHOP_DATA.open;
   try{
-    await db.collection(C.SHOPS).doc(`${UID}_${CHAR_ID}`).set({open:newState},{merge:true});
+    await db.collection(C.SHOPS).doc(window._getInventoryKey ? window._getInventoryKey() : `${UID}_${CHAR_ID}`).set({open:newState},{merge:true});
     MY_SHOP_DATA.open = newState;
     cacheInvalidate('_monshop');cacheInvalidate('_shops');
     renderMonShop();
@@ -170,7 +170,7 @@ async function addToShop(itemId, maxQty){
   const price = Math.max(1, parseInt(priceEl.value)||100);
   const currency = curEl.value || 'bronze_kanite';
 
-  const charKey = `${UID}_${CHAR_ID}`;
+  const charKey = (window._getInventoryKey ? window._getInventoryKey() : `${UID}_${CHAR_ID}`);
   try{
     // Retirer de l'inventaire
     const invItems = {...(INV_DATA.items||{})};
@@ -211,7 +211,7 @@ async function removeFromShop(itemId){
   if(!si) return;
 
   const qty = si.qty || 0;
-  const charKey = `${UID}_${CHAR_ID}`;
+  const charKey = (window._getInventoryKey ? window._getInventoryKey() : `${UID}_${CHAR_ID}`);
   try{
     // Retirer du shop
     delete shopItems[itemId];
@@ -448,7 +448,7 @@ async function buyFromPlayerShop(shopKey,itemId){
   const si=shop.items[itemId];
   if(!si){showEquipToast('❌ Cet article n\'est plus disponible',true);return;}
   const it=ALL_ITEMS_DATA[itemId]||{};
-  const price=si.price||{};const charKey=`${UID}_${CHAR_ID}`;
+  const price=si.price||{};const charKey=(window._getInventoryKey ? window._getInventoryKey() : `${UID}_${CHAR_ID}`);
   try{
     const[econSnap,invSnap]=await Promise.all([db.collection(C.ECONOMY).doc(charKey).get(),db.collection(C.INV).doc(charKey).get()]);
     const personal=Object.assign({},(econSnap.exists?econSnap.data().personal:null)||{});
@@ -513,7 +513,7 @@ async function renderUshopBalance(){
   if(!UID||!CHAR_ID)return;
   const balEl=document.getElementById('ushop-balance');if(!balEl)return;
   try{
-    const snap=await db.collection(C.ECONOMY).doc(`${UID}_${CHAR_ID}`).get();
+    const snap=await db.collection(C.ECONOMY).doc(window._getInventoryKey ? window._getInventoryKey() : `${UID}_${CHAR_ID}`).get();
     const personal=snap.exists?(snap.data().personal||{}):{};
     const currencies=['bronze_kanite','silver_kanite','gold_kanite','platinum_kanite'];
     balEl.innerHTML=currencies.filter(c=>(personal[c]||0)>0)
@@ -705,7 +705,7 @@ async function buyFromUshop(itemId){
   let price={};
   if(rawPrice.amount&&rawPrice.currency){price[rawPrice.currency]=rawPrice.amount;}
   else{Object.entries(rawPrice).forEach(([k,v])=>{if(!['currency','amount','secondary_currency','secondary_amount'].includes(k))price[k]=v;});}
-  const charKey=`${UID}_${CHAR_ID}`;
+  const charKey=(window._getInventoryKey ? window._getInventoryKey() : `${UID}_${CHAR_ID}`);
   try{
     const[econSnap,invSnap]=await Promise.all([db.collection(C.ECONOMY).doc(charKey).get(),db.collection(C.INV).doc(charKey).get()]);
     const personal=Object.assign({},(econSnap.exists?econSnap.data().personal:null)||{});

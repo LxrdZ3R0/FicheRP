@@ -43,9 +43,11 @@ function applyIRPGachaLabels(){
   const tag=document.querySelector('.hero-sub-tag');
   const desc=document.querySelector('.hero-sub-desc');
   const gate=document.querySelector('.gate-sub');
+  const note=document.querySelector('.gate-note');
   if(tag) tag.textContent='Nexus System · Tirage IRP';
   if(desc) desc.textContent='Consulte les bannières IRP exclusives et ton solde de Jahartites.';
-  if(gate) gate.textContent='Le Gacha IRP utilise la même session, mais des données séparées.';
+  if(gate) gate.innerHTML='Utilise la commande <strong style="color:#dc143c">/link</strong> sur le bot pour ouvrir une session site, y compris pour le Gacha IRP.';
+  if(note) note.textContent='Code valable 5 min · usage unique · partage la session du hub et du gacha';
   const badge=document.querySelector('.nv-badge');
   if(badge) badge.innerHTML='💎 JAHARTITE <span class="nv-val" id="nv-c">0</span>';
   const pull=document.querySelector('.pull-nv');
@@ -59,11 +61,31 @@ function applyIRPGachaLabels(){
   if(pityLbls[2]) pityLbls[2].textContent='STREAK JAHARTITE';
 }
 async function loadIRPBannersPage(){
-  const snap = await db.collection('irp_gacha_banners').get();
-  const out = [];
+  const [snap, cfgSnap] = await Promise.all([
+    db.collection('irp_gacha_banners').get(),
+    db.collection('irp_gacha_config').doc('rotation').get().catch(()=>null),
+  ]);
+
+  const raw=[];
   snap.forEach(function(d){
     const data = d.data() || {};
-    if(data.active === false) return;
+    raw.push({ id:d.id, ...data });
+  });
+  raw.sort(function(a,b){
+    return (Number(a.order ?? 9999) - Number(b.order ?? 9999)) || String(a.name||a.id).localeCompare(String(b.name||b.id));
+  });
+
+  const cfg = (cfgSnap && cfgSnap.exists) ? (cfgSnap.data() || {}) : {};
+  const activeIds = new Set(cfg.active_ids || raw.filter(b=>b.active).map(b=>b.id).slice(0,2));
+  const nextIds = new Set(cfg.next_ids || []);
+  window._irpRotationInfo = {
+    days_until_next: Number(cfg.days_until_next ?? 7),
+    rotation_days: Number(cfg.rotation_days ?? 7),
+    next_rotation_at: cfg.next_rotation_at || '',
+  };
+
+  const out = [];
+  raw.forEach(function(data){
     const rarities = data.rarities || {};
     const totalW = Object.values(rarities).reduce((sum, r) => sum + (Number(r.weight) || 0), 0) || 1;
     const normalized = {};
@@ -84,19 +106,21 @@ async function loadIRPBannersPage(){
     });
     const featuredNames=(data.featured || []).map(function(fid){
       for(const rarity in rarities){
-        const found=(rarities[rarity].items || []).find(function(it){ return it.id===fid; });
+        const found=((rarities[rarity]||{}).items || []).find(function(it){ return it.id===fid; });
         if(found) return found.name || fid;
       }
       return fid;
     });
+    const status = activeIds.has(data.id) ? 'live' : (nextIds.has(data.id) ? 'next' : (data.status || 'next'));
     out.push({
-      id: d.id,
-      name: data.name || d.id,
+      id: data.id,
+      name: data.name || data.id,
       description: data.description || '',
       featured: featuredNames,
       featured_rarity: data.featured_rarity || 'legendary',
       image: data.image_url || data.image || '',
-      status: 'live',
+      status,
+      active: status === 'live',
       rarities: normalized,
     });
   });
@@ -105,10 +129,14 @@ async function loadIRPBannersPage(){
 function renderIRPBannersPage(banners){
   const grid=document.getElementById('bg');
   const rot=document.getElementById('rot-info');
-  if(rot) rot.textContent=banners.length ? 'Mode IRP actif — bannières IRP uniquement' : 'Mode IRP actif — aucune bannière IRP configurée';
+  const info=window._irpRotationInfo||{};
+  if(rot){
+    const jours=Number.isFinite(info.days_until_next)?info.days_until_next:'?';
+    rot.textContent=banners.length ? 'Mode IRP actif — rotation auto 2 bannières / 7 jours · prochaine rotation dans '+jours+' jour(s)' : 'Mode IRP actif — aucune bannière IRP configurée';
+  }
   if(!grid) return;
   if(!banners.length){
-    grid.innerHTML="<div class=\"empty\" style=\"grid-column:1/-1;text-align:center;padding:48px 18px\">Aucune bannière IRP active. Configure <code>irp_gacha_banners</code> côté Firestore avant d’ouvrir le gacha IRP.</div>";
+    grid.innerHTML='<div class="empty" style="grid-column:1/-1;text-align:center;padding:48px 18px">Aucune bannière IRP configurée.</div>';
     return;
   }
   renderBanners(banners);
@@ -216,9 +244,9 @@ async function loadUser(){
       ]);
       U={
         id:s.id,
-        username:(main&&main.username)||s.username||'—',
-        avatar:(main&&main.avatar_url)||s.avatar||'',
-        navarites:(irp&&irp.jahartites)||0,
+        username:(main&&main.username)||(irp&&irp.username)||s.username||'—',
+        avatar:(main&&main.avatar_url)||(irp&&irp.avatar_url)||s.avatar||'',
+        navarites:Number((irp&&irp.jahartites)||0),
         booster:false,
         pity:{
           spent_epic:(pity&&pity.jahartites_spent_leg)||0,
@@ -258,9 +286,7 @@ async function loadBanners(){
   try{
     if(IS_IRP){
       BANNERS = await loadIRPBannersPage();
-      renderBanners(BANNERS);
-      const ri=document.getElementById('rot-info');
-      if(ri) ri.textContent=BANNERS.length ? 'Mode IRP actif — 11 bannières exclusives' : 'Mode IRP actif — aucune bannière IRP configurée';
+      renderIRPBannersPage(BANNERS);
       return;
     }
     const d=await JCache.get(db,'gacha_config','banners',120);
@@ -401,6 +427,7 @@ async function loadBannerImages(){
 
 // ═══ UI STATE ═══
 function showLoginGate(){
+  applyIRPGachaLabels();
   document.getElementById('login-gate').style.display='flex';
   document.getElementById('gacha-main').classList.remove('active');
 }
