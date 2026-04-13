@@ -184,10 +184,21 @@ async function loadAndShow(){
 }
 
 (async function init(){
-  // Check for existing session
+  // Check for existing session (shared with hub via localStorage)
   const s=getSession();
   if(s&&s.id){
-    await loadAndShow();
+    try{
+      await loadAndShow();
+    }catch(e){
+      window._dbg?.error('[GACHA_INIT]',e);
+      // Retry once after a short delay (Firebase may not be ready)
+      setTimeout(async()=>{
+        try{ await loadAndShow(); }catch(e2){
+          window._dbg?.error('[GACHA_INIT_RETRY]',e2);
+          showLoginGate();
+        }
+      },800);
+    }
   }else{
     showLoginGate();
   }
