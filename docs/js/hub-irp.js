@@ -149,6 +149,17 @@
       } else {
         fallbackShowTab(id);
       }
+
+      /* Re-render ciblé après le switch pour écraser les contenus RP tardifs */
+      setTimeout(function () {
+        if (id === 'gacha') renderIRPGacha();
+        if (id === 'dashboard' && typeof window.renderDashboard === 'function') {
+          try { window.renderDashboard(); } catch (_) {}
+        }
+        if (typeof window._refreshCurrentTab === 'function' && id !== 'dashboard' && id !== 'gacha') {
+          try { window._refreshCurrentTab(); } catch (_) {}
+        }
+      }, 0);
     };
   }
 
@@ -169,8 +180,9 @@
     var processed = new WeakSet();
 
     function replaceNavarites(root) {
-      if (!root || !root.querySelectorAll) return;
-      var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false);
+      if (!root) return;
+      var base = root.nodeType === 1 || root.nodeType === 9 ? root : document.body;
+      var walker = document.createTreeWalker(base, NodeFilter.SHOW_TEXT, null, false);
       while (walker.nextNode()) {
         var node = walker.currentNode;
         if (node.textContent.match(/Navarites?/i)) {
@@ -179,21 +191,32 @@
           });
         }
       }
-      root.querySelectorAll('[alt]').forEach(function (el) {
-        if (el.alt.match(/Navarites?/i)) {
-          el.alt = el.alt.replace(/Navarites?/gi, 'Jahartites');
-        }
+      base.querySelectorAll('[alt],[title],[placeholder],[aria-label]').forEach(function (el) {
+        ['alt', 'title', 'placeholder', 'aria-label'].forEach(function (attr) {
+          var val = el.getAttribute(attr);
+          if (val && /Navarites?/i.test(val)) {
+            el.setAttribute(attr, val.replace(/Navarites?/gi, function (m) {
+              return m.endsWith('s') ? 'Jahartites' : 'Jahartite';
+            }));
+          }
+        });
       });
     }
 
     /* Replace the wallet value with real Jahartites balance */
     function injectJahartiteBalance() {
       if (!window._irpPlayer) return;
-      var walletVal = document.querySelector('.wi-navarite .wi-val, .wallet-item:first-child .wi-val');
-      if (walletVal) {
-        var jah = window._irpPlayer.jahartites || 0;
-        walletVal.textContent = jah.toLocaleString();
-      }
+      var jah = window._irpPlayer.jahartites || 0;
+      [
+        '.wi-navarite .wi-val',
+        '.wallet-item:first-child .wi-val',
+        '#gacha-nav-val',
+        '#pnv',
+        '#nv-c'
+      ].forEach(function (selector) {
+        var el = document.querySelector(selector);
+        if (el) el.textContent = jah.toLocaleString();
+      });
     }
 
     replaceNavarites(document.body);
@@ -304,9 +327,29 @@
     if (!discordId) return;
 
     try {
+      /* Jahartites / streak dispo même si le perso n'est pas encore hydraté */
+      var playerSnap = await fdb.collection('irp_players').doc(discordId).get();
+      if (playerSnap.exists) {
+        window._irpPlayer = playerSnap.data();
+      } else {
+        window._irpPlayer = { jahartites: 0, consecutive_days: 0 };
+      }
+      var pitySnap = await fdb.collection('irp_gacha_pity').doc(discordId).get();
+      window._irpGachaPity = pitySnap.exists ? pitySnap.data() : { jahartites_spent_leg: 0, jahartites_spent_myth: 0 };
+      if (window.PLAYER) {
+        window.PLAYER.navarites = window._irpPlayer.jahartites || 0;
+        window.PLAYER.consecutive_days = window._irpPlayer.consecutive_days || 0;
+      }
+
       /* Charger bonds */
       var charId = window.CHAR_ID || (window.CHAR && window.CHAR._id);
-      if (!charId) return;
+      if (!charId) {
+        injectJahartiteBalance();
+        if (typeof window._refreshCurrentTab === 'function') {
+          try { window._refreshCurrentTab(); } catch (_) {}
+        }
+        return;
+      }
 
       var bondsSnap = await fdb.collection('irp_bonds').where('source_char_id', '==', charId).get();
       window._irpBonds = [];
@@ -331,13 +374,7 @@
       var marksSnap = await fdb.collection('irp_flesh_marks').doc(charId).get();
       window._irpFleshMarks = marksSnap.exists ? (marksSnap.data().marks || []) : [];
 
-      /* Jahartites from irp_players */
-      var playerSnap = await fdb.collection('irp_players').doc(discordId).get();
-      if (playerSnap.exists) {
-        window._irpPlayer = playerSnap.data();
-      } else {
-        window._irpPlayer = { jahartites: 0, consecutive_days: 0 };
-      }
+      /* Jahartites déjà chargées plus haut pour éviter les retours précoces. */
 
       /* Resolve character names for bonds */
       window._irpCharNames = {};
@@ -359,6 +396,12 @@
             }
           }
         } catch (e) { /* skip */ }
+      }
+
+      injectJahartiteBalance();
+      replaceNavarites(document.body);
+      if (typeof window._refreshCurrentTab === 'function') {
+        try { window._refreshCurrentTab(); } catch (_) {}
       }
     } catch (e) {
       window._dbg?.warn('[IRP HUB] data load:', e.message);
@@ -409,10 +452,11 @@
     var h = '';
 
     /* ── Wallet Jahartites ── */
-    h += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;padding:16px;background:var(--surface);border:1px solid rgba(220,20,60,0.15);border-radius:12px">';
-    h += '<div style="font-size:1.8rem">💎</div>';
+    h += '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:24px;padding:16px;background:var(--surface);border:1px solid rgba(220,20,60,0.15);border-radius:12px;flex-wrap:wrap">';
+    h += '<div style="display:flex;align-items:center;gap:12px"><div style="font-size:1.8rem">💎</div>';
     h += '<div><div style="font-family:var(--font-h);font-size:1.4rem;color:var(--text)">' + jah.toLocaleString() + '</div>';
-    h += '<div style="font-family:var(--font-m);font-size:0.55rem;color:var(--text3);letter-spacing:0.08em">JAHARTITES</div></div>';
+    h += '<div style="font-family:var(--font-m);font-size:0.55rem;color:var(--text3);letter-spacing:0.08em">JAHARTITES</div></div></div>';
+    h += '<button onclick="localStorage.setItem(&quot;jaharta_irp_mode&quot;,&quot;true&quot;);window.location.href=&quot;gacha.html&quot;" style="padding:10px 14px;border-radius:10px;border:1px solid rgba(220,20,60,.25);background:linear-gradient(135deg,rgba(220,20,60,.18),rgba(139,0,0,.18));color:#fff;font-family:var(--font-h);font-size:.55rem;letter-spacing:.1em;cursor:pointer">OUVRIR LE GACHA IRP</button>';
     h += '</div>';
 
     /* ── Bannières IRP ── */
@@ -454,9 +498,13 @@
       h += '</div>';
     }
 
-    /* ── Pity IRP (si données existent) ── */
-    /* For now, just show a placeholder since IRP pity is separate */
-    h += '<div style="margin-top:24px;text-align:center;font-family:var(--font-m);font-size:0.5rem;color:var(--text3);opacity:0.5">Système de pity IRP à venir</div>';
+    /* ── Pity IRP ── */
+    var pity = window._irpGachaPity || { jahartites_spent_leg: 0, jahartites_spent_myth: 0 };
+    h += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:24px">';
+    h += '<div style="padding:14px;border:1px solid rgba(220,20,60,.15);border-radius:12px;background:var(--surface)"><div style="font-family:var(--font-m);font-size:.5rem;color:var(--text3);letter-spacing:.08em">PITY LEG+</div><div style="font-family:var(--font-h);font-size:1rem;color:var(--text);margin-top:6px">' + Math.floor(pity.jahartites_spent_leg || 0) + ' / 60</div></div>';
+    h += '<div style="padding:14px;border:1px solid rgba(220,20,60,.15);border-radius:12px;background:var(--surface)"><div style="font-family:var(--font-m);font-size:.5rem;color:var(--text3);letter-spacing:.08em">PITY MYTH+</div><div style="font-family:var(--font-h);font-size:1rem;color:var(--text);margin-top:6px">' + Math.floor(pity.jahartites_spent_myth || 0) + ' / 180</div></div>';
+    h += '<div style="padding:14px;border:1px solid rgba(220,20,60,.15);border-radius:12px;background:var(--surface)"><div style="font-family:var(--font-m);font-size:.5rem;color:var(--text3);letter-spacing:.08em">STREAK</div><div style="font-family:var(--font-h);font-size:1rem;color:var(--text);margin-top:6px">' + (((window._irpPlayer || {}).consecutive_days) || 0) + ' jour(s)</div></div>';
+    h += '</div>';
 
     /* Replace panel content but keep the section header */
     var sh = panel.querySelector('.sh');

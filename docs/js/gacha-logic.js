@@ -31,6 +31,110 @@ function bannerAccent(id,name){
 
 const prefersReducedMotion=window.matchMedia('(prefers-reduced-motion:reduce)').matches;
 let U=null,SB=null,BANNERS=[];
+const IS_IRP = (() => {
+  try { return localStorage.getItem('jaharta_irp_mode') === 'true'; } catch(e) { return false; }
+})();
+function currencyUnit(){ return IS_IRP ? 'JAHARTITE' : 'NAVARITE'; }
+function currencyPlural(){ return IS_IRP ? 'JAHARTITES' : 'NAVARITES'; }
+function currencyShort(){ return IS_IRP ? 'JAH' : 'NAV'; }
+function applyIRPGachaLabels(){
+  if(!IS_IRP) return;
+  document.title='ATRAHAJ — Gacha IRP';
+  const tag=document.querySelector('.hero-sub-tag');
+  const desc=document.querySelector('.hero-sub-desc');
+  const gate=document.querySelector('.gate-sub');
+  if(tag) tag.textContent='Nexus System · Tirage IRP';
+  if(desc) desc.textContent='Consulte les bannières IRP exclusives et ton solde de Jahartites.';
+  if(gate) gate.textContent='Le Gacha IRP utilise la même session, mais des données séparées.';
+  const badge=document.querySelector('.nv-badge');
+  if(badge) badge.innerHTML='💎 JAHARTITE <span class="nv-val" id="nv-c">0</span>';
+  const pull=document.querySelector('.pull-nv');
+  if(pull) pull.innerHTML='SOLDE : <span class="nv-count" id="pnv">0</span> JAHARTITE(S)';
+  document.querySelectorAll('.btn-cost').forEach(function(el){
+    el.innerHTML=el.innerHTML.replace(/NAVARITES?/gi, function(m){ return m.endsWith('S') ? currencyPlural() : currencyUnit(); }).replace(/\bNAV\b/g, currencyShort());
+  });
+  const pityLbls=document.querySelectorAll('.pity-lbl');
+  if(pityLbls[0]) pityLbls[0].textContent='PITY LEG+';
+  if(pityLbls[1]) pityLbls[1].textContent='PITY MYTH+';
+  if(pityLbls[2]) pityLbls[2].textContent='STREAK JAHARTITE';
+}
+async function loadIRPBannersPage(){
+  const snap = await db.collection('irp_gacha_banners').get();
+  const out = [];
+  snap.forEach(function(d){
+    const data = d.data() || {};
+    if(data.active === false) return;
+    const rarities = data.rarities || {};
+    const totalW = Object.values(rarities).reduce((sum, r) => sum + (Number(r.weight) || 0), 0) || 1;
+    const normalized = {};
+    Object.entries(rarities).forEach(function(entry){
+      const rarity = entry[0];
+      const info = entry[1] || {};
+      normalized[rarity] = {
+        pct: (((Number(info.weight) || 0) / totalW) * 100).toFixed(2),
+        items: (info.items || []).map(function(it){
+          return {
+            id: it.id,
+            name: it.name || (it.id || '').replace(/_/g,' '),
+            icon: it.icon || '📦',
+            qty: it.quantity || 1,
+          };
+        })
+      };
+    });
+    const featuredNames=(data.featured || []).map(function(fid){
+      for(const rarity in rarities){
+        const found=(rarities[rarity].items || []).find(function(it){ return it.id===fid; });
+        if(found) return found.name || fid;
+      }
+      return fid;
+    });
+    out.push({
+      id: d.id,
+      name: data.name || d.id,
+      description: data.description || '',
+      featured: featuredNames,
+      featured_rarity: data.featured_rarity || 'legendary',
+      image: data.image_url || data.image || '',
+      status: 'live',
+      rarities: normalized,
+    });
+  });
+  return out;
+}
+function renderIRPBannersPage(banners){
+  const grid=document.getElementById('bg');
+  const rot=document.getElementById('rot-info');
+  if(rot) rot.textContent=banners.length ? 'Mode IRP actif — bannières IRP uniquement' : 'Mode IRP actif — aucune bannière IRP configurée';
+  if(!grid) return;
+  if(!banners.length){
+    grid.innerHTML="<div class=\"empty\" style=\"grid-column:1/-1;text-align:center;padding:48px 18px\">Aucune bannière IRP active. Configure <code>irp_gacha_banners</code> côté Firestore avant d’ouvrir le gacha IRP.</div>";
+    return;
+  }
+  renderBanners(banners);
+}
+
+function ensureIRPCodeUI(){
+  if(!IS_IRP) return;
+  const ps=document.getElementById('ps');
+  if(!ps || document.getElementById('irp-code-wrap')) return;
+  const wrap=document.createElement('div');
+  wrap.id='irp-code-wrap';
+  wrap.style.cssText='margin-top:18px;display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap';
+  wrap.innerHTML=''
+    + '<input id="irp-special-code" type="text" maxlength="20" placeholder="Code IRP optionnel" '
+    + 'style="min-width:220px;padding:12px 14px;border-radius:10px;border:1px solid rgba(220,20,60,.22);background:rgba(8,12,30,.8);color:#fff;font-family:var(--font-m);font-size:.62rem;letter-spacing:.08em;text-transform:uppercase">'
+    + '<div style="font-family:var(--font-m);font-size:.55rem;color:var(--text3);letter-spacing:.08em">LEG+ · Myth+ · item choisi</div>';
+  ps.appendChild(wrap);
+  const input=wrap.querySelector('#irp-special-code');
+  if(input) input.addEventListener('input',updNV);
+}
+
+function getIRPSpecialCode(){
+  const input=document.getElementById('irp-special-code');
+  return input ? input.value.trim().toUpperCase() : '';
+}
+
 
 // ═══ SESSION (localStorage) — TTL 7 jours ═══
 const SESSION_TTL_MS=7*24*60*60*1000;
@@ -104,6 +208,28 @@ async function loadUser(){
   const s=getSession();
   if(!s||!s.id)return null;
   try{
+    if(IS_IRP){
+      const [irp, main, pity] = await Promise.all([
+        JCache.get(db,'irp_players',s.id,30),
+        JCache.get(db,'players',s.id,30),
+        JCache.get(db,'irp_gacha_pity',s.id,30),
+      ]);
+      U={
+        id:s.id,
+        username:(main&&main.username)||s.username||'—',
+        avatar:(main&&main.avatar_url)||s.avatar||'',
+        navarites:(irp&&irp.jahartites)||0,
+        booster:false,
+        pity:{
+          spent_epic:(pity&&pity.jahartites_spent_leg)||0,
+          threshold_epic:60,
+          spent_leg:(pity&&pity.jahartites_spent_myth)||0,
+          threshold_leg:180,
+        },
+        streak:{ days_in_cycle:((irp&&irp.consecutive_days)||0)%3 },
+      };
+      return U;
+    }
     const[d,pity]=await Promise.all([
       JCache.get(db,'players',s.id,30),
       JCache.get(db,'gacha_pity',s.id,30),
@@ -130,6 +256,13 @@ async function loadUser(){
 
 async function loadBanners(){
   try{
+    if(IS_IRP){
+      BANNERS = await loadIRPBannersPage();
+      renderBanners(BANNERS);
+      const ri=document.getElementById('rot-info');
+      if(ri) ri.textContent=BANNERS.length ? 'Mode IRP actif — 11 bannières exclusives' : 'Mode IRP actif — aucune bannière IRP configurée';
+      return;
+    }
     const d=await JCache.get(db,'gacha_config','banners',120);
     if(!d)return;
     BANNERS=d.banners||[];
@@ -273,6 +406,8 @@ function showLoginGate(){
 }
 
 function showMainUI(){
+  applyIRPGachaLabels();
+  ensureIRPCodeUI();
   document.getElementById('login-gate').style.display='none';
   document.getElementById('gacha-main').classList.add('active');
   document.getElementById('u-av').src=U.avatar||'';
@@ -293,6 +428,17 @@ function updNV(){
   const n=U?U.navarites||0:0;
   document.getElementById('nv-c').textContent=n;
   document.getElementById('pnv').textContent=n;
+  if(IS_IRP){
+    const hasBanner=!!SB;
+    const code=getIRPSpecialCode();
+    document.getElementById('b1').disabled=n<1||!hasBanner;
+    document.getElementById('b5').disabled=n<5||!hasBanner;
+    document.getElementById('b10').disabled=n<10||!hasBanner;
+    document.getElementById('b1').querySelector('span').innerHTML='PULL ×1<span class="btn-cost">1 JAHARTITE</span>';
+    document.getElementById('b5').querySelector('span').innerHTML='PULL ×5<span class="btn-cost">5 JAH · +1 BONUS</span>';
+    document.getElementById('b10').querySelector('span').innerHTML='PULL ×10<span class="btn-cost">10 JAH · +4 BONUS · 1 EPIC+</span>'+(code?'<span class="btn-cost" style="color:#dc143c;opacity:1">⚡ CODE ACTIF</span>':'');
+    return;
+  }
   document.getElementById('b1').disabled=n<1||!SB;
   document.getElementById('b5').disabled=n<5||!SB;
   document.getElementById('b10').disabled=n<10||!SB;
@@ -500,35 +646,39 @@ async function doPull(count){
   if((U.navarites||0)<count)return;
   _pullBusy=true;
 
-  // Disable buttons
   document.getElementById('b1').disabled=true;
   document.getElementById('b5').disabled=true;
   document.getElementById('b10').disabled=true;
 
-  // Write pull request to Firestore
   let pullRef;
-  const specialzActive = window.GACHA_SPECIALZ_ACTIVE && count === 10 && !window.GACHA_SPECIALZ_FIRST_PULL_USED;
+  const collection = IS_IRP ? 'irp_gacha_pulls' : 'gacha_pulls';
+  const specialzActive = !IS_IRP && window.GACHA_SPECIALZ_ACTIVE && count === 10 && !window.GACHA_SPECIALZ_FIRST_PULL_USED;
   try{
-    /* Re-vérifier U après l'await précédent — un logout async peut l'avoir mis à null */
     if(!U||!U.id){showToast('Session expirée — reconnecte-toi','error');_pullBusy=false;updNV();return;}
-    pullRef=await db.collection('gacha_pulls').add({
+    const payload={
       user_id:U.id,
       banner_id:SB,
       count:count,
       status:'pending',
       created_at:new Date().toISOString(),
-    });
+    };
+    if(IS_IRP){
+      const irpCode=getIRPSpecialCode();
+      if(irpCode) payload.special_code=irpCode;
+    } else if (specialzActive) {
+      payload.specialz_leg_plus=true;
+    }
+    pullRef=await db.collection(collection).add(payload);
   }catch(e){
     window._dbg?.error('[PULL]',e);
     showToast('Erreur réseau — réessaye','error');
     _pullBusy=false;updNV();return;
   }
 
-  // Start animation + wait for bot result in parallel
   const resultPromise=new Promise((resolve,reject)=>{
     let unsub=()=>{};
-    const timeout=setTimeout(()=>{unsub();reject(new Error('Timeout — le bot n\'a pas répondu'))},30000);
-    unsub=db.collection('gacha_pulls').doc(pullRef.id).onSnapshot(
+    const timeout=setTimeout(()=>{unsub();reject(new Error("Timeout — le bot n'a pas répondu"))},30000);
+    unsub=db.collection(collection).doc(pullRef.id).onSnapshot(
       snap=>{
         const d=snap.data();
         if(!d)return;
@@ -538,38 +688,43 @@ async function doPull(count){
           clearTimeout(timeout);unsub();reject(new Error(d.error||'Erreur du bot'));
         }
       },
-      err=>{clearTimeout(timeout);reject(err);}  /* listener error → cleanup immédiat */
+      err=>{clearTimeout(timeout);reject(err);}
     );
   });
 
   try{
-    // Run animation and wait for result
     const [result]=await Promise.all([
       resultPromise,
       runPullAnimation(count),
     ]);
 
-    // Update local state
-    U.navarites=result.navarites;
-    // If SPECIALZ LEG+ was used, mark it consumed
+    U.navarites=IS_IRP ? result.jahartites : result.navarites;
     if (specialzActive) window.GACHA_SPECIALZ_FIRST_PULL_USED = true;
-    const res=result.results.map(r=>({name:r.name,icon:r.icon||'📦',rarity:r.rarity,qty:r.qty||1}));
+    const res=(result.results||[]).map(r=>({name:r.name,icon:r.icon||'📦',rarity:r.rarity,qty:r.qty||1}));
     await showPullResults(res,count);
 
-    // Reload fresh user data
-    JCache.invalidate('players',U.id);JCache.invalidate('gacha_pity',U.id);
+    if(IS_IRP){
+      const codeInput=document.getElementById('irp-special-code');
+      if(codeInput) codeInput.value='';
+      JCache.invalidate('irp_players',U.id);JCache.invalidate('irp_gacha_pity',U.id);
+    }else{
+      JCache.invalidate('players',U.id);JCache.invalidate('gacha_pity',U.id);
+    }
     await loadUser();
     showMainUI();
   }catch(e){
     window._dbg?.error('[PULL]',e);
     dismiss();
     showToast(e.message||'Erreur lors du pull','error');
-    JCache.invalidate('players',U?U.id:'');JCache.invalidate('gacha_pity',U?U.id:'');
+    if(IS_IRP){
+      JCache.invalidate('irp_players',U?U.id:'');JCache.invalidate('irp_gacha_pity',U?U.id:'');
+    }else{
+      JCache.invalidate('players',U?U.id:'');JCache.invalidate('gacha_pity',U?U.id:'');
+    }
     await loadUser();
     showMainUI();
   }finally{
     _pullBusy=false;
-    // Clean up the pull document (may fail if rules deny — that's fine, bot cleans up)
     try{await pullRef.delete().catch(()=>{})}catch(e){}
   }
 }
