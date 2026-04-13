@@ -510,14 +510,16 @@ async function loadUshop(){
         Object.entries(d[sec]).forEach(([id,it])=>{if(it&&it.price)USHOP_ITEMS[id]={...it,_section:sec};});
       }
     }
-    /* ── IRP Mode: load ALL IRP items, generate prices based on rarity ── */
+    /* ── Fix: reclasser les items selon leur type/slot réel ── */
+    Object.entries(USHOP_ITEMS).forEach(([id,it])=>{
+      const t=(it.type||'').toLowerCase();
+      const s=(it.slot||'').toLowerCase();
+      if(t==='equipment'||t==='weapon'||s) it._section='equipment';
+      else if(t==='consumable'||t==='usable') it._section='consumable_items';
+      else if(t==='food') it._section='food_items';
+    });
+    /* ── IRP Mode: load IRP items with their real prices from Firestore ── */
     if(window._irpMode){
-      const IRP_RARITY_PRICES={
-        common:{bronze_kanite:50},uncommon:{bronze_kanite:200},rare:{bronze_kanite:800},
-        epic:{silver_kanite:50},legendary:{silver_kanite:300},mythic:{gold_kanite:50},
-        unique:{gold_kanite:200},artifact:{gold_kanite:500},mastercraft:{platinum_kanite:100},
-        signature:{platinum_kanite:500}
-      };
       try{
         /* Load from Firestore config/irp_items */
         const irpCfg=await db.collection('config').doc('irp_items').get();
@@ -525,13 +527,11 @@ async function loadUshop(){
           const irpData=irpCfg.data()||{};
           const irpItems=irpData.items||{};
           Object.entries(irpItems).forEach(([id,it])=>{
-            if(!it||typeof it!=='object')return;
-            /* Générer un prix basé sur la rareté si absent */
-            const rarity=(it.rarity||'common').toLowerCase();
-            const price=it.price||IRP_RARITY_PRICES[rarity]||{bronze_kanite:100};
+            if(!it||typeof it!=='object'||id.startsWith('__'))return;
+            if(!it.price)return;
             const section=it.slot?'equipment':(it.type==='consumable'||it.type==='food'?it.type+'_items':'items');
-            USHOP_ITEMS[id]={...it,price,_section:section,_irpExclusive:true};
-            if(typeof ALL_ITEMS_DATA!=='undefined') ALL_ITEMS_DATA[id]={...it,price};
+            USHOP_ITEMS[id]={...it,_section:section,_irpExclusive:true};
+            if(typeof ALL_ITEMS_DATA!=='undefined') ALL_ITEMS_DATA[id]=it;
           });
         }
       }catch(irpErr){window._dbg?.warn('[USHOP_IRP]',irpErr);}
