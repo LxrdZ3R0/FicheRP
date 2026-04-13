@@ -141,6 +141,50 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // ── IRP PERSONNAGES (bot IRP — serveur secret) ────────────────────────────
+    // Lecture publique (le site les affiche en mode IRP).
+    // Écriture : bot uniquement via Admin SDK.
+    match /irp_characters/{charId} {
+      allow read: if true;
+      allow update: if isAdmin()
+                    || request.resource.data.diff(resource.data).affectedKeys()
+                       .hasOnly(['stats', 'available_stat_points',
+                                 'unallocated_stat_points', 'updated_at']);
+      allow create: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /irp_active_characters/{userId} {
+      allow read:  if true;
+      allow write: if isAdmin();
+    }
+
+    // Liens IRP ↔ Principal
+    match /irp_links/{userId} {
+      allow read:  if true;
+      allow write: if isAdmin();
+    }
+
+    // PNJ IRP
+    match /irp_pnj/{id} {
+      allow read: if true;
+      allow create, update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Bestiaire IRP (monstres exclusifs IRP)
+    match /irp_bestiaire/{id} {
+      allow read: if true;
+      allow create, update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Bonds IRP (liens relationnels entre personnages)
+    match /irp_bonds/{bondId} {
+      allow read: if true;
+      allow write: if true;  // Les joueurs modifient leurs liens via le bot
+    }
+
     // ── JOUEURS ───────────────────────────────────────────────────────────────
     // Seul display_theme est modifiable sans auth (préférence UI hub.html).
     // Toute modification de navarites, gacha, etc. est réservée au bot.
