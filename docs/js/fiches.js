@@ -367,13 +367,17 @@ function charToFiche(id,c){
     delete bonusStats.int;
   }
 
+  /* Map race_category du bot vers les clés de filtre du site */
+  const _raceMap={'Mythical Zooids':'MythZooids'};
+  const _mappedRace=_raceMap[c.race_category]||c.race_category||'';
+
   return{
     id:id,
     _source:'characters',
     firstname:c.first_name||'',
     lastname:c.last_name||'',
     age:c.age||'',
-    race:c.race_category||'',
+    race:_mappedRace,
     raceSpecific:c.class||'',
     rank:rankFromLevel(c.level||0),
     level:c.level||0,
@@ -804,6 +808,14 @@ window._loadIRPCards=function(){
   if(!window._irpMode)return;
   _irpCardsLoaded=true;
   try{
+    /* Also load flesh marks collection once */
+    var _fleshMarksCache={};
+    onSnapshot(collection(db,'irp_flesh_marks'),snap=>{
+      snap.forEach(d=>{
+        _fleshMarksCache[d.id]=d.data().marks||[];
+      });
+    });
+
     _unsubIRPChars=onSnapshot(collection(db,'irp_characters'),snap=>{
       const ctn=document.getElementById('cards-container');
       const noRes=document.getElementById('no-results');
@@ -817,6 +829,7 @@ window._loadIRPCards=function(){
         .map(c=>{
           const f=charToFiche(c.id,c);
           f._isIRP=true;
+          f._fleshMarks=_fleshMarksCache[c.id]||[];
           return f;
         });
       irpCards.sort((a,b)=>{
@@ -837,6 +850,14 @@ window._loadIRPCards=function(){
           badge.textContent='IRP';
           card.style.position='relative';
           card.appendChild(badge);
+          /* Marques de chair indicator */
+          if(d._fleshMarks&&d._fleshMarks.length>0){
+            const markBadge=document.createElement('div');
+            markBadge.style.cssText='position:absolute;top:8px;left:8px;z-index:20;background:rgba(139,0,139,0.85);color:#fff;font-family:var(--font-h);font-size:0.4rem;letter-spacing:0.08em;padding:3px 6px;border-radius:4px;cursor:help;';
+            markBadge.textContent='🔥 '+d._fleshMarks.length+' marque(s)';
+            markBadge.title=d._fleshMarks.map(function(m){return m.name+' ('+m.location+') — '+m.owner_name;}).join('\n');
+            card.appendChild(markBadge);
+          }
         }
         ctn.insertBefore(el,noRes);
       });

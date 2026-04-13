@@ -298,6 +298,7 @@
     /* Recharger les données si les fonctions existent */
     if (typeof window._loadIRPCards === 'function') window._loadIRPCards();
     if (typeof window._loadIRPPNJ === 'function') window._loadIRPPNJ();
+    if (typeof window._loadIRPBestiaire === 'function') window._loadIRPBestiaire();
 
     /* Reconstruire la nav pour le mode IRP */
     if (typeof window._rebuildNav === 'function') window._rebuildNav();
