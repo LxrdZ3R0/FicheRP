@@ -121,6 +121,59 @@
     '.irp-mode .sb-fill { background: linear-gradient(90deg, #8B008B, #dc143c) !important; }',
     /* Rank badges — prismatic override */
     '.irp-mode [data-rank] { --rank-color: #dc143c; }',
+    /* ── Glitch JAHARTA ↔ ATRAHAJ animation ── */
+    '.irp-glitch {',
+    '  position: relative;',
+    '  display: inline-block;',
+    '}',
+    '.irp-glitch::before, .irp-glitch::after {',
+    '  content: attr(data-text);',
+    '  position: absolute;',
+    '  top: 0; left: 0;',
+    '  width: 100%; height: 100%;',
+    '  opacity: 0;',
+    '}',
+    '.irp-glitch::before {',
+    '  color: #dc143c;',
+    '  animation: irpGlitch1 8s infinite;',
+    '  clip-path: inset(0 0 65% 0);',
+    '  transform: translate(-2px, -1px);',
+    '}',
+    '.irp-glitch::after {',
+    '  color: #8B008B;',
+    '  animation: irpGlitch2 8s infinite;',
+    '  clip-path: inset(65% 0 0 0);',
+    '  transform: translate(2px, 1px);',
+    '}',
+    '@keyframes irpGlitch1 {',
+    '  0%,87%,93%,100% { opacity: 0; }',
+    '  88%,92% { opacity: 0.8; transform: translate(-3px, -1px) skewX(-2deg); }',
+    '  90% { opacity: 1; transform: translate(2px, 1px) skewX(3deg); }',
+    '}',
+    '@keyframes irpGlitch2 {',
+    '  0%,87%,93%,100% { opacity: 0; }',
+    '  89% { opacity: 0.8; transform: translate(3px, 1px) skewX(2deg); }',
+    '  91% { opacity: 1; transform: translate(-2px, -1px) skewX(-3deg); }',
+    '}',
+    /* Texte qui bascule JAHARTA → ATRAHAJ */
+    '.irp-glitch-text {',
+    '  animation: irpTextSwap 8s infinite;',
+    '}',
+    '@keyframes irpTextSwap {',
+    '  0%,85%,95%,100% { opacity: 1; }',
+    '  88%,92% { opacity: 0; }',
+    '}',
+    '.irp-glitch-alt {',
+    '  position: absolute; top: 0; left: 0;',
+    '  opacity: 0;',
+    '  animation: irpTextSwapAlt 8s infinite;',
+    '  color: #dc143c;',
+    '  pointer-events: none;',
+    '}',
+    '@keyframes irpTextSwapAlt {',
+    '  0%,85%,95%,100% { opacity: 0; }',
+    '  88%,92% { opacity: 1; }',
+    '}',
     /* Badge IRP flottant */
     '.irp-badge {',
     '  position: fixed; bottom: 1rem; right: 1rem;',
@@ -224,26 +277,11 @@
     window._irpMode = true;
     localStorage.setItem(STORAGE_KEY, 'true');
 
-    /* Modifier le logo texte */
-    var logos = document.querySelectorAll('.nav-logo, .footer-brand');
-    logos.forEach(function (el) {
-      if (el.classList.contains('nav-logo')) {
-        /* Navbar : ajouter " IRP" au texte */
-        var textNodes = [];
-        el.childNodes.forEach(function (n) {
-          if (n.nodeType === 3 && n.textContent.trim()) textNodes.push(n);
-        });
-        textNodes.forEach(function (n) {
-          if (!n.textContent.includes('IRP')) {
-            n.textContent = n.textContent.replace('JAHARTA', 'JAHARTA IRP');
-          }
-        });
-      } else {
-        if (!el.textContent.includes('IRP')) {
-          el.textContent = el.textContent.replace('JAHARTA', 'JAHARTA IRP');
-        }
-      }
-    });
+    /* Modifier le logo footer */
+    var footerBrand = document.querySelector('.footer-brand');
+    if (footerBrand && !footerBrand.textContent.includes('IRP')) {
+      footerBrand.textContent = footerBrand.textContent.replace('JAHARTA', 'JAHARTA IRP');
+    }
 
     /* Badge flottant */
     if (!document.getElementById('irp-badge')) {
@@ -254,9 +292,18 @@
       document.body.appendChild(badge);
     }
 
+    /* ── Glitch JAHARTA ↔ ATRAHAJ sur tous les headers/titres ── */
+    applyGlitchEffect();
+
     /* Recharger les données si les fonctions existent */
     if (typeof window._loadIRPCards === 'function') window._loadIRPCards();
     if (typeof window._loadIRPPNJ === 'function') window._loadIRPPNJ();
+
+    /* Reconstruire la nav pour le mode IRP */
+    if (typeof window._rebuildNav === 'function') window._rebuildNav();
+
+    /* Appliquer le glitch aussi à la nav reconstruite */
+    setTimeout(applyGlitchEffect, 100);
   }
 
   function removeIRPMode() {
@@ -264,17 +311,14 @@
     window._irpMode = false;
     localStorage.removeItem(STORAGE_KEY);
 
-    /* Restaurer les logos */
-    var logos = document.querySelectorAll('.nav-logo, .footer-brand');
-    logos.forEach(function (el) {
-      if (el.classList.contains('nav-logo')) {
-        el.childNodes.forEach(function (n) {
-          if (n.nodeType === 3) n.textContent = n.textContent.replace('JAHARTA IRP', 'JAHARTA');
-        });
-      } else {
-        el.textContent = el.textContent.replace('JAHARTA IRP', 'JAHARTA');
-      }
-    });
+    /* Restaurer le footer */
+    var footerBrand = document.querySelector('.footer-brand');
+    if (footerBrand) {
+      footerBrand.textContent = footerBrand.textContent.replace('JAHARTA IRP', 'JAHARTA');
+    }
+
+    /* Retirer tous les effets glitch */
+    removeGlitchEffect();
 
     /* Retirer le badge */
     var badge = document.getElementById('irp-badge');
@@ -349,6 +393,99 @@
     });
 
     setTimeout(function () { input.focus(); }, 100);
+  }
+
+  /* ── Glitch JAHARTA ↔ ATRAHAJ ── */
+  function reverseWord(word) {
+    /* JAHARTA → ATRAHAJ */
+    return word.split('').reverse().join('');
+  }
+
+  function applyGlitchEffect() {
+    /* Sélecteurs : tous les éléments susceptibles de contenir JAHARTA */
+    var selectors = [
+      'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+      '.hero-title', '.section-title', '.nav-logo',
+      '.footer-brand', '.footer-copy',
+      '[class*="title"]', '[class*="header"]', '[class*="heading"]',
+      '.irp-badge'
+    ];
+    var elements = document.querySelectorAll(selectors.join(','));
+
+    elements.forEach(function (el) {
+      /* Skip si déjà traité */
+      if (el.dataset.irpGlitched) return;
+      /* Skip si pas de JAHARTA dans le texte */
+      if (!el.textContent.includes('JAHARTA')) return;
+
+      /* Pour les éléments simples (texte seul, pas d'enfants complexes) */
+      processNode(el);
+    });
+  }
+
+  function processNode(el) {
+    /* Parcourir les nœuds texte enfants */
+    var walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null, false);
+    var textNodes = [];
+    while (walker.nextNode()) textNodes.push(walker.currentNode);
+
+    textNodes.forEach(function (node) {
+      var text = node.textContent;
+      if (!text.includes('JAHARTA')) return;
+
+      /* Trouver toutes les occurrences de JAHARTA (et variantes) */
+      var parts = text.split(/(JAHARTA\s*IRP|JAHARTA)/g);
+      if (parts.length <= 1) return;
+
+      var frag = document.createDocumentFragment();
+      parts.forEach(function (part) {
+        if (part === 'JAHARTA' || part === 'JAHARTA IRP') {
+          var reversed = part === 'JAHARTA IRP' ? 'ATRAHAJ IRP' : 'ATRAHAJ';
+          var wrapper = document.createElement('span');
+          wrapper.className = 'irp-glitch';
+          wrapper.dataset.text = reversed;
+          wrapper.dataset.irpGlitched = 'true';
+          wrapper.style.position = 'relative';
+          wrapper.style.display = 'inline-block';
+
+          /* Texte normal (visible la plupart du temps) */
+          var normal = document.createElement('span');
+          normal.className = 'irp-glitch-text';
+          normal.textContent = part;
+
+          /* Texte alternatif (ATRAHAJ — visible pendant le glitch) */
+          var alt = document.createElement('span');
+          alt.className = 'irp-glitch-alt';
+          alt.textContent = reversed;
+          alt.setAttribute('aria-hidden', 'true');
+
+          wrapper.appendChild(normal);
+          wrapper.appendChild(alt);
+          frag.appendChild(wrapper);
+        } else if (part) {
+          frag.appendChild(document.createTextNode(part));
+        }
+      });
+
+      node.parentNode.replaceChild(frag, node);
+    });
+
+    el.dataset.irpGlitched = 'true';
+  }
+
+  function removeGlitchEffect() {
+    /* Restaurer tous les spans glitch en texte normal */
+    document.querySelectorAll('.irp-glitch').forEach(function (wrapper) {
+      var normalSpan = wrapper.querySelector('.irp-glitch-text');
+      if (normalSpan) {
+        var text = document.createTextNode(normalSpan.textContent);
+        wrapper.parentNode.replaceChild(text, wrapper);
+      }
+    });
+    /* Retirer les flags */
+    document.querySelectorAll('[data-irp-glitched]').forEach(function (el) {
+      delete el.dataset.irpGlitched;
+    });
   }
 
   /* ── Exposer pour les autres scripts ── */

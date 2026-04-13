@@ -1,7 +1,8 @@
 /* ── Navbar partagée Jaharta ── */
 /* Injecte nav + mobile-menu, détecte la page active, init le burger */
+/* Supporte le mode IRP : nav réduite (Index, Fiches, PNJ, Bestiaire, Gacha, Hub) */
 (function () {
-  var PAGES = [
+  var PAGES_NORMAL = [
     { href: 'index.html',          label: 'Accueil',   short: 'Accueil',  num: '01' },
     { href: 'fiches.html',         label: 'Fiches RP', short: 'Fiches',   num: '02' },
     { href: 'pnj.html',            label: 'PNJ',       short: 'PNJ',      num: '03' },
@@ -13,47 +14,77 @@
     { href: 'hub.html',            label: 'Hub',       short: 'Hub',      num: '09' }
   ];
 
+  var PAGES_IRP = [
+    { href: 'index.html',          label: 'Accueil',        short: 'Accueil',    num: '01' },
+    { href: 'fiches.html',         label: 'Fiches IRP',     short: 'Fiches',     num: '02' },
+    { href: 'pnj.html',            label: 'PNJ',            short: 'PNJ',        num: '03' },
+    { href: 'bestiaire.html',      label: 'Bestiaire IRP',  short: 'Bestiaire',  num: '04' },
+    { href: 'gacha.html',          label: 'Gacha IRP',      short: 'Gacha',      num: '05' },
+    { href: 'hub.html',            label: 'Hub IRP',        short: 'Hub',        num: '06' }
+  ];
+
   var current = window.location.pathname.split('/').pop() || 'index.html';
 
-  /* ── Nav desktop ── */
-  var navLinks = PAGES.map(function (p) {
-    var active = p.href === current ? ' class="active"' : '';
-    return '<a href="' + p.href + '"' + active + '>' + p.label + '</a>';
-  }).join('');
+  function getPages() {
+    return localStorage.getItem('jaharta_irp_mode') === 'true' ? PAGES_IRP : PAGES_NORMAL;
+  }
 
-  /* ── Menu mobile ── */
-  var menuLinks = PAGES.map(function (p) {
-    var cls = 'menu-link' + (p.href === current ? ' active' : '');
-    return '<a href="' + p.href + '" class="' + cls + '">' +
-      '<span class="menu-link-index">' + p.num + '</span>' +
-      '<span class="menu-link-text">' + p.short + '</span>' +
-      '<span class="menu-link-arrow">\u2192</span>' +
-      '</a>';
-  }).join('');
+  function buildNav(pages) {
+    var logoText = localStorage.getItem('jaharta_irp_mode') === 'true' ? 'JAHARTA IRP' : 'JAHARTA';
 
-  var html =
-    '<nav class="nav" id="nav">' +
-      '<a href="index.html" class="nav-logo">' +
-        '<img src="img/logo-jaharta.png" alt="Logo Jaharta">JAHARTA' +
-      '</a>' +
-      '<div class="nav-links" id="nav-links">' + navLinks + '</div>' +
-      '<button class="burger" id="burger" aria-label="Menu" aria-expanded="false">' +
-        '<span class="burger-line"></span>' +
-        '<span class="burger-line"></span>' +
-        '<span class="burger-line"></span>' +
-      '</button>' +
-    '</nav>' +
-    '<div class="mobile-menu" id="mobile-menu">' +
-      '<div class="menu-inner">' +
-        '<div class="menu-header-label">// NAVIGATION</div>' +
-        menuLinks +
-      '</div>' +
-      '<div class="menu-deco"></div>' +
-    '</div>';
+    var navLinks = pages.map(function (p) {
+      var active = p.href === current ? ' class="active"' : '';
+      return '<a href="' + p.href + '"' + active + '>' + p.label + '</a>';
+    }).join('');
 
-  /* ── Injection ── */
+    var menuLinks = pages.map(function (p) {
+      var cls = 'menu-link' + (p.href === current ? ' active' : '');
+      return '<a href="' + p.href + '" class="' + cls + '">' +
+        '<span class="menu-link-index">' + p.num + '</span>' +
+        '<span class="menu-link-text">' + p.short + '</span>' +
+        '<span class="menu-link-arrow">\u2192</span>' +
+        '</a>';
+    }).join('');
+
+    return '<nav class="nav" id="nav">' +
+        '<a href="index.html" class="nav-logo">' +
+          '<img src="img/logo-jaharta.png" alt="Logo Jaharta">' + logoText +
+        '</a>' +
+        '<div class="nav-links" id="nav-links">' + navLinks + '</div>' +
+        '<button class="burger" id="burger" aria-label="Menu" aria-expanded="false">' +
+          '<span class="burger-line"></span>' +
+          '<span class="burger-line"></span>' +
+          '<span class="burger-line"></span>' +
+        '</button>' +
+      '</nav>' +
+      '<div class="mobile-menu" id="mobile-menu">' +
+        '<div class="menu-inner">' +
+          '<div class="menu-header-label">// NAVIGATION</div>' +
+          menuLinks +
+        '</div>' +
+        '<div class="menu-deco"></div>' +
+      '</div>';
+  }
+
+  /* ── Injection initiale ── */
+  var pages = getPages();
+  var html = buildNav(pages);
   var placeholder = document.getElementById('jaharta-nav');
   if (placeholder) placeholder.outerHTML = html;
+
+  /* ── Rebuild (appelée par irp-mode.js quand le mode change) ── */
+  window._rebuildNav = function () {
+    var nav = document.getElementById('nav');
+    var mm = document.getElementById('mobile-menu');
+    if (!nav || !mm) return;
+    var newPages = getPages();
+    var newHtml = buildNav(newPages);
+    var tmp = document.createElement('div');
+    tmp.innerHTML = newHtml;
+    nav.replaceWith(tmp.querySelector('.nav'));
+    mm.replaceWith(tmp.querySelector('.mobile-menu'));
+    initBurger();
+  };
 
   /* ── Burger init ── */
   function initBurger() {
