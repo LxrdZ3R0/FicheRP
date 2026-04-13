@@ -49,7 +49,7 @@ function applyIRPGachaLabels(){
   if(gate) gate.innerHTML='Utilise la commande <strong style="color:#dc143c">/link</strong> sur le bot pour ouvrir une session site, y compris pour le Gacha IRP.';
   if(note) note.textContent='Code valable 5 min · usage unique · partage la session du hub et du gacha';
   const badge=document.querySelector('.nv-badge');
-  if(badge) badge.innerHTML='<img src="https://firebasestorage.googleapis.com/v0/b/jaharta-rp.firebasestorage.app/o/icons%2FChatGPT%20Image%2013%20avr.%202025%2C%2018_19_29.png?alt=media&token=ac0476c3-965f-4806-aad0-ee6c917e02cd" alt="" style="width:16px;height:16px;object-fit:contain;vertical-align:middle;margin-right:4px;filter:drop-shadow(0 0 4px rgba(220,20,60,0.3))"> JAHARTITE <span class="nv-val" id="nv-c">0</span>';
+  if(badge) badge.innerHTML='<img src="https://firebasestorage.googleapis.com/v0/b/jaharta-rp.firebasestorage.app/o/icons%2FChatGPT%20Image%2013%20avr.%202026%2C%2018_19_29.png?alt=media&token=ac0476c3-965f-4806-aad0-ee6c917e02cd" alt="" style="width:16px;height:16px;object-fit:contain;vertical-align:middle;margin-right:4px;filter:drop-shadow(0 0 4px rgba(220,20,60,0.3))"> JAHARTITE <span class="nv-val" id="nv-c">0</span>';
   const pull=document.querySelector('.pull-nv');
   if(pull) pull.innerHTML='SOLDE : <span class="nv-count" id="pnv">0</span> JAHARTITE(S)';
   document.querySelectorAll('.btn-cost').forEach(function(el){

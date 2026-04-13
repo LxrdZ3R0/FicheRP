@@ -250,7 +250,7 @@
     '.irp-mode .sb-fill { background: linear-gradient(90deg, #8B008B, #dc143c) !important; }',
     /* Rank badges — prismatic override */
     '.irp-mode [data-rank] { --rank-color: #dc143c; }',
-    /* ── Glitch JAHARTA ↔ ATRAHAJ animation ── */
+    /* ── Glitch JAHARTA ↔ ATRAHAJ animation (Gacha Nexus style scramble) ── */
     '.irp-glitch {',
     '  position: relative;',
     '  display: inline-block;',
@@ -259,33 +259,32 @@
     '.irp-glitch::before, .irp-glitch::after {',
     '  content: none !important;',
     '}',
-    '.irp-glitch-text, .irp-glitch-alt {',
+    '.irp-glitch-text {',
     '  display: inline-block;',
     '  background: none !important;',
     '  color: inherit !important;',
     '  -webkit-text-fill-color: currentColor !important;',
     '  filter: none !important;',
     '  text-shadow: inherit;',
+    '  white-space: pre;',
     '}',
-    /* ATRAHAJ visible par défaut ; JAHARTA visible 1.5s sur un cycle de 10s */
-    '.irp-glitch-text {',
-    '  animation: irpTextSwap 10s infinite steps(1, end);',
-    '}',
-    '@keyframes irpTextSwap {',
-    '  0%,84.999% { opacity: 1; }',
-    '  85%,100% { opacity: 0; }',
-    '}',
-    '.irp-glitch-alt {',
-    '  position: absolute; top: 0; left: 0;',
-    '  opacity: 0;',
+    '.irp-glitch-text.scrambling {',
     '  color: #dc143c !important;',
-    '  text-shadow: 0 0 12px rgba(220,20,60,0.28);',
-    '  animation: irpTextSwapAlt 10s infinite steps(1, end);',
-    '  pointer-events: none;',
+    '  -webkit-text-fill-color: #dc143c !important;',
+    '  text-shadow: 0 0 8px rgba(220,20,60,0.4), 0 0 2px rgba(255,0,255,0.15);',
+    '  animation: irpScrambleShake 0.08s infinite alternate;',
     '}',
-    '@keyframes irpTextSwapAlt {',
-    '  0%,84.999% { opacity: 0; }',
-    '  85%,100% { opacity: 1; }',
+    '.irp-glitch-text.resolved {',
+    '  color: #dc143c !important;',
+    '  -webkit-text-fill-color: #dc143c !important;',
+    '  text-shadow: 0 0 12px rgba(220,20,60,0.28);',
+    '}',
+    '@keyframes irpScrambleShake {',
+    '  0% { transform: translate(0,0) skewX(0deg); }',
+    '  25% { transform: translate(-1px,0.5px) skewX(-0.5deg); }',
+    '  50% { transform: translate(1px,-0.5px) skewX(0.3deg); }',
+    '  75% { transform: translate(-0.5px,-0.5px) skewX(-0.2deg); }',
+    '  100% { transform: translate(0.5px,0.5px) skewX(0.4deg); }',
     '}',
     /* Badge IRP flottant */
     '.irp-badge {',
@@ -563,27 +562,26 @@
       parts.forEach(function (part) {
         if (part === 'JAHARTA' || part === 'JAHARTA IRP') {
           var reversed = part === 'JAHARTA IRP' ? 'ATRAHAJ IRP' : 'ATRAHAJ';
+          var original = part;
           var wrapper = document.createElement('span');
           wrapper.className = 'irp-glitch';
-          wrapper.dataset.text = reversed;
+          wrapper.dataset.original = original;
+          wrapper.dataset.reversed = reversed;
           wrapper.dataset.irpGlitched = 'true';
           wrapper.style.position = 'relative';
           wrapper.style.display = 'inline-block';
 
-          /* Texte ATRAHAJ (visible la plupart du temps) */
-          var normal = document.createElement('span');
-          normal.className = 'irp-glitch-text';
-          normal.textContent = reversed;
+          /* Texte unique géré par le scramble engine */
+          var txt = document.createElement('span');
+          txt.className = 'irp-glitch-text';
+          txt.textContent = reversed;
+          txt.dataset.state = 'reversed'; /* reversed = ATRAHAJ, original = JAHARTA */
 
-          /* Texte original JAHARTA (visible pendant le glitch) */
-          var alt = document.createElement('span');
-          alt.className = 'irp-glitch-alt';
-          alt.textContent = part;
-          alt.setAttribute('aria-hidden', 'true');
-
-          wrapper.appendChild(normal);
-          wrapper.appendChild(alt);
+          wrapper.appendChild(txt);
           frag.appendChild(wrapper);
+
+          /* Lancer le cycle de scramble sur cet élément */
+          _startScrambleCycle(txt, reversed, original);
         } else if (part) {
           frag.appendChild(document.createTextNode(part));
         }
@@ -595,12 +593,102 @@
     el.dataset.irpGlitched = 'true';
   }
 
+  /* ── Gacha Nexus–style scramble engine ── */
+  var _SCRAMBLE_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&';
+  var _scrambleTimers = [];
+
+  function _shuffleString(str) {
+    var arr = str.replace(/\s+/g, '').split('');
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+    }
+    return arr.join('');
+  }
+
+  function _scrambleTo(el, target, duration, callback) {
+    var len = target.length;
+    var steps = Math.max(8, Math.floor(duration / 50));
+    var stepTime = duration / steps;
+    var resolved = [];
+    var step = 0;
+
+    el.classList.add('scrambling');
+
+    var iv = setInterval(function () {
+      step++;
+      var progress = step / steps;
+      /* Progressively lock letters from left to right */
+      var lockedCount = Math.floor(progress * len);
+      var display = '';
+      for (var i = 0; i < len; i++) {
+        if (i < lockedCount) {
+          display += target[i];
+        } else {
+          /* Random character from the scramble pool, sometimes use letters from source/target */
+          display += _SCRAMBLE_CHARS[Math.floor(Math.random() * _SCRAMBLE_CHARS.length)];
+        }
+      }
+      el.textContent = display;
+
+      if (step >= steps) {
+        clearInterval(iv);
+        el.textContent = target;
+        el.classList.remove('scrambling');
+        if (callback) callback();
+      }
+    }, stepTime);
+
+    return iv;
+  }
+
+  function _startScrambleCycle(el, reversed, original) {
+    /* Cycle: show ATRAHAJ 8.5s → scramble to JAHARTA (0.8s) → hold JAHARTA 1.5s → scramble back (0.7s) → repeat */
+    var HOLD_REVERSED = 8500;  /* ATRAHAJ visible duration */
+    var SCRAMBLE_IN = 800;     /* scramble ATRAHAJ → JAHARTA */
+    var HOLD_ORIGINAL = 1500;  /* JAHARTA visible duration */
+    var SCRAMBLE_OUT = 700;    /* scramble JAHARTA → ATRAHAJ */
+
+    function cycle() {
+      /* Phase 1: Hold ATRAHAJ */
+      var t1 = setTimeout(function () {
+        /* Phase 2: Scramble to JAHARTA */
+        _scrambleTo(el, original, SCRAMBLE_IN, function () {
+          el.classList.add('resolved');
+          el.dataset.state = 'original';
+          /* Phase 3: Hold JAHARTA */
+          var t2 = setTimeout(function () {
+            el.classList.remove('resolved');
+            /* Phase 4: Scramble back to ATRAHAJ */
+            _scrambleTo(el, reversed, SCRAMBLE_OUT, function () {
+              el.dataset.state = 'reversed';
+              /* Restart cycle */
+              cycle();
+            });
+          }, HOLD_ORIGINAL);
+          _scrambleTimers.push(t2);
+        });
+      }, HOLD_REVERSED);
+      _scrambleTimers.push(t1);
+    }
+
+    /* Stagger start: randomize initial delay slightly so multiple elements don't all fire at once */
+    var initDelay = Math.floor(Math.random() * 2000);
+    var t0 = setTimeout(cycle, initDelay);
+    _scrambleTimers.push(t0);
+  }
+
   function removeGlitchEffect() {
+    /* Clear all scramble timers */
+    _scrambleTimers.forEach(function (t) { clearTimeout(t); clearInterval(t); });
+    _scrambleTimers = [];
     /* Restaurer tous les spans glitch en texte normal */
     document.querySelectorAll('.irp-glitch').forEach(function (wrapper) {
       var normalSpan = wrapper.querySelector('.irp-glitch-text');
       if (normalSpan) {
-        var text = document.createTextNode(normalSpan.textContent);
+        /* Restore to JAHARTA (the original text) */
+        var original = wrapper.dataset.original || normalSpan.textContent;
+        var text = document.createTextNode(original);
         wrapper.parentNode.replaceChild(text, wrapper);
       }
     });

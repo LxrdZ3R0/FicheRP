@@ -42,8 +42,8 @@ function renderPlayerWidgets(){
   /* En IRP, utiliser le solde de jahartites si disponible */
   const isIRP = window._irpMode;
   const irpP = window._irpPlayer;
-  const nav = isIRP && irpP ? (irpP.jahartites || 0) : (PLAYER.navarites || 0);
-  const streak = isIRP && irpP ? (irpP.consecutive_days || 0) : (PLAYER.consecutive_days || 0);
+  const nav = isIRP ? (irpP ? (irpP.jahartites || 0) : (PLAYER.navarites || 0)) : (PLAYER.navarites || 0);
+  const streak = isIRP ? (irpP ? (irpP.consecutive_days || 0) : (PLAYER.consecutive_days || 0)) : (PLAYER.consecutive_days || 0);
   const unit = isIRP ? 'JAH' : 'NAV';
   document.getElementById('dash-nav-val').innerHTML=`<span>${nav.toLocaleString()}</span><span class="nav-unit">${unit}</span>`;
   document.getElementById('dash-nav-streak').innerHTML=streak?`<span>${streak}</span> jour${streak>1?'s':''} consécutifs`:'Pas encore de série active';
@@ -57,10 +57,10 @@ async function loadWallet(){
   // Gather all currency data
   const isIRP = window._irpMode;
   const irpP = window._irpPlayer;
-  const nav = isIRP && irpP ? (irpP.jahartites || 0) : (PLAYER.navarites || 0);
+  const nav = isIRP ? (irpP ? (irpP.jahartites || 0) : (PLAYER.navarites || 0)) : (PLAYER.navarites || 0);
   const navLabel = isIRP ? 'Jahartites' : 'Navarites';
   const navIcon = isIRP
-    ? 'https://firebasestorage.googleapis.com/v0/b/jaharta-rp.firebasestorage.app/o/icons%2FChatGPT%20Image%2013%20avr.%202025%2C%2018_19_29.png?alt=media&token=ac0476c3-965f-4806-aad0-ee6c917e02cd'
+    ? 'https://firebasestorage.googleapis.com/v0/b/jaharta-rp.firebasestorage.app/o/icons%2FChatGPT%20Image%2013%20avr.%202026%2C%2018_19_29.png?alt=media&token=ac0476c3-965f-4806-aad0-ee6c917e02cd'
     : 'https://firebasestorage.googleapis.com/v0/b/jaharta-rp.firebasestorage.app/o/icons%2FNavarite.png?alt=media&token=4b19c26d-c28e-426e-89ca-0fe381708ece';
   const notoriety=PLAYER.notoriety||0;
   const _ge=PLAYER.golden_eggs;

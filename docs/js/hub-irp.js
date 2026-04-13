@@ -249,6 +249,24 @@
         var el = document.querySelector(selector);
         if (el) el.textContent = jah.toLocaleString();
       });
+      /* Also fix the wallet label */
+      var walletLabel = document.querySelector('.wi-navarite .wi-label');
+      if (!walletLabel) walletLabel = document.querySelector('.wallet-item:first-child .wi-label');
+      if (walletLabel && walletLabel.textContent.match(/Navarites?/i)) {
+        walletLabel.textContent = 'Jahartites';
+      }
+      /* Fix dashboard nav val */
+      var dashNavVal = document.getElementById('dash-nav-val');
+      if (dashNavVal) {
+        var unit = dashNavVal.querySelector('.nav-unit');
+        var valSpan = dashNavVal.querySelector('span:first-child');
+        if (valSpan) valSpan.textContent = jah.toLocaleString();
+        if (unit && unit.textContent === 'NAV') unit.textContent = 'JAH';
+      }
+      /* Also force PLAYER.navarites to reflect jahartites */
+      if (window.PLAYER) {
+        window.PLAYER.navarites = jah;
+      }
     }
 
     replaceNavarites(document.body);
@@ -290,45 +308,79 @@
     if (!invPanel) return;
 
     var obs = new MutationObserver(function () {
-      /* Chercher le bon endroit : après les slots normaux, avant les set bonus */
+      /* Ne pas dupliquer */
+      if (invPanel.querySelector('.irp-slots-section')) return;
+
+      /* Chercher le conteneur principal de l'inventaire */
       var slotsContainer = invPanel.querySelector('.inv-right, .inv-slots, .slots-grid');
-      if (!slotsContainer) {
-        /* Fallback: chercher le premier cyb-panel dans inventaire */
-        slotsContainer = invPanel.querySelector('.cyb-panel');
-      }
+      if (!slotsContainer) slotsContainer = invPanel.querySelector('.cyb-panel');
       if (!slotsContainer) return;
-      if (slotsContainer.querySelector('.irp-slots-section')) return;
 
-      /* Trouver les set bonus pour insérer AVANT */
-      var setBonus = slotsContainer.querySelector('.set-bonus-list, .set-bonus-section, [class*="set-bonus"]');
+      /* Trouver la section bonus effectifs (set-bonus) et le panneau equip-bonus */
+      var setBonusSection = slotsContainer.querySelector('.set-bonus-list, .set-bonus-section, [class*="set-bonus"]');
+      var equipBonusGrid = slotsContainer.querySelector('#equip-bonus-grid, .equip-bonus-grid');
 
-      var irpSlots = document.createElement('div');
-      irpSlots.className = 'irp-slots-section';
-      irpSlots.style.cssText = 'margin:16px 0;padding:12px;border:1px solid rgba(220,20,60,0.15);border-radius:8px;background:rgba(220,20,60,0.03);';
-      irpSlots.innerHTML =
-        '<div style="font-family:var(--font-h);font-size:0.55rem;letter-spacing:0.12em;color:#dc143c;margin-bottom:10px;text-align:center">◆ IRP SLOTS ◆</div>' +
-        '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px">' +
-          _buildSlotCells('ERP', 3, '#dc143c') +
-          _buildSlotCells('DOM', 3, '#8B008B') +
-          _buildSlotCells('LORD', 4, '#6A0DAD') +
-        '</div>';
+      /* ── Section IRP Slots : bloc indépendant avec sous-catégories ── */
+      var irpSection = document.createElement('div');
+      irpSection.className = 'irp-slots-section';
+      irpSection.style.cssText = 'margin:20px 0;padding:16px;border:1px solid rgba(220,20,60,0.2);border-radius:10px;background:linear-gradient(145deg,rgba(220,20,60,0.04),rgba(139,0,139,0.03));';
 
-      if (setBonus) {
-        setBonus.parentNode.insertBefore(irpSlots, setBonus);
+      /* Header */
+      var header = '<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid rgba(220,20,60,0.12)">' +
+        '<span style="color:#dc143c;font-size:0.7rem">◆</span>' +
+        '<span style="font-family:var(--font-h);font-size:0.6rem;letter-spacing:0.15em;color:#dc143c;font-weight:800">SLOTS BONUS IRP</span>' +
+        '<span style="color:#dc143c;font-size:0.7rem">◆</span>' +
+      '</div>';
+
+      /* Slot categories with their own sub-sections */
+      var IRP_SLOT_CATS = [
+        { id: 'erp', label: 'EMPREINTE RITUELLE', tag: 'ERP', count: 3, color: '#dc143c', desc: 'Slots liés aux rituels de domination' },
+        { id: 'dom', label: 'DOMINION', tag: 'DOM', count: 3, color: '#8B008B', desc: 'Slots de contrôle et d\'emprise' },
+        { id: 'lord', label: 'SEIGNEURIE', tag: 'LORD', count: 4, color: '#6A0DAD', desc: 'Slots de souveraineté IRP' }
+      ];
+
+      var slotsHTML = '';
+      IRP_SLOT_CATS.forEach(function (cat) {
+        slotsHTML += '<div class="irp-slot-category" data-irp-cat="' + cat.id + '" style="margin-bottom:12px;padding:10px;border:1px solid ' + cat.color + '18;border-radius:8px;background:rgba(10,4,16,0.5)">';
+        slotsHTML += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">';
+        slotsHTML += '<div style="display:flex;align-items:center;gap:6px">';
+        slotsHTML += '<span style="font-family:var(--font-h);font-size:0.45rem;letter-spacing:0.12em;color:' + cat.color + ';font-weight:700">' + cat.label + '</span>';
+        slotsHTML += '<span style="font-family:var(--font-m);font-size:0.35rem;letter-spacing:0.08em;color:' + cat.color + '88;background:' + cat.color + '12;border:1px solid ' + cat.color + '25;border-radius:3px;padding:1px 5px">' + cat.tag + '</span>';
+        slotsHTML += '</div>';
+        slotsHTML += '<span style="font-family:var(--font-m);font-size:0.38rem;color:' + cat.color + '66">0 / ' + cat.count + '</span>';
+        slotsHTML += '</div>';
+        slotsHTML += '<div style="font-family:var(--font-m);font-size:0.35rem;color:var(--text3);letter-spacing:0.04em;margin-bottom:8px;opacity:0.7">' + cat.desc + '</div>';
+        slotsHTML += '<div style="display:grid;grid-template-columns:repeat(' + cat.count + ',1fr);gap:6px">';
+        for (var i = 0; i < cat.count; i++) {
+          slotsHTML += '<div class="irp-slot-cell" data-irp-slot="' + cat.id + '-' + i + '" style="aspect-ratio:1;border:1px dashed ' + cat.color + '40;border-radius:6px;display:flex;align-items:center;justify-content:center;background:rgba(10,4,16,0.7);transition:all 0.2s;min-height:48px;cursor:default">';
+          slotsHTML += '<span style="font-family:var(--font-h);font-size:0.35rem;color:' + cat.color + '44;letter-spacing:0.05em">' + cat.tag + '</span>';
+          slotsHTML += '</div>';
+        }
+        slotsHTML += '</div>';
+        slotsHTML += '</div>';
+      });
+
+      /* Imbrication forcée : après les bonus effectifs, AVANT les set bonus */
+      irpSection.innerHTML = header + slotsHTML;
+
+      /* Insertion : trouver l'endroit exact — après equip-bonus, avant set-bonus */
+      if (equipBonusGrid && equipBonusGrid.parentElement) {
+        /* Insérer après le bloc des bonus équipement */
+        var bonusParent = equipBonusGrid.closest('.card, .cyb-panel, div');
+        if (bonusParent && bonusParent.nextSibling) {
+          bonusParent.parentNode.insertBefore(irpSection, bonusParent.nextSibling);
+        } else if (setBonusSection) {
+          setBonusSection.parentNode.insertBefore(irpSection, setBonusSection);
+        } else {
+          slotsContainer.appendChild(irpSection);
+        }
+      } else if (setBonusSection) {
+        setBonusSection.parentNode.insertBefore(irpSection, setBonusSection);
       } else {
-        slotsContainer.appendChild(irpSlots);
+        slotsContainer.appendChild(irpSection);
       }
     });
     obs.observe(invPanel, { childList: true, subtree: true });
-  }
-
-  function _buildSlotCells(label, count, color) {
-    var html = '';
-    for (var i = 0; i < count; i++) {
-      html += '<div style="aspect-ratio:1;border:1px solid ' + color + '33;border-radius:4px;display:flex;align-items:center;justify-content:center;background:rgba(10,4,16,0.6)">' +
-        '<span style="font-family:var(--font-h);font-size:.35rem;color:' + color + '66;letter-spacing:.05em">' + label + '</span></div>';
-    }
-    return html;
   }
 
   /* ══════════════════════════════════════════════════════════════════════════
@@ -432,6 +484,13 @@
 
       injectJahartiteBalance();
       replaceNavarites(document.body);
+      /* Force re-render of dashboard widgets with correct Jahartites data */
+      if (typeof window.renderPlayerWidgets === 'function') {
+        try { window.renderPlayerWidgets(); } catch (_) {}
+      }
+      if (typeof window.loadWallet === 'function') {
+        try { window.loadWallet(); } catch (_) {}
+      }
       if (typeof window._refreshCurrentTab === 'function') {
         try { window._refreshCurrentTab(); } catch (_) {}
       }
@@ -485,7 +544,7 @@
 
     /* ── Wallet Jahartites ── */
     h += '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:24px;padding:16px;background:var(--surface);border:1px solid rgba(220,20,60,0.15);border-radius:12px;flex-wrap:wrap">';
-    h += '<div style="display:flex;align-items:center;gap:12px"><div><img src="https://firebasestorage.googleapis.com/v0/b/jaharta-rp.firebasestorage.app/o/icons%2FChatGPT%20Image%2013%20avr.%202025%2C%2018_19_29.png?alt=media&token=ac0476c3-965f-4806-aad0-ee6c917e02cd" alt="Jahartite" style="width:32px;height:32px;object-fit:contain;filter:drop-shadow(0 0 6px rgba(220,20,60,0.4))"></div>';
+    h += '<div style="display:flex;align-items:center;gap:12px"><div><img src="https://firebasestorage.googleapis.com/v0/b/jaharta-rp.firebasestorage.app/o/icons%2FChatGPT%20Image%2013%20avr.%202026%2C%2018_19_29.png?alt=media&token=ac0476c3-965f-4806-aad0-ee6c917e02cd" alt="Jahartite" style="width:32px;height:32px;object-fit:contain;filter:drop-shadow(0 0 6px rgba(220,20,60,0.4))"></div>';
     h += '<div><div style="font-family:var(--font-h);font-size:1.4rem;color:var(--text)">' + jah.toLocaleString() + '</div>';
     h += '<div style="font-family:var(--font-m);font-size:0.55rem;color:var(--text3);letter-spacing:0.08em">JAHARTITES</div></div></div>';
     h += '<button onclick="localStorage.setItem(&quot;jaharta_irp_mode&quot;,&quot;true&quot;);window.location.href=&quot;gacha.html&quot;" style="padding:10px 14px;border-radius:10px;border:1px solid rgba(220,20,60,.25);background:linear-gradient(135deg,rgba(220,20,60,.18),rgba(139,0,0,.18));color:#fff;font-family:var(--font-h);font-size:.55rem;letter-spacing:.1em;cursor:pointer">OUVRIR LE GACHA IRP</button>';
@@ -523,7 +582,7 @@
         h += '<div style="font-family:var(--font-h);font-size:0.75rem;color:var(--text);letter-spacing:0.06em;margin-bottom:4px">' + name + '</div>';
         if (desc) h += '<div style="font-family:var(--font-m);font-size:0.55rem;color:var(--text3);margin-bottom:12px">' + desc + '</div>';
         h += '<div style="display:flex;align-items:center;justify-content:space-between">';
-        h += '<div style="font-family:var(--font-m);font-size:0.6rem;color:' + color + '"><img src="https://firebasestorage.googleapis.com/v0/b/jaharta-rp.firebasestorage.app/o/icons%2FChatGPT%20Image%2013%20avr.%202025%2C%2018_19_29.png?alt=media&token=ac0476c3-965f-4806-aad0-ee6c917e02cd" alt="" style="width:14px;height:14px;object-fit:contain;vertical-align:middle;margin-right:3px"> ' + cost + ' Jahartites</div>';
+        h += '<div style="font-family:var(--font-m);font-size:0.6rem;color:' + color + '"><img src="https://firebasestorage.googleapis.com/v0/b/jaharta-rp.firebasestorage.app/o/icons%2FChatGPT%20Image%2013%20avr.%202026%2C%2018_19_29.png?alt=media&token=ac0476c3-965f-4806-aad0-ee6c917e02cd" alt="" style="width:14px;height:14px;object-fit:contain;vertical-align:middle;margin-right:3px"> ' + cost + ' Jahartites</div>';
         h += '<div style="font-family:var(--font-h);font-size:0.4rem;letter-spacing:0.1em;color:' + color + ';text-transform:uppercase;padding:4px 10px;border:1px solid ' + color + '44;border-radius:4px">' + rarity + '</div>';
         h += '</div></div></div>';
       });

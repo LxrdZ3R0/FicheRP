@@ -497,7 +497,9 @@ let USHOP_CAT='all';
 let USHOP_ITEMS={};
 
 async function loadUshop(){
-  if(Object.keys(USHOP_ITEMS).length)return;
+  /* Skip reload unless IRP mode needs IRP items that weren't loaded yet */
+  const _hasIRPItems=Object.keys(USHOP_ITEMS).some(id=>USHOP_ITEMS[id]._irpExclusive);
+  if(Object.keys(USHOP_ITEMS).length && (!window._irpMode || _hasIRPItems))return;
   const gridEl=document.getElementById('ushop-grid');if(!gridEl)return;
   try{
     const d=await cachedGet(C.CFG,'items','config/items',600);
@@ -507,6 +509,30 @@ async function loadUshop(){
       if(d[sec]&&typeof d[sec]==='object'){
         Object.entries(d[sec]).forEach(([id,it])=>{if(it&&it.price)USHOP_ITEMS[id]={...it,_section:sec};});
       }
+    }
+    /* ── IRP Mode: also load IRP-exclusive items from irp_items config ── */
+    if(window._irpMode){
+      try{
+        const irpCfg=await db.collection('config').doc('irp_items').get();
+        if(irpCfg.exists){
+          const irpData=irpCfg.data()||{};
+          for(const sec of['items','equipment','food_items','consumable_items']){
+            if(irpData[sec]&&typeof irpData[sec]==='object'){
+              Object.entries(irpData[sec]).forEach(([id,it])=>{
+                if(it&&it.price){
+                  USHOP_ITEMS[id]={...it,_section:sec,_irpExclusive:true};
+                  /* Also register in ALL_ITEMS_DATA for tooltips/inventory */
+                  if(typeof ALL_ITEMS_DATA!=='undefined') ALL_ITEMS_DATA[id]=it;
+                }
+              });
+            }
+          }
+        }
+      }catch(irpErr){window._dbg?.warn('[USHOP_IRP]',irpErr);}
+      /* Also include any items from normal config whose id starts with irp_ */
+      Object.entries(USHOP_ITEMS).forEach(([id,it])=>{
+        if(id.startsWith('irp_')&&!it._irpExclusive) it._irpExclusive=true;
+      });
     }
     renderUshop();renderUshopBalance();
   }catch(err){window._dbg?.error('[USHOP]',err);gridEl.innerHTML='<div class="empty">Erreur chargement</div>';}
@@ -580,7 +606,10 @@ function renderUshop(){
     const rc=RARITY_COLORS[rarity]||'#6b7280';
     const effects=it.stat_effects||it.stats||{};
     const effStr=Object.entries(effects).slice(0,3).map(([s,v])=>`+${v} ${SI[s]||s}`).join(' ');
-    return`<div class="ushop-card rarity-${rarity}">
+    const isIRPExclu=it._irpExclusive||id.startsWith('irp_');
+    const irpTag=isIRPExclu?'<span style="position:absolute;top:6px;right:6px;font-family:var(--font-m);font-size:0.38rem;letter-spacing:0.08em;color:#dc143c;background:rgba(220,20,60,0.12);border:1px solid rgba(220,20,60,0.25);border-radius:3px;padding:2px 6px;pointer-events:none;z-index:2;white-space:nowrap;font-weight:600">EXCLU IRP</span>':'';
+    return`<div class="ushop-card rarity-${rarity}" style="position:relative">
+      ${irpTag}
       <span style="font-size:1.8rem;display:block;margin-bottom:6px">${it.emoji||'📦'}</span>
       <div style="font-family:var(--font-b);font-weight:700;font-size:.82rem;color:${rc};margin-bottom:4px">${e(it.name||id)}</div>
       ${it.slot?`<div style="font-family:var(--font-m);font-size:.42rem;letter-spacing:.08em;color:var(--text3)">${SLOT_LIMITS[(it.slot||'').toLowerCase()]?.label||it.slot}</div>`:''}
@@ -614,6 +643,11 @@ function renderUshop(){
   // Food
   const food=entries.filter(([id,it])=>!used.has(id)&&it._section==='food_items');
   if(food.length){groups.push({label:'NOURRITURE',entries:food});food.forEach(([id])=>used.add(id));}
+  // IRP Exclusive items — grouped separately at the end with special styling
+  if(window._irpMode){
+    const irpExclu=entries.filter(([id,it])=>!used.has(id)&&(it._irpExclusive||id.startsWith('irp_')));
+    if(irpExclu.length){groups.push({label:'◆ EXCLUSIFS IRP',entries:irpExclu,isIRP:true});irpExclu.forEach(([id])=>used.add(id));}
+  }
   // Other
   const other=entries.filter(([id])=>!used.has(id));
   if(other.length)groups.push({label:'AUTRES',entries:other});
@@ -621,7 +655,8 @@ function renderUshop(){
   let html='';
   for(const g of groups){
     g.entries.sort(sortByRarity);
-    html+=`<div class="ushop-group-header">${g.label} <span class="ushop-group-count">(${g.entries.length})</span></div>`;
+    const headerStyle=g.isIRP?'style="color:#dc143c;border-bottom-color:rgba(220,20,60,0.2)"':'';
+    html+=`<div class="ushop-group-header" ${headerStyle}>${g.label} <span class="ushop-group-count">(${g.entries.length})</span></div>`;
     html+=`<div class="ushop-grid-sub">${g.entries.map(([id,it])=>shopCard(id,it)).join('')}</div>`;
   }
   gridEl.innerHTML=gateNotice+html;
