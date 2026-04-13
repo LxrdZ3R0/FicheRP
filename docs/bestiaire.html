@@ -37,7 +37,25 @@ window._loadBestiaire=function(){
     const docs=[];snap.forEach(d=>docs.push({id:d.id,...d.data()}));
     window._bestiaireData=docs;
     renderBestiaire();
+    /* Auto-load IRP bestiaire si mode actif */
+    if(window._irpMode&&typeof window._loadIRPBestiaire==='function')window._loadIRPBestiaire();
   },err=>window._dbg?.warn('[bestiaire]',err.message));
+};
+/* ── IRP Bestiaire — monstres exclusifs IRP ── */
+let _irpBestLoaded=false;
+window._loadIRPBestiaire=function(){
+  if(_irpBestLoaded)return;if(!window._irpMode)return;_irpBestLoaded=true;
+  try{
+    onSnapshot(query(collection(db,'irp_bestiaire'),orderBy('createdAt','desc')),snap=>{
+      const irpDocs=[];snap.forEach(d=>irpDocs.push({id:d.id,...d.data(),_isIRP:true}));
+      /* Fusionner avec les données normales */
+      const existing=window._bestiaireData||[];
+      /* Retirer les anciens IRP avant de re-merger */
+      const cleaned=existing.filter(d=>!d._isIRP);
+      window._bestiaireData=[...cleaned,...irpDocs];
+      renderBestiaire();
+    },err=>window._dbg?.warn('[irp_bestiaire]',err.message));
+  }catch(e){window._dbg?.warn('[irp_bestiaire] error:',e.message);}
 };
 </script>
 
