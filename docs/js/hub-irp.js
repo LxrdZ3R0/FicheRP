@@ -114,6 +114,9 @@
     /* ── Override showTab ── */
     overrideShowTab();
 
+    /* ── Override renderGacha pour IRP ── */
+    overrideGacha();
+
     /* ── Navarites → Jahartites (mutation observer) ── */
     startJahartitesObserver();
 
@@ -364,6 +367,101 @@
 
   function _charName(cid) {
     return (window._irpCharNames || {})[cid] || cid.substring(0, 10) + '…';
+  }
+
+  /* ══════════════════════════════════════════════════════════════════════════
+     PHASE 7 — Override Gacha pour IRP (Jahartites + bannières IRP only)
+     ══════════════════════════════════════════════════════════════════════════ */
+
+  function overrideGacha() {
+    /* Override renderGacha globale */
+    window.renderGacha = function () {
+      renderIRPGacha();
+    };
+  }
+
+  async function loadIRPBanners() {
+    if (window._irpBanners) return window._irpBanners;
+    try {
+      var fdb = window._db || db;
+      var snap = await fdb.collection('irp_gacha_banners').get();
+      window._irpBanners = [];
+      snap.forEach(function (d) {
+        var data = d.data();
+        if (data.active !== false) { /* include if not explicitly disabled */
+          window._irpBanners.push({ _id: d.id, ...data });
+        }
+      });
+    } catch (e) {
+      window._dbg?.warn('[IRP GACHA] load banners:', e.message);
+      window._irpBanners = [];
+    }
+    return window._irpBanners;
+  }
+
+  async function renderIRPGacha() {
+    var panel = document.getElementById('panel-gacha');
+    if (!panel) return;
+
+    var jah = (window._irpPlayer || {}).jahartites || 0;
+    var banners = await loadIRPBanners();
+
+    var h = '';
+
+    /* ── Wallet Jahartites ── */
+    h += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;padding:16px;background:var(--surface);border:1px solid rgba(220,20,60,0.15);border-radius:12px">';
+    h += '<div style="font-size:1.8rem">💎</div>';
+    h += '<div><div style="font-family:var(--font-h);font-size:1.4rem;color:var(--text)">' + jah.toLocaleString() + '</div>';
+    h += '<div style="font-family:var(--font-m);font-size:0.55rem;color:var(--text3);letter-spacing:0.08em">JAHARTITES</div></div>';
+    h += '</div>';
+
+    /* ── Bannières IRP ── */
+    if (banners.length === 0) {
+      h += '<div style="text-align:center;padding:60px 20px">';
+      h += '<div style="font-size:2.5rem;margin-bottom:16px;opacity:0.3">🎰</div>';
+      h += '<div style="font-family:var(--font-h);font-size:0.8rem;color:var(--text3);letter-spacing:0.12em">AUCUNE BANNIÈRE IRP ACTIVE</div>';
+      h += '<div style="font-family:var(--font-m);font-size:0.65rem;color:var(--text3);margin-top:8px;opacity:0.6">Les bannières IRP exclusives apparaîtront ici.</div>';
+      h += '</div>';
+    } else {
+      h += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px">';
+      banners.forEach(function (b) {
+        var name = b.name || 'Bannière IRP';
+        var desc = b.description || '';
+        var cost = b.cost || 0;
+        var img = b.image_url || '';
+        var rarity = (b.featured_rarity || 'epic').toLowerCase();
+        var rarityColors = {
+          common: '#888', uncommon: '#22c55e', rare: '#3b82f6',
+          epic: '#a855f7', legendary: '#f59e0b', mythic: '#ef4444',
+          unique: '#00bcd4',
+        };
+        var color = rarityColors[rarity] || '#dc143c';
+
+        h += '<div style="background:var(--surface);border:1px solid ' + color + '33;border-radius:12px;overflow:hidden">';
+        if (img) {
+          h += '<div style="height:140px;background:url(' + img + ') center/cover;border-bottom:1px solid ' + color + '22"></div>';
+        } else {
+          h += '<div style="height:140px;background:linear-gradient(135deg,' + color + '11,' + color + '05);display:flex;align-items:center;justify-content:center;font-size:2.5rem;opacity:0.3">🎰</div>';
+        }
+        h += '<div style="padding:16px">';
+        h += '<div style="font-family:var(--font-h);font-size:0.75rem;color:var(--text);letter-spacing:0.06em;margin-bottom:4px">' + name + '</div>';
+        if (desc) h += '<div style="font-family:var(--font-m);font-size:0.55rem;color:var(--text3);margin-bottom:12px">' + desc + '</div>';
+        h += '<div style="display:flex;align-items:center;justify-content:space-between">';
+        h += '<div style="font-family:var(--font-m);font-size:0.6rem;color:' + color + '">💎 ' + cost + ' Jahartites</div>';
+        h += '<div style="font-family:var(--font-h);font-size:0.4rem;letter-spacing:0.1em;color:' + color + ';text-transform:uppercase;padding:4px 10px;border:1px solid ' + color + '44;border-radius:4px">' + rarity + '</div>';
+        h += '</div></div></div>';
+      });
+      h += '</div>';
+    }
+
+    /* ── Pity IRP (si données existent) ── */
+    /* For now, just show a placeholder since IRP pity is separate */
+    h += '<div style="margin-top:24px;text-align:center;font-family:var(--font-m);font-size:0.5rem;color:var(--text3);opacity:0.5">Système de pity IRP à venir</div>';
+
+    /* Replace panel content but keep the section header */
+    var sh = panel.querySelector('.sh');
+    var shHTML = sh ? sh.outerHTML : '<div class="sh"><span class="sh-num">04</span><span class="sh-title">Gacha IRP</span><div class="sh-line"></div></div>';
+    panel.innerHTML = shHTML + '<div style="padding:0 4px">' + h + '</div>';
   }
 
   /* ══════════════════════════════════════════════════════════════════════════
