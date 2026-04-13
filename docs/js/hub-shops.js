@@ -89,7 +89,7 @@ function renderMonShop(){
               <div class="shop-item-info">
                 <div class="shop-item-name" style="color:${rc}">${e(it.name||item_id)}</div>
                 ${effStr?`<div class="shop-item-effects">${effStr}</div>`:''}
-                <div class="shop-item-qty">${si.qty===-1||si.qty===undefined?'∞':'×'+si.qty} en stock</div>
+                <div class="shop-item-qty">×${si.qty||0} en stock</div>
               </div>
             </div>
             <div class="shop-item-price">${formatShopPrice(si.price||{})}</div>
@@ -435,7 +435,7 @@ function renderShopDetail(shop){
             <div class="shop-item-info">
               <div class="shop-item-name">${e(it.name||item_id)}</div>
               ${effStr?`<div class="shop-item-effects">${effStr}</div>`:''}
-              <div class="shop-item-qty">${si.qty===-1||si.qty===undefined?'∞':'×'+si.qty} en stock</div>
+              <div class="shop-item-qty">×${si.qty||0} en stock</div>
             </div>
           </div>
           <div class="shop-item-price">${formatShopPrice(price)}</div>
@@ -466,6 +466,7 @@ async function buyFromPlayerShop(shopKey,itemId){
     invItems[itemId]=(invItems[itemId]||0)+1;
     const newShopItems=Object.assign({},shop.items);
     if(si.qty!==-1&&si.qty!==undefined){newShopItems[itemId]={...si,qty:si.qty-1};if(newShopItems[itemId].qty<=0)delete newShopItems[itemId];}
+    else{delete newShopItems[itemId];}
     const sellerSnap=await db.collection(C.ECONOMY).doc(shopKey).get();
     const sellerPersonal=Object.assign({},(sellerSnap.exists?sellerSnap.data().personal:null)||{});
     for(const[cur,amt] of Object.entries(price)){sellerPersonal[cur]=(sellerPersonal[cur]||0)+amt;}
