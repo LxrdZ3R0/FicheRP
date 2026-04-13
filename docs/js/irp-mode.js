@@ -124,7 +124,7 @@
     /* ── Glitch JAHARTA ↔ ATRAHAJ animation ── */
     '.irp-glitch {',
     '  position: relative;',
-    '  display: inline-block;',
+    '  display: inline;',
     '}',
     '.irp-glitch::before, .irp-glitch::after {',
     '  content: attr(data-text);',
@@ -132,6 +132,10 @@
     '  top: 0; left: 0;',
     '  width: 100%; height: 100%;',
     '  opacity: 0;',
+    '  background: inherit;',
+    '  -webkit-background-clip: text;',
+    '  -webkit-text-fill-color: transparent;',
+    '  background-clip: text;',
     '}',
     '.irp-glitch::before {',
     '  color: #dc143c;',
@@ -155,9 +159,13 @@
     '  89% { opacity: 0.8; transform: translate(3px, 1px) skewX(2deg); }',
     '  91% { opacity: 1; transform: translate(-2px, -1px) skewX(-3deg); }',
     '}',
-    /* Texte qui bascule JAHARTA → ATRAHAJ */
+    /* Texte qui bascule — ATRAHAJ par défaut, JAHARTA pendant glitch */
     '.irp-glitch-text {',
     '  animation: irpTextSwap 8s infinite;',
+    '  background: inherit;',
+    '  -webkit-background-clip: text;',
+    '  -webkit-text-fill-color: transparent;',
+    '  background-clip: text;',
     '}',
     '@keyframes irpTextSwap {',
     '  0%,85%,95%,100% { opacity: 1; }',
@@ -168,6 +176,7 @@
     '  opacity: 0;',
     '  animation: irpTextSwapAlt 8s infinite;',
     '  color: #dc143c;',
+    '  -webkit-text-fill-color: #dc143c;',
     '  pointer-events: none;',
     '}',
     '@keyframes irpTextSwapAlt {',
@@ -449,15 +458,15 @@
           wrapper.style.position = 'relative';
           wrapper.style.display = 'inline-block';
 
-          /* Texte normal (visible la plupart du temps) */
+          /* Texte ATRAHAJ (visible la plupart du temps) */
           var normal = document.createElement('span');
           normal.className = 'irp-glitch-text';
-          normal.textContent = part;
+          normal.textContent = reversed;
 
-          /* Texte alternatif (ATRAHAJ — visible pendant le glitch) */
+          /* Texte original JAHARTA (visible pendant le glitch) */
           var alt = document.createElement('span');
           alt.className = 'irp-glitch-alt';
-          alt.textContent = reversed;
+          alt.textContent = part;
           alt.setAttribute('aria-hidden', 'true');
 
           wrapper.appendChild(normal);
