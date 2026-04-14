@@ -402,6 +402,7 @@ async function loadHub(){
     return;
   }
   UID=s.id;
+  window.UID=UID; // expose pour hub-achievements.js / hub-irp.js
   // Afficher l'interface immédiatement
   document.getElementById('login-gate').style.display='none';
   document.getElementById('main-nav').style.display='flex';
@@ -418,10 +419,12 @@ async function loadCharacter(){
     const acData=await cachedGet(C.ACTIVE,UID,'_active_char',15);
     if(!acData){renderNoChar();return}
     CHAR_ID=acData.character_id;
+    window.CHAR_ID=CHAR_ID;
     if(!CHAR_ID){renderNoChar();return}
     const cData=await cachedGet(C.CHARS,CHAR_ID,'_character',30);
     if(!cData){renderNoChar();return}
     CHAR={_id:CHAR_ID,...cData};
+    window.CHAR=CHAR;
     const charKey=(window._resolveIRPInventoryKey && window._irpMode)
       ? await window._resolveIRPInventoryKey(UID, CHAR_ID, cData)
       : `${UID}_${CHAR_ID}`;
@@ -475,6 +478,7 @@ async function loadPlayer(){
       cachedGet(C.PITY,UID,'_pity',30)
     ]);
     PLAYER=pData||{};
+    window.PLAYER=PLAYER;
     PITY=pityData||{};
     renderPlayerWidgets();
     _refreshCurrentTab();
