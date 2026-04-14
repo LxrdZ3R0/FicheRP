@@ -15,6 +15,7 @@
 <link rel="stylesheet" href="css/jaharta.css">
 <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/dist/tippy.css">
 <link rel="stylesheet" href="css/hub.css">
+<link rel="stylesheet" href="css/hub-achievements.css">
 </head>
 <body>
 <div class="page-transition-overlay" id="page-transition"><div class="pt-logo-wrap"><div class="pt-glow-ring"></div><div class="pt-scan"></div><img src="img/logo-jaharta.png" class="pt-img" alt="Jaharta"></div><div class="pt-bar-wrap"><div class="pt-bar-fill"></div></div><div class="pt-text">Chargement</div></div>
@@ -101,6 +102,7 @@
     <button class="tab-btn" onclick="showTab('compagnons')" id="tab-compagnons">🐾 <span class="tab-text">Compagnons</span></button>
     <button class="tab-btn" onclick="showTab('monshop')" id="tab-monshop">🏷️ <span class="tab-text">Mon Shop</span></button>
     <button class="tab-btn" onclick="showTab('shops')" id="tab-shops">🏪 <span class="tab-text">Shops</span></button>
+    <button class="tab-btn" onclick="showTab('succes')" id="tab-succes">🏆 <span class="tab-text">Succès</span></button>
     <button class="tab-btn" onclick="showTab('ushop')" id="tab-ushop">🛒 <span class="tab-text">Universal Shop</span></button>
     <button class="tab-btn" onclick="showTab('parametres')" id="tab-parametres">⚙️ <span class="tab-text">Paramètres</span></button>
   </div>
@@ -519,6 +521,12 @@
     </div>
   </div>
 
+  <!-- SUCCÈS -->
+  <div class="tab-panel" id="panel-succes">
+    <div class="sh"><span class="sh-num">11</span><span class="sh-title">Succès</span><div class="sh-line"></div></div>
+    <div id="ach-container" style="padding:12px"><div class="ach-loading">Chargement...</div></div>
+  </div>
+
   <!-- UNIVERSAL SHOP -->
   <div class="tab-panel" id="panel-ushop">
     <div class="sh"><span class="sh-num">10</span><span class="sh-title">Universal Shop</span><div class="sh-line"></div></div>
@@ -603,6 +611,7 @@
 <script src="js/hub-renders.js"></script>
 <script src="js/hub-inventory.js"></script>
 <script src="js/hub-shops.js"></script>
+<script src="js/hub-achievements.js"></script>
 <script src="js/hub-core.js"></script>
 <script>
 /* Hub: Black Ops 2 only (index 2 in ALL_TRACKS) */
