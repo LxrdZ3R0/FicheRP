@@ -88,8 +88,8 @@ function renderPlayerWidgets(){
       }).catch(function(){});
     }
   } else {
-    nav = (PLAYER.navarites || 0);
-    streak = (PLAYER.consecutive_days || 0);
+    nav    = (PLAYER && PLAYER.navarites)        || 0;
+    streak = (PLAYER && PLAYER.consecutive_days) || 0;
   }
   const unit = isIRP ? 'JAH' : 'NAV';
   document.getElementById('dash-nav-val').innerHTML=`<span>${nav.toLocaleString()}</span><span class="nav-unit">${unit}</span>`;
@@ -104,13 +104,13 @@ async function loadWallet(){
   // Gather all currency data
   const isIRP = window._irpMode;
   const irpP = window._irpPlayer;
-  const nav = isIRP ? (irpP ? (irpP.jahartites || 0) : 0) : (PLAYER.navarites || 0);
+  const nav = isIRP ? (irpP ? (irpP.jahartites || 0) : 0) : ((PLAYER && PLAYER.navarites) || 0);
   const navLabel = isIRP ? 'Jahartites' : 'Navarites';
   const navIcon = isIRP
     ? 'https://firebasestorage.googleapis.com/v0/b/jaharta-rp.firebasestorage.app/o/icons%2FChatGPT%20Image%2013%20avr.%202026%2C%2018_19_29.png?alt=media&token=ac0476c3-965f-4806-aad0-ee6c917e02cd'
     : 'https://firebasestorage.googleapis.com/v0/b/jaharta-rp.firebasestorage.app/o/icons%2FNavarite.png?alt=media&token=4b19c26d-c28e-426e-89ca-0fe381708ece';
-  const notoriety=PLAYER.notoriety||0;
-  const _ge=PLAYER.golden_eggs;
+  const notoriety = (PLAYER && PLAYER.notoriety)    || 0;
+  const _ge        =  PLAYER && PLAYER.golden_eggs;
   const goldenEggs=typeof _ge==='number'?_ge:(typeof _ge==='object'&&_ge!==null?(Object.values(_ge).find(v=>typeof v==='number')||0):(parseInt(_ge)||0));
   // Load economy data for kanite currencies
   let bronze=0,silver=0,gold=0,platinum=0;

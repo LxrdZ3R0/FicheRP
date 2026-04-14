@@ -3,11 +3,30 @@
 (function () {
   'use strict';
 
-  var IRP_CODE = 'JAHARTA02irp';
-  var STORAGE_KEY = 'jaharta_irp_mode';
+  var STORAGE_KEY  = 'jaharta_irp_mode';
+  var _LOCK_KEY    = 'jaharta_irp_lock';
+  var _ATT_KEY     = 'jaharta_irp_att';
+
+  /* ── Code d'accès — obfusqué (XOR) pour éviter la lecture source directe ── */
+  var _E = [11,37,32,37,96,120,37,14,112,66,70,70];
+  var _K = [65,100,104,100,50,44,100,62,66,43,52,54];
+  function _dec() { return _E.map(function(c,i){ return String.fromCharCode(c^_K[i]); }).join(''); }
+
+  /* ── Token structuré en localStorage (remplace le simple 'true') ── */
+  function _mkToken() {
+    return btoa(JSON.stringify({ s: _E.join(','), t: Date.now() }));
+  }
+  function _validToken(raw) {
+    if (!raw) return false;
+    try {
+      var o = JSON.parse(atob(raw));
+      /* Expire après 90 jours */
+      return o.s === _E.join(',') && (Date.now() - (o.t || 0)) < 7776000000;
+    } catch (_) { return false; }
+  }
 
   /* ── State ── */
-  window._irpMode = localStorage.getItem(STORAGE_KEY) === 'true';
+  window._irpMode = _validToken(localStorage.getItem(STORAGE_KEY));
 
   /* ── CSS du mode IRP (injecté dynamiquement) ── */
   var IRP_THEME_CSS = [
@@ -387,7 +406,7 @@
   function applyIRPMode() {
     document.documentElement.classList.add('irp-mode');
     window._irpMode = true;
-    localStorage.setItem(STORAGE_KEY, 'true');
+    localStorage.setItem(STORAGE_KEY, _mkToken());
 
     /* Modifier le logo footer */
     var footerBrand = document.querySelector('.footer-brand');
@@ -423,6 +442,10 @@
     document.documentElement.classList.remove('irp-mode');
     window._irpMode = false;
     localStorage.removeItem(STORAGE_KEY);
+
+    /* Déconnecter tous les MutationObservers IRP enregistrés */
+    (window._irpObservers || []).forEach(function (o) { try { o.disconnect(); } catch (_) {} });
+    window._irpObservers = [];
 
     /* Restaurer le footer */
     var footerBrand = document.querySelector('.footer-brand');
@@ -474,8 +497,20 @@
     var cancelBtn = document.getElementById('irp-cancel-btn');
 
     function trySubmit() {
+      /* ── Rate limiting — bloquer si lockout actif ── */
+      var lockUntil = parseInt(localStorage.getItem(_LOCK_KEY) || '0');
+      if (lockUntil && Date.now() < lockUntil) {
+        var wait = Math.ceil((lockUntil - Date.now()) / 1000);
+        input.placeholder = 'Réessayer dans ' + wait + 's…';
+        input.classList.add('error');
+        setTimeout(function () { input.classList.remove('error'); }, 600);
+        return;
+      }
+
       var val = input.value.trim();
-      if (val === IRP_CODE) {
+      if (val === _dec()) {
+        localStorage.removeItem(_ATT_KEY);
+        localStorage.removeItem(_LOCK_KEY);
         overlay.classList.remove('visible');
         setTimeout(function () {
           overlay.remove();
@@ -483,10 +518,18 @@
           if (typeof showToast === 'function') showToast('Mode IRP activé', 'success');
         }, 300);
       } else {
+        var att = parseInt(localStorage.getItem(_ATT_KEY) || '0') + 1;
+        if (att >= 5) {
+          localStorage.setItem(_LOCK_KEY, String(Date.now() + 300000)); /* 5 min */
+          localStorage.removeItem(_ATT_KEY);
+          input.placeholder = 'Trop de tentatives — 5 min…';
+        } else {
+          localStorage.setItem(_ATT_KEY, String(att));
+          input.placeholder = 'Code incorrect (' + att + '/5)…';
+        }
         input.classList.add('error');
         setTimeout(function () { input.classList.remove('error'); }, 500);
         input.value = '';
-        input.placeholder = 'Code incorrect...';
       }
     }
 

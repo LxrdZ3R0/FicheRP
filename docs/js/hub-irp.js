@@ -6,6 +6,13 @@
 
   if (!window._irpMode) return;
 
+  /* ── Wrapper sanitize() — protège tous les innerHTML contre XSS ── */
+  var _s = typeof sanitize === 'function' ? sanitize : function (x) {
+    return String(x == null ? '' : x)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  };
+
   /* ══════════════════════════════════════════════════════════════════════════
      PHASE 1 — Override loadCharacter pour charger le perso IRP
      ══════════════════════════════════════════════════════════════════════════ */
@@ -27,13 +34,15 @@
     }
   }
 
-  /* On essaie d'overrider dès que possible */
+  /* On essaie d'overrider dès que possible — max 100 tentatives (2s) */
+  var _tryOverrideCount = 0;
   function tryOverride() {
     if (typeof C !== 'undefined') {
       overrideCollections();
       return;
     }
-    setTimeout(tryOverride, 20);
+    if (++_tryOverrideCount < 100) setTimeout(tryOverride, 20);
+    else window._dbg?.warn('[IRP HUB] tryOverride: C non défini après 2s — abandon');
   }
   tryOverride();
 
@@ -296,6 +305,8 @@
       injectJahartiteBalance();
     });
     obs.observe(document.body, { childList: true, subtree: true, characterData: true });
+    window._irpObservers = window._irpObservers || [];
+    window._irpObservers.push(obs);
 
     /* Also check periodically for the first few seconds */
     var attempts = 0;
@@ -315,7 +326,7 @@
     if (!invPanel) return;
 
     var obs = new MutationObserver(function () {
-      if (invPanel.querySelector('.irp-slots-section')) return;
+      if (invPanel.querySelector('.irp-slots-section')) { obs.disconnect(); return; }
 
       /* Cibler directement equip-bonus-grid — c'est l'élément fiable */
       var bonusGrid = invPanel.querySelector('#equip-bonus-grid');
@@ -375,7 +386,7 @@
         slotsHTML += '<div style="font-family:var(--font-m);font-size:0.35rem;color:var(--text3);letter-spacing:0.04em;margin-bottom:8px;opacity:0.7">' + cat.desc + '</div>';
         slotsHTML += '<div style="display:grid;grid-template-columns:repeat(' + cat.count + ',1fr);gap:6px">';
         for (var i = 0; i < cat.count; i++) {
-          slotsHTML += '<div class="irp-slot-cell" data-irp-slot="' + cat.id + '-' + i + '" style="aspect-ratio:1;border:1px dashed ' + cat.color + '40;border-radius:6px;display:flex;align-items:center;justify-content:center;background:rgba(10,4,16,0.7);transition:all 0.2s;min-height:48px;cursor:default">';
+          slotsHTML += '<div class="irp-slot-cell" data-irp-slot="' + cat.id + '-' + i + '" style="aspect-ratio:1;border:1px dashed ' + cat.color + '40;border-radius:6px;display:flex;align-items:center;justify-content:center;background:rgba(10,4,16,0.7);transition:background-color 0.2s,border-color 0.2s,opacity 0.2s;min-height:48px;cursor:default">';
           slotsHTML += '<span style="font-family:var(--font-h);font-size:0.35rem;color:' + cat.color + '44;letter-spacing:0.05em">' + cat.tag + '</span>';
           slotsHTML += '</div>';
         }
@@ -390,6 +401,8 @@
       bonusGridParent.appendChild(wrapper);
     });
     obs.observe(invPanel, { childList: true, subtree: true });
+    window._irpObservers = window._irpObservers || [];
+    window._irpObservers.push(obs);
   }
 
   /* ══════════════════════════════════════════════════════════════════════════
@@ -420,81 +433,84 @@
     if (!discordId) return;
 
     try {
-      /* Jahartites / streak dispo même si le perso n'est pas encore hydraté */
-      var playerSnap = await fdb.collection('irp_players').doc(discordId).get();
-      if (playerSnap.exists) {
-        window._irpPlayer = playerSnap.data();
-      } else {
-        window._irpPlayer = { jahartites: 0, consecutive_days: 0 };
-      }
-      var pitySnap = await fdb.collection('irp_gacha_pity').doc(discordId).get();
-      window._irpGachaPity = pitySnap.exists ? pitySnap.data() : { jahartites_spent_leg: 0, jahartites_spent_myth: 0 };
+      /* ── Phase 1 : données joueur (parallèle) ── */
+      var [playerSnap, pitySnap] = await Promise.all([
+        fdb.collection('irp_players').doc(discordId).get(),
+        fdb.collection('irp_gacha_pity').doc(discordId).get()
+      ]);
+      window._irpPlayer      = playerSnap.exists ? playerSnap.data() : { jahartites: 0, consecutive_days: 0 };
+      window._irpGachaPity   = pitySnap.exists   ? pitySnap.data()   : { jahartites_spent_leg: 0, jahartites_spent_myth: 0 };
       if (window.PLAYER) {
-        window.PLAYER.navarites = window._irpPlayer.jahartites || 0;
+        window.PLAYER.navarites        = window._irpPlayer.jahartites || 0;
         window.PLAYER.consecutive_days = window._irpPlayer.consecutive_days || 0;
       }
 
-      /* Charger bonds */
+      /* ── Phase 2 : données liées au personnage ── */
       var charId = window.CHAR_ID || (window.CHAR && window.CHAR._id);
       if (!charId) {
-        if(typeof window._irpInjectJahartiteBalance==='function') window._irpInjectJahartiteBalance();
-        if (typeof window.renderPlayerWidgets === 'function') {
-          try { window.renderPlayerWidgets(); } catch (_) {}
-        }
-        if (typeof window.loadWallet === 'function') {
-          try { window.loadWallet(); } catch (_) {}
-        }
-        if (typeof window._refreshCurrentTab === 'function') {
-          try { window._refreshCurrentTab(); } catch (_) {}
-        }
+        if (typeof window._irpInjectJahartiteBalance === 'function') window._irpInjectJahartiteBalance();
+        if (typeof window.renderPlayerWidgets === 'function') { try { window.renderPlayerWidgets(); } catch (_) {} }
+        if (typeof window.loadWallet === 'function') { try { window.loadWallet(); } catch (_) {} }
+        if (typeof window._refreshCurrentTab === 'function') { try { window._refreshCurrentTab(); } catch (_) {} }
         return;
       }
 
-      var bondsSnap = await fdb.collection('irp_bonds').where('source_char_id', '==', charId).get();
+      /* Requêtes indépendantes en parallèle */
+      var [bondsSnap, sealSnap, courtSnap, marksSnap] = await Promise.all([
+        fdb.collection('irp_bonds').where('source_char_id', '==', charId).get(),
+        fdb.collection('irp_seals').doc(charId).get(),
+        fdb.collection('irp_courts').doc(charId).get(),
+        fdb.collection('irp_flesh_marks').doc(charId).get()
+      ]);
+
       window._irpBonds = [];
       bondsSnap.forEach(function (d) { window._irpBonds.push({ _id: d.id, ...d.data() }); });
+      window._irpSeal       = sealSnap.exists   ? { _id: sealSnap.id,   ...sealSnap.data()   } : null;
+      window._irpCourt      = courtSnap.exists  ? { _id: courtSnap.id,  ...courtSnap.data()  } : null;
+      window._irpFleshMarks = marksSnap.exists  ? (marksSnap.data().marks || [])               : [];
 
-      /* Seal */
-      var sealSnap = await fdb.collection('irp_seals').doc(charId).get();
-      window._irpSeal = sealSnap.exists ? { _id: sealSnap.id, ...sealSnap.data() } : null;
-
-      /* Seal targets */
+      /* Seal targets (dépend de _irpSeal) */
       if (window._irpSeal) {
         var tgtSnap = await fdb.collection('irp_seal_targets').where('owner_char_id', '==', charId).get();
         window._irpSealTargets = [];
         tgtSnap.forEach(function (d) { window._irpSealTargets.push({ _id: d.id, ...d.data() }); });
       }
 
-      /* Court */
-      var courtSnap = await fdb.collection('irp_courts').doc(charId).get();
-      window._irpCourt = courtSnap.exists ? { _id: courtSnap.id, ...courtSnap.data() } : null;
-
-      /* Flesh marks on me */
-      var marksSnap = await fdb.collection('irp_flesh_marks').doc(charId).get();
-      window._irpFleshMarks = marksSnap.exists ? (marksSnap.data().marks || []) : [];
-
-      /* Jahartites déjà chargées plus haut pour éviter les retours précoces. */
-
-      /* Resolve character names for bonds */
+      /* ── Phase 3 : noms des personnages liés (parallèle) ── */
       window._irpCharNames = {};
       var allBondTargets = (window._irpBonds || []).map(function (b) { return b.target_char_id; }).filter(Boolean);
-      var courtMembers = (window._irpCourt || {}).members || [];
+      var courtMembers    = (window._irpCourt || {}).members || [];
       var allIds = [...new Set([...allBondTargets, ...courtMembers])];
-      for (var cid of allIds) {
-        try {
-          var snap = await fdb.collection('irp_characters').doc(cid).get();
-          if (snap.exists) {
-            var d = snap.data();
-            window._irpCharNames[cid] = ((d.first_name || '') + ' ' + (d.last_name || '')).trim() || cid.substring(0, 8);
-          } else {
-            /* Try normal characters */
-            var snap2 = await fdb.collection('characters').doc(cid).get();
-            if (snap2.exists) {
-              var d2 = snap2.data();
-              window._irpCharNames[cid] = ((d2.first_name || '') + ' ' + (d2.last_name || '')).trim() || cid.substring(0, 8);
-            }
+
+      if (allIds.length > 0) {
+        var nameResults = await Promise.all(allIds.map(function (cid) {
+          return fdb.collection('irp_characters').doc(cid).get()
+            .then(function (snap) { return { cid: cid, snap: snap, type: 'irp' }; })
+            .catch(function () { return { cid: cid, snap: null, type: 'irp' }; });
+        }));
+
+        /* Pour les IDs non trouvés en IRP, chercher dans characters normaux */
+        var fallbackIds = nameResults.filter(function (r) { return !r.snap || !r.snap.exists; }).map(function (r) { return r.cid; });
+        var fallbackResults = fallbackIds.length > 0
+          ? await Promise.all(fallbackIds.map(function (cid) {
+              return fdb.collection('characters').doc(cid).get()
+                .then(function (snap) { return { cid: cid, snap: snap }; })
+                .catch(function () { return { cid: cid, snap: null }; });
+            }))
+          : [];
+
+        nameResults.forEach(function (r) {
+          if (r.snap && r.snap.exists) {
+            var d = r.snap.data();
+            window._irpCharNames[r.cid] = ((d.first_name || '') + ' ' + (d.last_name || '')).trim() || r.cid.substring(0, 8);
           }
-        } catch (e) { /* skip */ }
+        });
+        fallbackResults.forEach(function (r) {
+          if (r.snap && r.snap.exists && !window._irpCharNames[r.cid]) {
+            var d2 = r.snap.data();
+            window._irpCharNames[r.cid] = ((d2.first_name || '') + ' ' + (d2.last_name || '')).trim() || r.cid.substring(0, 8);
+          }
+        });
       }
 
       if(typeof window._irpInjectJahartiteBalance==='function') window._irpInjectJahartiteBalance();
@@ -519,7 +535,8 @@
   }
 
   function _charName(cid) {
-    return (window._irpCharNames || {})[cid] || cid.substring(0, 10) + '…';
+    var raw = (window._irpCharNames || {})[cid] || cid.substring(0, 10) + '…';
+    return _s(raw);
   }
 
   /* ══════════════════════════════════════════════════════════════════════════
@@ -579,11 +596,11 @@
     } else {
       h += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px">';
       banners.forEach(function (b) {
-        var name = b.name || 'Bannière IRP';
-        var desc = b.description || '';
-        var cost = b.cost || 0;
-        var img = b.image_url || '';
-        var rarity = (b.featured_rarity || 'epic').toLowerCase();
+        var name = _s(b.name || 'Bannière IRP');
+        var desc = _s(b.description || '');
+        var cost = Number(b.cost) || 0;
+        var img = _s(b.image_url || '');
+        var rarity = _s((b.featured_rarity || 'epic').toLowerCase());
         var rarityColors = {
           common: '#888', uncommon: '#22c55e', rare: '#3b82f6',
           epic: '#a855f7', legendary: '#f59e0b', mythic: '#ef4444',
@@ -662,7 +679,7 @@
       });
       var jc = b.jealousy_context;
       if (jc && (jc.tension || 0) >= 50) h += '<div style="margin-top:8px;font-size:0.5rem;color:#dc143c">⚠️ Tension triangulaire</div>';
-      if ((b.corruption || 0) > 0) h += '<div style="margin-top:4px;font-size:0.5rem;color:#8B008B">☠️ Corruption: ' + b.corruption + '</div>';
+      if ((b.corruption || 0) > 0) h += '<div style="margin-top:4px;font-size:0.5rem;color:#8B008B">☠️ Corruption: ' + Number(b.corruption) + '</div>';
       h += '</div>';
     });
     h += '</div>';
@@ -706,21 +723,21 @@
     } else if (!seal) {
       h += '<div style="text-align:center;padding:40px"><div style="font-size:2rem;margin-bottom:12px">👁️</div><div style="font-family:var(--font-h);font-size:.8rem;color:#dc143c;letter-spacing:.12em">SEAL OF DOMINION</div><div style="font-family:var(--font-m);font-size:.7rem;color:var(--text2);margin-top:8px">Aucun sceau créé. Utilise le bot IRP.</div></div>';
     } else {
-      h += '<div style="text-align:center;margin-bottom:24px"><div style="font-family:var(--font-h);font-size:1rem;color:#dc143c;letter-spacing:.12em">👁️ ' + (seal.name || 'Sceau') + '</div>';
-      if (seal.description) h += '<div style="font-family:var(--font-body);font-size:.7rem;color:var(--text2);margin-top:4px;font-style:italic">' + seal.description + '</div>';
+      h += '<div style="text-align:center;margin-bottom:24px"><div style="font-family:var(--font-h);font-size:1rem;color:#dc143c;letter-spacing:.12em">👁️ ' + _s(seal.name || 'Sceau') + '</div>';
+      if (seal.description) h += '<div style="font-family:var(--font-body);font-size:.7rem;color:var(--text2);margin-top:4px;font-style:italic">' + _s(seal.description) + '</div>';
       h += '</div>';
       if (targets.length > 0) {
         h += '<div style="font-family:var(--font-b);font-size:.75rem;color:var(--text);margin-bottom:12px;letter-spacing:.08em">CIBLES MARQUÉES</div>';
         targets.forEach(function (t) {
           var se = { active: '🟢', inactive: '🟡', revoked: '🔴' }[t.state] || '⚪';
-          h += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:12px"><span>' + se + '</span><div style="flex:1"><div style="font-family:var(--font-b);font-size:.75rem;color:var(--text)">' + _charName(t.target_char_id) + '</div><div style="font-size:.6rem;color:var(--text3)">' + (t.state || '?') + '</div></div></div>';
+          h += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:12px"><span>' + se + '</span><div style="flex:1"><div style="font-family:var(--font-b);font-size:.75rem;color:var(--text)">' + _charName(t.target_char_id) + '</div><div style="font-size:.6rem;color:var(--text3)">' + _s(t.state || '?') + '</div></div></div>';
         });
       }
     }
     if (marks.length > 0) {
       h += '<div style="margin-top:24px;font-family:var(--font-b);font-size:.75rem;color:#dc143c;margin-bottom:12px;letter-spacing:.08em">🔥 MARQUES SUR MOI</div>';
       marks.forEach(function (m) {
-        h += '<div style="background:rgba(220,20,60,0.06);border:1px solid rgba(220,20,60,0.15);border-radius:8px;padding:10px;margin-bottom:6px"><span style="font-family:var(--font-b);color:var(--text);font-size:.7rem">🔥 ' + (m.name || '?') + '</span><span style="color:var(--text3);font-size:.6rem;margin-left:8px">' + (m.location || '') + ' — par ' + (m.owner_name || '?') + '</span></div>';
+        h += '<div style="background:rgba(220,20,60,0.06);border:1px solid rgba(220,20,60,0.15);border-radius:8px;padding:10px;margin-bottom:6px"><span style="font-family:var(--font-b);color:var(--text);font-size:.7rem">🔥 ' + _s(m.name || '?') + '</span><span style="color:var(--text3);font-size:.6rem;margin-left:8px">' + _s(m.location || '') + ' — par ' + _s(m.owner_name || '?') + '</span></div>';
       });
     }
     h += '</div>';
@@ -735,10 +752,10 @@
     if (!court) {
       h += '<div style="text-align:center;padding:40px;color:var(--text3)"><div style="font-size:2rem;margin-bottom:12px">👑</div><div style="font-family:var(--font-h);font-size:.8rem;letter-spacing:.12em">COUR</div><div style="font-family:var(--font-m);font-size:.7rem;margin-top:8px">Aucune cour. Ascendant ≥ 700 sur 3+ cibles requis.</div></div>';
     } else {
-      h += '<div style="text-align:center;margin-bottom:24px"><div style="font-family:var(--font-h);font-size:1rem;color:#dc143c;letter-spacing:.12em">👑 ' + (court.name || 'Cour') + '</div></div>';
+      h += '<div style="text-align:center;margin-bottom:24px"><div style="font-family:var(--font-h);font-size:1rem;color:#dc143c;letter-spacing:.12em">👑 ' + _s(court.name || 'Cour') + '</div></div>';
       (court.members || []).forEach(function (mcid, i) {
         var rank = ['🥇', '🥈', '🥉'][i] || '#' + (i + 1);
-        var title = (court.titles || {})[mcid] || '';
+        var title = _s((court.titles || {})[mcid] || '');
         h += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:12px"><span style="font-size:1.2rem">' + rank + '</span><div style="flex:1"><div style="font-family:var(--font-b);font-size:.75rem;color:var(--text)">' + _charName(mcid) + (title ? ' — ' + title : '') + '</div></div></div>';
       });
     }

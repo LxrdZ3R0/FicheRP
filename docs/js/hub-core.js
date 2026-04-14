@@ -383,6 +383,18 @@ function applyBuffMultipliersAndEqualizer(totalBonuses,charStats,equippedIds,ite
   }
 }
 
+/* ── Helper IRP items — évite la duplication loadCharacter / loadInventory ── */
+async function _mergeIRPItemsIfNeeded(){
+  if(!window._irpMode)return;
+  try{
+    const irpSnap=await db.collection('config').doc('irp_items').get();
+    if(irpSnap.exists){
+      const irpItems=(irpSnap.data()||{}).items||{};
+      Object.entries(irpItems).forEach(([k,v])=>{if(!k.startsWith('__'))ALL_ITEMS_DATA[k]=v;});
+    }
+  }catch(_){}
+}
+
 // ── INIT ──
 async function init(){
   const s=getSess();
@@ -442,16 +454,8 @@ async function loadCharacter(){
       // Merge signature items (defined in code, not in Firestore config)
       for(const[sid,sdata] of Object.entries(SIGNATURE_ITEMS)){if(!ALL_ITEMS_DATA[sid])ALL_ITEMS_DATA[sid]=sdata;}
     }
-    // Merge IRP items from Firestore (irp_items_config) so prices/IRP-specific items are available
-    if(window._irpMode){
-      try{
-        const irpCfgSnap=await db.collection('config').doc('irp_items').get();
-        if(irpCfgSnap.exists){
-          const irpItems=(irpCfgSnap.data()||{}).items||{};
-          Object.entries(irpItems).forEach(([k,v])=>{if(!k.startsWith('__'))ALL_ITEMS_DATA[k]=v;});
-        }
-      }catch(_){}
-    }
+    // Merge IRP items depuis Firestore (factorialisé dans _mergeIRPItemsIfNeeded)
+    await _mergeIRPItemsIfNeeded();
     BUFFS_DATA=bufData?(bufData.buffs||[]):[];
     // Charger compagnons pour bonus stats (Personnage tab)
     try{
@@ -500,16 +504,8 @@ async function loadInventory(){
     if(cfgData) ALL_ITEMS_DATA={...cfgData.items||{},...cfgData.equipment||{},...cfgData.food_items||{},...cfgData.consumable_items||{}};
     // Merge signature items (defined in code, not in Firestore config)
     for(const[sid,sdata] of Object.entries(SIGNATURE_ITEMS)){if(!ALL_ITEMS_DATA[sid])ALL_ITEMS_DATA[sid]=sdata;}
-    // Merge IRP items from Firestore
-    if(window._irpMode){
-      try{
-        const irpCfgSnap=await db.collection('config').doc('irp_items').get();
-        if(irpCfgSnap.exists){
-          const irpItems=(irpCfgSnap.data()||{}).items||{};
-          Object.entries(irpItems).forEach(([k,v])=>{if(!k.startsWith('__'))ALL_ITEMS_DATA[k]=v;});
-        }
-      }catch(_){}
-    }
+    // Merge IRP items (factorialisé)
+    await _mergeIRPItemsIfNeeded();
     if(window.Skeleton) window.Skeleton.hide('inv-grid');
     renderInventory();
   }catch(e){window._dbg?.error('[INV]',e);if(window.Skeleton) window.Skeleton.hide('inv-grid');grid.innerHTML='<div class="empty">Erreur de chargement</div>'}
@@ -611,12 +607,13 @@ function showTab(id){
   };
 
   if(prevPanel&&prevPanel!==panel&&!prefersReducedMotion){
+    /* transition uniquement sur opacity — jamais transition:all */
     prevPanel.style.transition='opacity 0.12s ease';
     prevPanel.style.opacity='0';
     setTimeout(()=>{
       prevPanel.style.opacity='';
       prevPanel.style.transition='';
-      doSwitch();
+      try{ doSwitch(); }catch(err){ window._dbg?.error('[TAB switch]',err); }
     },120);
   }else{
     doSwitch();
