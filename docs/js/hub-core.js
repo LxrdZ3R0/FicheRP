@@ -570,6 +570,7 @@ const LAZY={
   compagnons:loadCompanions,
   monshop:()=>{if(_monshopLoaded){renderMonShop();}else{loadMonShop();}},
   shops:loadShops,
+  succes:()=>{if(window._achRefresh)window._achRefresh();},
   ushop:loadUshop,
   parametres:renderSettings,
 };

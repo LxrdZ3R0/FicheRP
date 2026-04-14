@@ -102,6 +102,7 @@
       { id: 'corruption',  emoji: '☠️', label: 'Corruption' },
       { id: 'seal',        emoji: '👁️', label: 'Seal' },
       { id: 'cour',        emoji: '👑', label: 'Cour' },
+      { id: 'succes_irp',  emoji: '🏆', label: 'Succès IRP' },
       { id: 'ushop',       emoji: '🛒', label: 'IRP Shop' },
       { id: 'parametres',  emoji: '⚙️', label: 'Paramètres' },
     ];
@@ -116,7 +117,7 @@
     hubTabs.innerHTML = tabsHTML;
 
     /* Cacher les panels normaux qui n'existent pas en IRP */
-    ['party', 'progression', 'titres', 'compagnons', 'monshop', 'shops'].forEach(function (id) {
+    ['party', 'progression', 'titres', 'compagnons', 'monshop', 'shops', 'succes'].forEach(function (id) {
       var panel = document.getElementById('panel-' + id);
       if (panel) panel.style.display = 'none';
     });
@@ -128,6 +129,7 @@
       { id: 'corruption', num: '06', title: 'Corruption' },
       { id: 'seal', num: '07', title: 'Seal of Dominion' },
       { id: 'cour', num: '08', title: 'Cour' },
+      { id: 'succes_irp', num: '09', title: 'Succès IRP' },
     ];
     newPanels.forEach(function (p) {
       if (document.getElementById('panel-' + p.id)) return;
@@ -135,7 +137,7 @@
       div.className = 'tab-panel';
       div.id = 'panel-' + p.id;
       div.innerHTML = '<div class="sh"><span class="sh-num">' + p.num + '</span><span class="sh-title">' + p.title + '</span><div class="sh-line"></div></div>' +
-        '<div id="irp-' + p.id + '-container" style="padding:12px"><div class="empty-state" style="text-align:center;padding:40px;color:var(--text2)">Chargement...</div></div>';
+        '<div id="' + (p.id === 'succes_irp' ? 'irp-succes-container' : ('irp-' + p.id + '-container')) + '" style="padding:12px"><div class="empty-state" style="text-align:center;padding:40px;color:var(--text2)">Chargement...</div></div>';
       hubMain.appendChild(div);
     });
 
@@ -171,6 +173,7 @@
       else if (id === 'corruption') renderIRPCorruption();
       else if (id === 'seal') renderIRPSeal();
       else if (id === 'cour') renderIRPCour();
+      else if (id === 'succes_irp') { if (window._renderAchievements) window._renderAchievements(); }
 
       /* Call original for panel switching + lazy loading */
       if (typeof _orig === 'function') {
