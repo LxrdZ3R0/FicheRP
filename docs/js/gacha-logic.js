@@ -394,47 +394,8 @@ function watchBanners(){
   }catch(e){window._dbg?.error('[BANNER_WATCH]',e)}
 }
 
-// ═══ GACHA BANNER IMAGE (admin-managed, stored in Firestore) ═══
-async function loadGachaBannerImg(){
-  try{
-    const snap=await db.collection('gacha_config').doc('banner_image').get();
-    const d=snap.exists?snap.data():null;
-    const wrap=document.getElementById('gacha-banner-img-wrap');
-    const img=document.getElementById('gacha-banner-img');
-    if(d&&d.url&&d.url.trim()){
-      img.src=d.url;
-      img.style.display='block';
-      wrap.style.display='block';
-      const urlInput=document.getElementById('gacha-banner-img-url');
-      if(urlInput)urlInput.value=d.url;
-    }else{
-      img.style.display='none';
-      wrap.style.display='none';
-    }
-  }catch(e){window._dbg?.error('[BANNER_IMG]',e)}
-}
-async function saveGachaBannerImg(){
-  const url=(document.getElementById('gacha-banner-img-url').value||'').trim();
-  if(!U||!window._isAdmin){showToast('Accès refusé.','error');return;}
-  try{
-    await db.collection('gacha_config').doc('banner_image').set({url:url,updated_at:new Date().toISOString()});
-    const wrap=document.getElementById('gacha-banner-img-wrap');
-    const img=document.getElementById('gacha-banner-img');
-    if(url){
-      img.src=url;img.style.display='block';wrap.style.display='block';
-    }else{
-      img.style.display='none';wrap.style.display='none';
-    }
-    JCache.invalidate('gacha_config','banner_image');
-    showToast('Image de bannière mise à jour !','success');
-  }catch(e){window._dbg?.error('[SAVE_BANNER_IMG]',e);showToast('Erreur : '+e.message,'error')}
-}
+// ═══ ADMIN MODE — per-banner image editing ═══
 function showAdminBannerEditor(){
-  const editor=document.getElementById('gacha-admin-banner-editor');
-  if(editor&&window._isAdmin){
-    editor.style.display='block';
-  }
-  // Enable admin mode on banner cards (shows edit buttons)
   const main=document.getElementById('gacha-main');
   if(main&&window._isAdmin){
     main.classList.add('admin-mode');
