@@ -16,7 +16,7 @@
 
   var PAGES_IRP = [
     { href: 'index-irp.html',      label: 'Accueil IRP',    short: 'Accueil',    num: '01' },
-    { href: 'fiches.html',         label: 'Fiches RP',      short: 'Fiches',     num: '02' },
+    { href: 'fiches-irp.html',      label: 'Fiches IRP',     short: 'Fiches',     num: '02' },
     { href: 'gacha-irp.html',      label: 'Gacha IRP',      short: 'Gacha',      num: '03' },
     { href: 'hub-irp.html',        label: 'Hub IRP',        short: 'Hub',        num: '04' }
   ];
