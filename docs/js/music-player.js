@@ -163,37 +163,46 @@
 
   /* ── Auto-start music on first user interaction ──
      Browsers block autoplay without user gesture. We listen for
-     click, mousemove, touchstart — the first one triggers playback.
+     click, scroll, touchstart — the first one triggers playback.
      Always registers, on every page. */
   var _autoTriggered = false;
-  function _autoStart() {
-    if (_autoTriggered || playing) return;
-    _autoTriggered = true;
+  function _removeAutoListeners() {
     document.removeEventListener('click', _autoStart, true);
-    document.removeEventListener('mousemove', _autoStart, true);
+    document.removeEventListener('scroll', _autoStart, true);
     document.removeEventListener('touchstart', _autoStart, true);
-    setTimeout(function() {
+    document.removeEventListener('mousemove', _autoStartMouse, true);
+  }
+  function _autoStart(ev) {
+    if (_autoTriggered || playing) { _removeAutoListeners(); return; }
+    _autoTriggered = true;
+    _removeAutoListeners();
+    /* Force reload track to ensure fresh request with user gesture context */
+    loadTrack(idx);
+    function _tryPlay() {
       if (playing) return;
-      // Force reload track to ensure fresh request with user gesture context
-      loadTrack(idx);
-      var _waited = 0;
-      function _tryPlay() {
-        if (playing) return;
-        if (audio.readyState >= 2) {
-          doPlay();
-        } else if (_waited < 8000) {
-          _waited += 500;
-          setTimeout(_tryPlay, 500);
-        }
+      if (audio.readyState >= 2) {
+        doPlay();
+      } else {
+        audio.addEventListener('canplay', function() { if (!playing) doPlay(); }, { once: true });
       }
-      audio.addEventListener('canplay', function() { if (!playing) doPlay(); }, { once: true });
-      // Also poll in case canplay already fired or won't fire
-      setTimeout(_tryPlay, 600);
-    }, 200);
+    }
+    /* Immediate attempt + delayed fallback */
+    _tryPlay();
+    setTimeout(_tryPlay, 800);
+    setTimeout(_tryPlay, 2000);
+  }
+  /* Mousemove: require at least 50px movement to avoid false triggers */
+  var _mouseStartX = -1, _mouseStartY = -1;
+  function _autoStartMouse(ev) {
+    if (_autoTriggered || playing) { _removeAutoListeners(); return; }
+    if (_mouseStartX < 0) { _mouseStartX = ev.clientX; _mouseStartY = ev.clientY; return; }
+    var dx = Math.abs(ev.clientX - _mouseStartX), dy = Math.abs(ev.clientY - _mouseStartY);
+    if (dx + dy > 50) _autoStart(ev);
   }
   document.addEventListener('click', _autoStart, true);
-  document.addEventListener('mousemove', _autoStart, true);
+  document.addEventListener('scroll', _autoStart, true);
   document.addEventListener('touchstart', _autoStart, true);
+  document.addEventListener('mousemove', _autoStartMouse, true);
 
   /* ── Expose API for Gacha special music ── */
   window.JMP = {

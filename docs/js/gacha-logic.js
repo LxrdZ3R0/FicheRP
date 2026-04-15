@@ -359,7 +359,9 @@ async function loadBanners(){
       renderIRPBannersPage(BANNERS);
       return;
     }
-    const d=await JCache.get(db,'gacha_config','banners',120);
+    /* Force fresh read from Firestore (invalidate cache first) */
+    JCache.invalidate('gacha_config','banners');
+    const d=await JCache.get(db,'gacha_config','banners',60);
     if(!d)return;
     BANNERS=d.banners||[];
     // Load per-banner images and merge before rendering
@@ -373,6 +375,15 @@ async function loadBanners(){
     }
   }catch(e){window._dbg?.error('[LOAD_BANNERS]',e)}
 }
+/* Auto-refresh banners every 18 min (synced with bot push cycle + 3 min offset) */
+var _bannerRefreshInterval=null;
+function startBannerAutoRefresh(){
+  if(_bannerRefreshInterval)return;
+  _bannerRefreshInterval=setInterval(function(){
+    loadBanners();
+  }, 18*60*1000);
+}
+startBannerAutoRefresh();
 
 // ═══ GACHA BANNER IMAGE (admin-managed, stored in Firestore) ═══
 async function loadGachaBannerImg(){

@@ -39,7 +39,7 @@ function renderFullChar(){
   const sp=parseInt(c.available_stat_points||0);
 
   /* ── Calcul bonus par catégorie ── */
-  const bEquip={},bSets={},bParty={},bTitles={},bBuffs={},bComp={},bSig={},bMythic={};
+  const bEquip={},bSets={},bParty={},bTitles={},bBuffs={},bComp={},bSig={},bMythic={},bAch={};
   const bonuses={}; // total
   function addTo(cat,s,v){v=parseInt(v)||0;if(!v)return;cat[s]=(cat[s]||0)+v;bonuses[s]=(bonuses[s]||0)+v;}
 
@@ -120,6 +120,12 @@ function renderFullChar(){
     if(diff>0)bMythic[s]=(bMythic[s]||0)+diff;
   });
 
+  // 10) Achievement bonuses (combined normal + IRP)
+  try{
+    const achB=window._achGetAllBonuses?window._achGetAllBonuses():(window._achGetBonuses?window._achGetBonuses():{});
+    Object.entries(achB).forEach(([s,v])=>{addTo(bAch,s,v);});
+  }catch(_){}
+
   // ── True Self: INT locked at 10, no bonuses apply ──
   const _hasTrueSelf=(()=>{
     const pw=(c.powers||[]);
@@ -196,6 +202,7 @@ function renderFullChar(){
     html+=renderBonusSection('🧩','SETS','sets',bSets);
     if(sigEquipped.length) html+=renderBonusSection('⭐','SIGNATURE','sig',bSig,sigTags);
     html+=renderBonusSection('🔮','MYTHIC+','equip',bMythic);
+    html+=renderBonusSection('🏆','SUCCÈS','ach',bAch);
     if(activeCompName) html+=renderBonusSection('🐾','COMPAGNON','comp',bComp,compTag);
     html+=renderBonusSection('👥','PARTY','party',bParty);
     html+=renderBonusSection('🏷️','TITRES','titles',bTitles);

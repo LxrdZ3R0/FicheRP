@@ -76,13 +76,24 @@
 .ach-card.locked { opacity:.45; filter:grayscale(.6); }
 
 /* ── Card icon ── */
-.ach-card-icon { flex-shrink:0; width:44px; height:44px; display:flex; align-items:center; justify-content:center; }
-.ach-icon-img { width:44px; height:44px; border-radius:8px; object-fit:cover; }
+.ach-card-icon { flex-shrink:0; width:56px; height:56px; display:flex; align-items:center; justify-content:center; }
+.ach-icon-img { width:56px; height:56px; border-radius:10px; object-fit:cover; box-shadow:0 0 8px color-mix(in srgb, var(--rank-color) 25%, transparent); }
 .ach-icon-placeholder {
-  width:44px; height:44px; border-radius:8px; display:flex; align-items:center; justify-content:center;
+  width:56px; height:56px; border-radius:10px; display:flex; align-items:center; justify-content:center;
   background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08);
-  font-size:1.2rem;
+  font-size:1.4rem;
 }
+
+/* ── Admin edit button ── */
+.ach-edit-icon-btn {
+  position:absolute; top:6px; right:6px; width:24px; height:24px;
+  background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.15);
+  border-radius:6px; font-size:.6rem; cursor:pointer; display:flex;
+  align-items:center; justify-content:center; opacity:0;
+  transition:opacity .2s, background .2s; z-index:2;
+}
+.ach-card:hover .ach-edit-icon-btn { opacity:1; }
+.ach-edit-icon-btn:hover { background:rgba(255,255,255,.15); }
 
 /* ── Card info ── */
 .ach-card-info { flex:1; min-width:0; position:relative; z-index:1; }

@@ -7,7 +7,14 @@
   var STORAGE_KEY = 'jaharta_irp_mode';
 
   /* ── State ── */
-  window._irpMode = localStorage.getItem(STORAGE_KEY) === 'true';
+  /* IRP mode is activated ONLY via:
+     1) query param ?mode=irp on hub.html/gacha.html
+     2) localStorage (set when entering code on index.html, read on hub.html)
+     On ALL other pages, _irpMode stays false. */
+  var isHubOrGacha = /\b(hub|gacha)\b/.test(location.pathname);
+  var hasIRPParam = new URLSearchParams(location.search).get('mode') === 'irp';
+  var hasIRPStorage = localStorage.getItem(STORAGE_KEY) === 'true';
+  window._irpMode = isHubOrGacha && (hasIRPParam || hasIRPStorage);
 
   /* ── CSS du mode IRP (injecté dynamiquement) ── */
   var IRP_THEME_CSS = [
@@ -83,13 +90,17 @@
     '.irp-mode .footer-copy { color: #4a3060 !important; }',
     /* Titres et textes — couleur fixe pour éviter le flou du text-fill transparent */
     '.irp-mode .hero-title,',
+    '.irp-mode .hero-title em,',
     '.irp-mode .section-title,',
     '.irp-mode .glitch-title,',
     '.irp-mode .sh-title,',
     '.irp-mode .gate-logo,',
     '.irp-mode .footer-brand {',
     '  color: #dc143c !important;',
-    '  -webkit-text-fill-color: currentColor !important;',
+    '  -webkit-text-fill-color: #dc143c !important;',
+    '  background: none !important;',
+    '  background-clip: unset !important;',
+    '  -webkit-background-clip: unset !important;',
     '  text-shadow: 0 0 14px rgba(220,20,60,0.18);',
     '}',
 
@@ -444,8 +455,8 @@
     if (window._irpMode) {
       removeIRPMode();
       if (typeof showToast === 'function') showToast('Mode IRP désactivé', 'info');
-      /* Recharger la page pour nettoyer les données IRP */
-      setTimeout(function () { location.reload(); }, 500);
+      /* Redirect to normal hub (no IRP param) */
+      setTimeout(function () { location.href = 'hub.html'; }, 500);
       return;
     }
 
@@ -476,11 +487,19 @@
     function trySubmit() {
       var val = input.value.trim();
       if (val === IRP_CODE) {
+        localStorage.setItem(STORAGE_KEY, 'true');
         overlay.classList.remove('visible');
         setTimeout(function () {
           overlay.remove();
-          applyIRPMode();
-          if (typeof showToast === 'function') showToast('Mode IRP activé', 'success');
+          /* If we're already on hub or gacha, apply in-place */
+          if (isHubOrGacha) {
+            applyIRPMode();
+            if (typeof showToast === 'function') showToast('Mode IRP activé', 'success');
+            location.reload();
+          } else {
+            /* Redirect to hub IRP */
+            location.href = 'hub.html?mode=irp';
+          }
         }, 300);
       } else {
         input.classList.add('error');
@@ -723,7 +742,7 @@
   /* ── Auto-apply si déjà authentifié ── */
   function init() {
     injectSecretButton();
-    if (window._irpMode) {
+    if (window._irpMode && isHubOrGacha) {
       applyIRPMode();
     }
   }

@@ -27,6 +27,7 @@
   };
 
   var _achDefs = null;
+  var _customIcons = null;
   var _userAch = null;
   var _allUsersAch = null;
   var _loaded = false;
@@ -51,6 +52,27 @@
     } catch (_) {}
     _achDefs = { normal: {}, irp: {} };
     return _achDefs;
+  }
+
+  async function loadCustomIcons() {
+    if (_customIcons) return _customIcons;
+    try {
+      var snap = await db.collection('config').doc('achievements_icons').get();
+      if (snap.exists) { _customIcons = snap.data() || {}; return _customIcons; }
+    } catch (_) {}
+    _customIcons = {};
+    return _customIcons;
+  }
+
+  async function saveIcon(achId, url) {
+    try {
+      if (!_customIcons) _customIcons = {};
+      _customIcons[achId] = url;
+      await db.collection('config').doc('achievements_icons').set(_customIcons);
+      if (typeof showToast === 'function') showToast('Image sauvegardée !', 'success');
+    } catch (e) {
+      if (typeof showToast === 'function') showToast('Erreur: ' + e.message, 'error');
+    }
   }
 
   function getDefs() {
@@ -103,15 +125,18 @@
       c.innerHTML = '<div class="ach-loading">Chargement des succès...</div>';
       await loadDefs();
       await loadUser();
+      await loadCustomIcons();
       _loaded = true;
     }
 
     var defs = getDefs();
+    var icons = _customIcons || {};
     var unlocked = (_userAch || {}).unlocked || {};
     var total = Object.keys(defs).length;
     var cnt = Object.keys(unlocked).filter(function (a) { return !!defs[a]; }).length;
     var sc = score(unlocked, defs);
     var label = getLabel();
+    var isAdmin = !!window._isAdmin;
 
     /* Group by rank */
     var byRank = {};
@@ -163,12 +188,13 @@
       achs.forEach(function (a) {
         var lk = !a.isUnlocked;
         var cls = 'ach-card' + (lk ? ' locked' : '') + ' rank-' + rank.replace('+', 'plus');
-        var icon = a.icon || null;
+        var icon = icons[a.id] || a.icon || null;
         var bonus = bStr(a.bonus);
 
         h += '<div class="' + cls + '" style="--rank-color:' + col + '">';
         h += '<div class="ach-card-icon">';
-        if (icon && !lk) h += '<img src="' + icon + '" alt="" class="ach-icon-img">';
+        if (icon && !lk) h += '<img src="' + icon + '" alt="" class="ach-icon-img" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'
+          + '<div class="ach-icon-placeholder" style="display:none">🏆</div>';
         else h += '<div class="ach-icon-placeholder">' + (lk ? '?' : '🏆') + '</div>';
         h += '</div>';
         h += '<div class="ach-card-info">';
@@ -176,13 +202,34 @@
         h += '<div class="ach-card-desc">' + (lk ? 'Succès verrouillé' : a.desc) + '</div>';
         if (!lk && bonus) h += '<div class="ach-card-bonus">' + bonus + '</div>';
         h += '<div class="ach-card-type">' + (a.type === 'owner' ? '👑 Owner' : '⚡ Auto') + '</div>';
-        h += '</div></div>';
+        h += '</div>';
+        /* Admin image editor */
+        if (isAdmin) {
+          h += '<button class="ach-edit-icon-btn" data-ach-id="' + a.id + '" title="Modifier l\'image">✏️</button>';
+        }
+        h += '</div>';
       });
 
       h += '</div></div>';
     });
 
     c.innerHTML = h;
+
+    /* Bind admin edit buttons */
+    if (isAdmin) {
+      c.querySelectorAll('.ach-edit-icon-btn').forEach(function (btn) {
+        btn.addEventListener('click', function (ev) {
+          ev.stopPropagation();
+          var achId = this.dataset.achId;
+          var currentUrl = icons[achId] || '';
+          var newUrl = prompt('URL de l\'image pour ce succès :\n(laisser vide pour supprimer)', currentUrl);
+          if (newUrl === null) return;
+          saveIcon(achId, newUrl.trim()).then(function () {
+            _loaded = false; _customIcons = null; render();
+          });
+        });
+      });
+    }
   }
 
   /* ══════════════════════════════════════════════════════════════════════
@@ -252,6 +299,49 @@
     _userAch = null;
     render();
   };
+  /* Returns total stat bonuses from unlocked achievements (current mode) */
+  window._achGetBonuses = function () {
+    var defs = getDefs();
+    var unlocked = (_userAch || {}).unlocked || {};
+    var tb = {};
+    Object.keys(unlocked).forEach(function (aid) {
+      var d = defs[aid];
+      if (d && d.bonus) Object.entries(d.bonus).forEach(function (e) { tb[e[0]] = (tb[e[0]] || 0) + e[1]; });
+    });
+    return tb;
+  };
+  /* Returns combined bonuses from BOTH normal + IRP achievements */
+  window._achGetAllBonuses = function () {
+    if (!_achDefs || !_userAch) return {};
+    var unlocked = _userAch.unlocked || {};
+    var allDefs = Object.assign({}, _achDefs.normal || {}, _achDefs.irp || {});
+    var tb = {};
+    Object.keys(unlocked).forEach(function (aid) {
+      var d = allDefs[aid];
+      if (d && d.bonus) Object.entries(d.bonus).forEach(function (e) { tb[e[0]] = (tb[e[0]] || 0) + e[1]; });
+    });
+    return tb;
+  };
+
+  /* ── Preload achievement data at startup so _achGetBonuses works immediately ── */
+  function _preloadAchData() {
+    if (typeof db === 'undefined') {
+      setTimeout(_preloadAchData, 200);
+      return;
+    }
+    loadDefs().then(function () {
+      /* Delay loadUser until UID is available */
+      function _waitUID() {
+        if (window.UID) {
+          loadUser().then(function () { loadCustomIcons(); });
+        } else {
+          setTimeout(_waitUID, 300);
+        }
+      }
+      _waitUID();
+    }).catch(function () {});
+  }
+  _preloadAchData();
 
   /* ── Lazy loaders ── */
   /* Normal hub: LAZY.succes */
@@ -260,5 +350,20 @@
   }
   /* IRP hub: exposed for hub-irp.js override */
   window._renderAchievements = render;
+
+  /* ── Auto-refresh every 18 min (15 min bot push + 3 min offset) ── */
+  var _autoRefreshInterval = null;
+  function startAutoRefresh() {
+    if (_autoRefreshInterval) return;
+    _autoRefreshInterval = setInterval(function () {
+      _loaded = false;
+      _achDefs = null;
+      _customIcons = null;
+      _userAch = null;
+      _allUsersAch = null;
+      render();
+    }, 18 * 60 * 1000);
+  }
+  startAutoRefresh();
 
 })();
