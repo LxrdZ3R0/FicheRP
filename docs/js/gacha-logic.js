@@ -422,8 +422,9 @@ function closeBannerImgEditor(bid){
 
 async function saveBannerImg(bid){
   const inp=document.getElementById('bie-url-'+bid);
-  if(!inp)return;
-  if(!U||!window._isAdmin){showToast('Accès refusé.','error');return;}
+  if(!inp){showToast('Erreur: input introuvable (bie-url-'+bid+')','error');return;}
+  if(!U){showToast('Erreur: non connecté au gacha.','error');return;}
+  if(!window._isAdmin){showToast('Erreur: pas admin Firebase.','error');return;}
   const url=inp.value.trim();
   try{
     await db.collection('gacha_config').doc('banner_images').set(
@@ -631,7 +632,7 @@ function renderBanners(banners){
               <div class="banner-name" style="color:${c}">${b.name}</div>
               <div class="banner-subtitle">${live?'BANNIÈRE ACTIVE':'EN ATTENTE'}</div>
             </div>
-            <button class="banner-admin-edit" data-bid="${b.id}" onclick="event.stopPropagation();openBannerImgEditor('${b.id}')" title="Modifier l'image" aria-label="Modifier l'image de la bannière ${b.name}">✏️</button>
+            <button class="banner-admin-edit" data-bid="${b.id}" title="Modifier l'image" aria-label="Modifier l'image de la bannière ${b.name}">✏️</button>
           </div>
           <div class="banner-body">
             <div class="banner-desc">${b.description||''}</div>
@@ -648,8 +649,8 @@ function renderBanners(banners){
             <img class="banner-img-editor-preview" id="bie-prev-${b.id}" alt="Aperçu image bannière ${b.name}">
             <input class="banner-img-editor-input" id="bie-url-${b.id}" placeholder="URL de l'image (PNG, JPG, WEBP…)" value="${b.image||''}" spellcheck="false" autocomplete="off" aria-label="URL de l'image pour la bannière ${b.name}">
             <div class="banner-img-editor-actions">
-              <button class="btn-save-img" onclick="event.stopPropagation();saveBannerImg('${b.id}')" aria-label="Sauvegarder l'image de la bannière ${b.name}">SAUVEGARDER</button>
-              <button class="btn-cancel-img" onclick="event.stopPropagation();closeBannerImgEditor('${b.id}')" aria-label="Annuler la modification de l'image">ANNULER</button>
+              <button class="btn-save-img" data-save-bid="${b.id}" aria-label="Sauvegarder l'image de la bannière ${b.name}">SAUVEGARDER</button>
+              <button class="btn-cancel-img" data-cancel-bid="${b.id}" aria-label="Annuler la modification de l'image">ANNULER</button>
             </div>
           </div>
         </div>
@@ -692,6 +693,29 @@ function renderBanners(banners){
       else if(prev){prev.style.display='none';}
     });
     inp.addEventListener('click',function(e){e.stopPropagation();});
+  });
+  // Bind save/cancel buttons via addEventListener (avoids async onclick issues)
+  g.querySelectorAll('.btn-save-img[data-save-bid]').forEach(btn=>{
+    btn.addEventListener('click',function(e){
+      e.stopPropagation();
+      const bid=this.dataset.saveBid;
+      saveBannerImg(bid).catch(err=>{
+        window._dbg?.error('[SAVE_BANNER]',err);
+        showToast('Erreur: '+err.message,'error');
+      });
+    });
+  });
+  g.querySelectorAll('.btn-cancel-img[data-cancel-bid]').forEach(btn=>{
+    btn.addEventListener('click',function(e){
+      e.stopPropagation();
+      closeBannerImgEditor(this.dataset.cancelBid);
+    });
+  });
+  g.querySelectorAll('.banner-admin-edit[data-bid]').forEach(btn=>{
+    btn.addEventListener('click',function(e){
+      e.stopPropagation();
+      openBannerImgEditor(this.dataset.bid);
+    });
   });
   // Height: use FRONT face only
   g.querySelectorAll('.banner-flip-inner').forEach(inner=>{
