@@ -296,11 +296,18 @@ async function loadUser(){
   if(!s||!s.id)return null;
   try{
     if(IS_IRP){
-      const [irp, main, pity] = await Promise.all([
-        JCache.get(db,'irp_players',s.id,30),
-        JCache.get(db,'players',s.id,30),
-        JCache.get(db,'irp_gacha_pity',s.id,30),
+      /* Chaque read isolé : un échec sur players/pity ne doit pas
+         empêcher la récupération des jahartites depuis irp_players */
+      var [irp, main, pity] = await Promise.all([
+        JCache.get(db,'irp_players',s.id,30).catch(function(e){window._dbg?.error('[IRP_PLAYERS]',e);return null;}),
+        JCache.get(db,'players',s.id,30).catch(function(){return null;}),
+        JCache.get(db,'irp_gacha_pity',s.id,30).catch(function(){return null;}),
       ]);
+      /* Fallback direct Firestore si le cache a échoué pour irp_players */
+      if(!irp){
+        try{var snap=await db.collection('irp_players').doc(s.id).get();irp=snap.exists?snap.data():null;}
+        catch(e2){window._dbg?.error('[IRP_PLAYERS_FALLBACK]',e2);}
+      }
       U={
         id:s.id,
         username:(main&&main.username)||(irp&&irp.username)||s.username||'—',
