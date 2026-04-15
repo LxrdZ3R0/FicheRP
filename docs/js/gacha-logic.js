@@ -708,7 +708,9 @@ function renderBanners(banners){
     const isLive=bdata&&bdata.status==='live';
     bindTilt(f);
     f.addEventListener('mouseenter',()=>scramble(f.querySelector('.banner-name')));
-    f.addEventListener('click',()=>{
+    f.addEventListener('click',(e)=>{
+      // Don't flip if click is inside the image editor or admin edit button
+      if(e.target.closest('.banner-img-editor')||e.target.closest('.banner-admin-edit'))return;
       if(!isLive)return;
       flipCard(inner);
     });
