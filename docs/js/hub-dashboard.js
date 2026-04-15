@@ -50,28 +50,11 @@ function renderDashChar(){
       }
     }
   }catch(_){}
-  // 4) Achievement bonuses
-  try{
-    if(window._achDefsCache && UID){
-      const achSnap=window._userAchData;
-      if(achSnap && achSnap.unlocked){
-        const achN=window._achDefsCache.normal||{};
-        const achI=window._achDefsCache.irp||{};
-        Object.keys(achSnap.unlocked).forEach(function(achId){
-          const defn=achN[achId]||achI[achId];
-          if(defn && defn.bonus){
-            Object.entries(defn.bonus).forEach(function(e){_dashBonuses[e[0]]=(_dashBonuses[e[0]]||0)+e[1];});
-          }
-        });
-      }
-    }
-  }catch(_){}
   document.getElementById('dash-stats-grid').innerHTML=SK.map(k=>{
     const base=parseInt(stats[k]||0);
     const bon=_dashBonuses[k]||0;
-    const total=base+bon;
-    const bonusText=bon>0?`<span class="stat-bon-tag">+${bon}</span>`:(bon<0?`<span class="stat-bon-tag neg">${bon}</span>`:'');
-    return `<div class="stat-row"><span class="stat-icon">${SI[k]}</span><span class="stat-name">${SL[k]}</span><span class="stat-val">${total}${bonusText}</span></div>`;
+    const bonusText=bon>0?` <span style="color:var(--gold);font-size:.75em">[+${bon}]</span>`:(bon<0?` <span style="color:#dc143c;font-size:.75em">[${bon}]</span>`:'');
+    return `<div class="stat-row"><span class="stat-icon">${SI[k]}</span><span class="stat-name">${SL[k]}</span><span class="stat-val">${base}${bonusText}</span></div>`;
   }).join('');
   const powers=c.powers||[];
   document.getElementById('dash-powers-list').innerHTML=powers.length

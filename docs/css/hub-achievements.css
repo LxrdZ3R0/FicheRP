@@ -138,27 +138,6 @@
 /* ── Loading ── */
 .ach-loading { text-align:center; padding:40px; color:var(--text2); font-family:var(--font-m); font-size:.6rem; letter-spacing:.1em; }
 
-/* ══════════════════════════════════════════════════════════════════════
-   STAT OVERFLOW FIXES — Dashboard + Personnage
-   ══════════════════════════════════════════════════════════════════════ */
-
-/* Dashboard stat rows — prevent overflow */
-.stat-row { min-height:44px; flex-wrap:nowrap; }
-.stat-val { margin-left:auto; flex-shrink:0; white-space:nowrap; font-size:clamp(.75rem, 2.5vw, 1.05rem); display:flex; align-items:center; gap:4px; }
-.stat-bon-tag { font-family:var(--font-m); font-size:.6rem; color:var(--gold); letter-spacing:.04em; opacity:.85; }
-.stat-bon-tag.neg { color:#dc143c; }
-.stat-name { flex-shrink:1; min-width:0; overflow:hidden; text-overflow:ellipsis; }
-
-/* Personnage stat blocks — prevent overflow with large numbers */
-.stat-block { min-width:0; overflow:hidden; padding:10px 8px; }
-.stat-block-val { font-size:clamp(1rem, 3vw, 1.3rem); word-break:break-all; }
-.stat-block-bonus { font-size:.6rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.stats-full-grid { grid-template-columns:repeat(auto-fill, minmax(110px, 1fr)); }
-.stats-mini { grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); }
-
-/* Achievement bonus section color */
-.bonus-section-title.ach { color:#fbbf24; }
-
 /* ── Mobile ── */
 @media (max-width:600px) {
   .ach-header { flex-direction:column; align-items:stretch; }
