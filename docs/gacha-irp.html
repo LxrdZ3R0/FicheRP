@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" class="irp-mode">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
@@ -14,6 +14,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Exo+2:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/jaharta.css">
 <link rel="stylesheet" href="css/gacha.css">
+<link rel="stylesheet" href="css/irp-theme.css">
 
 <script src="js/debug.js"></script>
 <script type="module" src="js/auth-badge.js"></script>
@@ -91,7 +92,7 @@
 <footer class="footer">
   <div class="footer-brand">JAHARTA</div>
   <div class="footer-links">
-    <a href="index.html">Accueil</a><a href="fiches.html">Fiches</a><a href="pnj.html">PNJ</a><a href="portail.html">Portail</a><a href="racesjouables.html">Races</a>
+    <a href="index-irp.html">Accueil</a><a href="fiches-irp.html">Fiches</a><a href="gacha-irp.html">Gacha</a><a href="hub-irp.html">Hub</a>
   </div>
   <div class="footer-copy">©2026 JAHARTA RP</div>
 </footer>
@@ -199,8 +200,16 @@ async function loadAndShow(){
 
 // Listen for auth state from auth-badge.js to toggle admin features
 document.addEventListener('jaharta:auth', function(e){
-  showAdminBannerEditor();
+  if(typeof showAdminBannerEditor==='function') showAdminBannerEditor();
+  else setTimeout(function(){if(typeof showAdminBannerEditor==='function')showAdminBannerEditor();},500);
 });
+// Retry admin activation after banners load (auth may have fired early)
+setTimeout(function(){
+  if(window._isAdmin && typeof showAdminBannerEditor==='function') showAdminBannerEditor();
+},2000);
+setTimeout(function(){
+  if(window._isAdmin && typeof showAdminBannerEditor==='function') showAdminBannerEditor();
+},4000);
 
 // Scroll line
 window.addEventListener('scroll',()=>{const p=window.scrollY/(document.documentElement.scrollHeight-window.innerHeight)*100;document.getElementById('scroll-line').style.width=p+'%'});
@@ -251,6 +260,6 @@ window.addEventListener('scroll',()=>{const p=window.scrollY/(document.documentE
 <script src="js/music-player.js"></script>
 <script src="js/page-transition.js"></script>
 <script src="js/jaharta-motion.js"></script>
-<script src="js/irp-mode.js"></script>
+<!-- IRP mode native -->
 </body>
 </html>

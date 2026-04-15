@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" class="irp-mode">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <meta name="description" content="Jaharta RP — Hub Personnel">
 <meta name="theme-color" content="#020713">
-<title>JAHARTA — Hub</title>
+<title>JAHARTA IRP — Hub</title>
 <link rel="icon" type="image/x-icon" href="img/favicon.ico">
 <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png">
 <link rel="apple-touch-icon" sizes="180x180" href="img/favicon-180.png">
@@ -16,6 +16,7 @@
 <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/dist/tippy.css">
 <link rel="stylesheet" href="css/hub.css">
 <link rel="stylesheet" href="css/hub-achievements.css">
+<link rel="stylesheet" href="css/irp-theme.css">
 </head>
 <body>
 <div class="page-transition-overlay" id="page-transition"><div class="pt-logo-wrap"><div class="pt-glow-ring"></div><div class="pt-scan"></div><img src="img/logo-jaharta.png" class="pt-img" alt="Jaharta"></div><div class="pt-bar-wrap"><div class="pt-bar-fill"></div></div><div class="pt-text">Chargement</div></div>
@@ -24,8 +25,8 @@
 
 <!-- LOGIN GATE -->
 <div class="login-gate" id="login-gate">
-  <div class="gate-logo">JAHARTA</div>
-  <div class="gate-sub">// NEXUS HUB ACCESS //</div>
+  <div class="gate-logo">JAHARTA IRP</div>
+  <div class="gate-sub">// IRP NEXUS HUB ACCESS //</div>
   <p class="gate-desc">Entre le code généré par <strong style="color:var(--blue)">/link</strong> sur le serveur Discord pour accéder à ton espace personnel.</p>
   <div class="code-wrap">
     <div class="code-label">Code de liaison</div>
@@ -42,7 +43,7 @@
 <div class="ambient-glow"></div>
 
 <nav class="nav" id="main-nav" style="display:none">
-  <a href="index.html" class="nav-logo"><img src="img/logo-jaharta.png" alt="Jaharta">JAHARTA</a>
+  <a href="index-irp.html" class="nav-logo"><img src="img/logo-jaharta.png" alt="Jaharta">JAHARTA IRP</a>
   <div class="nav-links">
     <a href="index-irp.html">Accueil</a>
     <a href="fiches-irp.html">Fiches</a>
@@ -82,22 +83,19 @@
 <!-- HUB MAIN -->
 <div class="hub-main" id="hub-main">
   <div class="hub-tabs">
-    <a href="index.html" class="tab-btn" style="text-decoration:none;border-bottom:none;opacity:.55" title="Retour au site">← <span class="tab-text">Site</span></a>
+    <a href="index-irp.html" class="tab-btn" style="text-decoration:none;border-bottom:none;opacity:.55" title="Retour au site">← <span class="tab-text">Site</span></a>
     <div style="width:1px;background:var(--border);margin:10px 0;flex-shrink:0"></div>
     <button class="tab-btn active" onclick="showTab('dashboard')" id="tab-dashboard">🏠 <span class="tab-text">Dashboard</span></button>
     <button class="tab-btn" onclick="showTab('personnage')" id="tab-personnage">👤 <span class="tab-text">Personnage</span></button>
     <button class="tab-btn" onclick="showTab('inventaire')" id="tab-inventaire">🎒 <span class="tab-text">Inventaire</span></button>
-    <button class="tab-btn" onclick="showTab('gacha')" id="tab-gacha">🎰 <span class="tab-text">Gacha</span></button>
-    <button class="tab-btn" onclick="showTab('party')" id="tab-party">👥 <span class="tab-text">Party</span></button>
-    <button class="tab-btn" onclick="showTab('progression')" id="tab-progression">📈 <span class="tab-text">Progression</span></button>
-    <button class="tab-btn" onclick="showTab('titres')" id="tab-titres">🏷️ <span class="tab-text">Titres</span></button>
-    <button class="tab-btn" onclick="showTab('compagnons')" id="tab-compagnons">🐾 <span class="tab-text">Compagnons</span></button>
-    <button class="tab-btn" onclick="showTab('monshop')" id="tab-monshop">🏷️ <span class="tab-text">Mon Shop</span></button>
-    <button class="tab-btn" onclick="showTab('shops')" id="tab-shops">🏪 <span class="tab-text">Shops</span></button>
-    <button class="tab-btn" onclick="showTab('succes')" id="tab-succes">🏆 <span class="tab-text">Succès</span></button>
-    <button class="tab-btn" onclick="showTab('ushop')" id="tab-ushop">🛒 <span class="tab-text">Universal Shop</span></button>
-    <button class="tab-btn" onclick="showTab('parametres')" id="tab-parametres">⚙️ <span class="tab-text">Paramètres</span></button>
-  </div>
+    <button class="tab-btn" onclick="showTab('gacha')" id="tab-gacha">🎰 <span class="tab-text">Gacha IRP</span></button>
+    <button class="tab-btn" onclick="showTab('liens')" id="tab-liens">⛓️ <span class="tab-text">Liens</span></button>
+    <button class="tab-btn" onclick="showTab('corruption')" id="tab-corruption">☠️ <span class="tab-text">Corruption</span></button>
+    <button class="tab-btn" onclick="showTab('seal')" id="tab-seal">👁️ <span class="tab-text">Seal</span></button>
+    <button class="tab-btn" onclick="showTab('cour')" id="tab-cour">👑 <span class="tab-text">Cour</span></button>
+    <button class="tab-btn" onclick="showTab('succes_irp')" id="tab-succes_irp">🏆 <span class="tab-text">Succès IRP</span></button>
+    <button class="tab-btn" onclick="showTab('ushop')" id="tab-ushop">🛒 <span class="tab-text">IRP Shop</span></button>
+    <button class="tab-btn" onclick="showTab('parametres')" id="tab-parametres">⚙️ <span class="tab-text">Paramètres</span></button></div>
 
   <!-- DASHBOARD -->
   <div class="tab-panel active" id="panel-dashboard">
@@ -423,103 +421,57 @@
   </div>
 
   <!-- PARTY -->
-  <div class="tab-panel" id="panel-party">
-    <div class="sh"><span class="sh-num">05</span><span class="sh-title">Party</span><div class="sh-line"></div></div>
-    <div id="party-content"><div class="empty">Chargement...</div></div>
-  </div>
+  
 
   <!-- PROGRESSION -->
-  <div class="tab-panel" id="panel-progression">
-    <div class="sh"><span class="sh-num">06</span><span class="sh-title">Progression</span><div class="sh-line"></div></div>
-    <div class="prog-grid" style="margin-bottom:20px">
-      <div class="card"><div class="card-body" style="text-align:center;padding:32px 20px">
-        <div class="prog-level-num" id="prog-lvl">—</div>
-        <div class="prog-level-label">NIVEAU ACTUEL</div>
-      </div></div>
-      <div class="card"><div class="card-body">
-        <div style="font-family:var(--font-h);font-weight:800;font-size:1.6rem;color:var(--text);margin-bottom:4px" id="prog-xp">—</div>
-        <div style="font-family:var(--font-m);font-size:.65rem;letter-spacing:.14em;color:var(--text3);margin-bottom:16px">XP TOTAL</div>
-        <div class="xp-labels" id="prog-xp-labels"><span>XP</span><span>—</span></div>
-        <div class="xp-bar-big"><div class="xp-fill-big" id="prog-xp-fill" style="width:0%"></div></div>
-        <div style="margin-top:12px;font-family:var(--font-m);font-size:.65rem;letter-spacing:.08em;color:var(--text3)" id="prog-xp-needed"></div>
-      </div></div>
-    </div>
-    <div class="card"><div class="card-body">
-      <div class="sh" style="margin-bottom:14px"><span class="sh-num">—</span><span class="sh-title">Points de stat disponibles</span><div class="sh-line"></div></div>
-      <div id="prog-sp-content"><div class="empty">Chargement...</div></div>
-    </div></div>
-    <!-- ALLOCATION STATS -->
-  <div id="alloc-section" style="margin-top:20px">
-    <div class="card"><div class="card-body">
-      <div class="sh" style="margin-bottom:14px"><span class="sh-num">—</span><span class="sh-title">Allocation des stats</span><div class="sh-line"></div></div>
-      <div class="alloc-layout">
-        <div>
-          <div class="alloc-mult-row">
-            <button class="alloc-mult-btn active" onclick="setAllocMult(1)" id="amult-1">×1</button>
-            <button class="alloc-mult-btn" onclick="setAllocMult(5)" id="amult-5">×5</button>
-            <button class="alloc-mult-btn" onclick="setAllocMult(10)" id="amult-10">×10</button>
-            <button class="alloc-mult-btn" onclick="setAllocMult(50)" id="amult-50">×50</button>
-            <button class="alloc-mult-btn" onclick="setAllocMult(100)" id="amult-100">×100</button>
-          </div>
-          <div id="alloc-stats-list"><div class="empty">Chargement...</div></div>
-        </div>
-        <div>
-          <div class="card" style="text-align:center;padding:20px 14px;margin-bottom:16px">
-            <div class="alloc-pts-left" id="alloc-pts-left">0</div>
-            <div class="alloc-pts-label">POINTS DISPONIBLES</div>
-          </div>
-          <div class="card" id="alloc-preview-card" style="display:none"><div class="card-body">
-            <div class="widget-title">En attente</div>
-            <div id="alloc-preview"></div>
-          </div></div>
-          <button class="alloc-confirm-btn" id="alloc-confirm-btn" disabled onclick="confirmAlloc()">Confirmer l'allocation</button>
-          <button class="alloc-reset-btn" onclick="resetAlloc()">Tout remettre à zéro</button>
-        </div>
-      </div>
-    </div></div>
-  </div>
-  </div>
+  
   <!-- TITRES -->
-  <div class="tab-panel" id="panel-titres">
-    <div class="sh"><span class="sh-num">07</span><span class="sh-title">Titres</span><div class="sh-line"></div></div>
-    <div class="card"><div class="card-body">
-      <div class="titles-grid" id="titles-grid"><div class="empty">Chargement...</div></div>
-    </div></div>
-  </div>
+  
 
   <!-- COMPAGNONS -->
-  <div class="tab-panel" id="panel-compagnons">
-    <div class="sh"><span class="sh-num">08</span><span class="sh-title">Compagnons</span><div class="sh-line"></div></div>
-    <div id="comp-content"><div class="empty">Chargement...</div></div>
-  </div>
+  
 
   <!-- MON SHOP -->
-  <div class="tab-panel" id="panel-monshop">
-    <div class="sh"><span class="sh-num">—</span><span class="sh-title">Mon Shop</span><div class="sh-line"></div></div>
-    <div id="monshop-content"><div class="empty">Chargement...</div></div>
-  </div>
+  
 
   <!-- SHOPS DES JOUEURS -->
-  <div class="tab-panel" id="panel-shops">
-    <div class="sh"><span class="sh-num">09</span><span class="sh-title">Shops des joueurs</span><div class="sh-line"></div></div>
-    <div class="shops-layout">
-      <div class="card"><div class="card-body">
-        <div class="widget-title" style="margin-bottom:12px">Boutiques ouvertes</div>
-        <div id="shops-list"><div class="empty">Chargement...</div></div>
-      </div></div>
-      <div class="card"><div class="card-body" id="shop-detail">
-        <div class="empty">Sélectionne une boutique</div>
-      </div></div>
-    </div>
-  </div>
+  
 
   <!-- SUCCÈS -->
-  <div class="tab-panel" id="panel-succes">
-    <div class="sh"><span class="sh-num">11</span><span class="sh-title">Succès</span><div class="sh-line"></div></div>
-    <div id="ach-container" style="padding:12px"><div class="ach-loading">Chargement...</div></div>
-  </div>
+  
 
   <!-- UNIVERSAL SHOP -->
+  
+  <!-- IRP: LIENS -->
+  <div class="tab-panel" id="panel-liens">
+    <div class="sh"><span class="sh-num">05</span><span class="sh-title">Liens IRP</span><div class="sh-line"></div></div>
+    <div id="irp-liens-container" style="padding:12px"><div class="empty-state" style="text-align:center;padding:40px;color:var(--text2)">Chargement...</div></div>
+  </div>
+
+  <!-- IRP: CORRUPTION -->
+  <div class="tab-panel" id="panel-corruption">
+    <div class="sh"><span class="sh-num">06</span><span class="sh-title">Corruption</span><div class="sh-line"></div></div>
+    <div id="irp-corruption-container" style="padding:12px"><div class="empty-state" style="text-align:center;padding:40px;color:var(--text2)">Chargement...</div></div>
+  </div>
+
+  <!-- IRP: SEAL -->
+  <div class="tab-panel" id="panel-seal">
+    <div class="sh"><span class="sh-num">07</span><span class="sh-title">Seal of Dominion</span><div class="sh-line"></div></div>
+    <div id="irp-seal-container" style="padding:12px"><div class="empty-state" style="text-align:center;padding:40px;color:var(--text2)">Chargement...</div></div>
+  </div>
+
+  <!-- IRP: COUR -->
+  <div class="tab-panel" id="panel-cour">
+    <div class="sh"><span class="sh-num">08</span><span class="sh-title">Cour</span><div class="sh-line"></div></div>
+    <div id="irp-cour-container" style="padding:12px"><div class="empty-state" style="text-align:center;padding:40px;color:var(--text2)">Chargement...</div></div>
+  </div>
+
+  <!-- IRP: SUCCÈS IRP -->
+  <div class="tab-panel" id="panel-succes_irp">
+    <div class="sh"><span class="sh-num">09</span><span class="sh-title">Succès IRP</span><div class="sh-line"></div></div>
+    <div id="irp-succes-container" style="padding:12px"><div class="empty-state" style="text-align:center;padding:40px;color:var(--text2)">Chargement...</div></div>
+  </div>
+
   <div class="tab-panel" id="panel-ushop">
     <div class="sh"><span class="sh-num">10</span><span class="sh-title">Universal Shop</span><div class="sh-line"></div></div>
     <div class="ushop-balance" id="ushop-balance"></div>
@@ -575,12 +527,12 @@
       <div class="card"><div class="card-body">
         <div class="setting-title">Compte</div>
         <div class="setting-info" id="settings-user-info">—</div>
-        <div class="setting-info">Session partagée avec gacha.html</div>
+        <div class="setting-info">Session partagée avec gacha-irp.html</div>
         <button class="logout-btn" onclick="logout()">⏻ SE DÉCONNECTER</button>
       </div></div>
       <div class="card"><div class="card-body">
         <div class="setting-title">Collections Firestore</div>
-        <div class="setting-info">players · characters · active_characters · inventories · economy · companions_user · titles_user · parties · party_membership · gacha_pity · shops · buffs</div>
+        <div class="setting-info">irp_players · irp_characters · irp_active_characters · inventories · irp_bonds · irp_seals · irp_courts · irp_gacha_pity</div>
       </div></div>
     </div>
   </div>
@@ -604,7 +556,7 @@
 <script src="js/hub-inventory.js"></script>
 <script src="js/hub-shops.js"></script>
 <script src="js/hub-achievements.js"></script>
-<script src="js/hub-core.js"></script>
+<script src="js/hub-irp-core.js"></script>
 <script>
 /* Hub: Black Ops 2 only (index 2 in ALL_TRACKS) */
 window.JMP_CONFIG = { tracks: [2], autoTrack: 0 };
@@ -612,12 +564,8 @@ window.JMP_CONFIG = { tracks: [2], autoTrack: 0 };
 <script src="js/music-player.js"></script>
 <script src="js/page-transition.js"></script>
 <script src="js/jaharta-motion.js"></script>
-<script>
-window._irpMode = true;
-localStorage.setItem("jaharta_irp_mode","true");
-</script>
-<script src="js/irp-mode.js"></script>
-<script src="js/hub-irp.js"></script>
+
+
 <script type="module" src="js/auth-badge.js"></script>
 <script>
 // ═══ BURGER MENU ═══
