@@ -120,7 +120,7 @@ function renderFullChar(){
     if(diff>0)bMythic[s]=(bMythic[s]||0)+diff;
   });
 
-  // 10) Achievement bonuses (combined normal + IRP)
+  // 10) Achievement bonuses
   try{
     const achB=window._achGetAllBonuses?window._achGetAllBonuses():(window._achGetBonuses?window._achGetBonuses():{});
     Object.entries(achB).forEach(([s,v])=>{addTo(bAch,s,v);});

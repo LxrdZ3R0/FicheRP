@@ -163,41 +163,34 @@
 
   /* ── Auto-start music on first user interaction ──
      Browsers block autoplay without user gesture. We listen for
-     click, scroll, touchstart — the first one triggers playback.
+     click, mousemove, touchstart — the first one triggers playback.
      Always registers, on every page. */
   var _autoTriggered = false;
-  function _removeAutoListeners() {
+  function _cleanupAutoListeners(){
     document.removeEventListener('click', _autoStart, true);
     document.removeEventListener('scroll', _autoStart, true);
     document.removeEventListener('touchstart', _autoStart, true);
     document.removeEventListener('mousemove', _autoStartMouse, true);
   }
-  function _autoStart(ev) {
-    if (_autoTriggered || playing) { _removeAutoListeners(); return; }
+  function _autoStart() {
+    if (_autoTriggered || playing) { _cleanupAutoListeners(); return; }
     _autoTriggered = true;
-    _removeAutoListeners();
-    /* Force reload track to ensure fresh request with user gesture context */
+    _cleanupAutoListeners();
     loadTrack(idx);
     function _tryPlay() {
       if (playing) return;
-      if (audio.readyState >= 2) {
-        doPlay();
-      } else {
-        audio.addEventListener('canplay', function() { if (!playing) doPlay(); }, { once: true });
-      }
+      if (audio.readyState >= 2) doPlay();
+      else audio.addEventListener('canplay', function(){ if (!playing) doPlay(); }, { once: true });
     }
-    /* Immediate attempt + delayed fallback */
     _tryPlay();
     setTimeout(_tryPlay, 800);
     setTimeout(_tryPlay, 2000);
   }
-  /* Mousemove: require at least 50px movement to avoid false triggers */
-  var _mouseStartX = -1, _mouseStartY = -1;
-  function _autoStartMouse(ev) {
-    if (_autoTriggered || playing) { _removeAutoListeners(); return; }
-    if (_mouseStartX < 0) { _mouseStartX = ev.clientX; _mouseStartY = ev.clientY; return; }
-    var dx = Math.abs(ev.clientX - _mouseStartX), dy = Math.abs(ev.clientY - _mouseStartY);
-    if (dx + dy > 50) _autoStart(ev);
+  var _msx=-1,_msy=-1;
+  function _autoStartMouse(ev){
+    if(_autoTriggered||playing){_cleanupAutoListeners();return;}
+    if(_msx<0){_msx=ev.clientX;_msy=ev.clientY;return;}
+    if(Math.abs(ev.clientX-_msx)+Math.abs(ev.clientY-_msy)>50)_autoStart();
   }
   document.addEventListener('click', _autoStart, true);
   document.addEventListener('scroll', _autoStart, true);

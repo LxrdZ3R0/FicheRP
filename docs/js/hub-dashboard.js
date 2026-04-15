@@ -50,28 +50,23 @@ function renderDashChar(){
       }
     }
   }catch(_){}
-  // 4) Achievement bonuses
+  // Achievement bonuses
   const _dashAchBonuses={};
   try{
-    if(window._achGetBonuses){
-      const ab=window._achGetBonuses();
-      Object.entries(ab).forEach(([s,v])=>{
-        _dashAchBonuses[s]=(v||0);
-        _dashBonuses[s]=(_dashBonuses[s]||0)+(v||0);
-      });
-    }
+    const ab=window._achGetAllBonuses?window._achGetAllBonuses():(window._achGetBonuses?window._achGetBonuses():{});
+    Object.entries(ab).forEach(([s,v])=>{
+      _dashAchBonuses[s]=(v||0);
+      _dashBonuses[s]=(_dashBonuses[s]||0)+(v||0);
+    });
   }catch(_){}
   document.getElementById('dash-stats-grid').innerHTML=SK.map(k=>{
     const base=parseInt(stats[k]||0);
     const bon=_dashBonuses[k]||0;
     const achBon=_dashAchBonuses[k]||0;
     const total=base+bon;
-    let bonusHtml='';
-    if(bon>0) bonusHtml=` <span class="stat-bonus-inline positive">+${bon}</span>`;
-    else if(bon<0) bonusHtml=` <span class="stat-bonus-inline negative">${bon}</span>`;
-    let achHtml='';
-    if(achBon>0) achHtml=`<span class="stat-ach-inline">🏆+${achBon}</span>`;
-    return `<div class="stat-row"><span class="stat-icon">${SI[k]}</span><span class="stat-name">${SL[k]}</span><div class="stat-val-wrap"><span class="stat-val">${total}</span>${bonusHtml}</div>${achHtml}</div>`;
+    let bonHtml=bon>0?` <span class="stat-bonus-inline positive">+${bon}</span>`:(bon<0?` <span class="stat-bonus-inline negative">${bon}</span>`:'');
+    let achHtml=achBon>0?`<span class="stat-ach-inline">🏆+${achBon}</span>`:'';
+    return `<div class="stat-row"><span class="stat-icon">${SI[k]}</span><span class="stat-name">${SL[k]}</span><div class="stat-val-wrap"><span class="stat-val">${total}</span>${bonHtml}</div>${achHtml}</div>`;
   }).join('');
   const powers=c.powers||[];
   document.getElementById('dash-powers-list').innerHTML=powers.length

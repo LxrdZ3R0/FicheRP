@@ -203,10 +203,7 @@
         if (!lk && bonus) h += '<div class="ach-card-bonus">' + bonus + '</div>';
         h += '<div class="ach-card-type">' + (a.type === 'owner' ? '👑 Owner' : '⚡ Auto') + '</div>';
         h += '</div>';
-        /* Admin image editor */
-        if (isAdmin) {
-          h += '<button class="ach-edit-icon-btn" data-ach-id="' + a.id + '" title="Modifier l\'image">✏️</button>';
-        }
+        if (isAdmin) h += '<button class="ach-edit-icon-btn" data-ach-id="' + a.id + '" title="Modifier image">✏️</button>';
         h += '</div>';
       });
 
@@ -215,14 +212,14 @@
 
     c.innerHTML = h;
 
-    /* Bind admin edit buttons */
+    /* Admin edit icon binding */
     if (isAdmin) {
       c.querySelectorAll('.ach-edit-icon-btn').forEach(function (btn) {
         btn.addEventListener('click', function (ev) {
           ev.stopPropagation();
           var achId = this.dataset.achId;
-          var currentUrl = icons[achId] || '';
-          var newUrl = prompt('URL de l\'image pour ce succès :\n(laisser vide pour supprimer)', currentUrl);
+          var currentUrl = (icons[achId]) || '';
+          var newUrl = prompt('URL image succès (vide = supprimer):', currentUrl);
           if (newUrl === null) return;
           saveIcon(achId, newUrl.trim()).then(function () {
             _loaded = false; _customIcons = null; render();
@@ -285,6 +282,22 @@
       h += '</div>';
     }
     c.innerHTML = h;
+
+    /* Admin edit icon binding */
+    if (isAdmin) {
+      c.querySelectorAll('.ach-edit-icon-btn').forEach(function (btn) {
+        btn.addEventListener('click', function (ev) {
+          ev.stopPropagation();
+          var achId = this.dataset.achId;
+          var currentUrl = (icons[achId]) || '';
+          var newUrl = prompt('URL image succès (vide = supprimer):', currentUrl);
+          if (newUrl === null) return;
+          saveIcon(achId, newUrl.trim()).then(function () {
+            _loaded = false; _customIcons = null; render();
+          });
+        });
+      });
+    }
   }
 
   /* ── Public ── */
@@ -299,7 +312,6 @@
     _userAch = null;
     render();
   };
-  /* Returns total stat bonuses from unlocked achievements (current mode) */
   window._achGetBonuses = function () {
     var defs = getDefs();
     var unlocked = (_userAch || {}).unlocked || {};
@@ -310,7 +322,6 @@
     });
     return tb;
   };
-  /* Returns combined bonuses from BOTH normal + IRP achievements */
   window._achGetAllBonuses = function () {
     if (!_achDefs || !_userAch) return {};
     var unlocked = _userAch.unlocked || {};
@@ -323,25 +334,43 @@
     return tb;
   };
 
-  /* ── Preload achievement data at startup so _achGetBonuses works immediately ── */
+  /* ── Preload at startup for bonus getters ── */
   function _preloadAchData() {
-    if (typeof db === 'undefined') {
-      setTimeout(_preloadAchData, 200);
-      return;
-    }
+    if (typeof db === 'undefined') { setTimeout(_preloadAchData, 200); return; }
     loadDefs().then(function () {
-      /* Delay loadUser until UID is available */
       function _waitUID() {
-        if (window.UID) {
-          loadUser().then(function () { loadCustomIcons(); });
-        } else {
-          setTimeout(_waitUID, 300);
-        }
+        if (window.UID) { loadUser().then(function () { loadCustomIcons(); }); }
+        else { setTimeout(_waitUID, 300); }
       }
       _waitUID();
     }).catch(function () {});
   }
   _preloadAchData();
+
+  /* ── Periodic refresh aligned to bot push (h:03, h:18, h:33, h:48) ── */
+  function _scheduleRefresh() {
+    var now = new Date();
+    var min = now.getMinutes();
+    /* Next target: 3, 18, 33, 48 minutes past the hour */
+    var targets = [3, 18, 33, 48];
+    var nextMin = null;
+    for (var i = 0; i < targets.length; i++) {
+      if (targets[i] > min) { nextMin = targets[i]; break; }
+    }
+    if (nextMin === null) nextMin = targets[0] + 60; /* next hour */
+    var msUntil = ((nextMin - min) * 60 - now.getSeconds()) * 1000 - now.getMilliseconds();
+    if (msUntil < 0) msUntil += 15 * 60 * 1000;
+    setTimeout(function () {
+      _loaded = false; _achDefs = null; _customIcons = null; _userAch = null; _allUsersAch = null;
+      render();
+      /* Then repeat every 15 min exactly */
+      setInterval(function () {
+        _loaded = false; _achDefs = null; _customIcons = null; _userAch = null; _allUsersAch = null;
+        render();
+      }, 15 * 60 * 1000);
+    }, msUntil);
+  }
+  _scheduleRefresh();
 
   /* ── Lazy loaders ── */
   /* Normal hub: LAZY.succes */
@@ -350,20 +379,5 @@
   }
   /* IRP hub: exposed for hub-irp.js override */
   window._renderAchievements = render;
-
-  /* ── Auto-refresh every 18 min (15 min bot push + 3 min offset) ── */
-  var _autoRefreshInterval = null;
-  function startAutoRefresh() {
-    if (_autoRefreshInterval) return;
-    _autoRefreshInterval = setInterval(function () {
-      _loaded = false;
-      _achDefs = null;
-      _customIcons = null;
-      _userAch = null;
-      _allUsersAch = null;
-      render();
-    }, 18 * 60 * 1000);
-  }
-  startAutoRefresh();
 
 })();

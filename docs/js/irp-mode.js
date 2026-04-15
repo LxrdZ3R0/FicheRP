@@ -7,14 +7,9 @@
   var STORAGE_KEY = 'jaharta_irp_mode';
 
   /* ── State ── */
-  /* IRP mode is activated ONLY via:
-     1) query param ?mode=irp on hub.html/gacha.html
-     2) localStorage (set when entering code on index.html, read on hub.html)
-     On ALL other pages, _irpMode stays false. */
-  var isHubOrGacha = /\b(hub|gacha)\b/.test(location.pathname);
-  var hasIRPParam = new URLSearchParams(location.search).get('mode') === 'irp';
-  var hasIRPStorage = localStorage.getItem(STORAGE_KEY) === 'true';
-  window._irpMode = isHubOrGacha && (hasIRPParam || hasIRPStorage);
+  /* IRP mode: set by force-script on dedicated IRP pages, or read here */
+  var _isIRPPage = /irp\.html/.test(location.pathname);
+  if (!window._irpMode) window._irpMode = _isIRPPage;
 
   /* ── CSS du mode IRP (injecté dynamiquement) ── */
   var IRP_THEME_CSS = [
@@ -454,9 +449,10 @@
     /* Si déjà en mode IRP, on désactive */
     if (window._irpMode) {
       removeIRPMode();
+      localStorage.removeItem(STORAGE_KEY);
       if (typeof showToast === 'function') showToast('Mode IRP désactivé', 'info');
-      /* Redirect to normal hub (no IRP param) */
-      setTimeout(function () { location.href = 'hub.html'; }, 500);
+      /* Redirect to normal site */
+      setTimeout(function () { location.href = 'index.html'; }, 500);
       return;
     }
 
@@ -487,19 +483,12 @@
     function trySubmit() {
       var val = input.value.trim();
       if (val === IRP_CODE) {
-        localStorage.setItem(STORAGE_KEY, 'true');
         overlay.classList.remove('visible');
         setTimeout(function () {
           overlay.remove();
-          /* If we're already on hub or gacha, apply in-place */
-          if (isHubOrGacha) {
-            applyIRPMode();
-            if (typeof showToast === 'function') showToast('Mode IRP activé', 'success');
-            location.reload();
-          } else {
-            /* Redirect to hub IRP */
-            location.href = 'hub.html?mode=irp';
-          }
+          localStorage.setItem(STORAGE_KEY, 'true');
+          /* Redirect to dedicated IRP index */
+          location.href = 'index-irp.html';
         }, 300);
       } else {
         input.classList.add('error');
@@ -742,7 +731,7 @@
   /* ── Auto-apply si déjà authentifié ── */
   function init() {
     injectSecretButton();
-    if (window._irpMode && isHubOrGacha) {
+    if (window._irpMode) {
       applyIRPMode();
     }
   }

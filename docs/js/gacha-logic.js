@@ -31,9 +31,7 @@ function bannerAccent(id,name){
 
 const prefersReducedMotion=window.matchMedia('(prefers-reduced-motion:reduce)').matches;
 let U=null,SB=null,BANNERS=[];
-const IS_IRP = (() => {
-  try { return localStorage.getItem('jaharta_irp_mode') === 'true'; } catch(e) { return false; }
-})();
+const IS_IRP = !!window._irpMode;
 function currencyUnit(){ return IS_IRP ? 'JAHARTITE' : 'NAVARITE'; }
 function currencyPlural(){ return IS_IRP ? 'JAHARTITES' : 'NAVARITES'; }
 function currencyShort(){ return IS_IRP ? 'JAH' : 'NAV'; }
@@ -359,9 +357,9 @@ async function loadBanners(){
       renderIRPBannersPage(BANNERS);
       return;
     }
-    /* Force fresh read from Firestore (invalidate cache first) */
+    /* Force fresh read (no stale cache) */
     JCache.invalidate('gacha_config','banners');
-    const d=await JCache.get(db,'gacha_config','banners',60);
+    const d=await JCache.get(db,'gacha_config','banners',30);
     if(!d)return;
     BANNERS=d.banners||[];
     // Load per-banner images and merge before rendering
@@ -375,15 +373,26 @@ async function loadBanners(){
     }
   }catch(e){window._dbg?.error('[LOAD_BANNERS]',e)}
 }
-/* Auto-refresh banners every 18 min (synced with bot push cycle + 3 min offset) */
-var _bannerRefreshInterval=null;
-function startBannerAutoRefresh(){
-  if(_bannerRefreshInterval)return;
-  _bannerRefreshInterval=setInterval(function(){
-    loadBanners();
-  }, 18*60*1000);
+
+/* ── Live banner updates via onSnapshot ── */
+var _bannerUnsub = null;
+function watchBanners(){
+  if(IS_IRP || _bannerUnsub) return;
+  try{
+    _bannerUnsub = db.collection('gacha_config').doc('banners').onSnapshot(function(snap){
+      if(!snap.exists) return;
+      var d = snap.data();
+      BANNERS = d.banners || [];
+      loadBannerImages().then(function(){ renderBanners(BANNERS); });
+      var rot = d.rotation || {};
+      var ri = document.getElementById('rot-info');
+      if(ri){
+        if(rot.manual_override) ri.textContent='Rotation manuelle active';
+        else ri.textContent='Prochaine rotation dans '+(rot.days_until_next||'?')+' jour(s)';
+      }
+    });
+  }catch(e){window._dbg?.error('[BANNER_WATCH]',e)}
 }
-startBannerAutoRefresh();
 
 // ═══ GACHA BANNER IMAGE (admin-managed, stored in Firestore) ═══
 async function loadGachaBannerImg(){

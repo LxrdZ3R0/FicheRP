@@ -15,12 +15,9 @@
   ];
 
   var PAGES_IRP = [
-    { href: 'index.html',          label: 'Accueil',        short: 'Accueil',    num: '01' },
-    { href: 'fiches.html',         label: 'Fiches IRP',     short: 'Fiches',     num: '02' },
-    { href: 'pnj.html',            label: 'PNJ',            short: 'PNJ',        num: '03' },
-    { href: 'bestiaire.html',      label: 'Bestiaire IRP',  short: 'Bestiaire',  num: '04' },
-    { href: 'gacha.html',          label: 'Gacha IRP',      short: 'Gacha',      num: '05' },
-    { href: 'hub.html',            label: 'Hub IRP',        short: 'Hub',        num: '06' }
+    { href: 'index-irp.html',      label: 'Accueil IRP',    short: 'Accueil',    num: '01' },
+    { href: 'gacha-irp.html',      label: 'Gacha IRP',      short: 'Gacha',      num: '02' },
+    { href: 'hub-irp.html',        label: 'Hub IRP',        short: 'Hub',        num: '03' }
   ];
 
   var current = window.location.pathname.split('/').pop() || 'index.html';
