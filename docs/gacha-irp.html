@@ -63,19 +63,7 @@
 
     <div class="section-head"><span class="sh-num">01 //</span><h2 class="sh-title">Bannières</h2><div class="sh-line"></div></div>
 
-    <!-- Admin Banner Image -->
-    <div id="gacha-banner-img-wrap" style="display:none;margin-bottom:24px;text-align:center">
-      <img id="gacha-banner-img" src="" alt="Banner" style="max-width:100%;border-radius:10px;border:1px solid rgba(77,163,255,0.12);box-shadow:0 4px 30px rgba(0,0,0,0.4);display:none">
-    </div>
-    <!-- Admin: set banner image (visible only for admins) -->
-    <div id="gacha-admin-banner-editor" style="display:none;margin-bottom:20px;padding:16px;background:rgba(139,92,246,0.06);border:1px solid rgba(139,92,246,0.2);border-radius:8px">
-      <div style="font-family:var(--font-h);font-size:.55rem;font-weight:700;letter-spacing:.15em;color:var(--violet);margin-bottom:10px">⚙ IMAGE BANNIÈRE (ADMIN)</div>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <input type="text" id="gacha-banner-img-url" placeholder="URL de l'image (laisser vide pour supprimer)" style="flex:1;min-width:200px;font-family:var(--font-m);font-size:.6rem;letter-spacing:.04em;padding:10px 14px;background:rgba(8,12,30,0.8);border:1px solid rgba(139,92,246,0.2);border-radius:6px;color:#fff;outline:none">
-        <button onclick="saveGachaBannerImg()" style="font-family:var(--font-h);font-size:.5rem;font-weight:700;letter-spacing:.12em;color:#fff;background:linear-gradient(135deg,var(--violet),var(--magenta));border:none;padding:10px 20px;border-radius:6px;cursor:pointer;transition:all .3s;white-space:nowrap">SAUVEGARDER</button>
-      </div>
-      <div style="font-family:var(--font-m);font-size:.42rem;color:var(--text3);margin-top:6px;letter-spacing:.06em">L'image apparaîtra en haut de la section Bannières pour tous les utilisateurs.</div>
-    </div>
+    <!-- Per-banner images managed via ✏️ button on each card -->
 
     <div id="rot-info" style="font-family:var(--font-m);font-size:.5rem;color:var(--text3);letter-spacing:.1em;margin-bottom:16px"></div>
     <div class="banners-grid" id="bg"></div>
@@ -121,6 +109,7 @@
 
 <!-- Firebase + utils — en bas de body pour ne pas bloquer le rendu initial -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script src="js/constants.js"></script>
 <script src="js/utils.js"></script>
@@ -180,7 +169,7 @@ async function loadAndShow(){
   if(user){
     showMainUI();
     await loadBanners();
-    await loadGachaBannerImg();
+    
     showAdminBannerEditor();
   }else{
     showLoginGate();
