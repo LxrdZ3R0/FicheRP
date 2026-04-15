@@ -13,6 +13,7 @@ localStorage.setItem("jaharta_irp_mode","true");
 const FB={apiKey:"AIzaSyAru7qZX8Gu_b8Y3oNDV-a5PmkrrkRjkcs",authDomain:"jaharta-rp.firebaseapp.com",projectId:"jaharta-rp",storageBucket:"jaharta-rp.firebasestorage.app",messagingSenderId:"217075417489",appId:"1:217075417489:web:4d1e2df422a5cd42411a30"};
 if(!firebase.apps.length)firebase.initializeApp(FB);
 const db=firebase.firestore();
+window._db=db; // expose for cross-file access
 
 // ── COLLECTIONS IRP (directement, pas d'override) ──
 const C={
@@ -104,13 +105,22 @@ async function verifyCode(){
     showErr(msg);done();
   }
 }
-document.addEventListener('DOMContentLoaded',function(){
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded',function(){
+    const lc=document.getElementById('link-code');
+    const vb=document.getElementById('verify-btn');
+    if(lc)lc.addEventListener('keydown',e=>{if(e.key==='Enter')verifyCode();});
+    if(vb)vb.addEventListener('click',verifyCode);
+    init();
+  });
+}else{
+  // DOMContentLoaded already fired — run immediately
   const lc=document.getElementById('link-code');
   const vb=document.getElementById('verify-btn');
   if(lc)lc.addEventListener('keydown',e=>{if(e.key==='Enter')verifyCode();});
   if(vb)vb.addEventListener('click',verifyCode);
   init();
-});
+}
 
 function logout(){
   clearSess();
@@ -444,12 +454,15 @@ async function loadHub(){
   }
   UID=s.id;
   window.UID=UID;
-  document.getElementById('login-gate').style.display='none';
-  document.getElementById('main-nav').style.display='flex';
-  document.getElementById('hub-main').classList.add('active');
+  var loginGate=document.getElementById('login-gate');
+  var mainNav=document.getElementById('main-nav');
+  var hubMain=document.getElementById('hub-main');
+  if(loginGate)loginGate.style.display='none';
+  if(mainNav)mainNav.style.display='flex';
+  if(hubMain)hubMain.classList.add('active');
   try{document.getElementById('nav-username').textContent=s.username||'—';}catch(_){}
   try{document.getElementById('menu-username').textContent=s.username||'—';}catch(_){}
-  if(s.avatar){try{const av=document.getElementById('nav-avatar');av.src=s.avatar;av.style.display='block'}catch(_){}}
+  if(s.avatar){try{var av=document.getElementById('nav-avatar');if(av){av.src=s.avatar;av.style.display='block';}}catch(_){}}
   try{ await Promise.all([loadCharacter(),loadPlayer(),loadIRPData()]); }
   catch(err){ window._dbg?.error('[HUB-IRP] data load',err); }
 }
@@ -644,16 +657,16 @@ async function loadShop(){
 // TABS — IRP-specific tabs natively defined
 // ══════════════════════════════════════════════════════════════════════
 const LAZY={
-  personnage:()=>{if(CHAR)renderFullChar();},
-  inventaire:()=>{if(INV_DATA&&Object.keys(ALL_ITEMS_DATA).length){renderInventory();}else{loadInventory();}},
+  personnage:()=>{if(CHAR && typeof renderFullChar==='function')renderFullChar();},
+  inventaire:()=>{if(INV_DATA&&Object.keys(ALL_ITEMS_DATA).length){if(typeof renderInventory==='function')renderInventory();}else{loadInventory();}},
   gacha:()=>{ renderIRPGacha(); },
   liens:()=>{ renderIRPLiens(); },
   corruption:()=>{ renderIRPCorruption(); },
   seal:()=>{ renderIRPSeal(); },
   cour:()=>{ renderIRPCour(); },
   succes_irp:()=>{if(window._achRefresh)window._achRefresh();},
-  ushop:typeof loadUshop==='function'?loadUshop:()=>{},
-  parametres:typeof renderSettings==='function'?renderSettings:()=>{},
+  ushop:()=>{if(typeof loadUshop==='function')loadUshop();},
+  parametres:()=>{if(typeof renderSettings==='function')renderSettings();},
 };
 
 function showTab(id){
