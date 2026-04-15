@@ -399,6 +399,13 @@ function showAdminBannerEditor(){
   const main=document.getElementById('gacha-main');
   if(main&&window._isAdmin){
     main.classList.add('admin-mode');
+    // Make non-live banners interactive for admin (they were rendered with pointer-events:none)
+    main.querySelectorAll('.banner-flip').forEach(f=>{
+      if(f.style.pointerEvents==='none'){
+        f.style.pointerEvents='';
+        f.style.opacity='0.7';
+      }
+    });
   }
 }
 
@@ -466,6 +473,7 @@ async function saveBannerImg(bid){
     }
     closeBannerImgEditor(bid);
     JCache.invalidate('gacha_config','banner_images');
+    showToast('Image sauvegardée !','success');
   }catch(e){
     window._dbg?.error('[SAVE_BANNER_IMG]',e);
     showToast('Erreur : '+e.message,'error');
@@ -632,7 +640,7 @@ function renderBanners(banners){
               <div class="banner-name" style="color:${c}">${b.name}</div>
               <div class="banner-subtitle">${live?'BANNIÈRE ACTIVE':'EN ATTENTE'}</div>
             </div>
-            <button class="banner-admin-edit" data-bid="${b.id}" title="Modifier l'image" aria-label="Modifier l'image de la bannière ${b.name}">✏️</button>
+            <button class="banner-admin-edit" data-bid="${b.id}" title="Modifier l'image" aria-label="Modifier l image de la banniere">✏️</button>
           </div>
           <div class="banner-body">
             <div class="banner-desc">${b.description||''}</div>
@@ -646,11 +654,11 @@ function renderBanners(banners){
           <!-- Per-banner image editor (admin only) -->
           <div class="banner-img-editor" id="bie-${b.id}">
             <div class="banner-img-editor-title">⚙ IMAGE — ${b.name}</div>
-            <img class="banner-img-editor-preview" id="bie-prev-${b.id}" alt="Aperçu image bannière ${b.name}">
-            <input class="banner-img-editor-input" id="bie-url-${b.id}" placeholder="URL de l'image (PNG, JPG, WEBP…)" value="${b.image||''}" spellcheck="false" autocomplete="off" aria-label="URL de l'image pour la bannière ${b.name}">
+            <img class="banner-img-editor-preview" id="bie-prev-${b.id}" alt="Apercu">
+            <input class="banner-img-editor-input" id="bie-url-${b.id}" placeholder="URL de l image (PNG, JPG, WEBP…)" value="${b.image||''}" spellcheck="false" autocomplete="off">
             <div class="banner-img-editor-actions">
-              <button class="btn-save-img" data-save-bid="${b.id}" aria-label="Sauvegarder l'image de la bannière ${b.name}">SAUVEGARDER</button>
-              <button class="btn-cancel-img" data-cancel-bid="${b.id}" aria-label="Annuler la modification de l'image">ANNULER</button>
+              <button class="btn-save-img" data-save-bid="${b.id}">SAUVEGARDER</button>
+              <button class="btn-cancel-img" onclick="event.stopPropagation();closeBannerImgEditor('${b.id}')">ANNULER</button>
             </div>
           </div>
         </div>
@@ -694,27 +702,23 @@ function renderBanners(banners){
     });
     inp.addEventListener('click',function(e){e.stopPropagation();});
   });
-  // Bind save/cancel buttons via addEventListener (avoids async onclick issues)
+  // Bind save buttons — must use addEventListener with proper async catch
   g.querySelectorAll('.btn-save-img[data-save-bid]').forEach(btn=>{
     btn.addEventListener('click',function(e){
       e.stopPropagation();
-      const bid=this.dataset.saveBid;
-      saveBannerImg(bid).catch(err=>{
+      e.preventDefault();
+      const bid=this.getAttribute('data-save-bid');
+      saveBannerImg(bid).then(()=>{}).catch(err=>{
         window._dbg?.error('[SAVE_BANNER]',err);
         showToast('Erreur: '+err.message,'error');
       });
     });
   });
-  g.querySelectorAll('.btn-cancel-img[data-cancel-bid]').forEach(btn=>{
-    btn.addEventListener('click',function(e){
-      e.stopPropagation();
-      closeBannerImgEditor(this.dataset.cancelBid);
-    });
-  });
+  // Bind edit ✏️ buttons
   g.querySelectorAll('.banner-admin-edit[data-bid]').forEach(btn=>{
     btn.addEventListener('click',function(e){
       e.stopPropagation();
-      openBannerImgEditor(this.dataset.bid);
+      openBannerImgEditor(this.getAttribute('data-bid'));
     });
   });
   // Height: use FRONT face only
