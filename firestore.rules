@@ -319,39 +319,5 @@ service cloud.firestore {
       allow create, update: if isAdmin();
       allow delete: if isAdmin();
     }
-
-    // ── IRP GACHA ─────────────────────────────────────────────────────────────
-    match /irp_gacha_pity/{userId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-    match /irp_gacha_config/{doc} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    // ── IRP SEAL / COURT / FLESH MARKS ────────────────────────────────────────
-    match /irp_seals/{charId} {
-      allow read: if true;
-      allow write: if true;
-    }
-    match /irp_seal_targets/{targetId} {
-      allow read: if true;
-      allow write: if true;
-    }
-    match /irp_courts/{charId} {
-      allow read: if true;
-      allow write: if true;
-    }
-    match /irp_flesh_marks/{charId} {
-      allow read: if true;
-      allow write: if true;
-    }
-
-    // ── ACHIEVEMENTS ──────────────────────────────────────────────────────────
-    match /achievements_user/{userId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
   }
 }

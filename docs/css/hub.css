@@ -225,20 +225,6 @@ body::after{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;o
 
 /* Stats mini — CYBERPUNK */
 .stats-mini{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:8px}
-/* ── Stat Card v2 (dashboard refonte) ── */
-.stat-card-v2{padding:10px 12px;background:rgba(var(--bg-dk-rgb),0.8);border:1px solid rgba(var(--cyan-rgb),0.06);border-radius:6px;transition:border-color .3s,box-shadow .3s;position:relative;overflow:hidden}
-.stat-card-v2::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:linear-gradient(180deg,var(--cyan),transparent);opacity:.3}
-.stat-card-v2:hover{border-color:rgba(var(--cyan-rgb),0.2);box-shadow:0 0 16px rgba(var(--cyan-rgb),0.06)}
-.stat-card-header{display:flex;align-items:center;gap:6px;margin-bottom:4px}
-.stat-card-icon{font-size:.95rem;filter:drop-shadow(0 0 4px rgba(var(--cyan-rgb),0.3))}
-.stat-card-name{font-family:var(--font-m);font-size:.5rem;letter-spacing:.1em;color:var(--text3);text-transform:uppercase}
-.stat-card-value-row{display:flex;align-items:baseline;gap:6px;margin-bottom:6px}
-.stat-card-total{font-family:var(--font-h);font-size:1.1rem;font-weight:700;color:var(--text);text-shadow:0 0 6px rgba(255,255,255,0.08)}
-.stat-bonus-tag{font-family:var(--font-m);font-size:.55rem;font-weight:600;padding:1px 5px;border-radius:3px;white-space:nowrap}
-.stat-bonus-tag.positive{color:var(--green);background:rgba(var(--green-rgb),0.08);border:1px solid rgba(var(--green-rgb),0.15)}
-.stat-bonus-tag.negative{color:#dc143c;background:rgba(220,20,60,0.08);border:1px solid rgba(220,20,60,0.15)}
-.stat-card-bar{height:3px;background:rgba(var(--cyan-rgb),0.08);border-radius:2px;overflow:hidden}
-.stat-card-bar-fill{height:100%;background:linear-gradient(90deg,var(--cyan),var(--violet));border-radius:2px;transition:width .5s ease}
 .stat-row{display:flex;align-items:center;gap:10px;padding:12px 14px;background:rgba(var(--bg-dk-rgb),0.8);border:1px solid rgba(var(--cyan-rgb),0.06);border-radius:4px;transition:transform .3s,border-color .3s,box-shadow .3s;position:relative;overflow:visible}
 .stat-row::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:linear-gradient(180deg,var(--cyan),transparent);opacity:.3}
 .stat-row:hover{border-color:rgba(var(--cyan-rgb),0.2);transform:translateX(2px);box-shadow:0 0 20px rgba(var(--cyan-rgb),0.06),inset 0 0 30px rgba(var(--cyan-rgb),0.02)}
@@ -796,7 +782,7 @@ body::after{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;o
 @media(max-width:900px){.inv-layout{grid-template-columns:1fr}.shops-layout{grid-template-columns:1fr}}
 @media(max-width:800px){.alloc-layout{grid-template-columns:1fr}}
 @media(max-width:600px){.equip-bonus-grid{grid-template-columns:repeat(2,1fr)}.tab-btn{padding:12px 8px;font-size:.65rem}.tab-btn .tab-text{display:none}}
-@media(max-width:480px){.stats-mini{grid-template-columns:repeat(2,1fr)}.stat-card-v2{padding:8px 10px}.stat-card-total{font-size:.95rem}.pity-grid{grid-template-columns:1fr}}
+@media(max-width:480px){.stats-mini{grid-template-columns:repeat(2,1fr)}.pity-grid{grid-template-columns:1fr}}
 
 /* ═══ EXTRA CYBERPUNK EFFECTS — OVERHAUL ═══ */
 
