@@ -175,10 +175,18 @@
       else if (id === 'cour') renderIRPCour();
       else if (id === 'succes_irp') { if (window._renderAchievements) window._renderAchievements(); }
 
+      /* IRP-only tabs don't exist in LAZY — use fallback directly */
+      var irpOnlyTabs = ['liens', 'corruption', 'seal', 'cour', 'succes_irp'];
+      if (irpOnlyTabs.indexOf(id) !== -1) {
+        fallbackShowTab(id);
+        window.CURRENT_TAB = id;
+        return;
+      }
+
       /* Call original for panel switching + lazy loading */
       if (typeof _orig === 'function') {
         try { _orig(id); } catch (e) {
-          /* Fallback for IRP-only panels not in LAZY */
+          window._dbg?.warn('[HUB-IRP] showTab fallback for', id, e);
           fallbackShowTab(id);
         }
       } else {
@@ -188,11 +196,8 @@
       /* Re-render ciblé après le switch pour écraser les contenus RP tardifs */
       setTimeout(function () {
         if (id === 'gacha') renderIRPGacha();
-        if (id === 'dashboard' && typeof window.renderDashboard === 'function') {
-          try { window.renderDashboard(); } catch (_) {}
-        }
-        if (typeof window._refreshCurrentTab === 'function' && id !== 'dashboard' && id !== 'gacha') {
-          try { window._refreshCurrentTab(); } catch (_) {}
+        if (id === 'dashboard' && typeof window.renderPlayerWidgets === 'function') {
+          try { window.renderPlayerWidgets(); } catch (_) {}
         }
       }, 0);
     };
@@ -400,17 +405,31 @@
     var hubMain = document.getElementById('hub-main');
     if (!hubMain) return;
 
-    var loginObs = new MutationObserver(function () {
-      if (hubMain.style.display !== 'none') {
-        setTimeout(loadIRPData, 500);
-        loginObs.disconnect();
-      }
-    });
-    loginObs.observe(hubMain, { attributes: true, attributeFilter: ['style'] });
-    /* Also check immediately */
-    if (hubMain.style.display !== 'none') {
-      setTimeout(loadIRPData, 500);
+    var _irpDataLoaded = false;
+
+    function tryLoadIRP() {
+      if (_irpDataLoaded) return;
+      if (!hubMain.classList.contains('active')) return;
+      if (!window.UID) return;
+      _irpDataLoaded = true;
+      setTimeout(loadIRPData, 300);
     }
+
+    /* Watch class changes (hub-core uses classList.add('active')) */
+    var loginObs = new MutationObserver(function () {
+      tryLoadIRP();
+    });
+    loginObs.observe(hubMain, { attributes: true, attributeFilter: ['class'] });
+
+    /* Also check immediately in case already logged in */
+    tryLoadIRP();
+
+    /* Fallback poll for edge cases (class already set before observer) */
+    var pollCount = 0;
+    var pollIv = setInterval(function () {
+      tryLoadIRP();
+      if (_irpDataLoaded || ++pollCount > 60) clearInterval(pollIv);
+    }, 500);
   }
 
   async function loadIRPData() {
