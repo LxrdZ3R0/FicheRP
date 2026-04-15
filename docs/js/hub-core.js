@@ -383,18 +383,6 @@ function applyBuffMultipliersAndEqualizer(totalBonuses,charStats,equippedIds,ite
   }
 }
 
-/* ── Helper IRP items — évite la duplication loadCharacter / loadInventory ── */
-async function _mergeIRPItemsIfNeeded(){
-  if(!window._irpMode)return;
-  try{
-    const irpSnap=await db.collection('config').doc('irp_items').get();
-    if(irpSnap.exists){
-      const irpItems=(irpSnap.data()||{}).items||{};
-      Object.entries(irpItems).forEach(([k,v])=>{if(!k.startsWith('__'))ALL_ITEMS_DATA[k]=v;});
-    }
-  }catch(_){}
-}
-
 // ── INIT ──
 async function init(){
   const s=getSess();
@@ -414,7 +402,6 @@ async function loadHub(){
     return;
   }
   UID=s.id;
-  window.UID=UID; // expose pour hub-achievements.js / hub-irp.js
   // Afficher l'interface immédiatement
   document.getElementById('login-gate').style.display='none';
   document.getElementById('main-nav').style.display='flex';
@@ -431,12 +418,10 @@ async function loadCharacter(){
     const acData=await cachedGet(C.ACTIVE,UID,'_active_char',15);
     if(!acData){renderNoChar();return}
     CHAR_ID=acData.character_id;
-    window.CHAR_ID=CHAR_ID;
     if(!CHAR_ID){renderNoChar();return}
     const cData=await cachedGet(C.CHARS,CHAR_ID,'_character',30);
     if(!cData){renderNoChar();return}
     CHAR={_id:CHAR_ID,...cData};
-    window.CHAR=CHAR;
     const charKey=(window._resolveIRPInventoryKey && window._irpMode)
       ? await window._resolveIRPInventoryKey(UID, CHAR_ID, cData)
       : `${UID}_${CHAR_ID}`;
@@ -454,8 +439,16 @@ async function loadCharacter(){
       // Merge signature items (defined in code, not in Firestore config)
       for(const[sid,sdata] of Object.entries(SIGNATURE_ITEMS)){if(!ALL_ITEMS_DATA[sid])ALL_ITEMS_DATA[sid]=sdata;}
     }
-    // Merge IRP items depuis Firestore (factorialisé dans _mergeIRPItemsIfNeeded)
-    await _mergeIRPItemsIfNeeded();
+    // Merge IRP items from Firestore (irp_items_config) so prices/IRP-specific items are available
+    if(window._irpMode){
+      try{
+        const irpCfgSnap=await db.collection('config').doc('irp_items').get();
+        if(irpCfgSnap.exists){
+          const irpItems=(irpCfgSnap.data()||{}).items||{};
+          Object.entries(irpItems).forEach(([k,v])=>{if(!k.startsWith('__'))ALL_ITEMS_DATA[k]=v;});
+        }
+      }catch(_){}
+    }
     BUFFS_DATA=bufData?(bufData.buffs||[]):[];
     // Charger compagnons pour bonus stats (Personnage tab)
     try{
@@ -466,6 +459,15 @@ async function loadCharacter(){
       COMP_USER=compUser||{};
       COMP_CFG=compCfg||{companions:{},evolutions:{}};
     }catch(_){COMP_USER={};COMP_CFG={companions:{},evolutions:{}};}
+    // Load achievement data for bonus calculations
+    try{
+      const[achDefs,achUser]=await Promise.all([
+        cachedGet(C.CFG,'achievements_config','config/achievements_config',600),
+        cachedGet('achievements_user',UID,'_ach_user',30)
+      ]);
+      window._achDefsCache=achDefs||{normal:{},irp:{}};
+      window._userAchData=achUser||{unlocked:{},stats:{}};
+    }catch(_){window._achDefsCache=null;window._userAchData=null;}
     if(pmData&&pmData.party_id){
       const pData=await cachedGet(C.PARTIES,pmData.party_id,'_party',60);
       PARTY_DATA=pData||null;
@@ -482,7 +484,6 @@ async function loadPlayer(){
       cachedGet(C.PITY,UID,'_pity',30)
     ]);
     PLAYER=pData||{};
-    window.PLAYER=PLAYER;
     PITY=pityData||{};
     renderPlayerWidgets();
     _refreshCurrentTab();
@@ -504,8 +505,16 @@ async function loadInventory(){
     if(cfgData) ALL_ITEMS_DATA={...cfgData.items||{},...cfgData.equipment||{},...cfgData.food_items||{},...cfgData.consumable_items||{}};
     // Merge signature items (defined in code, not in Firestore config)
     for(const[sid,sdata] of Object.entries(SIGNATURE_ITEMS)){if(!ALL_ITEMS_DATA[sid])ALL_ITEMS_DATA[sid]=sdata;}
-    // Merge IRP items (factorialisé)
-    await _mergeIRPItemsIfNeeded();
+    // Merge IRP items from Firestore
+    if(window._irpMode){
+      try{
+        const irpCfgSnap=await db.collection('config').doc('irp_items').get();
+        if(irpCfgSnap.exists){
+          const irpItems=(irpCfgSnap.data()||{}).items||{};
+          Object.entries(irpItems).forEach(([k,v])=>{if(!k.startsWith('__'))ALL_ITEMS_DATA[k]=v;});
+        }
+      }catch(_){}
+    }
     if(window.Skeleton) window.Skeleton.hide('inv-grid');
     renderInventory();
   }catch(e){window._dbg?.error('[INV]',e);if(window.Skeleton) window.Skeleton.hide('inv-grid');grid.innerHTML='<div class="empty">Erreur de chargement</div>'}
@@ -607,13 +616,12 @@ function showTab(id){
   };
 
   if(prevPanel&&prevPanel!==panel&&!prefersReducedMotion){
-    /* transition uniquement sur opacity — jamais transition:all */
     prevPanel.style.transition='opacity 0.12s ease';
     prevPanel.style.opacity='0';
     setTimeout(()=>{
       prevPanel.style.opacity='';
       prevPanel.style.transition='';
-      try{ doSwitch(); }catch(err){ window._dbg?.error('[TAB switch]',err); }
+      doSwitch();
     },120);
   }else{
     doSwitch();

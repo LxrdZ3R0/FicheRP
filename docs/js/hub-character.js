@@ -74,6 +74,23 @@ function renderFullChar(){
   (BUFFS_DATA||[]).forEach(b=>{
     if(b.effects)Object.entries(b.effects).forEach(([s,v])=>{addTo(bBuffs,s,v);});
   });
+  // 5b) Achievement bonuses
+  const bAch={};
+  try{
+    if(window._achDefsCache && UID){
+      const achSnap=window._userAchData;
+      if(achSnap && achSnap.unlocked){
+        const achN=window._achDefsCache.normal||{};
+        const achI=window._achDefsCache.irp||{};
+        Object.keys(achSnap.unlocked).forEach(function(achId){
+          const defn=achN[achId]||achI[achId];
+          if(defn && defn.bonus){
+            Object.entries(defn.bonus).forEach(function(e){addTo(bAch,e[0],e[1]);});
+          }
+        });
+      }
+    }
+  }catch(_){}
   // 6) Compagnons (sync bonuses du compagnon actif)
   let activeCompName='';
   let compBuffMult={}; // {stat: multiplier} from evolved companions
@@ -139,10 +156,10 @@ function renderFullChar(){
     stats.intelligence=10;
     bonuses.intelligence=0;
     bEquip.intelligence=0; bSets.intelligence=0; bParty.intelligence=0;
-    bTitles.intelligence=0; bBuffs.intelligence=0; bComp.intelligence=0; bSig.intelligence=0; bMythic.intelligence=0;
+    bTitles.intelligence=0; bBuffs.intelligence=0; bComp.intelligence=0; bSig.intelligence=0; bMythic.intelligence=0; bAch.intelligence=0;
     delete bonuses.intelligence;
     delete bEquip.intelligence; delete bSets.intelligence; delete bParty.intelligence;
-    delete bTitles.intelligence; delete bBuffs.intelligence; delete bComp.intelligence; delete bSig.intelligence; delete bMythic.intelligence;
+    delete bTitles.intelligence; delete bBuffs.intelligence; delete bComp.intelligence; delete bSig.intelligence; delete bMythic.intelligence; delete bAch.intelligence;
   }
 
   // ── Stats display (with companion buff_mult) ──
@@ -200,6 +217,7 @@ function renderFullChar(){
     html+=renderBonusSection('👥','PARTY','party',bParty);
     html+=renderBonusSection('🏷️','TITRES','titles',bTitles);
     html+=renderBonusSection('✨','BUFFS','buffs',bBuffs);
+    html+=renderBonusSection('🏆','SUCCÈS','ach',bAch);
     if(!html) html='<div class="bonus-section-empty">Aucun bonus actif</div>';
     bbEl.innerHTML=html;
   }
