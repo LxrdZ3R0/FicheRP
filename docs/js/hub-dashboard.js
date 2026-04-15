@@ -103,9 +103,23 @@ function renderDashChar(){
     const bon=_dashBonuses[k]||0;
     const achBon=_dashAchBonuses[k]||0;
     const total=base+bon;
-    let bonHtml=bon>0?` <span class="stat-bonus-inline positive">+${bon}</span>`:(bon<0?` <span class="stat-bonus-inline negative">${bon}</span>`:'');
-    let achHtml=achBon>0?`<span class="stat-ach-inline">🏆+${achBon}</span>`:'';
-    return `<div class="stat-row"><span class="stat-icon">${SI[k]}</span><span class="stat-name">${SL[k]}</span><div class="stat-val-wrap"><span class="stat-val">${total}</span>${bonHtml}</div>${achHtml}</div>`;
+    const maxStat=1000;
+    const pct=Math.min(100,Math.round(total/maxStat*100));
+    /* Bonus breakdown tooltip */
+    const eqBon=bon-achBon;
+    let detailParts=[];
+    if(base>0)detailParts.push(`Base: ${base}`);
+    if(eqBon>0)detailParts.push(`Équip: +${eqBon}`);
+    if(achBon>0)detailParts.push(`Succès: +${achBon}`);
+    const detailText=detailParts.join(' · ');
+    let bonHtml='';
+    if(bon>0)bonHtml=`<span class="stat-bonus-tag positive">+${bon}</span>`;
+    else if(bon<0)bonHtml=`<span class="stat-bonus-tag negative">${bon}</span>`;
+    return `<div class="stat-card-v2" title="${detailText}">
+      <div class="stat-card-header"><span class="stat-card-icon">${SI[k]}</span><span class="stat-card-name">${SL[k]}</span></div>
+      <div class="stat-card-value-row"><span class="stat-card-total">${total}</span>${bonHtml}</div>
+      <div class="stat-card-bar"><div class="stat-card-bar-fill" style="width:${pct}%"></div></div>
+    </div>`;
   }).join('');
   const powers=c.powers||[];
   document.getElementById('dash-powers-list').innerHTML=powers.length
