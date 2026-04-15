@@ -437,16 +437,20 @@ window._getInventoryKey = function () {
 // INIT + LOAD
 // ══════════════════════════════════════════════════════════════════════
 async function init(){
+  console.log('[HUB-IRP] init() called, readyState:', document.readyState);
   const s=getSess();
+  console.log('[HUB-IRP] session:', s ? ('id='+s.id+' user='+s.username) : 'NULL');
   if(s&&s.id){
     try{ await loadHub(); }
-    catch(err){ window._dbg?.error('[HUB-IRP] loadHub failed',err); }
+    catch(err){ console.error('[HUB-IRP] loadHub failed:',err); }
   } else {
+    console.log('[HUB-IRP] No session — showing login gate');
     document.getElementById('login-gate').style.display='flex';
   }
 }
 
 async function loadHub(){
+  console.log('[HUB-IRP] loadHub() start');
   const s=getSess();
   if(!s||!s.id){
     document.getElementById('login-gate').style.display='flex';
@@ -457,24 +461,31 @@ async function loadHub(){
   var loginGate=document.getElementById('login-gate');
   var mainNav=document.getElementById('main-nav');
   var hubMain=document.getElementById('hub-main');
+  console.log('[HUB-IRP] DOM elements — gate:',!!loginGate,'nav:',!!mainNav,'hub:',!!hubMain);
   if(loginGate)loginGate.style.display='none';
   if(mainNav)mainNav.style.display='flex';
   if(hubMain)hubMain.classList.add('active');
   try{document.getElementById('nav-username').textContent=s.username||'—';}catch(_){}
   try{document.getElementById('menu-username').textContent=s.username||'—';}catch(_){}
   if(s.avatar){try{var av=document.getElementById('nav-avatar');if(av){av.src=s.avatar;av.style.display='block';}}catch(_){}}
+  console.log('[HUB-IRP] UI shown, loading data for UID:', UID);
   try{ await Promise.all([loadCharacter(),loadPlayer(),loadIRPData()]); }
-  catch(err){ window._dbg?.error('[HUB-IRP] data load',err); }
+  catch(err){ console.error('[HUB-IRP] data load error:',err); }
+  console.log('[HUB-IRP] loadHub() complete — CHAR_ID:', CHAR_ID, 'CHAR:', !!CHAR);
 }
 
 async function loadCharacter(){
+  console.log('[HUB-IRP] loadCharacter() — C.ACTIVE:', C.ACTIVE, 'UID:', UID);
   try{
     const acData=await cachedGet(C.ACTIVE,UID,'_active_char',15);
+    console.log('[HUB-IRP] active_char data:', acData);
     if(!acData){renderNoChar();return}
     CHAR_ID=acData.character_id;
     window.CHAR_ID=CHAR_ID;
     if(!CHAR_ID){renderNoChar();return}
+    console.log('[HUB-IRP] loading char:', CHAR_ID, 'from', C.CHARS);
     const cData=await cachedGet(C.CHARS,CHAR_ID,'_character',30);
+    console.log('[HUB-IRP] char data:', cData ? 'OK ('+((cData.first_name||'')+' '+(cData.last_name||'')).trim()+')' : 'NULL');
     if(!cData){renderNoChar();return}
     CHAR={_id:CHAR_ID,...cData};
     window.CHAR=CHAR;

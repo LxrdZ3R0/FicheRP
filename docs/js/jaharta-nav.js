@@ -28,12 +28,26 @@
   }
 
   function buildNav(pages) {
-    var logoText = localStorage.getItem('jaharta_irp_mode') === 'true' ? 'JAHARTA IRP' : 'JAHARTA';
+    var isIRP = localStorage.getItem('jaharta_irp_mode') === 'true';
+    var logoText = isIRP ? 'JAHARTA IRP' : 'JAHARTA';
+    var logoHref = isIRP ? 'index-irp.html' : 'index.html';
 
     var navLinks = pages.map(function (p) {
       var active = p.href === current ? ' class="active"' : '';
       return '<a href="' + p.href + '"' + active + '>' + p.label + '</a>';
     }).join('');
+
+    // Ajouter lien retour au site normal si on est en IRP
+    var returnLink = '';
+    var returnMenuLink = '';
+    if (isIRP) {
+      returnLink = '<a href="index.html" onclick="localStorage.removeItem(\'jaharta_irp_mode\')" style="opacity:.55;font-size:.6rem">\u21A9 Site Normal</a>';
+      returnMenuLink = '<a href="index.html" class="menu-link" onclick="localStorage.removeItem(\'jaharta_irp_mode\')" style="opacity:.5;border-top:1px solid rgba(220,20,60,0.15);margin-top:8px;padding-top:12px">' +
+        '<span class="menu-link-index">\u21A9</span>' +
+        '<span class="menu-link-text">Site Normal</span>' +
+        '<span class="menu-link-arrow">\u2192</span>' +
+        '</a>';
+    }
 
     var menuLinks = pages.map(function (p) {
       var cls = 'menu-link' + (p.href === current ? ' active' : '');
@@ -45,10 +59,10 @@
     }).join('');
 
     return '<nav class="nav" id="nav">' +
-        '<a href="index.html" class="nav-logo">' +
+        '<a href="' + logoHref + '" class="nav-logo">' +
           '<img src="img/logo-jaharta.png" alt="Logo Jaharta">' + logoText +
         '</a>' +
-        '<div class="nav-links" id="nav-links">' + navLinks + '</div>' +
+        '<div class="nav-links" id="nav-links">' + navLinks + returnLink + '</div>' +
         '<button class="burger" id="burger" aria-label="Menu" aria-expanded="false">' +
           '<span class="burger-line"></span>' +
           '<span class="burger-line"></span>' +
@@ -58,7 +72,7 @@
       '<div class="mobile-menu" id="mobile-menu">' +
         '<div class="menu-inner">' +
           '<div class="menu-header-label">// NAVIGATION</div>' +
-          menuLinks +
+          menuLinks + returnMenuLink +
         '</div>' +
         '<div class="menu-deco"></div>' +
       '</div>';
