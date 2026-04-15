@@ -105,22 +105,6 @@ async function verifyCode(){
     showErr(msg);done();
   }
 }
-if(document.readyState==='loading'){
-  document.addEventListener('DOMContentLoaded',function(){
-    const lc=document.getElementById('link-code');
-    const vb=document.getElementById('verify-btn');
-    if(lc)lc.addEventListener('keydown',e=>{if(e.key==='Enter')verifyCode();});
-    if(vb)vb.addEventListener('click',verifyCode);
-    init();
-  });
-}else{
-  // DOMContentLoaded already fired — run immediately
-  const lc=document.getElementById('link-code');
-  const vb=document.getElementById('verify-btn');
-  if(lc)lc.addEventListener('keydown',e=>{if(e.key==='Enter')verifyCode();});
-  if(vb)vb.addEventListener('click',verifyCode);
-  init();
-}
 
 function logout(){
   clearSess();
@@ -133,11 +117,11 @@ function logout(){
 // ── ACCESSIBILITY ──
 const prefersReducedMotion=window.matchMedia('(prefers-reduced-motion:reduce)').matches;
 
-// ── STATE ──
-let CHAR=null,PLAYER=null,PITY=null,INV_DATA=null,CHAR_ID=null,UID=null,ALL_ITEMS_DATA={};
-let PARTY_DATA=null,TITLES_DATA=null,TITLES_DEF=null,BUFFS_DATA=null;
-let COMP_USER=null,COMP_CFG=null;
-let CURRENT_TAB='dashboard';
+// ── STATE (var pour hoisting — init() peut être appelé avant cette ligne) ──
+var CHAR=null,PLAYER=null,PITY=null,INV_DATA=null,CHAR_ID=null,UID=null,ALL_ITEMS_DATA={};
+var PARTY_DATA=null,TITLES_DATA=null,TITLES_DEF=null,BUFFS_DATA=null;
+var COMP_USER=null,COMP_CFG=null;
+var CURRENT_TAB='dashboard';
 
 // ── IRP State ──
 window._irpPlayer = null;
@@ -905,3 +889,24 @@ window.addEventListener('scroll',()=>{const max=document.body.scrollHeight-windo
   else document.addEventListener('DOMContentLoaded',function(){obs.observe(document.body,{childList:true,subtree:true,characterData:true});});
   var att=0;var iv=setInterval(function(){injectJahartiteBalance();replaceNavarites(document.body);if(++att>30)clearInterval(iv);},500);
 })();
+
+// ══════════════════════════════════════════════════════════════════════
+// BOOT — must be at the very end so all const/let/var are initialized
+// ══════════════════════════════════════════════════════════════════════
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded',function(){
+    const lc=document.getElementById('link-code');
+    const vb=document.getElementById('verify-btn');
+    if(lc)lc.addEventListener('keydown',e=>{if(e.key==='Enter')verifyCode();});
+    if(vb)vb.addEventListener('click',verifyCode);
+    init();
+  });
+}else{
+  // DOMContentLoaded already fired — run immediately
+  const lc=document.getElementById('link-code');
+  const vb=document.getElementById('verify-btn');
+  if(lc)lc.addEventListener('keydown',e=>{if(e.key==='Enter')verifyCode();});
+  if(vb)vb.addEventListener('click',verifyCode);
+  init();
+
+}

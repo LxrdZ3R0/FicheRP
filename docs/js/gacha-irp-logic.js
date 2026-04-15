@@ -498,10 +498,9 @@ function updNV(){
   document.getElementById('b1').disabled=n<1||!hasBanner;
   document.getElementById('b5').disabled=n<5||!hasBanner;
   document.getElementById('b10').disabled=n<10||!hasBanner;
-    document.getElementById('b1').querySelector('span').innerHTML='PULL ×1<span class="btn-cost">1 JAHARTITE</span>';
-    document.getElementById('b5').querySelector('span').innerHTML='PULL ×5<span class="btn-cost">5 JAH · +1 BONUS</span>';
-    document.getElementById('b10').querySelector('span').innerHTML='PULL ×10<span class="btn-cost">10 JAH · +4 BONUS · 1 EPIC+</span>'+(code?'<span class="btn-cost" style="color:#dc143c;opacity:1">⚡ CODE ACTIF</span>':'');
-  }
+  document.getElementById('b1').querySelector('span').innerHTML='PULL ×1<span class="btn-cost">1 JAHARTITE</span>';
+  document.getElementById('b5').querySelector('span').innerHTML='PULL ×5<span class="btn-cost">5 JAH · +1 BONUS</span>';
+  document.getElementById('b10').querySelector('span').innerHTML='PULL ×10<span class="btn-cost">10 JAH · +4 BONUS · 1 EPIC+</span>'+(code?'<span class="btn-cost" style="color:#dc143c;opacity:1">⚡ CODE ACTIF</span>':'');
 }
 
 // ═══ TILT 3D ═══
