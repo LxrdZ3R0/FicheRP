@@ -49,8 +49,47 @@ function renderDashChar(){
         Object.entries(setR.stats||{}).forEach(([s,v])=>{_dashBonuses[s]=(_dashBonuses[s]||0)+v;});
       }
     }
+    // 4) Party bonuses
+    if(typeof PARTY_DATA!=='undefined'&&PARTY_DATA&&PARTY_DATA.members){
+      const me=(PARTY_DATA.members||[]).find(m=>m.char_key===UID+'_'+CHAR_ID);
+      if(me&&me.bonuses)Object.entries(me.bonuses).forEach(([s,v])=>{_dashBonuses[s]=(_dashBonuses[s]||0)+(parseInt(v)||0);});
+    }
+    // 5) Titles
+    if(typeof TITLES_DATA!=='undefined'&&TITLES_DATA&&typeof TITLES_DEF!=='undefined'&&TITLES_DEF){
+      Object.entries(TITLES_DATA.titles||{}).forEach(([tid,ts])=>{
+        const td=TITLES_DEF[tid];if(!td)return;
+        const tier=ts.current_tier||ts.tier||1;
+        const tierDef=(td.tiers||[]).find(t=>t.tier===tier);
+        if(tierDef&&tierDef.stat_bonuses)Object.entries(tierDef.stat_bonuses).forEach(([s,v])=>{_dashBonuses[s]=(_dashBonuses[s]||0)+(parseInt(v)||0);});
+      });
+    }
+    // 6) Buffs
+    if(typeof BUFFS_DATA!=='undefined'&&BUFFS_DATA){
+      (BUFFS_DATA||[]).forEach(b=>{
+        if(b.effects)Object.entries(b.effects).forEach(([s,v])=>{_dashBonuses[s]=(_dashBonuses[s]||0)+(parseInt(v)||0);});
+      });
+    }
+    // 7) Companion sync bonuses
+    if(typeof COMP_USER!=='undefined'&&COMP_USER&&typeof COMP_CFG!=='undefined'&&COMP_CFG){
+      const owned=COMP_USER.owned_companions||{};
+      const activeId=COMP_USER.active_companion;
+      if(activeId&&owned[activeId]){
+        const cd=owned[activeId];
+        if(cd.synchronized){
+          const form=cd.current_form||activeId;
+          const allComps=COMP_CFG.companions||{};
+          const allEvos=COMP_CFG.evolutions||{};
+          const info=allEvos[form]||allComps[form]||allComps[activeId]||{};
+          const baseEntry=allComps[activeId]||{};
+          const syncBonuses=info.sync_bonuses||baseEntry.sync_bonuses||{};
+          Object.entries(syncBonuses).forEach(([s,v])=>{_dashBonuses[s]=(_dashBonuses[s]||0)+(parseInt(v)||0);});
+          const spBonuses=_compSyncPowerBonuses(info.sync_power||baseEntry.sync_power||'');
+          Object.entries(spBonuses).forEach(([s,v])=>{_dashBonuses[s]=(_dashBonuses[s]||0)+(parseInt(v)||0);});
+        }
+      }
+    }
   }catch(_){}
-  // Achievement bonuses
+  // 8) Achievement bonuses
   const _dashAchBonuses={};
   try{
     const ab=window._achGetAllBonuses?window._achGetAllBonuses():(window._achGetBonuses?window._achGetBonuses():{});
