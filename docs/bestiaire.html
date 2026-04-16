@@ -674,7 +674,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 /* ── Submit (create) ── */
 window.submitBest = async function() {
-  if (!window._isAdmin) { showToast('⚠ Connexion admin requise', 'error'); return; }
+  if (!window._isAdmin) { alert('⚠ Connexion admin requise'); return; }
   const data = collectBestForm();
   if (!data) return;
   const btn = document.getElementById('best-submit-btn');
@@ -683,7 +683,7 @@ window.submitBest = async function() {
     data.createdAt = window._serverTimestamp();
     await window._addDoc(window._collection(window._db, 'bestiaire'), data);
     closeBestModal();
-  } catch (e) { showToast('⚠ ' + e.message, 'error'); }
+  } catch (e) { alert('Erreur: ' + e.message); }
   btn.disabled = false; btn.textContent = '◆ Créer la bête';
 };
 
@@ -710,7 +710,7 @@ window.openEditBest = async function(id) {
 };
 
 window.updateBest = async function(id) {
-  if (!window._isAdmin) { showToast('⚠ Connexion admin requise', 'error'); return; }
+  if (!window._isAdmin) { alert('⚠ Connexion admin requise'); return; }
   const data = collectBestForm();
   if (!data) return;
   const btn = document.getElementById('best-submit-btn');
@@ -718,7 +718,7 @@ window.updateBest = async function(id) {
   try {
     await window._updateDoc(window._doc(window._db, 'bestiaire', id), data);
     closeBestModal();
-  } catch (e) { showToast('⚠ ' + e.message, 'error'); }
+  } catch (e) { alert('Erreur: ' + e.message); }
   btn.disabled = false; btn.textContent = '✎ Mettre à jour';
 };
 
@@ -726,12 +726,12 @@ window.deleteBest = async function(id, name) {
   if (!window._isAdmin) return;
   if (!confirm('Supprimer "' + (name || 'cette bête') + '" ?')) return;
   try { await window._deleteDoc(window._doc(window._db, 'bestiaire', id)); }
-  catch (e) { showToast('⚠ ' + e.message, 'error'); }
+  catch (e) { alert('Erreur: ' + e.message); }
 };
 
 function collectBestForm() {
   const name = document.getElementById('best-name').value.trim();
-  if (!name) { showToast('Le nom est obligatoire', 'error'); return null; }
+  if (!name) { alert('Le nom est obligatoire'); return null; }
   const section = document.getElementById('best-section').value;
   const style = document.getElementById('best-style').value;
   const color = document.getElementById('best-color-sel').value;

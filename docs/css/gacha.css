@@ -82,7 +82,7 @@ html { scroll-behavior: smooth; }
 .nav-links a {
   font-family: var(--font-b); font-size: .8rem; font-weight: 500;
   letter-spacing: .06em; color: var(--text2); text-decoration: none;
-  padding: 8px 16px; border-radius: 6px; transition: color .3s, background .3s;
+  padding: 8px 16px; border-radius: 6px; transition: all .3s;
 }
 .nav-links a:hover { color: #fff; background: rgba(255,255,255,0.04); }
 .nav-links a.active { color: var(--blue); background: rgba(77,163,255,0.08); }
@@ -197,7 +197,7 @@ html { scroll-behavior: smooth; }
   letter-spacing: .15em; color: #fff; background: #5865F2;
   border: none; padding: 18px 40px; border-radius: 12px; cursor: pointer;
   display: inline-flex; align-items: center; gap: 14px;
-  transition: background .4s cubic-bezier(.4,0,.2,1), transform .4s cubic-bezier(.4,0,.2,1), box-shadow .4s cubic-bezier(.4,0,.2,1); text-decoration: none;
+  transition: all .4s cubic-bezier(.4,0,.2,1); text-decoration: none;
   box-shadow: 0 4px 24px rgba(88,101,242,0.25), 0 0 0 1px rgba(88,101,242,0.3);
 }
 .discord-login-btn:hover {
@@ -265,7 +265,7 @@ html { scroll-behavior: smooth; }
   font-family: var(--font-b); font-size: .75rem; letter-spacing: .06em;
   color: var(--text3); background: transparent;
   border: 1px solid rgba(255,255,255,0.06); padding: 10px 18px;
-  border-radius: 8px; cursor: pointer; transition: color .25s, border-color .25s, background .25s;
+  border-radius: 8px; cursor: pointer; transition: all .25s;
 }
 .btn-logout:hover { color: var(--red); border-color: rgba(255,71,87,0.3); background: rgba(255,71,87,0.04); }
 
@@ -443,7 +443,7 @@ html { scroll-behavior: smooth; }
   cursor: pointer; display: none;
   align-items: center; justify-content: center;
   font-size: .8rem; color: var(--violet);
-  transition: background .3s, border-color .3s, box-shadow .3s, transform .3s;
+  transition: all .3s;
 }
 .banner-admin-edit:hover {
   background: rgba(139,92,246,0.25);
@@ -487,7 +487,7 @@ html { scroll-behavior: smooth; }
 .banner-img-editor-actions button {
   flex: 1; font-family: var(--font-h); font-size: .48rem; font-weight: 700;
   letter-spacing: .1em; padding: 10px; border-radius: 6px;
-  cursor: pointer; transition: border-color .3s, box-shadow .3s; border: 1px solid;
+  cursor: pointer; transition: all .3s; border: 1px solid;
 }
 .btn-save-img {
   color: #fff;
@@ -566,7 +566,7 @@ html { scroll-behavior: smooth; }
   background: transparent;
   border: 1px solid rgba(255,255,255,0.08);
   padding: 10px 22px; border-radius: 8px; cursor: pointer;
-  transition: color .35s cubic-bezier(.4,0,.2,1), background .35s cubic-bezier(.4,0,.2,1), border-color .35s cubic-bezier(.4,0,.2,1), box-shadow .35s cubic-bezier(.4,0,.2,1), transform .35s cubic-bezier(.4,0,.2,1);
+  transition: all .35s cubic-bezier(.4,0,.2,1);
   white-space: nowrap; position: relative; z-index: 30;
 }
 .banner-select-btn:hover {
@@ -694,7 +694,7 @@ html { scroll-behavior: smooth; }
   letter-spacing: .15em;
   padding: 22px 40px; border: 1px solid; border-radius: 14px;
   background: var(--card); cursor: pointer;
-  transition: transform .4s cubic-bezier(.4,0,.2,1);
+  transition: all .4s cubic-bezier(.4,0,.2,1);
   position: relative; overflow: hidden;
   backdrop-filter: blur(8px);
 }
@@ -881,7 +881,7 @@ html { scroll-behavior: smooth; }
   letter-spacing: .15em; color: var(--text2); background: transparent;
   border: 1px solid rgba(255,255,255,0.1); padding: 16px 36px;
   border-radius: 12px; cursor: pointer; margin-top: 2rem;
-  transition: color .35s, border-color .35s, background .35s, transform .35s, box-shadow .35s;
+  transition: all .35s;
 }
 .result-dismiss:hover {
   color: #fff; border-color: rgba(255,255,255,0.2);
@@ -945,7 +945,7 @@ html { scroll-behavior: smooth; }
   background: rgba(77,163,255,0.06);
   border: 1px solid rgba(77,163,255,0.15); border-radius: 10px;
   cursor: pointer; flex-direction: column; align-items: center;
-  justify-content: center; gap: 5px; transition: border-color .3s, background .3s, box-shadow .3s;
+  justify-content: center; gap: 5px; transition: all .3s;
   position: relative; z-index: 1001;
 }
 .burger:hover {
@@ -955,7 +955,7 @@ html { scroll-behavior: smooth; }
 }
 .burger-line {
   display: block; width: 18px; height: 1.5px; border-radius: 2px;
-  background: #4DA3FF; transition: transform .4s cubic-bezier(0.76,0,0.24,1);
+  background: #4DA3FF; transition: all .4s cubic-bezier(0.76,0,0.24,1);
   transform-origin: center;
 }
 .burger.active .burger-line:nth-child(1){transform:translateY(6.5px) rotate(45deg)}
@@ -997,7 +997,7 @@ html { scroll-behavior: smooth; }
   display: flex; align-items: center; gap: 16px; text-decoration: none;
   padding: 18px 0; border-bottom: 1px solid rgba(77,163,255,0.04);
   transform: translateX(-30px); opacity: 0;
-  transition: opacity .4s cubic-bezier(0.16,1,0.3,1), transform .4s cubic-bezier(0.16,1,0.3,1);
+  transition: all .4s cubic-bezier(0.16,1,0.3,1);
 }
 .mobile-menu.open .menu-link { transform: translateX(0); opacity: 1; }
 .mobile-menu.open .menu-link:nth-child(1){transition-delay:.06s}
@@ -1012,7 +1012,7 @@ html { scroll-behavior: smooth; }
 .menu-link-text {
   font-family: var(--font-h); font-size: clamp(1.1rem,4vw,1.6rem);
   font-weight: 700; letter-spacing: .12em; color: #c8cde0;
-  transition: color .3s; text-transform: uppercase;
+  transition: all .3s; text-transform: uppercase;
 }
 .menu-link:hover .menu-link-text, .menu-link.active .menu-link-text { color: #fff; }
 .menu-link.active .menu-link-text {
@@ -1021,7 +1021,7 @@ html { scroll-behavior: smooth; }
 }
 .menu-link-arrow {
   margin-left: auto; font-family: var(--font-m); font-size: .7rem;
-  color: rgba(77,163,255,0.2); transition: color .3s, transform .3s;
+  color: rgba(77,163,255,0.2); transition: all .3s;
 }
 .menu-link:hover .menu-link-arrow { color: #4DA3FF; transform: translateX(4px); }
 .menu-link.active .menu-link-arrow { color: #8B5CF6; }
