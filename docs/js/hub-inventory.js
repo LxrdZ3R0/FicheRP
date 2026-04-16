@@ -14,7 +14,11 @@ const SLOT_LIMITS={
   mains:{label:'Mains',max:3},doigts:{label:'Doigts',max:10},poignets:{label:'Poignets',max:2},
   jambes:{label:'Jambes',max:3},pieds:{label:'Pieds',max:2},dos:{label:'Dos',max:1},
   cou:{label:'Cou',max:2},armes_h:{label:'Armes H',max:1},armes_l:{label:'Armes L',max:2},
-  oreilles:{label:'Oreilles',max:2},visage:{label:'Visage',max:1},special:{label:'Spécial',max:2}
+  oreilles:{label:'Oreilles',max:2},visage:{label:'Visage',max:1},special:{label:'Spécial',max:2},
+  /* IRP-exclusifs — mirror cogs/irp_inventory_system.py IRP_SLOT_LIMITS */
+  erp:{label:'ERP',max:3,irp:true,requiredTag:'erp'},
+  dominion:{label:'Dominion',max:3,irp:true,requiredTag:'dominion'},
+  lord:{label:'Seigneurie',max:4,irp:true}
 };
 
 const RARITY_COLORS={
@@ -83,7 +87,7 @@ function renderCharacterPanel(){
     bySlot[slot].push(id);
   });
 
-  const slotOrder=['tete','visage','cou','oreilles','torse','dos','bras','mains','poignets','doigts','jambes','pieds','armes_h','armes_l','special'];
+  const slotOrder=['tete','visage','cou','oreilles','torse','dos','bras','mains','poignets','doigts','jambes','pieds','armes_h','armes_l','special','erp','dominion','lord'];
   slotOrder.forEach(slotId=>{
     const cellsCont=document.getElementById('sz-'+slotId);
     if(!cellsCont)return;
@@ -541,7 +545,7 @@ function initDragDrop(){
   });
 
   // SortableJS sur chaque zone de slot (cible)
-  const slotOrder=['tete','visage','cou','oreilles','torse','dos','bras','mains','poignets','doigts','jambes','pieds','armes_h','armes_l','special'];
+  const slotOrder=['tete','visage','cou','oreilles','torse','dos','bras','mains','poignets','doigts','jambes','pieds','armes_h','armes_l','special','erp','dominion','lord'];
   slotOrder.forEach(slotId=>{
     const cells=document.getElementById('sz-'+slotId);
     if(!cells)return;
@@ -661,6 +665,13 @@ async function toggleEquip(itemId){
         if(def){
           const inSlot=equipped.filter(id=>(ALL_ITEMS_DATA[id]||{}).slot===slot).length;
           if(inSlot>=def.max){showEquipToast(`❌ Slot ${def.label} plein (${inSlot}/${def.max})`,true);return;}
+          /* Slots IRP erp/dominion : tag obligatoire (lord accepte tout) */
+          if(def.requiredTag){
+            const rawTags=it.tags;
+            const tags=Array.isArray(rawTags)?rawTags:(typeof rawTags==='string'?[rawTags]:[]);
+            const has=tags.some(t=>String(t).toLowerCase()===def.requiredTag);
+            if(!has){showEquipToast(`❌ Slot ${def.label} — item non tagué ${def.requiredTag.toUpperCase()}`,true);return;}
+          }
         }
       }
       // Vérifier restriction high-tier par niveau

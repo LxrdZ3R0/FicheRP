@@ -447,6 +447,84 @@ body::after{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;o
   box-shadow:0 0 18px rgba(var(--cyan-rgb),0.28);animation:none;
 }
 
+/* ══ SLOTS IRP EXCLUSIFS — ERP / Dominion / Seigneurie ══
+   Même squelette .slot-zone / .slot-cell mais accents rouge-magenta-violet.
+   Bande dédiée sous le .cyb-panel, 3 colonnes égales. */
+.cyb-irp-slots{
+  padding:14px 16px 6px;
+  border-top:1px solid rgba(220,20,60,0.15);
+  position:relative;z-index:1;
+  background:linear-gradient(180deg,rgba(220,20,60,0.04),transparent 80%);
+}
+.cyb-irp-header{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  margin-bottom:14px;padding-bottom:10px;
+  border-bottom:1px solid rgba(220,20,60,0.12);
+}
+.cyb-irp-title{
+  font-family:var(--font-h);font-size:var(--fs-xs);letter-spacing:.22em;
+  color:#dc143c;font-weight:800;
+}
+.cyb-irp-tick{
+  width:6px;height:6px;background:#dc143c;border-radius:50%;
+  box-shadow:0 0 8px rgba(220,20,60,0.8);
+}
+.cyb-irp-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:10px;
+}
+.cyb-irp-zone{
+  align-items:center !important;
+  padding:10px 8px;border-radius:8px;
+  background:rgba(10,4,16,0.55);
+  border:1px solid rgba(220,20,60,0.12);
+  transition:border-color .25s,box-shadow .25s;
+}
+.cyb-irp-zone .slot-zone-label{text-align:center}
+.cyb-irp-zone .slot-zone-desc{
+  font-family:var(--font-m);font-size:.38rem;letter-spacing:.05em;
+  color:var(--text3);opacity:0.7;text-align:center;
+  margin:2px 0 8px;min-height:1.3em;
+}
+.cyb-irp-zone .slot-cells{justify-content:center !important;flex-wrap:wrap}
+
+/* Accent par catégorie — ERP crimson · Dominion magenta · Seigneurie violet */
+.slot-zone[data-slot="erp"]{border-color:rgba(220,20,60,0.18)}
+.slot-zone[data-slot="erp"] .slot-zone-label{color:#dc143c}
+.slot-zone[data-slot="erp"] .slot-cell{border-color:rgba(220,20,60,0.28)}
+.slot-zone[data-slot="erp"] .slot-cell.empty-cell{border-color:rgba(220,20,60,0.28)}
+.slot-zone[data-slot="erp"] .slot-cell.occupied{
+  border-color:rgba(220,20,60,0.75);background:rgba(220,20,60,0.08);
+  box-shadow:inset 0 0 10px rgba(220,20,60,0.1),0 0 14px rgba(220,20,60,0.28);animation:none;
+}
+
+.slot-zone[data-slot="dominion"]{border-color:rgba(139,0,139,0.20)}
+.slot-zone[data-slot="dominion"] .slot-zone-label{color:#b23cc8}
+.slot-zone[data-slot="dominion"] .slot-cell{border-color:rgba(139,0,139,0.30)}
+.slot-zone[data-slot="dominion"] .slot-cell.empty-cell{border-color:rgba(139,0,139,0.30)}
+.slot-zone[data-slot="dominion"] .slot-cell.occupied{
+  border-color:rgba(178,60,200,0.80);background:rgba(139,0,139,0.08);
+  box-shadow:inset 0 0 10px rgba(178,60,200,0.12),0 0 14px rgba(178,60,200,0.30);animation:none;
+}
+
+.slot-zone[data-slot="lord"]{border-color:rgba(106,13,173,0.22)}
+.slot-zone[data-slot="lord"] .slot-zone-label{color:#9d5bff}
+.slot-zone[data-slot="lord"] .slot-cell{border-color:rgba(106,13,173,0.32)}
+.slot-zone[data-slot="lord"] .slot-cell.empty-cell{border-color:rgba(106,13,173,0.32)}
+.slot-zone[data-slot="lord"] .slot-cell.occupied{
+  border-color:rgba(157,91,255,0.78);background:rgba(106,13,173,0.08);
+  box-shadow:inset 0 0 10px rgba(157,91,255,0.12),0 0 14px rgba(157,91,255,0.30);animation:none;
+}
+
+/* Drag-over IRP — même règle que drag-over générique mais tinté */
+.slot-zone[data-slot="erp"].drag-over{box-shadow:0 0 18px rgba(220,20,60,0.25)}
+.slot-zone[data-slot="dominion"].drag-over{box-shadow:0 0 18px rgba(178,60,200,0.25)}
+.slot-zone[data-slot="lord"].drag-over{box-shadow:0 0 18px rgba(157,91,255,0.25)}
+
+/* Mobile : empile en 1 colonne */
+@media (max-width:720px){
+  .cyb-irp-grid{grid-template-columns:1fr;gap:8px}
+}
+
 /* Stats summary */
 .inv-stats-summary{padding:14px 16px;border-top:1px solid rgba(var(--cyan-rgb),0.07);position:relative;z-index:1}
 .inv-stats-title{font-family:var(--font-m);font-size:var(--fs-xs);letter-spacing:.2em;color:rgba(var(--cyan-rgb),0.5);margin-bottom:10px}
