@@ -141,7 +141,7 @@ function renderIRPBannersPage(banners){
       const btn=document.createElement('button');
       btn.id='irp-manual-rot-btn';
       btn.textContent='⟳ ROTATION MANUELLE';
-      btn.style.cssText='margin-left:12px;padding:6px 14px;border-radius:6px;border:1px solid rgba(220,20,60,0.35);background:linear-gradient(135deg,rgba(220,20,60,0.15),rgba(139,0,0,0.15));color:#dc143c;font-family:var(--font-h);font-size:0.48rem;font-weight:700;letter-spacing:0.1em;cursor:pointer;transition:background 0.3s,box-shadow 0.3s;vertical-align:middle';
+      btn.style.cssText='margin-left:12px;padding:6px 14px;border-radius:6px;border:1px solid rgba(220,20,60,0.35);background:linear-gradient(135deg,rgba(220,20,60,0.15),rgba(139,0,0,0.15));color:#dc143c;font-family:var(--font-h);font-size:0.48rem;font-weight:700;letter-spacing:0.1em;cursor:pointer;transition:all 0.3s;vertical-align:middle';
       btn.addEventListener('mouseenter',function(){btn.style.background='linear-gradient(135deg,rgba(220,20,60,0.3),rgba(139,0,0,0.3))';btn.style.boxShadow='0 0 12px rgba(220,20,60,0.25)';});
       btn.addEventListener('mouseleave',function(){btn.style.background='linear-gradient(135deg,rgba(220,20,60,0.15),rgba(139,0,0,0.15))';btn.style.boxShadow='none';});
       btn.addEventListener('click',async function(){
@@ -324,10 +324,15 @@ async function loadUser(){
       };
       return U;
     }
-    const[d,pity]=await Promise.all([
-      JCache.get(db,'players',s.id,30),
-      JCache.get(db,'gacha_pity',s.id,30),
+    var [d, pity] = await Promise.all([
+      JCache.get(db,'players',s.id,30).catch(function(e){window._dbg?.error('[PLAYERS]',e);return null;}),
+      JCache.get(db,'gacha_pity',s.id,30).catch(function(e){window._dbg?.error('[GACHA_PITY]',e);return null;}),
     ]);
+    /* Fallback direct Firestore si le cache a échoué pour players */
+    if(!d){
+      try{var snap=await db.collection('players').doc(s.id).get();d=snap.exists?snap.data():null;}
+      catch(e2){window._dbg?.error('[PLAYERS_FALLBACK]',e2);}
+    }
     U={
       id:s.id,
       username:(d&&d.username)||s.username||'—',
