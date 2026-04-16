@@ -150,7 +150,7 @@ function renderIRPBannersPage(banners){
       const btn=document.createElement('button');
       btn.id='irp-manual-rot-btn';
       btn.textContent='⟳ ROTATION MANUELLE';
-      btn.style.cssText='margin-left:12px;padding:6px 14px;border-radius:6px;border:1px solid rgba(220,20,60,0.35);background:linear-gradient(135deg,rgba(220,20,60,0.15),rgba(139,0,0,0.15));color:#dc143c;font-family:var(--font-h);font-size:0.48rem;font-weight:700;letter-spacing:0.1em;cursor:pointer;transition:all 0.3s;vertical-align:middle';
+      btn.style.cssText='margin-left:12px;padding:6px 14px;border-radius:6px;border:1px solid rgba(220,20,60,0.35);background:linear-gradient(135deg,rgba(220,20,60,0.15),rgba(139,0,0,0.15));color:#dc143c;font-family:var(--font-h);font-size:0.48rem;font-weight:700;letter-spacing:0.1em;cursor:pointer;transition:background 0.3s,box-shadow 0.3s;vertical-align:middle';
       btn.addEventListener('mouseenter',function(){btn.style.background='linear-gradient(135deg,rgba(220,20,60,0.3),rgba(139,0,0,0.3))';btn.style.boxShadow='0 0 12px rgba(220,20,60,0.25)';});
       btn.addEventListener('mouseleave',function(){btn.style.background='linear-gradient(135deg,rgba(220,20,60,0.15),rgba(139,0,0,0.15))';btn.style.boxShadow='none';});
       btn.addEventListener('click',async function(){
@@ -508,12 +508,6 @@ function updNV(){
   document.getElementById('b1').querySelector('span').innerHTML='PULL ×1<span class="btn-cost">1 JAHARTITE</span>';
   document.getElementById('b5').querySelector('span').innerHTML='PULL ×5<span class="btn-cost">5 JAH · +1 BONUS</span>';
   document.getElementById('b10').querySelector('span').innerHTML='PULL ×10<span class="btn-cost">10 JAH · +4 BONUS · 1 EPIC+</span>'+(code?'<span class="btn-cost" style="color:#dc143c;opacity:1">⚡ CODE ACTIF</span>':'');
-  /* Hint visuel sous les boutons */
-  var hint=document.getElementById('pull-hint');
-  if(!hint){hint=document.createElement('div');hint.id='pull-hint';hint.style.cssText='font-family:var(--font-m);font-size:.48rem;color:var(--red,#ff4757);letter-spacing:.08em;margin-top:10px;text-align:center;min-height:1.2em';var pb=document.querySelector('.pull-buttons');if(pb)pb.parentNode.insertBefore(hint,pb.nextSibling);}
-  if(!hasBanner)hint.textContent='⬆ Sélectionne une bannière ci-dessus';
-  else if(n<1)hint.textContent='Solde insuffisant — 0 Jahartite disponible';
-  else hint.textContent='';
 }
 
 // ═══ TILT 3D ═══
@@ -722,10 +716,8 @@ function selectBanner(id){
 // ═══ PULL (via Firestore — bot processes server-side) ═══
 let _pullBusy=false;
 async function doPull(count){
-  if(_pullBusy)return;
-  if(!U||!U.id){showToast('Session expirée — reconnecte-toi','error');return;}
-  if(!SB){showToast('Sélectionne une bannière avant de tirer','error');return;}
-  if((U.navarites||0)<count){showToast('Jahartites insuffisants ('+count+' requis, '+(U.navarites||0)+' disponibles)','error');return;}
+  if(!SB||!U||_pullBusy)return;
+  if((U.navarites||0)<count)return;
   _pullBusy=true;
 
   document.getElementById('b1').disabled=true;

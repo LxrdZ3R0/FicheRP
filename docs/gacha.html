@@ -164,18 +164,11 @@ async function loadAndShow(){
   const user=await loadUser();
   if(user){
     showMainUI();
-    try{ await loadBanners(); }catch(e){ window._dbg?.error('[LOAD_BANNERS]',e); }
+    await loadBanners();
+    
     showAdminBannerEditor();
   }else{
-    /* Session valide mais loadUser a échoué → tenter le fallback session */
-    const sf=getSession();
-    if(sf&&sf.id){
-      U={id:sf.id,username:sf.username||'—',avatar:sf.avatar||'',navarites:0,booster:false,pity:{spent_epic:0,threshold_epic:30,spent_leg:0,threshold_leg:150},streak:{days_in_cycle:0}};
-      showMainUI();
-      try{ await loadBanners(); }catch(e){ window._dbg?.error('[LOAD_BANNERS]',e); }
-    }else{
-      showLoginGate();
-    }
+    showLoginGate();
   }
 }
 
@@ -191,14 +184,7 @@ async function loadAndShow(){
       setTimeout(async()=>{
         try{ await loadAndShow(); }catch(e2){
           window._dbg?.error('[GACHA_INIT_RETRY]',e2);
-          /* Dernier recours : forcer l'UI si la session existe */
-          var sf=getSession();
-          if(sf&&sf.id){
-            U={id:sf.id,username:sf.username||'—',avatar:sf.avatar||'',navarites:0,booster:false,pity:{spent_epic:0,threshold_epic:30,spent_leg:0,threshold_leg:150},streak:{days_in_cycle:0}};
-            showMainUI();
-          }else{
-            showLoginGate();
-          }
+          showLoginGate();
         }
       },800);
     }

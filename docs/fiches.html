@@ -471,9 +471,9 @@ body::before{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;
    ALL ORIGINAL FICHES.HTML JS — preserved exactly
    ═══════════════════════════════════════════════════ */
 window.updateRaceSpecific=function(group){const sel=document.getElementById('f-race-specific');sel.innerHTML='';if(!group){sel.disabled=true;sel.innerHTML='<option value="">— Choisir d\'abord un groupe —</option>';return;}sel.disabled=false;sel.innerHTML='<option value="">— Choisir une race —</option>';(window.RACES_SPECIFIC[group]||[]).forEach(r=>{const o=document.createElement('option');o.value=r;o.textContent=r;sel.appendChild(o);});};
-window.deleteFicheById=async function(id){if(!window._isAdmin){alert('Connexion admin requise');return;}if(!confirm('Supprimer définitivement cette fiche ?'))return;try{await window._deleteDoc(window._doc(window._db,'fiches',id));showToast('Fiche supprimée.','error');}catch(e){window._dbg?.error(e);showToast('⚠ '+e.message,'error');}};
+window.deleteFicheById=async function(id){if(!window._isAdmin){showToast('Connexion admin requise','error');return;}if(!confirm('Supprimer définitivement cette fiche ?'))return;try{await window._deleteDoc(window._doc(window._db,'fiches',id));showToast('Fiche supprimée.','error');}catch(e){window._dbg?.error(e);showToast('⚠ '+e.message,'error');}};
 window.openEditFiche=async function(id){
-  if(!window._isAdmin){alert('Connexion admin requise');return;}
+  if(!window._isAdmin){showToast('Connexion admin requise','error');return;}
   const snap=await window._getDoc(window._doc(window._db,'fiches',id));
   if(!snap.exists())return;
   const ch=snap.data();
