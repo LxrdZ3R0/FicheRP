@@ -15,7 +15,7 @@
   padding:8px 14px; border-radius:8px; border:1px solid var(--border);
   background:rgba(255,255,255,.03); color:var(--text2);
   font-family:var(--font-h); font-size:.55rem; letter-spacing:.1em;
-  cursor:pointer; transition:background .2s, border-color .2s, color .2s;
+  cursor:pointer; transition:all .2s;
 }
 .ach-mode-btn:hover { background:rgba(255,255,255,.08); color:#fff; }
 .ach-mode-btn.active { background:rgba(0,229,255,.12); border-color:rgba(0,229,255,.35); color:var(--blue); }
@@ -57,7 +57,7 @@
   display:flex; gap:10px; padding:12px; border-radius:10px;
   border:1px solid rgba(255,255,255,.08);
   background:rgba(255,255,255,.02);
-  transition:border-color .25s ease, box-shadow .25s ease, transform .25s ease; position:relative; overflow:hidden;
+  transition:all .25s ease; position:relative; overflow:hidden;
 }
 .ach-card::before {
   content:''; position:absolute; inset:0; border-radius:10px;

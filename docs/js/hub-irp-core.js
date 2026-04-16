@@ -421,20 +421,20 @@ window._getInventoryKey = function () {
 // INIT + LOAD
 // ══════════════════════════════════════════════════════════════════════
 async function init(){
-  window._dbg?.log('[HUB-IRP] init() called, readyState:', document.readyState);
+  console.log('[HUB-IRP] init() called, readyState:', document.readyState);
   const s=getSess();
-  window._dbg?.log('[HUB-IRP] session:', s ? ('id='+s.id+' user='+s.username) : 'NULL');
+  console.log('[HUB-IRP] session:', s ? ('id='+s.id+' user='+s.username) : 'NULL');
   if(s&&s.id){
     try{ await loadHub(); }
-    catch(err){ window._dbg?.error('[HUB-IRP] loadHub failed:',err); }
+    catch(err){ console.error('[HUB-IRP] loadHub failed:',err); }
   } else {
-    window._dbg?.log('[HUB-IRP] No session — showing login gate');
+    console.log('[HUB-IRP] No session — showing login gate');
     document.getElementById('login-gate').style.display='flex';
   }
 }
 
 async function loadHub(){
-  window._dbg?.log('[HUB-IRP] loadHub() start');
+  console.log('[HUB-IRP] loadHub() start');
   const s=getSess();
   if(!s||!s.id){
     document.getElementById('login-gate').style.display='flex';
@@ -445,31 +445,31 @@ async function loadHub(){
   var loginGate=document.getElementById('login-gate');
   var mainNav=document.getElementById('main-nav');
   var hubMain=document.getElementById('hub-main');
-  window._dbg?.log('[HUB-IRP] DOM elements — gate:',!!loginGate,'nav:',!!mainNav,'hub:',!!hubMain);
+  console.log('[HUB-IRP] DOM elements — gate:',!!loginGate,'nav:',!!mainNav,'hub:',!!hubMain);
   if(loginGate)loginGate.style.display='none';
   if(mainNav)mainNav.style.display='flex';
   if(hubMain)hubMain.classList.add('active');
   try{document.getElementById('nav-username').textContent=s.username||'—';}catch(_){}
   try{document.getElementById('menu-username').textContent=s.username||'—';}catch(_){}
   if(s.avatar){try{var av=document.getElementById('nav-avatar');if(av){av.src=s.avatar;av.style.display='block';}}catch(_){}}
-  window._dbg?.log('[HUB-IRP] UI shown, loading data for UID:', UID);
+  console.log('[HUB-IRP] UI shown, loading data for UID:', UID);
   try{ await Promise.all([loadCharacter(),loadPlayer(),loadIRPData()]); }
-  catch(err){ window._dbg?.error('[HUB-IRP] data load error:',err); }
-  window._dbg?.log('[HUB-IRP] loadHub() complete — CHAR_ID:', CHAR_ID, 'CHAR:', !!CHAR);
+  catch(err){ console.error('[HUB-IRP] data load error:',err); }
+  console.log('[HUB-IRP] loadHub() complete — CHAR_ID:', CHAR_ID, 'CHAR:', !!CHAR);
 }
 
 async function loadCharacter(){
-  window._dbg?.log('[HUB-IRP] loadCharacter() — C.ACTIVE:', C.ACTIVE, 'UID:', UID);
+  console.log('[HUB-IRP] loadCharacter() — C.ACTIVE:', C.ACTIVE, 'UID:', UID);
   try{
     const acData=await cachedGet(C.ACTIVE,UID,'_active_char',15);
-    window._dbg?.log('[HUB-IRP] active_char data:', acData);
+    console.log('[HUB-IRP] active_char data:', acData);
     if(!acData){renderNoChar();return}
     CHAR_ID=acData.character_id;
     window.CHAR_ID=CHAR_ID;
     if(!CHAR_ID){renderNoChar();return}
-    window._dbg?.log('[HUB-IRP] loading char:', CHAR_ID, 'from', C.CHARS);
+    console.log('[HUB-IRP] loading char:', CHAR_ID, 'from', C.CHARS);
     const cData=await cachedGet(C.CHARS,CHAR_ID,'_character',30);
-    window._dbg?.log('[HUB-IRP] char data:', cData ? 'OK ('+((cData.first_name||'')+' '+(cData.last_name||'')).trim()+')' : 'NULL');
+    console.log('[HUB-IRP] char data:', cData ? 'OK ('+((cData.first_name||'')+' '+(cData.last_name||'')).trim()+')' : 'NULL');
     if(!cData){renderNoChar();return}
     CHAR={_id:CHAR_ID,...cData};
     window.CHAR=CHAR;
@@ -856,39 +856,17 @@ function e(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').re
 // Scroll line
 window.addEventListener('scroll',()=>{const max=document.body.scrollHeight-window.innerHeight;const el=document.getElementById('scroll-line');if(el)el.style.width=(max>0?(window.scrollY/max*100):0)+'%';});
 
-// ── Navarites → Jahartites text replacement ──
-(function(){
-  function replaceNavarites(root){
-    if(!root)return;
-    var walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,null,false);
-    while(walker.nextNode()){
-      var node=walker.currentNode;
-      if(node.textContent.match(/Navarites?/i)){
-        node.textContent=node.textContent.replace(/Navarites?/gi,function(m){
-          return m.endsWith('s')?'Jahartites':'Jahartite';
-        });
-      }
-    }
-  }
-  function injectJahartiteBalance(){
-    if(!window._irpPlayer)return;
-    var jah=window._irpPlayer.jahartites||0;
-    ['.wi-navarite .wi-val','.wallet-item:first-child .wi-val','#dash-nav-val span:first-child'].forEach(function(sel){
-      var el=document.querySelector(sel);if(el&&!isNaN(jah))el.textContent=jah.toLocaleString();
-    });
-    var unit=document.querySelector('#dash-nav-val .nav-unit');
-    if(unit&&unit.textContent==='NAV')unit.textContent='JAH';
-  }
-  window._irpInjectJahartiteBalance=injectJahartiteBalance;
-  window._irpReplaceNavarites=replaceNavarites;
-  var obs=new MutationObserver(function(mutations){
-    mutations.forEach(function(m){m.addedNodes.forEach(function(n){if(n.nodeType===1)replaceNavarites(n);});});
-    injectJahartiteBalance();
+// ── Jahartite balance injection (appelé après loadPlayer + re-render dashboard) ──
+function _irpInjectJahartiteBalance(){
+  if(!window._irpPlayer)return;
+  var jah=window._irpPlayer.jahartites||0;
+  ['.wi-navarite .wi-val','.wallet-item:first-child .wi-val','#dash-nav-val span:first-child'].forEach(function(sel){
+    var el=document.querySelector(sel);if(el&&!isNaN(jah))el.textContent=jah.toLocaleString();
   });
-  if(document.body)obs.observe(document.body,{childList:true,subtree:true,characterData:true});
-  else document.addEventListener('DOMContentLoaded',function(){obs.observe(document.body,{childList:true,subtree:true,characterData:true});});
-  var att=0;var iv=setInterval(function(){injectJahartiteBalance();replaceNavarites(document.body);if(++att>30)clearInterval(iv);},500);
-})();
+  var unit=document.querySelector('#dash-nav-val .nav-unit');
+  if(unit&&unit.textContent==='NAV')unit.textContent='JAH';
+}
+window._irpInjectJahartiteBalance=_irpInjectJahartiteBalance;
 
 // ══════════════════════════════════════════════════════════════════════
 // BOOT — must be at the very end so all const/let/var are initialized

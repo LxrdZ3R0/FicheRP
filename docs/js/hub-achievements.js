@@ -32,6 +32,8 @@
   var _allUsersAch = null;
   var _loaded = false;
   var _showingLeaderboard = false;
+  var _userUnsub = null;
+  var _watchedUID = null;
 
   function isIRP() { return !!window._irpMode; }
   function getLabel() { return isIRP() ? 'IRP' : 'NORMAL'; }
@@ -80,25 +82,49 @@
     return isIRP() ? (_achDefs.irp || {}) : (_achDefs.normal || {});
   }
 
+  /* Attache un listener temps-réel sur achievements_user/{uid}.
+     Remplace le get() one-shot : dès que le bot écrit un nouvel unlock,
+     Firestore push le snapshot et on re-render si le panneau est visible.
+     Idempotent — relance seulement si l'UID a changé. */
+  function watchUser() {
+    if (typeof db === 'undefined' || !window.UID) return;
+    var uidStr = String(window.UID);
+    if (_userUnsub && _watchedUID === uidStr) return;
+    if (_userUnsub) { try { _userUnsub(); } catch (_) {} _userUnsub = null; }
+    _watchedUID = uidStr;
+    try {
+      _userUnsub = db.collection('achievements_user').doc(uidStr).onSnapshot(
+        function (snap) {
+          var data = snap.exists ? (snap.data() || {}) : {};
+          _userAch = { unlocked: data.unlocked || {}, stats: data.stats || {} };
+          /* Re-render seulement si le panneau succès est actuellement visible
+             (évite de repeindre le DOM pour rien quand l'utilisateur est ailleurs). */
+          var c = getContainer();
+          if (_loaded && !_showingLeaderboard && c && c.offsetParent !== null) {
+            render();
+          }
+        },
+        function (err) { window._dbg && window._dbg.error && window._dbg.error('[ACH] watchUser', err); }
+      );
+    } catch (e) { window._dbg && window._dbg.error && window._dbg.error('[ACH] watchUser', e); }
+  }
+
   async function loadUser() {
     /* Attendre jusqu'à 3 s que UID soit posé par hub-irp-core.js (race entre
-       ouverture du tab Succès et fin du login). Sans ça, _userAch restait null
-       et render() posait _loaded=true → succès affichés comme verrouillés à jamais. */
+       ouverture du tab Succès et fin du login). */
     if (!window.UID) {
       for (var i = 0; i < 30 && !window.UID; i++) {
         await new Promise(function (r) { setTimeout(r, 100); });
       }
     }
     if (!window.UID) { _userAch = { unlocked: {}, stats: {} }; return _userAch; }
-    try {
-      var snap = await db.collection('achievements_user').doc(String(window.UID)).get();
-      if (snap.exists) {
-        var data = snap.data() || {};
-        _userAch = { unlocked: data.unlocked || {}, stats: data.stats || {} };
-        return _userAch;
-      }
-    } catch (e) { window._dbg && window._dbg.error && window._dbg.error('[ACH] loadUser', e); }
-    _userAch = { unlocked: {}, stats: {} };
+    watchUser();
+    /* Attendre la première arrivée du snapshot (max 3 s). Les updates
+       suivantes passeront par le listener → re-render automatique. */
+    for (var j = 0; j < 30 && !_userAch; j++) {
+      await new Promise(function (r) { setTimeout(r, 100); });
+    }
+    if (!_userAch) _userAch = { unlocked: {}, stats: {} };
     return _userAch;
   }
 
@@ -110,6 +136,20 @@
       snaps.forEach(function (d) { _allUsersAch[d.id] = d.data(); });
     } catch (_) { _allUsersAch = {}; }
     return _allUsersAch;
+  }
+
+  /* Renvoie uniquement les unlocks dont le champ `mode` correspond au hub courant.
+     Le bot écrit `mode: "normal"|"irp"` sur chaque entrée ([achievement_system.py])
+     → on filtre ici pour garantir la séparation hub normal / hub IRP, même si
+     un ID venait à exister dans les deux sets définitions. */
+  function unlockedForMode() {
+    var all = (_userAch || {}).unlocked || {};
+    var want = isIRP() ? 'irp' : 'normal';
+    var out = {};
+    Object.keys(all).forEach(function (k) {
+      if ((all[k] || {}).mode === want) out[k] = all[k];
+    });
+    return out;
   }
 
   function score(unlocked, defs) {
@@ -143,7 +183,7 @@
 
     var defs = getDefs();
     var icons = _customIcons || {};
-    var unlocked = (_userAch || {}).unlocked || {};
+    var unlocked = unlockedForMode();
     var total = Object.keys(defs).length;
     var cnt = Object.keys(unlocked).filter(function (a) { return !!defs[a]; }).length;
     var sc = score(unlocked, defs);
@@ -254,9 +294,14 @@
     var defs = getDefs();
     var label = getLabel();
 
+    var want = isIRP() ? 'irp' : 'normal';
     var scores = [];
     Object.entries(allU).forEach(function (e) {
-      var uid = e[0], data = e[1], ul = data.unlocked || {};
+      var uid = e[0], data = e[1], rawU = data.unlocked || {};
+      var ul = {};
+      Object.keys(rawU).forEach(function (k) {
+        if ((rawU[k] || {}).mode === want) ul[k] = rawU[k];
+      });
       var s = score(ul, defs);
       var n = Object.keys(ul).filter(function (a) { return !!defs[a]; }).length;
       if (s > 0) scores.push({ uid: uid, score: s, count: n });
@@ -323,12 +368,13 @@
     _loaded = false;
     _achDefs = null;
     _customIcons = null;
-    _userAch = null;
+    /* NE PAS reset _userAch : le listener onSnapshot le garde à jour en
+       temps réel. Le vider forcerait un re-await inutile de 3 s. */
     render();
   };
   window._achGetBonuses = function () {
     var defs = getDefs();
-    var unlocked = (_userAch || {}).unlocked || {};
+    var unlocked = unlockedForMode();
     var tb = {};
     Object.keys(unlocked).forEach(function (aid) {
       var d = defs[aid];
@@ -361,30 +407,9 @@
   }
   _preloadAchData();
 
-  /* ── Periodic refresh aligned to bot push (h:03, h:18, h:33, h:48) ── */
-  function _scheduleRefresh() {
-    var now = new Date();
-    var min = now.getMinutes();
-    /* Next target: 3, 18, 33, 48 minutes past the hour */
-    var targets = [3, 18, 33, 48];
-    var nextMin = null;
-    for (var i = 0; i < targets.length; i++) {
-      if (targets[i] > min) { nextMin = targets[i]; break; }
-    }
-    if (nextMin === null) nextMin = targets[0] + 60; /* next hour */
-    var msUntil = ((nextMin - min) * 60 - now.getSeconds()) * 1000 - now.getMilliseconds();
-    if (msUntil < 0) msUntil += 15 * 60 * 1000;
-    setTimeout(function () {
-      _loaded = false; _achDefs = null; _customIcons = null; _userAch = null; _allUsersAch = null;
-      render();
-      /* Then repeat every 15 min exactly */
-      setInterval(function () {
-        _loaded = false; _achDefs = null; _customIcons = null; _userAch = null; _allUsersAch = null;
-        render();
-      }, 15 * 60 * 1000);
-    }, msUntil);
-  }
-  _scheduleRefresh();
+  /* Pas de poll périodique : `watchUser()` reçoit les nouveaux unlocks en
+     temps réel via onSnapshot. Le doc `config/achievements_config` est
+     rechargé seulement à l'ouverture du tab (change rarement — push horaire). */
 
   /* ── Lazy loaders ── */
   /* Normal hub: LAZY.succes */
