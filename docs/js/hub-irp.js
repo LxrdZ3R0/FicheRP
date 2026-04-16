@@ -585,7 +585,7 @@
     h += '<div style="display:flex;align-items:center;gap:12px"><div><img src="https://firebasestorage.googleapis.com/v0/b/jaharta-rp.firebasestorage.app/o/icons%2FChatGPT%20Image%2013%20avr.%202026%2C%2018_19_29.png?alt=media&token=ac0476c3-965f-4806-aad0-ee6c917e02cd" alt="Jahartite" style="width:32px;height:32px;object-fit:contain;filter:drop-shadow(0 0 6px rgba(220,20,60,0.4))"></div>';
     h += '<div><div style="font-family:var(--font-h);font-size:1.4rem;color:var(--text)">' + jah.toLocaleString() + '</div>';
     h += '<div style="font-family:var(--font-m);font-size:0.55rem;color:var(--text3);letter-spacing:0.08em">JAHARTITES</div></div></div>';
-    h += '<button onclick="localStorage.setItem(&quot;jaharta_irp_mode&quot;,&quot;true&quot;);window.location.href=&quot;gacha.html&quot;" style="padding:10px 14px;border-radius:10px;border:1px solid rgba(220,20,60,.25);background:linear-gradient(135deg,rgba(220,20,60,.18),rgba(139,0,0,.18));color:#fff;font-family:var(--font-h);font-size:.55rem;letter-spacing:.1em;cursor:pointer">OUVRIR LE GACHA IRP</button>';
+    h += '<button onclick="localStorage.setItem(&quot;jaharta_irp_mode&quot;,&quot;true&quot;);window.location.href=&quot;gacha-irp.html&quot;" style="padding:10px 14px;border-radius:10px;border:1px solid rgba(220,20,60,.25);background:linear-gradient(135deg,rgba(220,20,60,.18),rgba(139,0,0,.18));color:#fff;font-family:var(--font-h);font-size:.55rem;letter-spacing:.1em;cursor:pointer">OUVRIR LE GACHA IRP</button>';
     h += '</div>';
 
     /* ── Bannières IRP ── */

@@ -81,11 +81,23 @@
   }
 
   async function loadUser() {
-    if (!window.UID) return {};
+    /* Attendre jusqu'à 3 s que UID soit posé par hub-irp-core.js (race entre
+       ouverture du tab Succès et fin du login). Sans ça, _userAch restait null
+       et render() posait _loaded=true → succès affichés comme verrouillés à jamais. */
+    if (!window.UID) {
+      for (var i = 0; i < 30 && !window.UID; i++) {
+        await new Promise(function (r) { setTimeout(r, 100); });
+      }
+    }
+    if (!window.UID) { _userAch = { unlocked: {}, stats: {} }; return _userAch; }
     try {
-      var snap = await db.collection('achievements_user').doc(String(UID)).get();
-      if (snap.exists) { _userAch = snap.data(); return _userAch; }
-    } catch (_) {}
+      var snap = await db.collection('achievements_user').doc(String(window.UID)).get();
+      if (snap.exists) {
+        var data = snap.data() || {};
+        _userAch = { unlocked: data.unlocked || {}, stats: data.stats || {} };
+        return _userAch;
+      }
+    } catch (e) { window._dbg && window._dbg.error && window._dbg.error('[ACH] loadUser', e); }
     _userAch = { unlocked: {}, stats: {} };
     return _userAch;
   }
