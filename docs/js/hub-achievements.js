@@ -50,8 +50,8 @@
       var snap = await db.collection('config').doc('achievements_config').get();
       if (snap.exists) { _achDefs = snap.data(); return _achDefs; }
     } catch (_) {}
-    _achDefs = { normal: {}, irp: {} };
-    return _achDefs;
+    /* Ne PAS cacher le fallback vide : on réessaiera au prochain appel */
+    return { normal: {}, irp: {} };
   }
 
   async function loadCustomIcons() {
@@ -60,8 +60,8 @@
       var snap = await db.collection('config').doc('achievements_icons').get();
       if (snap.exists) { _customIcons = snap.data() || {}; return _customIcons; }
     } catch (_) {}
-    _customIcons = {};
-    return _customIcons;
+    /* Ne PAS cacher le fallback vide : on réessaiera au prochain appel */
+    return {};
   }
 
   async function saveIcon(achId, url) {
@@ -309,6 +309,8 @@
   window._achRefresh = function () {
     _showingLeaderboard = false;
     _loaded = false;
+    _achDefs = null;
+    _customIcons = null;
     _userAch = null;
     render();
   };
