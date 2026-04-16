@@ -35,7 +35,7 @@
   <canvas id="fx-canvas"></canvas>
   <div class="hero-sub-tag">Nexus System · Tirage RP</div>
   <div class="glitch-wrap"><h1 class="glitch-title" data-text="GACHA NEXUS">GACHA NEXUS</h1></div>
-  <p class="hero-sub-desc">Tire des items, équipements et ressources rares grâce à tes Navarites</p>
+  <p class="hero-sub-desc">Tire des items, équipements et ressources rares grâce à tes Jahartites</p>
 </section>
 
 <!-- PAGE WRAP -->
@@ -60,7 +60,7 @@
   <section class="gacha-main" id="gacha-main">
     <div class="user-bar">
       <div class="user-info"><img class="user-avatar" id="u-av" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Crect fill='%231a1a2e' width='36' height='36'/%3E%3C/svg%3E" alt=""><div><div class="user-name" id="u-name">—</div><div class="user-id-text" id="u-id">—</div></div></div>
-      <div class="user-right"><div class="nv-badge">💎 NAVARITE <span class="nv-val" id="nv-c">0</span></div><button class="btn-logout" onclick="logout()">Déconnexion</button></div>
+      <div class="user-right"><div class="nv-badge">💎 JAHARTITE <span class="nv-val" id="nv-c">0</span></div><button class="btn-logout" onclick="logout()">Déconnexion</button></div>
     </div>
 
     <div class="section-head"><span class="sh-num">01 //</span><h2 class="sh-title">Bannières</h2><div class="sh-line"></div></div>
@@ -72,11 +72,11 @@
 
     <div class="section-head"><span class="sh-num">02 //</span><h2 class="sh-title">Tirage</h2><div class="sh-line"></div></div>
     <div class="pull-section" id="ps">
-      <div class="pull-header"><span class="pull-bname" id="pb">Sélectionne une bannière</span><div class="pull-nv">SOLDE : <span class="nv-count" id="pnv">0</span> NAVARITE(S)</div></div>
+      <div class="pull-header"><span class="pull-bname" id="pb">Sélectionne une bannière</span><div class="pull-nv">SOLDE : <span class="nv-count" id="pnv">0</span> JAHARTITE(S)</div></div>
       <div class="pull-buttons">
-        <button class="pull-btn x1" id="b1" onclick="doPull(1)" disabled><span>PULL ×1<span class="btn-cost">1 NAVARITE</span></span></button>
-        <button class="pull-btn x5" id="b5" onclick="doPull(5)" disabled><span>PULL ×5<span class="btn-cost">5 NAV · +1 BONUS</span></span></button>
-        <button class="pull-btn x10" id="b10" onclick="doPull(10)" disabled><span>PULL ×10<span class="btn-cost">10 NAV · +4 BONUS · 1 EPIC+</span></span></button>
+        <button class="pull-btn x1" id="b1" onclick="doPull(1)" disabled><span>PULL ×1<span class="btn-cost">1 JAHARTITE</span></span></button>
+        <button class="pull-btn x5" id="b5" onclick="doPull(5)" disabled><span>PULL ×5<span class="btn-cost">5 JAH · +1 BONUS</span></span></button>
+        <button class="pull-btn x10" id="b10" onclick="doPull(10)" disabled><span>PULL ×10<span class="btn-cost">10 JAH · +4 BONUS · 1 EPIC+</span></span></button>
       </div>
     </div>
 
@@ -84,7 +84,7 @@
     <div class="pity-row">
       <div class="pity-stat"><div class="pity-lbl">PULLS SINCE EPIC</div><div class="pity-val" id="psr">0</div><div class="pity-bar"><div class="pity-fill sr" id="psr-b" style="width:0%"></div></div></div>
       <div class="pity-stat"><div class="pity-lbl">PULLS SINCE LEG</div><div class="pity-val" id="pleg">0</div><div class="pity-bar"><div class="pity-fill leg" id="pleg-b" style="width:0%"></div></div></div>
-      <div class="pity-stat"><div class="pity-lbl">STREAK NAVARITE</div><div class="pity-val" id="pstr">0/3</div><div class="pity-bar"><div class="pity-fill sr" id="pstr-b" style="width:0%"></div></div></div>
+      <div class="pity-stat"><div class="pity-lbl">STREAK JAHARTITE</div><div class="pity-val" id="pstr">0/3</div><div class="pity-bar"><div class="pity-fill sr" id="pstr-b" style="width:0%"></div></div></div>
     </div>
   </section>
 </div>
@@ -170,11 +170,18 @@ async function loadAndShow(){
   const user=await loadUser();
   if(user){
     showMainUI();
-    await loadBanners();
-    
+    try{ await loadBanners(); }catch(e){ window._dbg?.error('[LOAD_BANNERS]',e); }
     showAdminBannerEditor();
   }else{
-    showLoginGate();
+    /* Session valide mais loadUser a échoué → tenter le fallback session */
+    const sf=getSession();
+    if(sf&&sf.id){
+      U={id:sf.id,username:sf.username||'—',avatar:sf.avatar||'',navarites:0,booster:false,pity:{spent_epic:0,threshold_epic:60,spent_leg:0,threshold_leg:180},streak:{days_in_cycle:0}};
+      showMainUI();
+      try{ await loadBanners(); }catch(e){ window._dbg?.error('[LOAD_BANNERS]',e); }
+    }else{
+      showLoginGate();
+    }
   }
 }
 
@@ -190,7 +197,14 @@ async function loadAndShow(){
       setTimeout(async()=>{
         try{ await loadAndShow(); }catch(e2){
           window._dbg?.error('[GACHA_INIT_RETRY]',e2);
-          showLoginGate();
+          /* Dernier recours : forcer l'UI si la session existe */
+          var sf=getSession();
+          if(sf&&sf.id){
+            U={id:sf.id,username:sf.username||'—',avatar:sf.avatar||'',navarites:0,booster:false,pity:{spent_epic:0,threshold_epic:60,spent_leg:0,threshold_leg:180},streak:{days_in_cycle:0}};
+            showMainUI();
+          }else{
+            showLoginGate();
+          }
         }
       },800);
     }
