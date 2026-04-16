@@ -260,7 +260,6 @@
   function exportLogs() {
     const logs = load();
     if (logs.length === 0) {
-      alert('Aucune erreur à exporter.');
       return;
     }
 
