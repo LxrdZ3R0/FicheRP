@@ -407,18 +407,33 @@ function watchBanners(){
 }
 
 // ═══ ADMIN MODE — per-banner image editing ═══
-function showAdminBannerEditor(){
+function _applyAdminUI(){
   const main=document.getElementById('gacha-main');
-  if(main&&window._isAdmin){
-    main.classList.add('admin-mode');
-    // Make non-live banners interactive for admin (they were rendered with pointer-events:none)
-    main.querySelectorAll('.banner-flip').forEach(f=>{
-      if(f.style.pointerEvents==='none'){
-        f.style.pointerEvents='';
-        f.style.opacity='0.7';
+  if(!main)return;
+  main.classList.add('admin-mode');
+  // Make non-live banners interactive for admin (they were rendered with pointer-events:none)
+  main.querySelectorAll('.banner-flip').forEach(f=>{
+    if(f.style.pointerEvents==='none'){
+      f.style.pointerEvents='';
+      f.style.opacity='0.7';
+    }
+  });
+}
+function showAdminBannerEditor(){
+  /* Fast path : flag déjà setté */
+  if(window._isAdmin===true){_applyAdminUI();return;}
+  /* Sinon : tenter un live check (Firebase Auth peut être prêt même si
+     auth-badge.js n'a pas encore fini son onAuthStateChanged) */
+  try{
+    const auth=firebase.auth();
+    if(!auth.currentUser)return; /* Pas connecté → pas admin */
+    db.collection('admins').doc(auth.currentUser.uid).get().then(function(snap){
+      if(snap.exists){
+        window._isAdmin=true;
+        _applyAdminUI();
       }
-    });
-  }
+    }).catch(function(e){window._dbg?.warn('[ADMIN_CHECK_LIVE]',e);});
+  }catch(e){window._dbg?.warn('[ADMIN_CHECK]',e);}
 }
 
 // ═══ PER-BANNER IMAGE EDITOR ═══
@@ -439,11 +454,44 @@ function closeBannerImgEditor(bid){
   if(editor)editor.classList.remove('active');
 }
 
+/* ── Vérification admin LIVE (contourne window._isAdmin potentiellement
+   non initialisé si auth-badge.js (module) charge après ce script) ── */
+async function _liveAdminCheck(){
+  /* Fast path : flag déjà setté par auth-badge.js */
+  if(window._isAdmin===true) return {ok:true,uid:firebase.auth().currentUser?.uid||'?'};
+  /* Sinon : check Firebase Auth directement */
+  try{
+    const auth=firebase.auth();
+    const user=auth.currentUser;
+    if(!user){
+      return {ok:false,reason:'no_auth',msg:'Pas connecté à Firebase. Ouvre admin.html dans un autre onglet et connecte-toi avec Google, puis reviens ici.'};
+    }
+    /* Fresh lookup dans admins/{uid} */
+    const snap=await db.collection('admins').doc(user.uid).get();
+    if(!snap.exists){
+      return {ok:false,reason:'not_whitelisted',msg:'UID non whitelisté : '+user.uid+' ('+user.email+'). Ajoute ce UID dans admins/{uid} via la console Firebase.',uid:user.uid,email:user.email};
+    }
+    /* OK — synchroniser le flag pour les prochains appels */
+    window._isAdmin=true;
+    return {ok:true,uid:user.uid,email:user.email};
+  }catch(e){
+    return {ok:false,reason:'error',msg:'Erreur vérif admin : '+e.message};
+  }
+}
+
 async function saveBannerImg(bid){
   const inp=document.getElementById('bie-url-'+bid);
   if(!inp){showToast('Erreur: input introuvable (bie-url-'+bid+')','error');return;}
-  if(!U){showToast('Erreur: non connecté au gacha.','error');return;}
-  if(!window._isAdmin){showToast('Erreur: pas admin Firebase.','error');return;}
+  if(!U){showToast('Erreur: non connecté au gacha (fais /link sur Discord).','error');return;}
+  /* Live admin check — ne se fie pas au flag stale window._isAdmin */
+  const adm=await _liveAdminCheck();
+  if(!adm.ok){
+    window._dbg?.error('[SAVE_BANNER_IMG_ADMIN_CHECK]',adm);
+    showToast(adm.msg||'Erreur admin','error',8000);
+    /* Message long → alerte de secours pour être sûr qu'il est lu */
+    alert('[Admin check]\n'+(adm.msg||'Erreur inconnue'));
+    return;
+  }
   const url=inp.value.trim();
   try{
     await db.collection('gacha_config').doc('banner_images').set(
