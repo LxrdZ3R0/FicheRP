@@ -151,7 +151,9 @@ function renderFullChar(){
     delete bTitles.intelligence; delete bBuffs.intelligence; delete bComp.intelligence; delete bSig.intelligence; delete bMythic.intelligence;
   }
 
-  // ── Stats display (with companion buff_mult) ──
+  // ── Stats display (with companion buff_mult + rank cap) ──
+  const _hubLevel = (typeof levelFromXp==='function' ? (levelFromXp(c.xp||0).level||1) : (c.level||1));
+  const _hubRank = (window.Jaharta && Jaharta.rankFromLevel) ? Jaharta.rankFromLevel(_hubLevel) : 'F';
   document.getElementById('char-stats-grid').innerHTML=
     (sp?'<div class="sp-banner" style="grid-column:1/-1">&#9889; '+sp+' pt'+(sp>1?'s':'')+' stat dispo</div>':'')+
     SK.map(k=>{
@@ -168,7 +170,16 @@ function renderFullChar(){
         const multBonus=total-before;
         if(multBonus>0) multLabel='<div class="stat-block-bonus-detail">×'+mult+' (+'+multBonus+')</div>';
       }
-      return '<div class="stat-block"><div class="stat-block-val">'+total+'</div>'+(bon?'<div class="stat-block-bonus">+'+bon+'</div>':'')+multLabel+'<div class="stat-block-name">'+SI[k]+' '+SL[k]+'</div></div>';
+      // Rank cap / overflow — aura not capped
+      let capLabel='';
+      if(window.Jaharta && Jaharta.applyRankCap){
+        const eff=Jaharta.applyRankCap(_hubRank,k,total);
+        if(eff!==total){
+          capLabel='<div class="stat-block-bonus-detail" style="color:#f59e0b">⚠ cap '+eff+'</div>';
+          total=eff;
+        }
+      }
+      return '<div class="stat-block"><div class="stat-block-val">'+total+'</div>'+(bon?'<div class="stat-block-bonus">+'+bon+'</div>':'')+multLabel+capLabel+'<div class="stat-block-name">'+SI[k]+' '+SL[k]+'</div></div>';
     }).join('');
 
   // ── Powers ──

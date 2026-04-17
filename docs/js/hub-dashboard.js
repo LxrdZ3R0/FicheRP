@@ -98,11 +98,15 @@ function renderDashChar(){
       _dashBonuses[s]=(_dashBonuses[s]||0)+(v||0);
     });
   }catch(_){}
+  const _dashRank=(window.Jaharta&&Jaharta.rankFromLevel)?Jaharta.rankFromLevel(lvl):'F';
   document.getElementById('dash-stats-grid').innerHTML=SK.map(k=>{
     const base=parseInt(stats[k]||0);
     const bon=_dashBonuses[k]||0;
     const achBon=_dashAchBonuses[k]||0;
-    const total=base+bon;
+    let total=base+bon;
+    if(window.Jaharta&&Jaharta.applyRankCap){
+      total=Jaharta.applyRankCap(_dashRank,k,total);
+    }
     const maxStat=1000;
     const pct=Math.min(100,Math.round(total/maxStat*100));
     /* Bonus breakdown tooltip */

@@ -83,8 +83,19 @@ function buildPNJCard(p) {
       { k: 'mana', l: 'MNA' }, { k: 'resistance', l: 'RES' },
       { k: 'charisma', l: 'CHA' }
     ];
+    /* Apply rank cap if PNJ has a level (otherwise show raw) */
+    var _pnjRank = null;
+    if (p.level && window.Jaharta && Jaharta.rankFromLevel) {
+      _pnjRank = Jaharta.rankFromLevel(p.level);
+    }
     mapped.stats = {};
-    statMap.forEach(function(st) { mapped.stats[st.l] = s[st.k] || 0; });
+    statMap.forEach(function(st) {
+      var v = s[st.k] || 0;
+      if (_pnjRank && window.Jaharta && Jaharta.applyRankCap) {
+        v = Jaharta.applyRankCap(_pnjRank, st.k, v);
+      }
+      mapped.stats[st.l] = v;
+    });
   }
 
   /* If bot format and no desc, build one from available info */
@@ -558,6 +569,7 @@ body::before{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;
 <script src="js/debug.js"></script>
 <script src="js/constants.js"></script>
 <script src="js/utils.js"></script>
+<script src="js/stats-caps.js"></script>
 <script src="js/jaharta-cache.js"></script>
 <script src="js/jaharta-img-cache.js"></script>
 <script type="module" src="js/auth-badge.js"></script>

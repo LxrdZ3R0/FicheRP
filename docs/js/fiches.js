@@ -367,6 +367,15 @@ function charToFiche(id,c){
     delete bonusStats.int;
   }
 
+  // ── Rank-based cap / overflow bonus (aura never capped) ──
+  const _fRank = rankFromLevel(c.level||0);
+  if(window.Jaharta && Jaharta.applyRankCap){
+    Object.keys(totalStats).forEach(shortK=>{
+      const longK = SMAP[shortK] || shortK;
+      totalStats[shortK] = Jaharta.applyRankCap(_fRank, longK, totalStats[shortK]);
+    });
+  }
+
   /* Map race_category du bot vers les clés de filtre du site */
   const _raceMap={'Mythical Zooids':'MythZooids'};
   const _mappedRace=_raceMap[c.race_category]||c.race_category||'';
