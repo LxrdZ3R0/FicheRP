@@ -380,7 +380,7 @@
         slotsHTML += '<div style="font-family:var(--font-m);font-size:0.35rem;color:var(--text3);letter-spacing:0.04em;margin-bottom:8px;opacity:0.7">' + cat.desc + '</div>';
         slotsHTML += '<div style="display:grid;grid-template-columns:repeat(' + cat.count + ',1fr);gap:6px">';
         for (var i = 0; i < cat.count; i++) {
-          slotsHTML += '<div class="irp-slot-cell" data-irp-slot="' + cat.id + '-' + i + '" style="aspect-ratio:1;border:1px dashed ' + cat.color + '40;border-radius:6px;display:flex;align-items:center;justify-content:center;background:rgba(10,4,16,0.7);transition:all 0.2s;min-height:48px;cursor:default">';
+          slotsHTML += '<div class="irp-slot-cell" data-irp-slot="' + cat.id + '-' + i + '" style="aspect-ratio:1;border:1px dashed ' + cat.color + '40;border-radius:6px;display:flex;align-items:center;justify-content:center;background:rgba(10,4,16,0.7);transition:border-color 0.2s,background 0.2s;min-height:48px;cursor:default">';
           slotsHTML += '<span style="font-family:var(--font-h);font-size:0.35rem;color:' + cat.color + '44;letter-spacing:0.05em">' + cat.tag + '</span>';
           slotsHTML += '</div>';
         }

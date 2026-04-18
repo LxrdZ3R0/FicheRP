@@ -150,7 +150,7 @@ function renderIRPBannersPage(banners){
       const btn=document.createElement('button');
       btn.id='irp-manual-rot-btn';
       btn.textContent='⟳ ROTATION MANUELLE';
-      btn.style.cssText='margin-left:12px;padding:6px 14px;border-radius:6px;border:1px solid rgba(220,20,60,0.35);background:linear-gradient(135deg,rgba(220,20,60,0.15),rgba(139,0,0,0.15));color:#dc143c;font-family:var(--font-h);font-size:0.48rem;font-weight:700;letter-spacing:0.1em;cursor:pointer;transition:all 0.3s;vertical-align:middle';
+      btn.style.cssText='margin-left:12px;padding:6px 14px;border-radius:6px;border:1px solid rgba(220,20,60,0.35);background:linear-gradient(135deg,rgba(220,20,60,0.15),rgba(139,0,0,0.15));color:#dc143c;font-family:var(--font-h);font-size:0.48rem;font-weight:700;letter-spacing:0.1em;cursor:pointer;transition:background 0.3s,box-shadow 0.3s;vertical-align:middle';
       btn.addEventListener('mouseenter',function(){btn.style.background='linear-gradient(135deg,rgba(220,20,60,0.3),rgba(139,0,0,0.3))';btn.style.boxShadow='0 0 12px rgba(220,20,60,0.25)';});
       btn.addEventListener('mouseleave',function(){btn.style.background='linear-gradient(135deg,rgba(220,20,60,0.15),rgba(139,0,0,0.15))';btn.style.boxShadow='none';});
       btn.addEventListener('click',async function(){
@@ -346,31 +346,13 @@ async function loadBanners(){
   try{
     BANNERS = await loadIRPBannersPage();
     renderIRPBannersPage(BANNERS);
-    return;
-    /* IRP standalone — should not reach here */
-    BANNERS = await loadIRPBannersPage();
-    renderIRPBannersPage(BANNERS);
   }catch(e){window._dbg?.error('[LOAD_BANNERS]',e)}
 }
 
 /* ── Live banner updates via onSnapshot ── */
 var _bannerUnsub = null;
 function watchBanners(){
-  return; // IRP mode: no live watch needed for IRP banners
-  try{
-    _bannerUnsub = db.collection('gacha_config').doc('banners').onSnapshot(function(snap){
-      if(!snap.exists) return;
-      var d = snap.data();
-      BANNERS = d.banners || [];
-      loadBannerImages().then(function(){ renderBanners(BANNERS); });
-      var rot = d.rotation || {};
-      var ri = document.getElementById('rot-info');
-      if(ri){
-        if(rot.manual_override) ri.textContent='Rotation manuelle active';
-        else ri.textContent='Prochaine rotation dans '+(rot.days_until_next||'?')+' jour(s)';
-      }
-    });
-  }catch(e){window._dbg?.error('[BANNER_WATCH]',e)}
+  // IRP mode: no live watch needed for IRP banners
 }
 
 // ═══ ADMIN MODE — per-banner image editing ═══
@@ -455,8 +437,6 @@ async function saveBannerImg(bid){
   if(!adm.ok){
     window._dbg?.error('[SAVE_BANNER_IMG_ADMIN_CHECK]',adm);
     showToast(adm.msg||'Erreur admin','error',8000);
-    /* Message long → alerte de secours pour être sûr qu'il est lu */
-    alert('[Admin check]\n'+(adm.msg||'Erreur inconnue'));
     return;
   }
   const url=inp.value.trim();

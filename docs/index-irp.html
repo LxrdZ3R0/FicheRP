@@ -40,7 +40,7 @@ body::before {
   position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
   padding: 0 clamp(1.5rem, 4vw, 3rem); height: 72px;
   display: flex; align-items: center; justify-content: space-between;
-  transition: all 0.5s cubic-bezier(0.16,1,0.3,1);
+  transition: background 0.5s cubic-bezier(0.16,1,0.3,1),backdrop-filter 0.5s cubic-bezier(0.16,1,0.3,1),border-color 0.5s cubic-bezier(0.16,1,0.3,1);
 }
 .nav.scrolled {
   background: rgba(2,7,19,0.92); backdrop-filter: blur(24px) saturate(1.4);
@@ -57,7 +57,7 @@ body::before {
 .nav-links a {
   font-family: var(--font-b); font-size: 0.72rem; font-weight: 500;
   letter-spacing: 0.08em; color: var(--text2); text-decoration: none;
-  padding: 8px 16px; border-radius: 6px; transition: all 0.3s;
+  padding: 8px 16px; border-radius: 6px; transition: color 0.3s,background 0.3s;
 }
 .nav-links a:hover { color: #fff; background: rgba(255,255,255,0.04); }
 
@@ -102,7 +102,7 @@ body::before {
   padding: 14px 32px; border: 1px solid rgba(255,255,255,0.12);
   border-radius: 8px; background: rgba(255,255,255,0.03);
   backdrop-filter: blur(8px); position: relative; overflow: hidden;
-  transition: all 0.4s cubic-bezier(0.16,1,0.3,1);
+  transition: border-color 0.4s cubic-bezier(0.16,1,0.3,1),background 0.4s cubic-bezier(0.16,1,0.3,1),box-shadow 0.4s cubic-bezier(0.16,1,0.3,1);
   opacity: 0; transform: translateY(24px); animation: up 0.8s 0.9s forwards;
 }
 .hero-cta:hover { border-color: var(--blue); background: rgba(77,163,255,0.06); box-shadow: 0 0 40px rgba(77,163,255,0.08); }
@@ -330,7 +330,7 @@ body::before {
   background: rgba(12,18,40,0.50); border: 1px solid rgba(255,255,255,0.06);
   border-radius: 12px; padding: 2.5rem 2rem; text-decoration: none;
   color: inherit; display: flex; flex-direction: column;
-  transition: all 0.5s cubic-bezier(0.16,1,0.3,1); position: relative; overflow: hidden;
+  transition: transform 0.5s cubic-bezier(0.16,1,0.3,1),border-color 0.5s cubic-bezier(0.16,1,0.3,1),box-shadow 0.5s cubic-bezier(0.16,1,0.3,1); position: relative; overflow: hidden;
 }
 .explore-card::before {
   content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2px;
@@ -376,7 +376,7 @@ body::before {
   letter-spacing: 0.04em; color: #fff; background: rgba(114,137,218,0.7);
   text-decoration: none; padding: 12px 24px; border-radius: 8px;
   display: inline-flex; align-items: center; gap: 8px;
-  transition: all 0.3s;
+  transition: background 0.3s,box-shadow 0.3s,transform 0.3s;
 }
 .discord-btn:hover { background: #7289da; box-shadow: 0 0 30px rgba(114,137,218,0.3); transform: translateY(-2px); }
 .discord-btn svg { width: 14px; height: 14px; fill: currentColor; }
@@ -436,9 +436,9 @@ body::before {
 .nav-links{display:none!important}
 .nav-toggle{display:none!important}
 .nav-backdrop{display:none!important}
-.burger{display:flex;width:42px;height:42px;background:rgba(77,163,255,0.06);border:1px solid rgba(77,163,255,0.15);border-radius:8px;cursor:pointer;flex-direction:column;align-items:center;justify-content:center;gap:5px;transition:all .3s;position:relative;z-index:1001}
+.burger{display:flex;width:42px;height:42px;background:rgba(77,163,255,0.06);border:1px solid rgba(77,163,255,0.15);border-radius:8px;cursor:pointer;flex-direction:column;align-items:center;justify-content:center;gap:5px;transition:background .3s,border-color .3s,box-shadow .3s;position:relative;z-index:1001}
 .burger:hover{border-color:rgba(77,163,255,0.35);background:rgba(77,163,255,0.1);box-shadow:0 0 16px rgba(77,163,255,0.15)}
-.burger-line{display:block;width:18px;height:1.5px;border-radius:2px;background:#4DA3FF;transition:all .4s cubic-bezier(0.76,0,0.24,1);transform-origin:center}
+.burger-line{display:block;width:18px;height:1.5px;border-radius:2px;background:#4DA3FF;transition:transform .4s cubic-bezier(0.76,0,0.24,1),opacity .4s cubic-bezier(0.76,0,0.24,1),background .4s cubic-bezier(0.76,0,0.24,1);transform-origin:center}
 .burger.active .burger-line:nth-child(1){transform:translateY(6.5px) rotate(45deg)}
 .burger.active .burger-line:nth-child(2){opacity:0;transform:scaleX(0)}
 .burger.active .burger-line:nth-child(3){transform:translateY(-6.5px) rotate(-45deg)}
@@ -450,7 +450,7 @@ body::before {
 .mobile-menu::after{content:'';position:absolute;top:10%;right:-10%;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(139,92,246,0.08),transparent 70%);pointer-events:none;z-index:0}
 .menu-inner{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;padding:0 clamp(2rem,6vw,4rem)}
 .menu-header-label{font-family:'Share Tech Mono',monospace;font-size:.48rem;letter-spacing:.5em;color:#9aa0b8;opacity:.5;margin-bottom:2rem;text-transform:uppercase}
-.menu-link{display:flex;align-items:center;gap:16px;text-decoration:none;padding:16px 0;border-bottom:1px solid rgba(77,163,255,0.04);transform:translateX(-30px);opacity:0;transition:all .4s cubic-bezier(0.16,1,0.3,1)}
+.menu-link{display:flex;align-items:center;gap:16px;text-decoration:none;padding:16px 0;border-bottom:1px solid rgba(77,163,255,0.04);transform:translateX(-30px);opacity:0;transition:transform .4s cubic-bezier(0.16,1,0.3,1),opacity .4s cubic-bezier(0.16,1,0.3,1)}
 .mobile-menu.open .menu-link{transform:translateX(0);opacity:1}
 .mobile-menu.open .menu-link:nth-child(1){transition-delay:.06s}
 .mobile-menu.open .menu-link:nth-child(2){transition-delay:.10s}
@@ -461,10 +461,10 @@ body::before {
 .mobile-menu.open .menu-link:nth-child(7){transition-delay:.30s}
 .mobile-menu.open .menu-link:nth-child(8){transition-delay:.34s}
 .menu-link-index{font-family:'Share Tech Mono',monospace;font-size:.5rem;color:rgba(77,163,255,0.3);min-width:28px;letter-spacing:.1em}
-.menu-link-text{font-family:'Orbitron',sans-serif;font-size:clamp(1.1rem,4vw,1.6rem);font-weight:700;letter-spacing:.12em;color:#c8cde0;transition:all .3s;text-transform:uppercase}
+.menu-link-text{font-family:'Orbitron',sans-serif;font-size:clamp(1.1rem,4vw,1.6rem);font-weight:700;letter-spacing:.12em;color:#c8cde0;transition:color .3s;text-transform:uppercase}
 .menu-link:hover .menu-link-text,.menu-link.active .menu-link-text{color:#fff}
 .menu-link.active .menu-link-text{background:linear-gradient(90deg,#4DA3FF,#8B5CF6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.menu-link-arrow{margin-left:auto;font-family:'Share Tech Mono',monospace;font-size:.7rem;color:rgba(77,163,255,0.2);transition:all .3s}
+.menu-link-arrow{margin-left:auto;font-family:'Share Tech Mono',monospace;font-size:.7rem;color:rgba(77,163,255,0.2);transition:color .3s,transform .3s}
 .menu-link:hover .menu-link-arrow{color:#4DA3FF;transform:translateX(4px)}
 .menu-link.active .menu-link-arrow{color:#8B5CF6}
 .menu-link::before{content:'';width:0;height:1px;background:linear-gradient(90deg,#4DA3FF,transparent);transition:width .4s ease}
