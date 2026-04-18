@@ -200,8 +200,9 @@ window.JImgCache.stats()                // {total, expired}
 - Si l'UID n'existe pas dans `/admins` → `auth.signOut()` immédiat + message "Accès refusé"
 - Rôle `admin` : supprimer fiches + voir logs
 - Rôle `modo` : lecture seule (fiches + PNJ)
-- Onglets : **Fiches** · **PNJ** · **Logs** (Logs visible admins uniquement)
-- Alpine.js pour la réactivité des onglets (`logsVisible` contrôle l'onglet Logs)
+- Onglets : **Fiches** · **PNJ** · **Lore** · **Bestiaire** · **Casino** · **Logs** (Casino + Logs visibles admins uniquement, masqués pour modo)
+- `_setAdminTab` masque les onglets `tab-btn-logs` et `tab-btn-casino` si role !== 'admin'
+- Onglet **Casino** : indicateur d'état + bouton FERMER/OUVRIR (`toggleCasino()` → `casino_config/main.is_open`) + feed des 20 derniers paris ; double garde role==='admin' côté JS + Firestore rules (`isAdmin()` sur `casino_config`)
 - **⚠ SUPPRIMÉ** : bypass VIP Discord IDs — `window._isAdmin` est exclusivement contrôlé par Firebase Auth
 - **⚠ SUPPRIMÉ** : onglet Gacha (API bot externe) + onglet Races (redondant)
 

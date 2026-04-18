@@ -119,7 +119,7 @@ function showScreen(name){
     switchAdminTab('fiches');
   }
 }
-window._setAdminTab=(data)=>{const btn=document.getElementById('tab-btn-logs');if(btn)btn.style.display=(data.role==='admin')?'':'none';};
+window._setAdminTab=(data)=>{const isAdm=data.role==='admin';const bl=document.getElementById('tab-btn-logs');if(bl)bl.style.display=isAdm?'':'none';const bc=document.getElementById('tab-btn-casino');if(bc)bc.style.display=isAdm?'':'none';};
 
 /* ═══ LORE ═══ */
 const _ld={empires:[],organisations:[],dynasties:[],histoire:[],pantheon:[],chronologie:[],glossaire:[]};
@@ -357,7 +357,7 @@ function renderAdminHeader(){if(!currentAdmin)return;document.getElementById('ad
     <button class="admin-tab" data-tab="pnj" onclick="switchAdminTab('pnj')">PNJ <span class="tab-badge" id="badge-pnj" style="background:#b06eff"></span></button>
     <button class="admin-tab" data-tab="lore" onclick="switchAdminTab('lore')">Lore</button>
     <button class="admin-tab" data-tab="bestiaire" onclick="switchAdminTab('bestiaire')">Bestiaire <span class="tab-badge" id="cnt-best" style="background:#00e5ff;color:#04060f;display:inline">0</span></button>
-    <button class="admin-tab" data-tab="casino" onclick="switchAdminTab('casino')">Casino <span class="tab-badge" id="badge-casino" style="background:#e8b04a;color:#1a1208;display:inline">—</span></button>
+    <button class="admin-tab" data-tab="casino" id="tab-btn-casino" style="display:none" onclick="switchAdminTab('casino')">Casino <span class="tab-badge" id="badge-casino" style="background:#e8b04a;color:#1a1208;display:inline">—</span></button>
     <button class="admin-tab" data-tab="logs" id="tab-btn-logs" style="display:none" onclick="switchAdminTab('logs')">Logs</button>
   </div>
 
