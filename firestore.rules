@@ -198,14 +198,38 @@ service cloud.firestore {
       allow write: if true;  // Les joueurs modifient leurs liens via le bot
     }
 
+    // ── CASINO ────────────────────────────────────────────────────────────────
+    // casino_config : lecture publique, écriture admin uniquement.
+    match /casino_config/{doc} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    // casino_tables : lecture publique, écriture sans auth (host-driven via transactions).
+    // La logique de sécurité est dans le client (transactions atomiques, phase checks).
+    match /casino_tables/{tableId} {
+      allow read: if true;
+      allow create, update: if true;
+      allow delete: if isAdmin();
+    }
+    // casino_logs : lecture admin, création publique (log des paris côté client).
+    match /casino_logs/{logId} {
+      allow read: if isAdmin();
+      allow create: if request.resource.data.keys().hasOnly([
+                       'user_id','username','game','mode','currency',
+                       'amount','profit','result','char_id','extra','at'
+                     ]);
+      allow update, delete: if false;
+    }
+
     // ── JOUEURS ───────────────────────────────────────────────────────────────
-    // Seul display_theme est modifiable sans auth (préférence UI hub.html).
-    // Toute modification de navarites, gacha, etc. est réservée au bot.
+    // display_theme : préférence UI (hub.html).
+    // navarites : mis à jour côté client via transactions (casino PRIME mode).
+    // Toute autre modification est réservée au bot via Admin SDK.
     match /players/{userId} {
       allow read: if true;
       allow update: if isAdmin()
                     || request.resource.data.diff(resource.data).affectedKeys()
-                       .hasOnly(['display_theme']);
+                       .hasOnly(['display_theme', 'navarites']);
       allow create: if isAdmin();
       allow delete: if false;
     }
