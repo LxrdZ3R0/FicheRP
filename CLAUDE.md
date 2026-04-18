@@ -16,7 +16,6 @@ Hébergé sur GitHub Pages (`/docs`), backend Firebase, zéro framework JS.
 | Frontend | HTML5 / CSS3 / JS vanilla — aucun bundler |
 | Alpine.js 3.14 | **Uniquement** dans `admin.html` (onglets réactifs) |
 | Three.js + GSAP | Blob 3D + animations gacha (`kanji-blob.js`, `gacha.html`) + scan silhouette hub (`hub.html`) |
-| Web Component | `<jaharta-card>` — `js/jaharta-card.js` |
 
 ---
 
@@ -24,36 +23,65 @@ Hébergé sur GitHub Pages (`/docs`), backend Firebase, zéro framework JS.
 
 ```
 docs/
-├── index.html           Accueil + nav
-├── fiches.html          Cartes personnages joueurs (PC)
-├── pnj.html             Personnages non-joueurs
-├── portail.html         Portail lore + carte monde
-├── racesjouables.html   Encyclopédie des 42 races
-├── gacha.html           Système Gacha Nexus (auth requis)
-├── hub.html             Hub joueur — 12 onglets (auth requis)
-├── admin.html           Panel staff (whitelist Firestore)
+├── index.html            Accueil NORMAL + nav
+├── index-irp.html        Accueil branche IRP (voir § Branche IRP)
+├── fiches.html           Cartes personnages joueurs (PC) — branche NORMAL
+├── fiches-irp.html       idem — branche IRP
+├── pnj.html              Personnages non-joueurs
+├── portail.html          Portail lore + carte monde
+├── lore.html             Lore complet
+├── racesjouables.html    Encyclopédie des 42 races
+├── bestiaire.html        Bestiaire (créatures/monstres)
+├── gacha.html            Gacha Nexus NORMAL (auth requis)
+├── gacha-irp.html        Gacha IRP
+├── hub.html              Hub joueur NORMAL — 12 onglets (auth requis)
+├── hub-irp.html          Hub joueur IRP — collections irp_*
+├── admin.html            Panel staff (whitelist Firestore)
 │
 ├── css/
-│   └── jaharta.css      Thème global partagé (variables CSS)
+│   ├── jaharta.css           Thème global partagé (variables CSS + tokens animation)
+│   ├── hub.css               Styles hub (NORMAL + IRP)
+│   ├── hub-achievements.css  Styles onglet Achievements
+│   ├── gacha.css             Styles gacha
+│   ├── bestiaire-card.css    Styles cartes bestiaire
+│   └── irp-theme.css         Overrides thème IRP
 │
 └── js/
     ├── constants.js             window.RACES / window.RANKS / window.RACES_SPECIFIC
     ├── utils.js                 sanitize(), compressImage(), AntiSpam, Skeleton, showToast()
-    ├── jaharta-card.js          Web Component <jaharta-card> (tilt 3D, scramble, sparkle)
-    ├── jaharta-img-cache.js     Cache localStorage des URLs d'images Firestore (TTL 24h)
-    ├── debug.js                 Logger flottant (localStorage, bas-droit)
-    ├── kanji-blob.js            Blob Three.js pour gacha
-    ├── page-transition.js       Overlay de chargement
-    ├── fiches.js                Module Firebase fiches joueurs (extrait de fiches.html)
-    ├── lore.js                  Logique page lore (extrait de lore.html)
-    ├── racesjouables-logic.js   Popup races + filtres (extrait de racesjouables.html)
-    ├── hub-core.js              Logique centrale hub (extrait de hub.html)
-    ├── hub-dashboard.js         Onglet Dashboard
-    ├── hub-inventory.js         Onglet Inventaire (UI Cyberpunk)
-    ├── hub-renders.js           Rendu des cartes hub
-    ├── hub-shops.js             Onglets Shops
+    ├── debug.js                 Logger flottant (window._dbg)
+    ├── jaharta-nav.js           Navbar injectée (PAGES_NORMAL + PAGES_IRP)
+    ├── jaharta-cache.js         Wrapper onSnapshot avec tracking unsub (_snapSubs)
+    ├── jaharta-img-cache.js     Cache localStorage URLs Firebase Storage (TTL 24h)
+    ├── jaharta-motion.js        Micro-interactions globales (ripple, reveal, press)
+    ├── page-transition.js       Overlay fade entre pages
     ├── music-player.js          Lecteur audio flottant
-    └── race-popup.js            Popup race (hub)
+    ├── auth-badge.js            Badge utilisateur authentifié
+    ├── kanji-blob.js            Blob Three.js (gacha NORMAL + hub scan)
+    ├── stats-caps.js            Calcul plafonds de stats selon rang
+    ├── irp-mode.js              Flag localStorage + redirections NORMAL↔IRP
+    ├── script.js                Logique landing (index.html only)
+    │
+    ├── fiches.js                Firebase fiches joueurs (NORMAL)
+    ├── fiches-irp.js            Firebase fiches joueurs (IRP)
+    ├── lore.js                  Logique page lore
+    ├── racesjouables-logic.js   Popup races + filtres
+    ├── race-popup.js            Popup race (hub)
+    │
+    ├── gacha-logic.js           Logique tirages gacha NORMAL
+    ├── gacha-irp-logic.js       Logique tirages gacha IRP
+    ├── gacha-blob.js            Blob 3D gacha
+    ├── gacha-fx.js              Effets visuels gacha
+    │
+    ├── hub-core.js              Logique centrale hub NORMAL (tabs + fade)
+    ├── hub-irp.js               Override hub IRP (collections)
+    ├── hub-irp-core.js          Logique centrale hub IRP
+    ├── hub-dashboard.js         Onglet Dashboard
+    ├── hub-character.js         Onglet Personnage
+    ├── hub-inventory.js         Onglet Inventaire (UI Cyberpunk)
+    ├── hub-renders.js           Rendu cartes hub
+    ├── hub-shops.js             Onglets Shops
+    └── hub-achievements.js      Onglet Achievements
 ```
 
 ---
@@ -113,7 +141,7 @@ window.JImgCache.stats()                // {total, expired}
 ```
 
 **Clés par type de document :**
-- `fc_{id}` — fiches joueurs (fiches.html, jaharta-card.js)
+- `fc_{id}` — fiches joueurs (fiches.html, fiches.js)
 - `char_{id}` — personnage hub (hub.html)
 - `pnj_{id}` — PNJ (pnj.html)
 
@@ -161,6 +189,26 @@ window.JImgCache.stats()                // {total, expired}
 - Alpine.js pour la réactivité des onglets (`logsVisible` contrôle l'onglet Logs)
 - **⚠ SUPPRIMÉ** : bypass VIP Discord IDs — `window._isAdmin` est exclusivement contrôlé par Firebase Auth
 - **⚠ SUPPRIMÉ** : onglet Gacha (API bot externe) + onglet Races (redondant)
+
+### Branche IRP (fork permanent assumé)
+
+La branche **IRP** est un univers RP parallèle, déployée comme un **fork permanent** de la branche NORMAL (décision 2026-04-18). Les deux versions coexistent et peuvent diverger.
+
+**Pages IRP :**
+- `index-irp.html` · `hub-irp.html` · `gacha-irp.html` · `fiches-irp.html`
+
+**Collections Firestore IRP :** `irp_pnj`, `irp_bestiaire`, `irp_characters`, `irp_flesh_marks` (en plus des collections NORMAL qui restent utilisées par les pages non-IRP).
+
+**Entrée utilisateur** : bouton discret ◆ dans le footer de `index.html` → modal code `JAHARTA02irp` → `index-irp.html`. Flag stocké dans `localStorage.jaharta_irp_mode`.
+
+**Modules IRP-specific** :
+- `js/irp-mode.js` — gestion du flag + redirections inter-pages
+- `js/hub-irp.js` + `js/hub-irp-core.js` — override collections hub
+- `js/gacha-irp-logic.js` — logique gacha IRP (bannières, Jahartites)
+- `js/fiches-irp.js` — fiches IRP
+- `css/irp-theme.css` — overrides visuels (thème violine)
+
+**Règle de sync** : toute évolution touchant le code commun (layout, nav, utils, constants, auth) DOIT être portée sur les 2 branches. Les divergences intentionnelles (features propres à IRP) restent isolées dans les fichiers `*-irp.*`.
 
 ---
 
@@ -250,7 +298,7 @@ python3 -m http.server 8080
 
 **Ajouter un champ à une fiche :**
 1. `fiches.html` modal soumission + `submitCard()` + `openEditFiche()`
-2. `js/jaharta-card.js` `_render()` pour l'affichage
+2. `js/fiches.js` (et `fiches-irp.js` si applicable) — rendu dans `buildCard()`
 3. `admin.html` `renderTable()` si besoin dans le panel
 4. `README.md` schéma Firestore
 

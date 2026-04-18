@@ -17,10 +17,25 @@ Le site permet à tout visiteur de consulter les informations de l'univers Jahar
 | **Fiches RP** | Cartes des personnages joueurs validés | Public (lecture) |
 | **PNJ** | Personnages non-joueurs importants | Public (lecture) |
 | **Portail** | Liens Lore + Carte du monde | Public |
+| **Lore** | Lore complet de l'univers | Public |
 | **Races jouables** | Encyclopédie des 42 races (7 groupes) | Public |
+| **Bestiaire** | Créatures et monstres | Public |
 | **Gacha Nexus** | Système de tirages avec Navarites | Auth Discord `/link` |
 | **Hub joueur** | 12 onglets de progression personnalisée | Auth Discord `/link` |
 | **Admin** | Panel de gestion staff | Whitelist Firestore |
+
+### Branche IRP (univers parallèle)
+
+Une seconde expérience RP — **fork permanent** — coexiste avec la branche NORMAL :
+
+| Page IRP | Équivalent NORMAL |
+|---|---|
+| `index-irp.html` | `index.html` |
+| `fiches-irp.html` | `fiches.html` |
+| `gacha-irp.html` | `gacha.html` |
+| `hub-irp.html` | `hub.html` |
+
+**Accès IRP** : bouton discret ◆ dans le footer de `index.html` → code `JAHARTA02irp` → redirige vers `index-irp.html`. Mode stocké dans `localStorage.jaharta_irp_mode`, géré par `js/irp-mode.js`. Collections Firestore dédiées : `irp_pnj`, `irp_bestiaire`, `irp_characters`, `irp_flesh_marks`.
 
 ---
 
@@ -35,7 +50,6 @@ Le site permet à tout visiteur de consulter les informations de l'univers Jahar
 | Frontend | HTML / CSS / JS vanilla — aucun bundler | — |
 | UI réactive | Alpine.js 3.14 (onglets admin) | admin.html |
 | 3D / Animation | Three.js (blob gacha) + GSAP (flip cartes + scan silhouette hub) | js/kanji-blob.js, gacha.html, hub.html |
-| Composant carte | Web Component `<jaharta-card>` | js/jaharta-card.js |
 | Constantes | RACES, RANKS, RACES_SPECIFIC | js/constants.js |
 | Utilitaires | sanitize, compressImage, AntiSpam, Skeleton, showToast | js/utils.js |
 | Cache images | localStorage URL cache (TTL 24h) — `window.JImgCache` | js/jaharta-img-cache.js |
@@ -46,51 +60,47 @@ Le site permet à tout visiteur de consulter les informations de l'univers Jahar
 
 ## Structure du repo
 
+> L'arborescence complète des scripts figure dans [CLAUDE.md § Structure](CLAUDE.md#structure--fichiers-clés). Vue d'ensemble :
+
 ```
 JahartaRP/
 │
 ├── docs/                          ← Dossier servi par GitHub Pages
-│   ├── index.html                 ← Page d'accueil
-│   ├── fiches.html                ← Personnages joueurs (PC)
+│   ├── index.html                 ← Accueil NORMAL
+│   ├── index-irp.html             ← Accueil branche IRP (voir § Branche IRP)
+│   ├── fiches.html / fiches-irp.html        ← Personnages joueurs (PC)
 │   ├── pnj.html                   ← Personnages non-joueurs
 │   ├── portail.html               ← Portail ressources (Lore + Carte)
+│   ├── lore.html                  ← Lore complet
 │   ├── racesjouables.html         ← Encyclopédie des 42 races (7 groupes)
-│   ├── gacha.html                 ← Gacha Nexus — tirages + pity (auth Discord)
-│   ├── hub.html                   ← Hub joueur — 12 onglets (auth Discord)
-│   ├── admin.html                 ← Panel d'administration (login requis)
+│   ├── bestiaire.html             ← Bestiaire (créatures/monstres)
+│   ├── gacha.html / gacha-irp.html          ← Gacha Nexus
+│   ├── hub.html / hub-irp.html              ← Hub joueur (12 onglets, auth Discord)
+│   ├── admin.html                 ← Panel d'administration (login Google)
 │   │
 │   ├── css/
-│   │   └── jaharta.css            ← STYLES PARTAGÉS — inclus par toutes les pages
+│   │   ├── jaharta.css            ← STYLES PARTAGÉS
+│   │   ├── hub.css                ← Styles hub
+│   │   ├── hub-achievements.css   ← Onglet Achievements
+│   │   ├── gacha.css              ← Styles gacha
+│   │   ├── bestiaire-card.css     ← Cartes bestiaire
+│   │   └── irp-theme.css          ← Overrides visuels IRP
 │   │
-│   ├── js/
-│   │   ├── constants.js             ← RACES, RANKS, RACES_SPECIFIC (partagé)
-│   │   ├── utils.js                 ← sanitize, compressImage, AntiSpam, Skeleton, showToast
-│   │   ├── jaharta-card.js          ← Web Component <jaharta-card> (cartes personnages)
-│   │   ├── jaharta-img-cache.js     ← Cache localStorage URLs images Firebase (TTL 24h)
-│   │   ├── jaharta-motion.js        ← Micro-interactions globales (ripple, reveal, scroll-progress)
-│   │   ├── kanji-blob.js            ← Blob Three.js pour gacha (morphing 3D)
-│   │   ├── page-transition.js       ← Overlay de chargement entre pages
-│   │   ├── debug.js                 ← Logger d'erreurs flottant (dev)
-│   │   ├── fiches.js                ← Module Firebase fiches joueurs
-│   │   ├── lore.js                  ← Logique page lore
-│   │   ├── racesjouables-logic.js   ← Popup races + filtres
-│   │   ├── hub-core.js              ← Logique centrale hub (tabs + fade transitions)
-│   │   ├── hub-dashboard.js         ← Onglet Dashboard
-│   │   ├── hub-inventory.js         ← Onglet Inventaire (UI Cyberpunk)
-│   │   ├── hub-renders.js           ← Rendu cartes hub
-│   │   ├── hub-shops.js             ← Onglets Shops
-│   │   ├── music-player.js          ← Lecteur audio flottant
-│   │   └── race-popup.js            ← Popup race (hub)
+│   ├── js/                        ← ~30 modules (voir CLAUDE.md pour détail)
+│   │   ├── [shared]   constants, utils, debug, jaharta-nav, jaharta-cache, jaharta-img-cache, jaharta-motion, page-transition, music-player, auth-badge, kanji-blob, stats-caps, irp-mode, script
+│   │   ├── [fiches]   fiches.js, fiches-irp.js
+│   │   ├── [lore]     lore.js, racesjouables-logic.js, race-popup.js
+│   │   ├── [gacha]    gacha-logic, gacha-irp-logic, gacha-blob, gacha-fx
+│   │   └── [hub]      hub-core, hub-irp, hub-irp-core, hub-dashboard, hub-character, hub-inventory, hub-renders, hub-shops, hub-achievements
 │   │
-│   └── img/
-│       ├── banner.png             ← Image Open Graph (Discord embed)
-│       ├── favicon.ico
-│       ├── favicon-32.png
-│       └── favicon-180.png
+│   ├── img/ + assets/             ← Images, logos, favicons, carte
+│   └── data/                      ← Fixtures / données statiques
 │
-├── CLAUDE.md                      ← Guide pour Claude Code (IA)
+├── CLAUDE.md                      ← Guide pour Claude Code (IA) — source de vérité conventions
+├── docs/SITE_ARCHITECTURE.md      ← Guide rapide scripts par page + timings bot↔site
+├── firestore.rules                ← Règles sécurité Firestore
 ├── .gitignore
-└── README.md
+└── README.md                      ← Ce fichier (doc humaine)
 ```
 
 ---
@@ -118,11 +128,6 @@ Dans chaque page, les scripts doivent être inclus dans cet ordre :
 ```
 
 > `jaharta-motion.js` doit toujours être **après** `page-transition.js` et en fin de `<body>`. Il s'auto-initialise au `DOMContentLoaded` et ne dépend d'aucun autre script.
-
-Pour `fiches.html`, le Web Component est importé depuis le module Firebase :
-```js
-import '/js/jaharta-card.js';
-```
 
 ---
 
@@ -283,7 +288,7 @@ Toutes les données sont chargées en temps réel via `onSnapshot()`.
 { action, targetId, targetName, byEmail, byUid, byName, role, at }
 ```
 
-> **Note sécurité (2026-04-06)** : le champ `_vip_id` a été supprimé de toutes les collections. Ne jamais le réintroduire — voir `UPDATES.md`.
+> **Note sécurité (2026-04-06)** : le champ `_vip_id` a été supprimé de toutes les collections. Ne jamais le réintroduire.
 
 ### Collection `users` — Données joueurs (gacha + hub)
 
@@ -473,7 +478,7 @@ window.RANKS = {
 1. **Formulaire** (`fiches.html`, section `<!-- MODAL DE SOUMISSION -->`) : ajouter l'input
 2. **Soumission** (`submitCard()`) : lire et inclure la valeur dans `data`
 3. **Édition** (`openEditFiche()`) : pré-remplir le champ
-4. **Affichage** (`docs/js/jaharta-card.js`, méthode `_render()`) : afficher dans la carte
+4. **Affichage** (`docs/js/fiches.js`, `buildCard()`) : afficher dans la carte (idem `fiches-irp.js` si applicable)
 5. **Admin** (`admin.html`, `renderTable()`) : afficher dans le panel si nécessaire
 6. **README** (ici) : documenter le champ dans le schéma `fiches`
 

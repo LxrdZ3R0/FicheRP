@@ -537,7 +537,7 @@ window.openEditFiche=async function(id){
   openModal(true);
 };
 let _activeRace='all';let _activeRank='all';
-function applyFilters(){let visible=0;document.querySelectorAll('.rp-card[data-race]').forEach(card=>{const matchRace=_activeRace==='all'||card.dataset.race===_activeRace;const matchRank=_activeRank==='all'||card.dataset.rank===_activeRank;const show=matchRace&&matchRank;const wrapper=card.closest('jaharta-card')||card;wrapper.style.display=show?'':'none';if(show)visible++;});document.getElementById('no-results').style.display=visible===0?'block':'none';}
+function applyFilters(){let visible=0;document.querySelectorAll('.rp-card[data-race]').forEach(card=>{const matchRace=_activeRace==='all'||card.dataset.race===_activeRace;const matchRank=_activeRank==='all'||card.dataset.rank===_activeRank;const show=matchRace&&matchRank;const wrapper=card;wrapper.style.display=show?'':'none';if(show)visible++;});document.getElementById('no-results').style.display=visible===0?'block':'none';}
 function filterRace(race,btn){_activeRace=race;document.querySelectorAll('#race-filters .fbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');applyFilters();}
 function filterRank(rank,btn){_activeRank=rank;document.querySelectorAll('#rank-filters .fbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');applyFilters();}
 function openModal(skipClearLinks=false){if(!window._isAdmin){showToast('⚠ Connexion admin requise.','error');return;}if(!skipClearLinks)clearLinks();document.getElementById('modal').classList.add('open');document.body.style.overflow='hidden';document.body.classList.add('modal-open');}

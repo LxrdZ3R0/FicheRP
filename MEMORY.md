@@ -29,9 +29,8 @@
 | `js/hub-character.js` | 200 | Extrait ✓ |
 | `js/hub-dashboard.js` | 121 | Extrait ✓ |
 | `js/hub-core.js` | ~406 | Extrait ✓ + showTab() fade transition |
-| `js/jaharta-motion.js` | ~160 | NOUVEAU — ripple, reveal, scroll-progress |
-| `js/jaharta-card.js` | 321 | RAF throttle tilt ✓ |
-| `js/fiches.js` | 701 | Extrait ✓ |
+| `js/jaharta-motion.js` | ~184 | ripple, reveal, scroll-progress |
+| `js/fiches.js` | 718 | Extrait ✓ |
 | `js/lore.js` | 675 | Extrait ✓ |
 | `js/racesjouables-logic.js` | 711 | Extrait ✓ |
 | `fiches.html` | 599 | ✓ |
@@ -205,7 +204,7 @@ Le bloc ORIGINAL (après) overridait `.nav-logo` sans `display:flex` → logo im
 | 2 | hub.html décomposé (4042 → 681L), CSS tokens unifiés, onSnapshot orphelins corrigés | 2026-04-09/10 |
 | 3 | fiches.html (1301→599L), lore.html (1296→620L), racesjouables.html (1025→313L) extraits | 2026-04-10 |
 | 4 | Typographie Crystal Clear — variables `--fs-*` dans hub.css | 2026-04-10 |
-| 5 | RAF throttle tilt (jaharta-card.js), dirty-check + DocumentFragment (hub-inventory.js), token system animation (jaharta.css) | 2026-04-11 |
+| 5 | RAF throttle tilt (jaharta-card.js — **fichier supprimé 2026-04-18, orphelin**), dirty-check + DocumentFragment (hub-inventory.js), token system animation (jaharta.css) | 2026-04-11 |
 | 5b | jaharta-motion.js créé + 9 pages, showTab() fade transition + guard re-render (hub-core.js) | 2026-04-11 |
 
 ## PROCHAINES ÉTAPES
