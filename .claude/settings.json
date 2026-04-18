@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '{\"hookSpecificOutput\":{\"hookEventName\":\"SessionStart\",\"additionalContext\":\"JAHARTA-RP SESSION RULES (lis attentivement):\\n\\n1. LECTURE OBLIGATOIRE avant toute action:\\n   - CLAUDE.md (racine du repo) — conventions projet\\n   - MEMORY.md (c:/Users/Matys/.claude/projects/c--Users-Matys-Project-JahartaRP/memory/MEMORY.md) + tous les .md qu'il pointe\\n   Résume ta compréhension en 5 bullets AVANT d'agir.\\n\\n2. RÈGLE DE SYNCHRONISATION CRITIQUE:\\n   Dès qu'une modification touche l'un de ces aspects, tu DOIS mettre à jour CLAUDE.md ET le fichier memory/*.md pertinent DANS LA MÊME RÉPONSE que le changement de code (jamais différé):\\n   - Nouvelle convention ou règle de code\\n   - Changement de structure de dossiers ou renommage\\n   - Feature ajoutée, supprimée, ou dépréciée\\n   - Décision architecturale (Firebase, design system, patterns)\\n   - Variables CSS ajoutées/supprimées du :root\\n   - Nouveau fichier JS/CSS clé ou suppression\\n\\n3. CONTRADICTIONS: Si CLAUDE.md ou MEMORY affirme quelque chose qui ne correspond plus au code actuel, signale-le explicitement avant de continuer — ne pas supposer que la doc est à jour.\"}}'"
+          }
+        ]
+      }
+    ]
+  }
+}
