@@ -14,7 +14,7 @@
 <!-- FIREBASE MODULE -->
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import{getFirestore,collection,doc,getDoc,getDocFromServer,addDoc,deleteDoc,query,orderBy,onSnapshot,serverTimestamp,enableIndexedDbPersistence,where}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import{getFirestore,collection,doc,getDoc,getDocFromServer,addDoc,deleteDoc,setDoc,query,orderBy,onSnapshot,serverTimestamp,enableIndexedDbPersistence,where,limit}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import{getAuth,onAuthStateChanged,signOut,GoogleAuthProvider,signInWithPopup}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 const firebaseConfig={apiKey:"AIzaSyAru7qZX8Gu_b8Y3oNDV-a5PmkrrkRjkcs",authDomain:"jaharta-rp.firebaseapp.com",projectId:"jaharta-rp",storageBucket:"jaharta-rp.firebasestorage.app",messagingSenderId:"217075417489",appId:"1:217075417489:web:4d1e2df422a5cd42411a30"};
 const app=initializeApp(firebaseConfig);const db=getFirestore(app);const auth=getAuth(app);
@@ -22,17 +22,75 @@ enableIndexedDbPersistence(db).catch(e=>{if(e.code!=='failed-precondition'&&e.co
 let currentAdmin=null;
 const _unsubs={};
 onAuthStateChanged(auth,async user=>{
-  if(!user){showScreen('login');currentAdmin=null;return;}showScreen('loading');try{const snap=await getDocFromServer(doc(db,'admins',user.uid));if(!snap.exists()){await signOut(auth);showScreen('login');document.getElementById('login-error').textContent='⚠ Accès refusé. Votre compte n\'est pas dans la whitelist admin.';return;}const data=snap.data();currentAdmin={uid:user.uid,email:user.email,name:data.name||user.displayName||user.email,role:data.role||'admin'};window._adminRole=currentAdmin.role;window._adminEmail=currentAdmin.email;window._adminName=currentAdmin.name;renderAdminHeader();showScreen('panel');setTimeout(()=>window._setAdminTab?.({role:currentAdmin.role}),50);loadAllFiches();loadPNJ();loadLore();loadBestiaire();if(currentAdmin.role==='admin')loadLogs();}catch(err){window._dbg?.error('[ADMIN] ERREUR auth:', err);document.getElementById('login-error').textContent='⚠ '+err.message;showScreen('login');}});
+  if(!user){showScreen('login');currentAdmin=null;return;}showScreen('loading');try{const snap=await getDocFromServer(doc(db,'admins',user.uid));if(!snap.exists()){await signOut(auth);showScreen('login');document.getElementById('login-error').textContent='⚠ Accès refusé. Votre compte n\'est pas dans la whitelist admin.';return;}const data=snap.data();currentAdmin={uid:user.uid,email:user.email,name:data.name||user.displayName||user.email,role:data.role||'admin'};window._adminRole=currentAdmin.role;window._adminEmail=currentAdmin.email;window._adminName=currentAdmin.name;renderAdminHeader();showScreen('panel');setTimeout(()=>window._setAdminTab?.({role:currentAdmin.role}),50);loadAllFiches();loadPNJ();loadLore();loadBestiaire();loadCasino();if(currentAdmin.role==='admin')loadLogs();}catch(err){window._dbg?.error('[ADMIN] ERREUR auth:', err);document.getElementById('login-error').textContent='⚠ '+err.message;showScreen('login');}});
 window.loginGoogle=async function(){const errEl=document.getElementById('login-error');errEl.textContent='';try{await signInWithPopup(auth,new GoogleAuthProvider());}catch(e){if(e.code!=='auth/popup-closed-by-user')errEl.textContent='⚠ Erreur Google : '+e.message;}};
 window.adminLogout=async function(){currentAdmin=null;window._adminRole=null;await signOut(auth);};
 async function writeLog(action,targetId,targetName){if(!currentAdmin)return;try{const d={action,targetId,targetName,byEmail:currentAdmin.email,byUid:currentAdmin.uid,byName:currentAdmin.name,role:currentAdmin.role,at:serverTimestamp()};await addDoc(collection(db,'logs'),d);}catch(e){window._dbg?.warn('[log]',e.message);}}
 function loadLogs(){if(_unsubs.logs)_unsubs.logs();const q=query(collection(db,'logs'),orderBy('at','desc'));_unsubs.logs=onSnapshot(q,snap=>{const logs=[];snap.forEach(d=>logs.push({id:d.id,...d.data()}));document.getElementById('cnt-logs').textContent=logs.length;renderLogs(logs);},err=>window._dbg?.warn('[logs]',err.message));}
 function loadAllFiches(){if(_unsubs.fiches)_unsubs.fiches();const q=query(collection(db,'fiches'),orderBy('createdAt','desc'));_unsubs.fiches=onSnapshot(q,snap=>{const fiches=[];snap.forEach(d=>fiches.push({id:d.id,...d.data()}));document.getElementById('cnt-total').textContent=fiches.length;renderTable('table-fiches',fiches);},err=>window._dbg?.warn('[fiches]',err.message));}
-window.deleteFiche=function(id,name){showConfirm('Supprimer définitivement cette fiche ?',async function(){await deleteDoc(doc(db,'fiches',id));await writeLog('delete',id,name);showToast('Fiche supprimée.','error');});};
+window.deleteFiche=async function(id,name){if(!confirm('Supprimer définitivement cette fiche ?'))return;await deleteDoc(doc(db,'fiches',id));await writeLog('delete',id,name);showToast('Fiche supprimée.','error');};
 function loadPNJ(){if(_unsubs.pnj)_unsubs.pnj();const q=query(collection(db,'pnj'),orderBy('createdAt','desc'));_unsubs.pnj=onSnapshot(q,snap=>{const pnjs=[];snap.forEach(d=>pnjs.push({id:d.id,...d.data()}));document.getElementById('cnt-pnj').textContent=pnjs.length;const bp=document.getElementById('badge-pnj');bp.textContent=pnjs.length||'';bp.style.display=pnjs.length?'inline':'none';renderPNJTable(pnjs);},err=>window._dbg?.warn('[pnj]',err.message));}
-window.deletePNJ=function(id,name){showConfirm('Supprimer définitivement ce PNJ ?',async function(){await deleteDoc(doc(db,'pnj',id));await writeLog('delete_pnj',id,name);showToast('PNJ supprimé.','error');});};
+window.deletePNJ=async function(id,name){if(!confirm('Supprimer définitivement ce PNJ ?'))return;await deleteDoc(doc(db,'pnj',id));await writeLog('delete_pnj',id,name);showToast('PNJ supprimé.','error');};
 function loadBestiaire(){if(_unsubs.best)_unsubs.best();const q=query(collection(db,'bestiaire'),orderBy('createdAt','desc'));_unsubs.best=onSnapshot(q,snap=>{const arr=[];snap.forEach(d=>arr.push({id:d.id,...d.data()}));const ce=document.getElementById('cnt-best');if(ce)ce.textContent=arr.length;renderBestTable(arr);},err=>window._dbg?.warn('[best]',err.message));}
-window.deleteBestiaire=function(id,name){showConfirm('Supprimer "'+(name||'cette bête')+'" ?',async function(){await deleteDoc(doc(db,'bestiaire',id));await writeLog('delete_best',id,name);showToast('Bête supprimée.','error');});};
+
+/* ═══ CASINO CONTROL ═══ */
+const _ts=serverTimestamp;const _limit=limit;
+function loadCasino(){
+  if(_unsubs.casinoCfg)_unsubs.casinoCfg();
+  _unsubs.casinoCfg=onSnapshot(doc(db,'casino_config','main'),snap=>{
+    const d=snap.exists()?snap.data():{is_open:true};
+    const open=d.is_open!==false;
+    const ind=document.getElementById('casino-state-indicator');
+    const lbl=document.getElementById('casino-state-label');
+    const btn=document.getElementById('btn-casino-toggle');
+    const bad=document.getElementById('badge-casino');
+    if(ind){ind.style.background=open?'#44ff88':'#FF4757';ind.style.boxShadow='0 0 10px '+(open?'#44ff88':'#FF4757');}
+    if(lbl)lbl.textContent=open?'CASINO OUVERT':'CASINO FERMÉ';
+    if(btn){btn.textContent=open?'FERMER LE CASINO':'OUVRIR LE CASINO';btn.style.background=open?'linear-gradient(180deg,#ff6b78,#FF4757)':'linear-gradient(180deg,#5cf199,#44ff88)';btn.style.color=open?'#fff':'#0a2014';}
+    if(bad){bad.textContent=open?'ON':'OFF';bad.style.background=open?'#44ff88':'#FF4757';bad.style.color=open?'#0a2014':'#fff';}
+  },err=>window._dbg?.warn('[casino-cfg]',err.message));
+  // Recent bets
+  if(_unsubs.casinoLogs)_unsubs.casinoLogs();
+  const q=query(collection(db,'casino_logs'),orderBy('at','desc'),_limit(20));
+  _unsubs.casinoLogs=onSnapshot(q,snap=>{
+    const arr=[];snap.forEach(d=>arr.push({id:d.id,...d.data()}));
+    renderCasinoLogs(arr);
+  },err=>window._dbg?.warn('[casino-logs]',err.message));
+}
+function renderCasinoLogs(rows){
+  const el=document.getElementById('casino-logs-list');if(!el)return;
+  if(!rows.length){el.innerHTML='<div class="empty-list"><span class="empty-list-icon">◈</span>Aucun pari enregistré.</div>';return;}
+  el.innerHTML=rows.map(r=>{
+    const d=r.at&&r.at.toDate?r.at.toDate():null;
+    const when=d?d.toLocaleString('fr-FR',{hour12:false}):'—';
+    const game=(r.game||'?').toUpperCase();
+    const mode=r.mode==='prime'?'✦PRIME':'◈NORMAL';
+    const cur=r.currency==='navarites'?'✦':({bronze_kanite:'🥉',silver_kanite:'🥈',gold_kanite:'🥇',platinum_kanite:'💎'})[r.currency]||'';
+    const profit=r.profit||0;
+    const profCls=profit>0?'#44ff88':(profit<0?'#FF4757':'#e8b04a');
+    const profTxt=(profit>0?'+':'')+profit+' '+cur;
+    return '<div class="fiche-row" style="display:grid;grid-template-columns:80px 90px 1fr 80px 150px 140px;gap:10px;align-items:center;padding:10px 14px;border-bottom:1px solid rgba(77,163,255,.08)">'+
+      '<span style="font-family:Orbitron;font-weight:700;color:#e8b04a;font-size:.7rem;letter-spacing:.15em">'+escHtml(game)+'</span>'+
+      '<span style="font-family:Share Tech Mono,monospace;font-size:.6rem;color:'+(r.mode==='prime'?'#d946ef':'#4DA3FF')+'">'+mode+'</span>'+
+      '<span>'+escHtml(r.username||'Joueur')+'</span>'+
+      '<span style="font-family:Share Tech Mono,monospace;font-size:.65rem">'+(r.amount||0)+' '+cur+'</span>'+
+      '<span style="font-family:Share Tech Mono,monospace;font-size:.7rem;color:'+profCls+';font-weight:700">'+profTxt+'</span>'+
+      '<span style="font-family:Share Tech Mono,monospace;font-size:.55rem;color:var(--muted)">'+when+'</span>'+
+      '</div>';
+  }).join('');
+}
+window.toggleCasino=async function(){
+  if(!currentAdmin||currentAdmin.role!=='admin'){showToast('Admin requis','error');return;}
+  try{
+    const snap=await getDoc(doc(db,'casino_config','main'));
+    const cur=snap.exists()?snap.data():{is_open:true};
+    const next=!(cur.is_open!==false);
+    await setDoc(doc(db,'casino_config','main'),{is_open:next,updated_by:currentAdmin.email,updated_at:_ts()},{merge:true});
+    await writeLog(next?'casino_open':'casino_close','main','Casino');
+    showToast(next?'Casino ouvert ✓':'Casino fermé ✖',next?'success':'error');
+  }catch(e){showToast('Erreur : '+e.message,'error');}
+};
+window.deleteBestiaire=async function(id,name){if(!confirm('Supprimer "'+(name||'cette bête')+'" ?'))return;await deleteDoc(doc(db,'bestiaire',id));await writeLog('delete_best',id,name);showToast('Bête supprimée.','error');};
 window.submitBestiaireAdmin=async function(){
   const v=id=>document.getElementById(id).value.trim();
   const name=v('ab-name');if(!name){showToast('Nom requis','error');return;}
@@ -91,7 +149,7 @@ window._renderLoreList=function(cat){
     row.innerHTML='<div class="lore-item-ico" style="border-color:'+co+'22">'+ico+'</div><span class="lore-item-color" style="background:'+co+'"></span><div class="lore-item-info"><div class="lore-item-name">'+n+'</div><div class="lore-item-sub">'+s+'</div></div><div class="lore-item-actions"></div>';
     if(role==='admin'){
       const btn=document.createElement('button');btn.className='action-btn delete';btn.textContent='\u2715 Suppr.';
-      btn.addEventListener('click',()=>{showConfirm('Supprimer ?',()=>{deleteDoc(doc(db,'lore',item.id)).then(()=>{writeLog('del_lore',item.id,item.name||item.title||item.term||'?');showToast('Supprim\u00E9.','error');}).catch(e=>showToast('Erreur: '+e.message,'error'));});});
+      btn.addEventListener('click',()=>{if(!confirm('Supprimer ?'))return;deleteDoc(doc(db,'lore',item.id)).then(()=>{writeLog('del_lore',item.id,item.name||item.title||item.term||'?');showToast('Supprim\u00E9.','error');}).catch(e=>showToast('Erreur: '+e.message,'error'));});
       row.querySelector('.lore-item-actions').appendChild(btn);
     }
     el.appendChild(row);
@@ -128,12 +186,13 @@ function renderAdminHeader(){if(!currentAdmin)return;document.getElementById('ad
 :root{
   --accent:var(--gold);--accent-rgb:255,214,10;
   --accent-border:rgba(255,214,10,0.22);--accent-bg:rgba(255,214,10,0.04);
+  --dark:var(--bg);--dark2:var(--bg2);--dark3:var(--surface);
   --panel:rgba(77,163,255,0.035);--border:rgba(255,255,255,0.06);
   --orange:#f97316;
 }
 .noise{position:fixed;inset:0;z-index:9997;pointer-events:none;opacity:.035;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-size:200px;}
 /* Screens */
-#login-screen,#loading-screen{position:fixed;inset:0;background:var(--bg);z-index:500;display:flex;align-items:center;justify-content:center;}
+#login-screen,#loading-screen{position:fixed;inset:0;background:var(--dark);z-index:500;display:flex;align-items:center;justify-content:center;}
 #loading-screen{flex-direction:column;gap:20px;}#panel-screen{display:none;min-height:100vh;}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 .loading-text{font-family:'Rajdhani',sans-serif;font-size:.7rem;color:var(--muted);letter-spacing:.2em;animation:pulse 1.4s ease-in-out infinite;}
@@ -143,10 +202,10 @@ function renderAdminHeader(){if(!currentAdmin)return;document.getElementById('ad
 .login-accent{height:3px;background:linear-gradient(90deg,var(--gold),var(--magenta));margin-bottom:30px;}
 .login-title{font-family:'Orbitron',sans-serif;font-weight:800;font-size:1.05rem;letter-spacing:.25em;color:var(--gold);margin-bottom:4px;}
 .login-sub{font-family:'Rajdhani',sans-serif;font-size:.6rem;color:var(--muted);letter-spacing:.14em;margin-bottom:26px;}
-.btn-google{width:100%;display:flex;align-items:center;justify-content:center;gap:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.15);color:#e8eaed;font-family:'Rajdhani',sans-serif;font-size:.95rem;font-weight:600;padding:12px;cursor:pointer;transition:background .2s,border-color .2s;letter-spacing:.08em;border-radius:10px;margin-bottom:20px;}.btn-google:hover{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.15);}
+.btn-google{width:100%;display:flex;align-items:center;justify-content:center;gap:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.15);color:#e8eaed;font-family:'Rajdhani',sans-serif;font-size:.95rem;font-weight:600;padding:12px;cursor:pointer;transition:all .2s;letter-spacing:.08em;border-radius:10px;margin-bottom:20px;}.btn-google:hover{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.15);}
 .login-sep{display:flex;align-items:center;gap:12px;margin-bottom:18px;font-family:'Rajdhani',sans-serif;font-size:.58rem;color:var(--muted);letter-spacing:.15em;}.login-sep::before,.login-sep::after{content:'';flex:1;height:1px;background:var(--border);}
 .login-input{width:100%;background:rgba(255,255,255,0.02);border:1px solid var(--border);color:var(--text);font-family:'Rajdhani',sans-serif;font-size:.9rem;padding:12px 14px;outline:none;margin-bottom:12px;transition:border-color .2s;box-sizing:border-box;border-radius:8px;}.login-input:focus{border-color:var(--gold);box-shadow:0 0 12px rgba(255,214,10,.06);}
-.login-btn{width:100%;font-family:'Orbitron',sans-serif;font-size:.68rem;font-weight:700;letter-spacing:.2em;color:var(--bg);background:linear-gradient(135deg,var(--gold),#ffed4a);border:none;padding:13px;cursor:pointer;margin-top:4px;transition:box-shadow .3s,transform .3s;border-radius:10px;}.login-btn:hover{box-shadow:0 0 24px rgba(255,214,10,0.25);transform:translateY(-1px);}
+.login-btn{width:100%;font-family:'Orbitron',sans-serif;font-size:.68rem;font-weight:700;letter-spacing:.2em;color:var(--dark);background:linear-gradient(135deg,var(--gold),#ffed4a);border:none;padding:13px;cursor:pointer;margin-top:4px;transition:all .3s;border-radius:10px;}.login-btn:hover{box-shadow:0 0 24px rgba(255,214,10,0.25);transform:translateY(-1px);}
 .login-error{font-family:'Rajdhani',sans-serif;font-size:.62rem;color:var(--red);letter-spacing:.1em;margin-top:10px;min-height:18px;line-height:1.5;}
 .login-hint{font-family:'Rajdhani',sans-serif;font-size:.56rem;color:var(--muted);margin-top:18px;line-height:1.8;opacity:.65;border-top:1px solid var(--border);padding-top:14px;}
 /* Header */
@@ -157,8 +216,8 @@ function renderAdminHeader(){if(!currentAdmin)return;document.getElementById('ad
 .role-admin{color:var(--gold);border-color:rgba(255,214,10,.5);background:rgba(255,214,10,.08);}
 .role-modo{color:var(--cyan);border-color:rgba(0,240,255,.4);background:rgba(0,240,255,.06);}
 .admin-user{font-family:'Rajdhani',sans-serif;font-size:.62rem;color:var(--muted);letter-spacing:.1em;}.admin-user strong{color:var(--text);}
-.logout-btn{font-family:'Rajdhani',sans-serif;font-size:.6rem;letter-spacing:.14em;color:var(--muted);background:transparent;border:1px solid var(--border);padding:6px 14px;cursor:pointer;transition:color .2s,border-color .2s;border-radius:6px;}.logout-btn:hover{color:var(--red);border-color:rgba(255,71,87,0.3);}
-.back-link{font-family:'Rajdhani',sans-serif;font-size:.6rem;letter-spacing:.14em;color:var(--cyan);text-decoration:none;border:1px solid rgba(77,163,255,0.15);padding:6px 14px;border-radius:6px;transition:border-color .2s,background .2s;}.back-link:hover{background:rgba(77,163,255,0.04);}
+.logout-btn{font-family:'Rajdhani',sans-serif;font-size:.6rem;letter-spacing:.14em;color:var(--muted);background:transparent;border:1px solid var(--border);padding:6px 14px;cursor:pointer;transition:all .2s;border-radius:6px;}.logout-btn:hover{color:var(--red);border-color:rgba(255,71,87,0.3);}
+.back-link{font-family:'Rajdhani',sans-serif;font-size:.6rem;letter-spacing:.14em;color:var(--cyan);text-decoration:none;border:1px solid rgba(77,163,255,0.15);padding:6px 14px;border-radius:6px;transition:all .2s;}.back-link:hover{background:rgba(77,163,255,0.04);}
 /* Stats */
 .admin-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:14px;padding:28px 36px 0;}
 .stat-card{background:rgba(8,12,30,0.6);backdrop-filter:blur(12px);border:1px solid var(--border);border-radius:12px;padding:22px 20px;position:relative;overflow:hidden;transition:border-color .3s;}.stat-card:hover{border-color:rgba(255,255,255,0.08);}
@@ -176,7 +235,7 @@ function renderAdminHeader(){if(!currentAdmin)return;document.getElementById('ad
 .tab-count{font-family:'Rajdhani',sans-serif;font-size:.6rem;color:var(--muted);letter-spacing:.15em;}
 /* Fiche rows */
 .fiche-list{display:flex;flex-direction:column;gap:14px;}
-.fiche-row{background:rgba(8,12,30,0.5);backdrop-filter:blur(8px);border:1px solid var(--border);border-radius:10px;display:grid;grid-template-columns:86px 1fr auto;gap:0;overflow:hidden;transition:border-color .3s,transform .3s;margin-bottom:8px;}.fiche-row:hover{border-color:rgba(255,214,10,.12);transform:translateX(3px);}
+.fiche-row{background:rgba(8,12,30,0.5);backdrop-filter:blur(8px);border:1px solid var(--border);border-radius:10px;display:grid;grid-template-columns:86px 1fr auto;gap:0;overflow:hidden;transition:all .3s;margin-bottom:8px;}.fiche-row:hover{border-color:rgba(255,214,10,.12);transform:translateX(3px);}
 .fiche-thumb{width:86px;height:86px;overflow:hidden;flex-shrink:0;}.fiche-thumb img{width:100%;height:100%;object-fit:cover;object-position:top;}
 .fiche-thumb-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;font-size:1.5rem;font-weight:900;}
 .fiche-info{padding:14px 18px;min-width:0;}
@@ -188,7 +247,7 @@ function renderAdminHeader(){if(!currentAdmin)return;document.getElementById('ad
 .fiche-date{font-family:'Rajdhani',sans-serif;font-size:.54rem;color:var(--muted);margin-top:3px;}
 .fiche-actions{padding:14px 16px;display:flex;flex-direction:column;gap:8px;justify-content:center;align-items:flex-end;flex-shrink:0;min-width:220px;}
 .fiche-actions-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;}
-.action-btn{font-family:'Rajdhani',sans-serif;font-size:.57rem;letter-spacing:.1em;text-transform:uppercase;border:1px solid;padding:7px 14px;cursor:pointer;background:transparent;transition:border-color .2s,background .2s,color .2s;white-space:nowrap;border-radius:6px;}
+.action-btn{font-family:'Rajdhani',sans-serif;font-size:.57rem;letter-spacing:.1em;text-transform:uppercase;border:1px solid;padding:7px 14px;cursor:pointer;background:transparent;transition:all .2s;white-space:nowrap;border-radius:6px;}
 .action-btn.approve{color:var(--green);border-color:rgba(0,255,136,.35);}.action-btn.approve:hover:not(:disabled){background:rgba(0,255,136,.08);}
 .action-btn.delete{color:var(--muted);border-color:rgba(90,122,144,.3);}.action-btn.delete:hover:not(:disabled){color:var(--red);border-color:rgba(255,48,48,.3);}
 .action-btn.view{color:var(--cyan);border-color:rgba(0,240,255,.3);text-decoration:none;display:inline-flex;align-items:center;}.action-btn.view:hover{background:rgba(0,240,255,.05);}
@@ -203,7 +262,7 @@ function renderAdminHeader(){if(!currentAdmin)return;document.getElementById('ad
 .log-date{color:var(--muted);text-align:right;}
 .empty-list{text-align:center;padding:56px 24px;font-family:'Rajdhani',sans-serif;color:var(--muted);letter-spacing:.16em;font-size:.72rem;line-height:2.2;}.empty-list-icon{font-size:2rem;display:block;margin-bottom:12px;opacity:.15;}
 .lore-subtabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:24px;}
-.lore-subtab{font-family:'Rajdhani',sans-serif;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);background:rgba(255,255,255,.02);border:1px solid var(--border);padding:8px 16px;cursor:pointer;transition:border-color .2s,color .2s,background .2s;border-radius:8px;}.lore-subtab:hover{border-color:rgba(139,92,246,.3);color:var(--text);}.lore-subtab.active{color:var(--violet);border-color:rgba(139,92,246,.5);background:rgba(139,92,246,.06);}
+.lore-subtab{font-family:'Rajdhani',sans-serif;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);background:rgba(255,255,255,.02);border:1px solid var(--border);padding:8px 16px;cursor:pointer;transition:all .2s;border-radius:8px;}.lore-subtab:hover{border-color:rgba(139,92,246,.3);color:var(--text);}.lore-subtab.active{color:var(--violet);border-color:rgba(139,92,246,.5);background:rgba(139,92,246,.06);}
 .lore-panel{display:none;}.lore-panel.active{display:block;}
 .lore-form-title{font-family:'Orbitron',sans-serif;font-size:.68rem;font-weight:700;letter-spacing:.18em;color:var(--violet);margin-bottom:18px;text-transform:uppercase;}
 .lore-form{background:rgba(8,12,30,0.5);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:28px;display:flex;flex-wrap:wrap;gap:14px;}
@@ -222,7 +281,7 @@ function renderAdminHeader(){if(!currentAdmin)return;document.getElementById('ad
 .lore-item-actions{display:flex;gap:8px;flex-shrink:0;}
 @media(max-width:650px){.lf-row.lf-half{width:100%;}}
 /* x-cloak supprimé — plus nécessaire sans Alpine */
-.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--bg2);border:1px solid var(--border);font-family:'Rajdhani',sans-serif;font-size:.7rem;letter-spacing:.14em;color:var(--text);padding:14px 28px;z-index:9000;transition:transform .3s,opacity .3s;opacity:0;border-radius:10px;}.toast.show{transform:translateX(-50%) translateY(0);opacity:1;}.toast.success{border-color:rgba(68,255,136,.4);color:var(--green);}.toast.error{border-color:rgba(255,71,87,.4);color:var(--red);}
+.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--dark2);border:1px solid var(--border);font-family:'Rajdhani',sans-serif;font-size:.7rem;letter-spacing:.14em;color:var(--text);padding:14px 28px;z-index:9000;transition:transform .3s,opacity .3s;opacity:0;border-radius:10px;}.toast.show{transform:translateX(-50%) translateY(0);opacity:1;}.toast.success{border-color:rgba(68,255,136,.4);color:var(--green);}.toast.error{border-color:rgba(255,71,87,.4);color:var(--red);}
 @media(max-width:900px){.fiche-row{grid-template-columns:70px 1fr;}.fiche-actions{grid-column:1/-1;flex-direction:row;flex-wrap:wrap;padding:10px 14px;min-width:unset;}.admin-stats{grid-template-columns:repeat(3,1fr);}.log-row{grid-template-columns:100px 70px 1fr 120px;}.log-date{display:none;}}
 @media(max-width:650px){.admin-header{padding:0 16px;}.admin-tabs{overflow-x:auto;}.tab-content{padding:20px 16px;}.admin-stats{padding:20px 16px 0;grid-template-columns:repeat(2,1fr);}.admin-meta{gap:8px;}.admin-user{display:none;}.log-row{grid-template-columns:90px 1fr 100px;}.log-role,.log-by{display:none;}}
 
@@ -298,6 +357,7 @@ function renderAdminHeader(){if(!currentAdmin)return;document.getElementById('ad
     <button class="admin-tab" data-tab="pnj" onclick="switchAdminTab('pnj')">PNJ <span class="tab-badge" id="badge-pnj" style="background:#b06eff"></span></button>
     <button class="admin-tab" data-tab="lore" onclick="switchAdminTab('lore')">Lore</button>
     <button class="admin-tab" data-tab="bestiaire" onclick="switchAdminTab('bestiaire')">Bestiaire <span class="tab-badge" id="cnt-best" style="background:#00e5ff;color:#04060f;display:inline">0</span></button>
+    <button class="admin-tab" data-tab="casino" onclick="switchAdminTab('casino')">Casino <span class="tab-badge" id="badge-casino" style="background:#e8b04a;color:#1a1208;display:inline">—</span></button>
     <button class="admin-tab" data-tab="logs" id="tab-btn-logs" style="display:none" onclick="switchAdminTab('logs')">Logs</button>
   </div>
 
@@ -347,6 +407,31 @@ function renderAdminHeader(){if(!currentAdmin)return;document.getElementById('ad
       <button class="lore-submit" onclick="submitBestiaireAdmin()">+ Ajouter</button>
     </div>
     <div class="fiche-list" id="table-bestiaire" style="margin-top:24px"><div class="empty-list"><span class="empty-list-icon">⟳</span>Chargement...</div></div>
+  </div>
+
+  <div class="tab-content" id="tab-casino" data-tab="casino">
+    <div class="tab-header"><div class="tab-title">◈ Casino — Contrôle global</div><a href="casino.html" target="_blank" class="action-btn view">↗ Page Casino</a></div>
+    <div class="lore-form" style="max-width:680px">
+      <div class="lf-row">
+        <label>État du casino</label>
+        <div id="casino-state-row" style="display:flex;gap:12px;align-items:center;padding:14px;background:rgba(0,0,0,.2);border:1px solid rgba(232,176,74,.2);border-radius:3px">
+          <span id="casino-state-indicator" style="width:14px;height:14px;border-radius:50%;background:#44ff88;box-shadow:0 0 10px #44ff88"></span>
+          <span id="casino-state-label" style="font-family:'Orbitron',sans-serif;font-weight:700;letter-spacing:.2em;font-size:.85rem">CHARGEMENT…</span>
+          <div style="flex:1"></div>
+          <button id="btn-casino-toggle" class="lore-submit" style="background:linear-gradient(180deg,#ff6b78,#FF4757);color:#fff;padding:10px 22px;min-width:150px" onclick="toggleCasino()">FERMER LE CASINO</button>
+        </div>
+      </div>
+      <div class="lf-row">
+        <label style="color:var(--muted);font-size:.7rem">
+          Fermer le casino empêche toute nouvelle mise et affiche un écran "Casino fermé" aux joueurs. Les sessions en cours se terminent normalement.
+        </label>
+      </div>
+    </div>
+
+    <div class="lore-form-title" style="margin-top:24px">Derniers paris (20 plus récents)</div>
+    <div class="fiche-list" id="casino-logs-list">
+      <div class="empty-list"><span class="empty-list-icon">⟳</span>Chargement...</div>
+    </div>
   </div>
 
   <div class="tab-content" id="tab-logs" data-tab="logs">
