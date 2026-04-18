@@ -149,7 +149,7 @@ async function loadCasino() {
   // Render header
   document.getElementById('cu-avatar').src = CASINO.avatar || 'img/logo-jaharta.png';
   document.getElementById('cu-name').textContent = CASINO.username;
-  const charName = CASINO.charData ? ((CASINO.charData.firstname || '') + ' ' + (CASINO.charData.lastname || '')).trim() : '—';
+  const charName = CASINO.charData ? ((CASINO.charData.first_name || CASINO.charData.firstname || '') + ' ' + (CASINO.charData.last_name || CASINO.charData.lastname || '')).trim() : '—';
   document.getElementById('cu-char').textContent = charName || '// PAS DE PERSO ACTIF';
 
   // Enter casino UI (respect open/closed)
