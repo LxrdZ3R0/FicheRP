@@ -69,7 +69,7 @@ function renderMonShop(){
         <div><div style="font-family:var(--font-h);font-weight:800;font-size:1.4rem;color:var(--blue)">${entries.length}</div><div style="font-family:var(--font-m);font-size:.42rem;letter-spacing:.1em;color:var(--text3)">ARTICLES EN VENTE</div></div>
         <div><div style="font-family:var(--font-h);font-weight:800;font-size:1.4rem;color:var(--gold)">${(s.sales_log||[]).length}</div><div style="font-family:var(--font-m);font-size:.42rem;letter-spacing:.1em;color:var(--text3)">VENTES RÉCENTES</div></div>
       </div>
-      <button onclick="toggleShopOpen()" style="padding:8px 20px;border-radius:8px;border:1px solid ${toggleColor};background:transparent;color:${toggleColor};font-family:var(--font-b);font-size:.72rem;font-weight:600;cursor:pointer;transition:all .2s">${toggleLabel}</button>
+      <button onclick="toggleShopOpen()" style="padding:8px 20px;border-radius:8px;border:1px solid ${toggleColor};background:transparent;color:${toggleColor};font-family:var(--font-b);font-size:.72rem;font-weight:600;cursor:pointer;transition:border-color .2s,color .2s,background .2s">${toggleLabel}</button>
     </div></div>
 
     ${entries.length ? `
@@ -93,7 +93,7 @@ function renderMonShop(){
               </div>
             </div>
             <div class="shop-item-price">${formatShopPrice(si.price||{})}</div>
-            <button onclick="removeFromShop('${item_id}')" style="margin-top:8px;width:100%;padding:6px;border-radius:6px;border:1px solid var(--red);background:rgba(255,71,87,0.08);color:var(--red);font-family:var(--font-b);font-size:.65rem;font-weight:600;cursor:pointer;transition:all .2s">✕ Retirer de la vente</button>
+            <button onclick="removeFromShop('${item_id}')" style="margin-top:8px;width:100%;padding:6px;border-radius:6px;border:1px solid var(--red);background:rgba(255,71,87,0.08);color:var(--red);font-family:var(--font-b);font-size:.65rem;font-weight:600;cursor:pointer;transition:background .2s,border-color .2s">✕ Retirer de la vente</button>
           </div>`;
         }).join('')}
       </div>
@@ -126,7 +126,7 @@ function renderMonShop(){
                 <option value="platinum_kanite">Plat.</option>
               </select>
             </div>
-            <button onclick="addToShop('${item_id}',${qty})" style="margin-top:6px;width:100%;padding:6px;border-radius:6px;border:1px solid var(--green);background:rgba(52,211,153,0.08);color:var(--green);font-family:var(--font-b);font-size:.65rem;font-weight:600;cursor:pointer;transition:all .2s">🏷️ Mettre en vente</button>
+            <button onclick="addToShop('${item_id}',${qty})" style="margin-top:6px;width:100%;padding:6px;border-radius:6px;border:1px solid var(--green);background:rgba(52,211,153,0.08);color:var(--green);font-family:var(--font-b);font-size:.65rem;font-weight:600;cursor:pointer;transition:background .2s,border-color .2s">🏷️ Mettre en vente</button>
           </div>`;
         }).join('')}
       </div>` : '<div class="empty">Aucun item disponible à la vente — équipe tes items ou obtiens-en via le gacha</div>'}
@@ -581,7 +581,7 @@ function _injectIRPFilterButton(){
   const btn=document.createElement('button');
   btn.className='ushop-cat ushop-irp-filter';
   btn.id='ucatbtn-irp';
-  btn.style.cssText='border:1px solid rgba(220,20,60,0.3);color:#dc143c;background:rgba(220,20,60,0.06);font-family:var(--font-h);font-size:0.5rem;letter-spacing:0.1em;padding:6px 14px;border-radius:6px;cursor:pointer;transition:all 0.2s;margin-left:6px;font-weight:700;';
+  btn.style.cssText='border:1px solid rgba(220,20,60,0.3);color:#dc143c;background:rgba(220,20,60,0.06);font-family:var(--font-h);font-size:0.5rem;letter-spacing:0.1em;padding:6px 14px;border-radius:6px;cursor:pointer;transition:border-color 0.2s,color 0.2s,background 0.2s;margin-left:6px;font-weight:700;';
   btn.textContent='◆ EXCLU IRP';
   btn.onclick=function(){
     _ushopIRPOnly=!_ushopIRPOnly;

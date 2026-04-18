@@ -140,3 +140,83 @@ Deux fichiers strictement identiques (`diff` retourne 0) :
 ---
 
 ⛔ **Fin Phase 3.** Correctifs appliqués sur CLAUDE.md, README.md, MEMORY.md, memory/*. Réponds aux 4 points ci-dessus avant Phase 4 (ROADMAP).
+
+---
+
+## Addendum — Module Casino (ajouté 2026-04-19)
+
+Nouveau domaine `casino` ajouté entre Phase 3 et Phase 4, documenté dans `docs/CLAUDE-CASINO.md` (221 lignes).
+
+### Inventaire Casino
+
+| Fichier | Lignes | Rôle | État |
+|---|---|---|---|
+| `docs/casino.html` | 384 | Page principale · auth gate · hero · panels jeux · toggle mode | OK |
+| `docs/css/casino.css` | 1516 | Thème gold/felt · cartes · roue · pièce · responsive | OK (exception taille — thème dédié) |
+| `docs/js/casino-core.js` | 515 | Init Firebase compat · auth /link · wallet · mode · debit/credit · logs | OK |
+| `docs/js/casino-roulette.js` | 573 | Roulette européenne · betting 30s · spin · payouts | OK |
+| `docs/js/casino-blackjack.js` | 596 | Blackjack 6 sièges · dealer soft 17 · BJ 3:2 · double | OK |
+| `docs/js/casino-poker.js` | 721 | Texas Hold'em 2-6j · évaluation main 7 cartes · fold/call/raise | Proche limite 800 lignes |
+| `docs/js/casino-flip.js` | 122 | Quitte ou Double (PRIME only) · solo · navarites · streak | OK |
+| `docs/CLAUDE-CASINO.md` | 221 | Doc technique dédiée | OK |
+
+### Hygiène du code — conforme
+
+- Aucun `console.*` dans les 5 fichiers JS casino
+- Aucun `transition:all` dans `casino.css`
+- Aucune variable CSS legacy (`--dark`, `--bg-deep`, etc.)
+- Tous les `onSnapshot` stockent leur unsub (`unsubTable`, `CASINO.unsubs.cfg/player/eco`)
+- `innerHTML` avec données utilisateur systématiquement passés par `escape()` (username, avatar src)
+- Transactions atomiques Firebase pour tous les débits/crédits
+- `lastClaimedRound` implémenté dans chaque module → anti double-crédit payouts
+
+### Régressions détectées dans le code existant
+
+| Fichier | Ligne | Violation | Correctif |
+|---|---|---|---|
+| `docs/js/hub-shops.js` | 72 | `transition:all .2s` | Corrigé 2026-04-19 → `border-color .2s,color .2s,background .2s` |
+| `docs/js/hub-shops.js` | 96 | `transition:all .2s` | Corrigé 2026-04-19 → `background .2s,border-color .2s` |
+| `docs/js/hub-shops.js` | 129 | `transition:all .2s` | Corrigé 2026-04-19 → `background .2s,border-color .2s` |
+| `docs/js/hub-shops.js` | 584 | `transition:all 0.2s` | Corrigé 2026-04-19 → `border-color 0.2s,color 0.2s,background 0.2s` |
+
+### Findings sécurité — à traiter
+
+| Fichier | Cible | Risque | Sévérité |
+|---|---|---|---|
+| `firestore.rules` | `casino_tables` | `allow create, update: if true` — tout client peut réécrire n'importe quelle table ; les transactions atomiques protègent contre les races mais pas contre les écritures malicieuses | CRITICAL |
+| `firestore.rules` | `players.update` | `navarites` modifiable sans `request.auth` — un joueur malveillant peut se créditer arbitrairement | CRITICAL |
+| `firestore.rules` | `casino_logs.create` | Pas de vérif que `user_id` correspond à l'authentifié — log spoofing possible | HIGH |
+| `firestore.rules` | `economy.update` | `personal|family|royal` modifiables sans auth — même problème que `navarites` | CRITICAL |
+
+**Recommandation** : durcir via Cloud Functions (`onCall` trigger) ou Admin SDK côté bot Discord pour toutes les écritures casino. L'argument "transactions + client logic" est contournable par un client modifié.
+
+### Violations de convention — mineures
+
+| Fichier | Ligne | Remarque |
+|---|---|---|
+| `docs/casino.html` | 18 | `constants.js` non chargé — OK car casino n'utilise pas `window.RACES/RANKS`, mais rupture de l'ordre canonique (debug → constants → utils → Firebase) documenté dans CLAUDE.md |
+| `docs/casino.html` | 376 | `utils.js` chargé après Firebase compat — ordre particulier justifié par l'architecture compat (non-ESM) du casino |
+| `docs/js/casino-core.js` | plusieurs | `try { fn() } catch {}` silencieux lors des unsub — acceptable pour cleanup, à auditer si appliqué à logique métier |
+
+### Sync documentaire — appliqué 2026-04-19
+
+- `CLAUDE.md` — section Casino ajoutée, structure fichiers mise à jour (+casino.html, casino.css, 5 JS casino-*.js), collections Firestore étendues (casino_config, casino_tables, casino_logs, players, economy)
+- `memory/project_jaharta.md` — frontmatter rafraîchi, section "Module Casino" ajoutée, tailles fichiers mises à jour, régression hub-shops.js journalisée
+- `docs/MD-AUDIT.md` — ce document (addendum)
+- `README.md` — **en attente** : pas encore mis à jour avec la section Casino (la Phase 3 initiale recommandait une réécriture plus large)
+
+### Intégrations modifiées
+
+| Fichier | Changement |
+|---|---|
+| `docs/js/jaharta-nav.js` | +1 entrée nav `casino.html` (num `10`) dans `PAGES_NORMAL` |
+| `docs/admin.html` | +onglet Casino (toggle `is_open`, feed 20 derniers `casino_logs`) — +115 lignes |
+| `docs/js/hub-shops.js` | 4 régressions `transition:all` (non liées casino, collatéral des commits "Add files via upload") |
+| `firestore.rules` | +rules `casino_config`, `casino_tables`, `casino_logs` ; assouplissement `players.navarites` et `economy.personal|family|royal` |
+
+### Actions recommandées Phase 4
+
+1. **Durcissement Firestore rules casino** (CRITICAL) : migrer les écritures sensibles vers Cloud Functions ou Admin SDK (bot)
+2. **Validation log spoofing** (HIGH) : ajouter une règle `request.resource.data.user_id == request.auth.uid` sur `casino_logs.create` (impose `signInWithCustomToken` ou équivalent)
+3. **Surveillance taille** : `casino-poker.js` (721 lignes) proche du plafond 800 — refactor si ajout de features
+4. **README.md** : ajouter section Casino (actuellement absent)

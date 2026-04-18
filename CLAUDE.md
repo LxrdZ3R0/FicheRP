@@ -36,7 +36,10 @@ docs/
 ├── gacha-irp.html        Gacha IRP
 ├── hub.html              Hub joueur NORMAL — 12 onglets (auth requis)
 ├── hub-irp.html          Hub joueur IRP — collections irp_*
+├── casino.html           Casino Nexus — Roulette · Blackjack · Poker · Quitte ou Double (auth /link)
 ├── admin.html            Panel staff (whitelist Firestore)
+│
+├── CLAUDE-CASINO.md      Doc technique dédiée au module Casino
 │
 ├── css/
 │   ├── jaharta.css           Thème global partagé (variables CSS + tokens animation)
@@ -44,6 +47,7 @@ docs/
 │   ├── hub-achievements.css  Styles onglet Achievements
 │   ├── gacha.css             Styles gacha
 │   ├── bestiaire-card.css    Styles cartes bestiaire
+│   ├── casino.css            Styles casino (thème gold/felt, cartes, roue, pièce)
 │   └── irp-theme.css         Overrides thème IRP
 │
 └── js/
@@ -81,7 +85,13 @@ docs/
     ├── hub-inventory.js         Onglet Inventaire (UI Cyberpunk)
     ├── hub-renders.js           Rendu cartes hub
     ├── hub-shops.js             Onglets Shops
-    └── hub-achievements.js      Onglet Achievements
+    ├── hub-achievements.js      Onglet Achievements
+    │
+    ├── casino-core.js           Init Firebase, auth /link, session, wallet, mode, tabs, debit/credit, logs
+    ├── casino-roulette.js       Roulette européenne — table partagée, betting 30s, spin, payouts
+    ├── casino-blackjack.js      Blackjack 6 sièges — dealer hits soft 17, BJ 3:2, double
+    ├── casino-poker.js          Texas Hold'em 2-6 joueurs — évaluation main 7 cartes
+    └── casino-flip.js           Quitte ou Double (PRIME only) — solo, navarites, streak
 ```
 
 ---
@@ -122,6 +132,11 @@ const firebaseConfig = {
 | `admins/{uid}` | Whitelist staff — role: `admin\|modo` |
 | `logs/{id}` | Historique actions admin |
 | `users/{discordId}` | Données joueurs (navarites, gacha, inventaire…) |
+| `players/{uid}` | Profil joueur — `navarites`, `display_theme` (modifiables client) |
+| `economy/{uid_charId}` | Économie Kanites — `personal`, `family`, `royal` (modifiables client) |
+| `casino_config/main` | `is_open: bool` — ouverture/fermeture globale (admin only en écriture) |
+| `casino_tables/{tableId}` | Tables multijoueur (`roulette_main`, `blackjack_main`, `poker_main`) |
+| `casino_logs/{id}` | Historique paris casino — create public whitelisté, read admin |
 
 **Globals window exposés** dans les modules Firebase pour les scripts non-module :
 `window._db`, `window._storage`, `window._isAdmin`, `window._doc`, `window._updateDoc`, `window._deleteDoc`
@@ -189,6 +204,20 @@ window.JImgCache.stats()                // {total, expired}
 - Alpine.js pour la réactivité des onglets (`logsVisible` contrôle l'onglet Logs)
 - **⚠ SUPPRIMÉ** : bypass VIP Discord IDs — `window._isAdmin` est exclusivement contrôlé par Firebase Auth
 - **⚠ SUPPRIMÉ** : onglet Gacha (API bot externe) + onglet Races (redondant)
+
+### Casino Nexus (`casino.html`)
+
+Module multijoueur temps réel — voir **[docs/CLAUDE-CASINO.md](docs/CLAUDE-CASINO.md)** pour la doc technique complète.
+
+- Auth : même système `/link` Discord que gacha/hub (session 7 jours localStorage)
+- Firebase **compat** (non-ESM) — scripts chargés après `firebase-*-compat.js`
+- Deux modes : **NORMAL** (Kanites — `economy.personal`) / **PRIME** (Navarites — `players.navarites`)
+- 4 jeux : Roulette européenne · Blackjack 6 sièges · Texas Hold'em 2-6j · Quitte ou Double (PRIME only)
+- Architecture **host-driven** : élection client dynamique via `host_ping` (TTL 7s, failover auto)
+- Transactions atomiques Firestore pour tous débits/crédits + `lastClaimedRound` anti double-crédit payouts
+- Admin : onglet **Casino** dans `admin.html` → toggle `casino_config.is_open` + feed des 20 derniers paris
+
+**⚠ Sécurité Firestore — point d'attention :** `casino_tables` et `players.navarites` sont écrits sans auth (règles `allow write: if true`), la logique métier repose sur les transactions client et les phase checks. Cela est **contournable** : tout client peut réécrire les tables ou se créditer. Durcissement prévu via Cloud Function ou Admin SDK côté bot.
 
 ### Branche IRP (fork permanent assumé)
 
