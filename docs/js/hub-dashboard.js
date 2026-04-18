@@ -188,7 +188,9 @@ async function loadWallet(){
       const charKey=`${UID}_${CHAR_ID}`;
       const snap=await db.collection(C.ECONOMY).doc(charKey).get();
       if(snap.exists){
-        const personal=snap.data().personal||{};
+        const rawPersonal=snap.data().personal||{};
+        // Compress to highest denomination for display (uses helper from hub-shops.js)
+        const personal=(typeof autoConvertUp==='function')?autoConvertUp(rawPersonal):rawPersonal;
         bronze=personal.bronze_kanite||0;
         silver=personal.silver_kanite||0;
         gold=personal.gold_kanite||0;

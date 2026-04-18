@@ -173,70 +173,70 @@ async function addToShop(itemId, maxQty){
   const currency = curEl.value || 'bronze_kanite';
 
   const charKey = (window._getInventoryKey ? window._getInventoryKey() : `${UID}_${CHAR_ID}`);
+  const invRef=db.collection(C.INV).doc(charKey);
+  const shopRef=db.collection(C.SHOPS).doc(charKey);
+  let nextInvItems=null,nextShopItems=null;
   try{
-    // Retirer de l'inventaire
-    const invItems = {...(INV_DATA.items||{})};
-    const current = invItems[itemId] || 0;
-    if(current < qty){ showToast('❌ Pas assez en stock','error'); return; }
-    invItems[itemId] = current - qty;
-    if(invItems[itemId] <= 0) delete invItems[itemId];
-
-    // Ajouter au shop
-    const shopItems = {...(MY_SHOP_DATA.items||{})};
-    if(shopItems[itemId]){
-      shopItems[itemId] = {...shopItems[itemId], qty: (shopItems[itemId].qty||0) + qty};
-    } else {
-      shopItems[itemId] = { price: { [currency]: price }, qty: qty };
-    }
-
-    // Écrire les deux en parallèle
-    await Promise.all([
-      db.collection(C.INV).doc(charKey).update({items:invItems}),
-      db.collection(C.SHOPS).doc(charKey).set({items:shopItems},{merge:true}),
-    ]);
-
-    INV_DATA.items = invItems;
-    MY_SHOP_DATA.items = shopItems;
+    await db.runTransaction(async(tx)=>{
+      const[invSnap,shopSnap]=await Promise.all([tx.get(invRef),tx.get(shopRef)]);
+      const invItems={...((invSnap.exists?invSnap.data().items:null)||{})};
+      const current=invItems[itemId]||0;
+      if(current<qty) throw new Error('Pas assez en stock');
+      invItems[itemId]=current-qty;
+      if(invItems[itemId]<=0) delete invItems[itemId];
+      const shopItems={...((shopSnap.exists?shopSnap.data().items:null)||{})};
+      if(shopItems[itemId]){
+        shopItems[itemId]={...shopItems[itemId],qty:(shopItems[itemId].qty||0)+qty};
+      }else{
+        shopItems[itemId]={price:{[currency]:price},qty:qty};
+      }
+      tx.set(invRef,{items:invItems},{merge:true});
+      tx.set(shopRef,{items:shopItems},{merge:true});
+      nextInvItems=invItems;nextShopItems=shopItems;
+    });
+    if(nextInvItems) INV_DATA.items=nextInvItems;
+    if(nextShopItems) MY_SHOP_DATA.items=nextShopItems;
     cacheInvalidate('_inventory');cacheInvalidate('_monshop');cacheInvalidate('_shops');
     renderMonShop();
     showToast('✓ Article mis en vente !','success');
   }catch(err){
     window._dbg?.error('[SHOP_ADD]',err);
-    showToast('❌ Erreur lors de la mise en vente','error');
+    const msg=(err&&err.message)?err.message:'Erreur lors de la mise en vente';
+    showToast('❌ '+msg,'error');
   }
 }
 
 async function removeFromShop(itemId){
   if(!UID||!CHAR_ID||!MY_SHOP_DATA) return;
-  const shopItems = {...(MY_SHOP_DATA.items||{})};
-  const si = shopItems[itemId];
-  if(!si) return;
-
-  const qty = si.qty || 0;
   const charKey = (window._getInventoryKey ? window._getInventoryKey() : `${UID}_${CHAR_ID}`);
+  const invRef=db.collection(C.INV).doc(charKey);
+  const shopRef=db.collection(C.SHOPS).doc(charKey);
+  let nextInvItems=null,nextShopItems=null;
   try{
-    // Retirer du shop
-    delete shopItems[itemId];
-
-    // Remettre dans l'inventaire
-    const invItems = {...(INV_DATA.items||{})};
-    if(qty > 0 && qty !== -1){
-      invItems[itemId] = (invItems[itemId]||0) + qty;
-    }
-
-    await Promise.all([
-      db.collection(C.SHOPS).doc(charKey).update({items:shopItems}),
-      db.collection(C.INV).doc(charKey).update({items:invItems}),
-    ]);
-
-    MY_SHOP_DATA.items = shopItems;
-    INV_DATA.items = invItems;
+    await db.runTransaction(async(tx)=>{
+      const[invSnap,shopSnap]=await Promise.all([tx.get(invRef),tx.get(shopRef)]);
+      const shopItems={...((shopSnap.exists?shopSnap.data().items:null)||{})};
+      const si=shopItems[itemId];
+      if(!si) throw new Error('Article introuvable');
+      const qty=si.qty||0;
+      delete shopItems[itemId];
+      const invItems={...((invSnap.exists?invSnap.data().items:null)||{})};
+      if(qty>0&&qty!==-1){
+        invItems[itemId]=(invItems[itemId]||0)+qty;
+      }
+      tx.set(shopRef,{items:shopItems},{merge:true});
+      tx.set(invRef,{items:invItems},{merge:true});
+      nextShopItems=shopItems;nextInvItems=invItems;
+    });
+    if(nextShopItems) MY_SHOP_DATA.items=nextShopItems;
+    if(nextInvItems) INV_DATA.items=nextInvItems;
     cacheInvalidate('_inventory');cacheInvalidate('_monshop');cacheInvalidate('_shops');
     renderMonShop();
     showToast('✓ Article retiré de la vente','success');
   }catch(err){
     window._dbg?.error('[SHOP_REMOVE]',err);
-    showToast('❌ Erreur lors du retrait','error');
+    const msg=(err&&err.message)?err.message:'Erreur lors du retrait';
+    showToast('❌ '+msg,'error');
   }
 }
 
@@ -448,41 +448,65 @@ function renderShopDetail(shop){
 async function buyFromPlayerShop(shopKey,itemId){
   if(!UID||!CHAR_ID){showEquipToast('❌ Connecte-toi',true);return;}
   const shop=ALL_SHOPS_DATA.find(s=>s.key===shopKey);if(!shop)return;
-  const si=shop.items[itemId];
-  if(!si){showEquipToast('❌ Cet article n\'est plus disponible',true);return;}
+  const si0=shop.items&&shop.items[itemId];
+  if(!si0){showEquipToast('❌ Cet article n\'est plus disponible',true);return;}
   const it=ALL_ITEMS_DATA[itemId]||{};
-  const price=si.price||{};const charKey=(window._getInventoryKey ? window._getInventoryKey() : `${UID}_${CHAR_ID}`);
+  const charKey=(window._getInventoryKey ? window._getInventoryKey() : `${UID}_${CHAR_ID}`);
+  if(charKey===shopKey){showEquipToast('❌ Tu ne peux pas acheter dans ton propre shop',true);return;}
+  const buyerEcoRef=db.collection(C.ECONOMY).doc(charKey);
+  const buyerInvRef=db.collection(C.INV).doc(charKey);
+  const sellerEcoRef=db.collection(C.ECONOMY).doc(shopKey);
+  const shopRef=db.collection(C.SHOPS).doc(shopKey);
+  let resultShopItems=null;
   try{
-    const[econSnap,invSnap]=await Promise.all([db.collection(C.ECONOMY).doc(charKey).get(),db.collection(C.INV).doc(charKey).get()]);
-    const personal=Object.assign({},(econSnap.exists?econSnap.data().personal:null)||{});
-    // Auto-conversion check
-    const totalW=totalInBronze(personal);
-    const totalC=priceInBronze(price);
-    if(totalW<totalC){showEquipToast(`❌ Fonds insuffisants`,true);return;}
-    const newW=deductWithAutoConversion(personal,price);
-    if(!newW){showEquipToast('❌ Conversion impossible',true);return;}
-    CURRENCY_ORDER.forEach(c=>{personal[c]=newW[c];});
-    const invItems=Object.assign({},(invSnap.exists?invSnap.data().items:null)||{});
-    invItems[itemId]=(invItems[itemId]||0)+1;
-    const newShopItems=Object.assign({},shop.items);
-    if(si.qty!==-1&&si.qty!==undefined){newShopItems[itemId]={...si,qty:si.qty-1};if(newShopItems[itemId].qty<=0)delete newShopItems[itemId];}
-    else{delete newShopItems[itemId];}
-    const sellerSnap=await db.collection(C.ECONOMY).doc(shopKey).get();
-    const sellerPersonal=Object.assign({},(sellerSnap.exists?sellerSnap.data().personal:null)||{});
-    for(const[cur,amt] of Object.entries(price)){sellerPersonal[cur]=(sellerPersonal[cur]||0)+amt;}
-    const saleEntry={item_id:itemId,item_name:it.name||itemId,price,buyer:charKey,at:new Date().toISOString()};
-    await Promise.all([
-      db.collection(C.ECONOMY).doc(charKey).set({personal},{merge:true}),
-      db.collection(C.INV).doc(charKey).set({items:invItems},{merge:true}),
-      db.collection(C.SHOPS).doc(shopKey).update({items:newShopItems,sales_log:firebase.firestore.FieldValue.arrayUnion(saleEntry)}),
-      db.collection(C.ECONOMY).doc(shopKey).set({personal:sellerPersonal},{merge:true}),
-    ]);
-    shop.items=newShopItems;
-    if(!newShopItems||!Object.keys(newShopItems).length)ALL_SHOPS_DATA=ALL_SHOPS_DATA.filter(s=>s.key!==shopKey);
+    await db.runTransaction(async(tx)=>{
+      const[shopSnap,buyerEcoSnap,buyerInvSnap,sellerEcoSnap]=await Promise.all([
+        tx.get(shopRef),tx.get(buyerEcoRef),tx.get(buyerInvRef),tx.get(sellerEcoRef)
+      ]);
+      if(!shopSnap.exists) throw new Error('Shop introuvable');
+      const shopData=shopSnap.data()||{};
+      const liveItems=Object.assign({},shopData.items||{});
+      const live=liveItems[itemId];
+      if(!live) throw new Error('Article épuisé');
+      const price=live.price||{};
+      const buyerPersonal=Object.assign({},(buyerEcoSnap.exists?(buyerEcoSnap.data().personal||{}):{}));
+      const totalW=totalInBronze(buyerPersonal);
+      const totalC=priceInBronze(price);
+      if(totalW<totalC) throw new Error('Fonds insuffisants');
+      const deducted=deductWithAutoConversion(buyerPersonal,price);
+      if(!deducted) throw new Error('Conversion impossible');
+      const newBuyerPersonal=autoConvertUp(deducted);
+      const buyerItems=Object.assign({},(buyerInvSnap.exists?(buyerInvSnap.data().items||{}):{}));
+      buyerItems[itemId]=(buyerItems[itemId]||0)+1;
+      if(live.qty!==-1&&live.qty!==undefined){
+        const nq=live.qty-1;
+        if(nq<=0) delete liveItems[itemId];
+        else liveItems[itemId]={...live,qty:nq};
+      }else{
+        delete liveItems[itemId];
+      }
+      const sellerPersonalRaw=Object.assign({},(sellerEcoSnap.exists?(sellerEcoSnap.data().personal||{}):{}));
+      for(const[cur,amt] of Object.entries(price)){sellerPersonalRaw[cur]=(sellerPersonalRaw[cur]||0)+(amt||0);}
+      const newSellerPersonal=autoConvertUp(sellerPersonalRaw);
+      const saleEntry={item_id:itemId,item_name:it.name||itemId,price,buyer:charKey,at:new Date().toISOString()};
+      tx.set(buyerEcoRef,{personal:newBuyerPersonal},{merge:true});
+      tx.set(buyerInvRef,{items:buyerItems},{merge:true});
+      tx.update(shopRef,{items:liveItems,sales_log:firebase.firestore.FieldValue.arrayUnion(saleEntry)});
+      tx.set(sellerEcoRef,{personal:newSellerPersonal},{merge:true});
+      resultShopItems=liveItems;
+    });
+    if(resultShopItems){
+      shop.items=resultShopItems;
+      if(!Object.keys(resultShopItems).length)ALL_SHOPS_DATA=ALL_SHOPS_DATA.filter(s=>s.key!==shopKey);
+    }
     cacheInvalidate('_inventory');cacheInvalidate('_economy');cacheInvalidate('_shops');cacheInvalidate('_monshop');
     renderShopsList();selectShop(shopKey);
     showEquipToast(`✓ ${it.name||itemId} acheté !`);
-  }catch(err){window._dbg?.error('[BUY_SHOP]',err);showEquipToast('❌ Erreur achat',true);}
+  }catch(err){
+    window._dbg?.error('[BUY_SHOP]',err);
+    const msg=(err&&err.message)?err.message:'Erreur achat';
+    showEquipToast('❌ '+msg,true);
+  }
 }
 
 function formatShopPrice(price){
@@ -574,8 +598,10 @@ async function renderUshopBalance(){
   const balEl=document.getElementById('ushop-balance');if(!balEl)return;
   try{
     const snap=await db.collection(C.ECONOMY).doc(window._getInventoryKey ? window._getInventoryKey() : `${UID}_${CHAR_ID}`).get();
-    const personal=snap.exists?(snap.data().personal||{}):{};
-    const currencies=['bronze_kanite','silver_kanite','gold_kanite','platinum_kanite'];
+    const rawPersonal=snap.exists?(snap.data().personal||{}):{};
+    const personal=autoConvertUp(rawPersonal);
+    // Show in descending tier order so highest denomination first
+    const currencies=['platinum_kanite','gold_kanite','silver_kanite','bronze_kanite'];
     balEl.innerHTML=currencies.filter(c=>(personal[c]||0)>0)
       .map(c=>`<div class="ushop-bal-chip">${personal[c].toLocaleString()} ${formatCurLabel(c)}</div>`).join('')
       ||'<div style="font-family:var(--font-m);font-size:.5rem;color:var(--text3)">Solde vide</div>';
@@ -714,6 +740,22 @@ function priceInBronze(price){
   return total;
 }
 
+// Compress a wallet UP: 100 bronze → 1 silver, etc. Mutates a copy and returns it.
+function autoConvertUp(personal){
+  const w={};
+  CURRENCY_ORDER.forEach(c=>{w[c]=Math.max(0,Math.floor(personal[c]||0));});
+  for(let i=0;i<CURRENCY_ORDER.length-1;i++){
+    const cur=CURRENCY_ORDER[i];
+    const next=CURRENCY_ORDER[i+1];
+    if(w[cur]>=CURRENCY_RATE){
+      const carry=Math.floor(w[cur]/CURRENCY_RATE);
+      w[cur]-=carry*CURRENCY_RATE;
+      w[next]+=carry;
+    }
+  }
+  return w;
+}
+
 function deductWithAutoConversion(personal,price){
   // Convert everything to bronze, check, then redistribute
   const wallet={};
@@ -774,31 +816,30 @@ async function buyFromUshop(itemId){
   if(rawPrice.amount&&rawPrice.currency){price[rawPrice.currency]=rawPrice.amount;}
   else{Object.entries(rawPrice).forEach(([k,v])=>{if(!['currency','amount','secondary_currency','secondary_amount'].includes(k))price[k]=v;});}
   const charKey=(window._getInventoryKey ? window._getInventoryKey() : `${UID}_${CHAR_ID}`);
+  const ecoRef=db.collection(C.ECONOMY).doc(charKey);
+  const invRef=db.collection(C.INV).doc(charKey);
   try{
-    const[econSnap,invSnap]=await Promise.all([db.collection(C.ECONOMY).doc(charKey).get(),db.collection(C.INV).doc(charKey).get()]);
-    const personal=Object.assign({},(econSnap.exists?econSnap.data().personal:null)||{});
-    
-    // Check total purchasing power with auto-conversion
-    const totalWallet=totalInBronze(personal);
-    const totalCost=priceInBronze(price);
-    if(totalWallet<totalCost){showEquipToast(`❌ Fonds insuffisants (besoin de ${totalCost.toLocaleString()} Bronze eq.)`,true);return;}
-    
-    // Deduct with auto-conversion
-    const newWallet=deductWithAutoConversion(personal,price);
-    if(!newWallet){showEquipToast('❌ Conversion impossible',true);return;}
-    
-    // Apply new wallet
-    CURRENCY_ORDER.forEach(c=>{personal[c]=newWallet[c];});
-    
-    const invItems=Object.assign({},(invSnap.exists?invSnap.data().items:null)||{});
-    invItems[itemId]=(invItems[itemId]||0)+1;
-    await Promise.all([
-      db.collection(C.ECONOMY).doc(charKey).set({personal},{merge:true}),
-      db.collection(C.INV).doc(charKey).set({items:invItems},{merge:true}),
-    ]);
+    await db.runTransaction(async(tx)=>{
+      const[econSnap,invSnap]=await Promise.all([tx.get(ecoRef),tx.get(invRef)]);
+      const personal=Object.assign({},(econSnap.exists?(econSnap.data().personal||{}):{}));
+      const totalWallet=totalInBronze(personal);
+      const totalCost=priceInBronze(price);
+      if(totalWallet<totalCost) throw new Error(`Fonds insuffisants (besoin de ${totalCost.toLocaleString()} Bronze eq.)`);
+      const deducted=deductWithAutoConversion(personal,price);
+      if(!deducted) throw new Error('Conversion impossible');
+      const newPersonal=autoConvertUp(deducted);
+      const invItems=Object.assign({},(invSnap.exists?(invSnap.data().items||{}):{}));
+      invItems[itemId]=(invItems[itemId]||0)+1;
+      tx.set(ecoRef,{personal:newPersonal},{merge:true});
+      tx.set(invRef,{items:invItems},{merge:true});
+    });
     cacheInvalidate('_inventory');cacheInvalidate('_economy');
     renderUshopBalance();showEquipToast(`✓ ${it.name||itemId} acheté !`);
-  }catch(err){window._dbg?.error('[USHOP_BUY]',err);showEquipToast('❌ Erreur achat',true);}
+  }catch(err){
+    window._dbg?.error('[USHOP_BUY]',err);
+    const msg=(err&&err.message)?err.message:'Erreur achat';
+    showEquipToast('❌ '+msg,true);
+  }
 }
 
 

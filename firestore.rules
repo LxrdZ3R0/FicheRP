@@ -238,10 +238,16 @@ service cloud.firestore {
     match /shops/{key} {
       allow read: if true;
       allow create: if isAdmin()
-                    || request.resource.data.keys().hasOnly(['items', 'open', 'name']);
+                    || request.resource.data.keys().hasOnly([
+                         'items', 'open', 'name', 'tagline',
+                         'sales_log', 'owner_user_id', 'message_id', 'channel_id'
+                       ]);
       allow update: if isAdmin()
                     || request.resource.data.diff(resource.data).affectedKeys()
-                       .hasOnly(['items', 'open', 'name']);
+                       .hasOnly([
+                         'items', 'open', 'name', 'tagline',
+                         'sales_log', 'owner_user_id', 'message_id', 'channel_id'
+                       ]);
       allow delete: if isAdmin();
     }
 
