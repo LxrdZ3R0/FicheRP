@@ -581,7 +581,7 @@ function _injectIRPFilterButton(){
   const btn=document.createElement('button');
   btn.className='ushop-cat ushop-irp-filter';
   btn.id='ucatbtn-irp';
-  btn.style.cssText='border:1px solid rgba(220,20,60,0.3);color:#dc143c;background:rgba(220,20,60,0.06);font-family:var(--font-h);font-size:0.5rem;letter-spacing:0.1em;padding:6px 14px;border-radius:6px;cursor:pointer;transition:all 0.2s;margin-left:6px;font-weight:700;';
+  btn.style.cssText='border:1px solid rgba(220,20,60,0.3);color:#dc143c;background:rgba(220,20,60,0.06);font-family:var(--font-h);font-size:0.5rem;letter-spacing:0.1em;padding:6px 14px;border-radius:6px;cursor:pointer;transition:border-color 0.2s,color 0.2s,background 0.2s;margin-left:6px;font-weight:700;';
   btn.textContent='◆ EXCLU IRP';
   btn.onclick=function(){
     _ushopIRPOnly=!_ushopIRPOnly;

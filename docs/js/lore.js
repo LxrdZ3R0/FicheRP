@@ -430,11 +430,12 @@ window.saveLoreCreate=async function(cat){
 };
 
 /* ═══ DELETE LORE ═══ */
-window.deleteLoreItem=async function(cat,id,name){
-  if(!confirm('Supprimer définitivement « '+(name||'?')+' » ?'))return;
-  var ok=await window._loreDeleteDoc(id);
-  if(ok){showLoreToast('Supprimé','error');}
-  else{showLoreToast('Erreur lors de la suppression','error');}
+window.deleteLoreItem=function(cat,id,name){
+  showConfirm('Supprimer définitivement « '+(name||'?')+' » ?',async function(){
+    var ok=await window._loreDeleteDoc(id);
+    if(ok){showLoreToast('Supprimé','error');}
+    else{showLoreToast('Erreur lors de la suppression','error');}
+  });
 };
 
 /* ═══ ADMIN BUTTONS HTML HELPER ═══ */

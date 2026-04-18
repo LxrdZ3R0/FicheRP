@@ -22,6 +22,13 @@
 
    Usage : const nom = sanitize(document.getElementById('f-fn').value);
    ══════════════════════════════════════════════════════════════════════ */
+/* Échappe les caractères HTML pour insertion sécurisée dans innerHTML */
+window.escHtml = function(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+};
+
 window.sanitize = function(str) {
   if (typeof str !== 'string') return '';
   /* Utilise un élément temporaire pour laisser le DOM parser l'HTML
@@ -320,3 +327,59 @@ document.addEventListener('click', function(e) {
     e.target.classList.toggle('revealed');
   }
 });
+
+
+/* ══════════════════════════════════════════════════════════════════════
+   7. CONFIRM MODAL — remplace window.confirm() natif
+   ══════════════════════════════════════════════════════════════════════
+   Usage :
+     showConfirm('Supprimer cette fiche ?', () => { ... });
+   ══════════════════════════════════════════════════════════════════════ */
+window.showConfirm = (function() {
+  var overlay = null;
+
+  function injectCSS() {
+    if (document.getElementById('jh-confirm-style')) return;
+    var s = document.createElement('style');
+    s.id = 'jh-confirm-style';
+    s.textContent = `
+      .jh-confirm-overlay{position:fixed;inset:0;z-index:9999;background:rgba(2,7,19,0.82);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;animation:jh-cin .15s ease}
+      @keyframes jh-cin{from{opacity:0}to{opacity:1}}
+      .jh-confirm-box{background:#0c1228;border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:28px 32px;max-width:360px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.6)}
+      .jh-confirm-msg{font-family:'Rajdhani',sans-serif;font-size:.9rem;color:#e2e6f0;line-height:1.5;margin-bottom:22px}
+      .jh-confirm-btns{display:flex;gap:10px;justify-content:center}
+      .jh-confirm-ok{font-family:'Orbitron',sans-serif;font-size:.55rem;font-weight:700;letter-spacing:.12em;color:#fff;background:rgba(255,71,87,0.18);border:1px solid rgba(255,71,87,0.45);padding:10px 22px;border-radius:8px;cursor:pointer;transition:background .2s,border-color .2s}
+      .jh-confirm-ok:hover{background:rgba(255,71,87,0.3);border-color:rgba(255,71,87,0.8)}
+      .jh-confirm-cancel{font-family:'Orbitron',sans-serif;font-size:.55rem;font-weight:700;letter-spacing:.12em;color:#9aa0b8;background:transparent;border:1px solid rgba(255,255,255,0.1);padding:10px 22px;border-radius:8px;cursor:pointer;transition:border-color .2s,color .2s}
+      .jh-confirm-cancel:hover{border-color:rgba(255,255,255,0.25);color:#e2e6f0}
+    `;
+    document.head.appendChild(s);
+  }
+
+  function close() {
+    if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
+    overlay = null;
+  }
+
+  return function showConfirm(msg, onConfirm) {
+    injectCSS();
+    if (overlay) close();
+    overlay = document.createElement('div');
+    overlay.className = 'jh-confirm-overlay';
+    overlay.innerHTML =
+      '<div class="jh-confirm-box">' +
+        '<div class="jh-confirm-msg">' + msg + '</div>' +
+        '<div class="jh-confirm-btns">' +
+          '<button class="jh-confirm-cancel">Annuler</button>' +
+          '<button class="jh-confirm-ok">Confirmer</button>' +
+        '</div>' +
+      '</div>';
+    overlay.querySelector('.jh-confirm-ok').addEventListener('click', function() {
+      close();
+      onConfirm();
+    });
+    overlay.querySelector('.jh-confirm-cancel').addEventListener('click', close);
+    overlay.addEventListener('click', function(e) { if (e.target === overlay) close(); });
+    document.body.appendChild(overlay);
+  };
+})();

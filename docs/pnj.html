@@ -33,7 +33,7 @@ window._loadFilters=async function loadFilters(){try{
 window.renderFilterBar=function(){const bar=document.getElementById('filter-bar');bar.innerHTML=`<button class="cat-btn${window._activeFilter==='all'?' active':''}" onclick="applyFilter('all',this)">Tous</button>`;window._filters.forEach(f=>{const hex=f.color||'#00f0ff';const btn=document.createElement('button');btn.className='cat-btn'+(window._activeFilter===f.id?' active':'');btn.style.cssText=`color:${hex};border-color:${hex}44;`;btn.innerHTML=`<span class="fdot" style="background:${hex};box-shadow:0 0 5px ${hex}"></span>${f.label}`;btn.onclick=()=>applyFilter(f.id,btn);if(window._isAdmin){const x=document.createElement('span');x.className='filter-del';x.textContent='✕';x.onclick=e=>{e.stopPropagation();deleteFilter(f.id);};btn.appendChild(x);}bar.appendChild(btn);});if(window._isAdmin){const ab=document.createElement('button');ab.className='cat-btn add-filter-btn';ab.innerHTML='+ Filtre';ab.onclick=()=>openFilterModal();bar.appendChild(ab);}};
 window.applyFilter=function(id,btn){window._activeFilter=id;document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');let v=0;document.querySelectorAll('.pnj-card[data-cat]').forEach(c=>{const show=id==='all'||c.dataset.cat===id;c.style.display=show?'':'none';if(show)v++;});document.getElementById('no-results').style.display=v===0?'block':'none';};
 window.saveFilter=async function(){const label=document.getElementById('new-filter-label').value.trim();const color=document.getElementById('new-filter-color').value;if(!label){showToast('Donnez un nom au filtre','error');return;}const btn=document.getElementById('filter-save-btn');btn.disabled=true;btn.textContent='⟳';try{const d={label,color,createdAt:serverTimestamp()};await addDoc(collection(db,'pnj_filters'),d);if(window.JCache)window.JCache.invalidate('pnj_filters',null);showToast('✓ Filtre créé !','success');closeFilterModal();await loadFilters();}catch(e){showToast('Erreur: '+e.message,'error');}btn.disabled=false;btn.textContent='Créer';};
-window.deleteFilter=async function(id){if(!confirm('Supprimer ce filtre ?'))return;try{await deleteDoc(doc(db,'pnj_filters',id));window._filters=window._filters.filter(f=>f.id!==id);if(window._activeFilter===id)window._activeFilter='all';if(window.JCache)window.JCache.invalidate('pnj_filters',null);renderFilterBar();showToast('Filtre supprimé','error');}catch(e){showToast('Erreur: '+e.message,'error');}};
+window.deleteFilter=function(id){showConfirm('Supprimer ce filtre ?',async function(){try{await deleteDoc(doc(db,'pnj_filters',id));window._filters=window._filters.filter(f=>f.id!==id);if(window._activeFilter===id)window._activeFilter='all';if(window.JCache)window.JCache.invalidate('pnj_filters',null);renderFilterBar();showToast('Filtre supprimé','error');}catch(e){showToast('Erreur: '+e.message,'error');}})};
 function animatePnjCount(target){const el=document.getElementById('count-pnj');if(!el)return;let n=0;const iv=setInterval(()=>{n++;el.textContent=n;if(n>=target)clearInterval(iv);},80);}
 function setPnjLive(){var sc=document.getElementById('status-container');if(sc)sc.innerHTML='<span class="hero-stat-num"><span class="live-dot"></span><span class="live-text">LIVE</span></span><span class="hero-stat-lbl">Statut</span>';}
 window._loadPNJ=function loadPNJ(){if(window._pnjLoaded)return;window._pnjLoaded=true;const q=collection(db,'pnj');window._pnjUnsub=onSnapshot(q,snap=>{const container=document.getElementById('pnj-container');container.querySelectorAll('.pnj-card').forEach(c=>c.remove());const empty=document.getElementById('empty-state');if(empty)empty.style.display='none';const docs=[];snap.forEach(d=>docs.push({id:d.id,...d.data()}));docs.sort((a,b)=>{const ta=a.createdAt?.toMillis?.()??( a.syncedAt?new Date(a.syncedAt).getTime():0);const tb=b.createdAt?.toMillis?.()??( b.syncedAt?new Date(b.syncedAt).getTime():0);return tb-ta;});docs.forEach(p=>{const card=buildPNJCard(p);container.appendChild(card);});if(docs.length===0&&empty)empty.style.display='block';if(window._activeFilter!=='all'){document.querySelectorAll('.pnj-card[data-cat]').forEach(c=>{c.style.display=c.dataset.cat===window._activeFilter?'':'none';});}animatePnjCount(docs.length);setPnjLive();setTimeout(revealCards,80);},err=>window._dbg?.warn('PNJ load:',err.message));}
@@ -128,30 +128,30 @@ function _buildPNJCardInner(p) {
     window.JImgCache.set('pnj_' + p.id, p.photo);
   }
   var photoHTML = _pnjImgUrl
-    ? '<img src="'+_pnjImgUrl+'" alt="'+p.prenom+'" loading="lazy">'
-    : '<div class="pnj-photo-ph" style="color:'+c+'">'+(p.prenom||'?')[0]+'</div>';
+    ? '<img src="'+escHtml(_pnjImgUrl)+'" alt="'+escHtml(p.prenom||'')+'" loading="lazy">'
+    : '<div class="pnj-photo-ph" style="color:'+c+'">'+escHtml((p.prenom||'?')[0])+'</div>';
 
   var powersHTML = '';
   if (p.powers && p.powers.length) {
     var pl = '';
     p.powers.forEach(function(pw){
       pl += '<div class="pnj-power-item" style="border-color:'+c+'88;background:'+c+'08">'
-        +'<div class="pnj-power-name" style="color:'+c+'">'+(pw.name||pw)+'</div>'
-        +(pw.desc?'<div class="pnj-power-desc">'+pw.desc+'</div>':'')+'</div>';
+        +'<div class="pnj-power-name" style="color:'+c+'">'+escHtml(pw.name||pw)+'</div>'
+        +(pw.desc?'<div class="pnj-power-desc">'+escHtml(pw.desc)+'</div>':'')+'</div>';
     });
     powersHTML = '<div class="pnj-powers"><div class="pnj-powers-title">POUVOIRS</div>'+pl+'</div>';
   }
 
   var motivHTML = p.motivations && p.motivations.desc
-    ? '<div class="pnj-divider"></div><div class="pnj-mot-title">MOTIVATIONS</div><div class="pnj-mot-desc">'+p.motivations.desc+'</div>'
+    ? '<div class="pnj-divider"></div><div class="pnj-mot-title">MOTIVATIONS</div><div class="pnj-mot-desc">'+escHtml(p.motivations.desc)+'</div>'
     : '';
 
   var tagsHTML = '';
-  if (p.race) tagsHTML += '<span class="pnj-tag" style="color:'+c+';border-color:'+c+'44;background:'+c+'0d">'+p.race+'</span>';
-  if (p.raceSpecific && p.raceSpecific !== 'Unknown' && p.raceSpecific !== p.race) tagsHTML += '<span class="pnj-tag" style="color:'+c+';border-color:'+c+'44;background:'+c+'0d">'+p.raceSpecific+'</span>';
-  if (p.role) tagsHTML += '<span class="pnj-tag">'+p.role+'</span>';
-  if (p.age && p.age !== '?')  tagsHTML += '<span class="pnj-tag">'+p.age+' ans</span>';
-  if (p.trigger) tagsHTML += '<span class="pnj-tag" style="color:#00e5cc;border-color:#00e5cc44;background:#00e5cc0d">'+p.trigger+'</span>';
+  if (p.race) tagsHTML += '<span class="pnj-tag" style="color:'+c+';border-color:'+c+'44;background:'+c+'0d">'+escHtml(p.race)+'</span>';
+  if (p.raceSpecific && p.raceSpecific !== 'Unknown' && p.raceSpecific !== p.race) tagsHTML += '<span class="pnj-tag" style="color:'+c+';border-color:'+c+'44;background:'+c+'0d">'+escHtml(p.raceSpecific)+'</span>';
+  if (p.role) tagsHTML += '<span class="pnj-tag">'+escHtml(p.role)+'</span>';
+  if (p.age && p.age !== '?')  tagsHTML += '<span class="pnj-tag">'+escHtml(p.age)+' ans</span>';
+  if (p.trigger) tagsHTML += '<span class="pnj-tag" style="color:#00e5cc;border-color:#00e5cc44;background:#00e5cc0d">'+escHtml(p.trigger)+'</span>';
 
   /* Stats bar for bot PNJs */
   var statsHTML = '';
@@ -173,7 +173,7 @@ function _buildPNJCardInner(p) {
   }
 
   /* Nom en majuscules */
-  var nomAffiche = ((p.prenom||'')+' '+(p.nom||'')).trim().toUpperCase();
+  var nomAffiche = escHtml(((p.prenom||'')+' '+(p.nom||'')).trim().toUpperCase());
 
   card.innerHTML =
     '<div class="card-reflet"></div>'+
@@ -182,14 +182,14 @@ function _buildPNJCardInner(p) {
       '<div class="pnj-stripe" style="background:linear-gradient(90deg,'+c+','+c+'20)"></div>'+
       '<div class="pnj-photo-ov"></div>'+
       photoHTML+
-      (p.danger ? '<div class="danger-badge" style="color:'+c+';border-color:'+c+'80;background:'+c+'18">'+p.danger+'</div>' : '')+
-      (p.catLabel ? '<div class="cat-badge" style="color:'+c+';border-color:'+c+'55;background:'+c+'10">'+p.catLabel+'</div>' : '')+
+      (p.danger ? '<div class="danger-badge" style="color:'+c+';border-color:'+c+'80;background:'+c+'18">'+escHtml(p.danger)+'</div>' : '')+
+      (p.catLabel ? '<div class="cat-badge" style="color:'+c+';border-color:'+c+'55;background:'+c+'10">'+escHtml(p.catLabel)+'</div>' : '')+
     '</div>'+
     '<div class="pnj-body">'+
       '<div class="pnj-title">'+nomAffiche+'</div>'+
-      (p.titre ? '<div class="pnj-epithet" style="color:'+c+';text-shadow:0 0 14px '+c+'88">✦ '+p.titre+'</div>' : '')+
+      (p.titre ? '<div class="pnj-epithet" style="color:'+c+';text-shadow:0 0 14px '+c+'88">✦ '+escHtml(p.titre)+'</div>' : '')+
       '<div class="pnj-tags">'+tagsHTML+'</div>'+
-      (p.desc ? '<p class="pnj-desc">'+p.desc+'</p>' : '')+
+      (p.desc ? '<p class="pnj-desc">'+escHtml(p.desc)+'</p>' : '')+
       statsHTML+
       powersHTML+
       motivHTML+
@@ -272,7 +272,7 @@ window._loadIRPPNJ=function(){
   if(!window._irpMode)return;
   _irpPnjLoaded=true;
   try{
-    onSnapshot(collection(db,'irp_pnj'),snap=>{
+    window._irpPnjUnsub=onSnapshot(collection(db,'irp_pnj'),snap=>{
       const container=document.getElementById('pnj-container');
       if(!container)return;
       container.querySelectorAll('[data-irp-pnj="true"]').forEach(c=>c.remove());

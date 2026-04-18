@@ -144,8 +144,8 @@ function renderIRPBannersPage(banners){
       btn.style.cssText='margin-left:12px;padding:6px 14px;border-radius:6px;border:1px solid rgba(220,20,60,0.35);background:linear-gradient(135deg,rgba(220,20,60,0.15),rgba(139,0,0,0.15));color:#dc143c;font-family:var(--font-h);font-size:0.48rem;font-weight:700;letter-spacing:0.1em;cursor:pointer;transition:background 0.3s,box-shadow 0.3s;vertical-align:middle';
       btn.addEventListener('mouseenter',function(){btn.style.background='linear-gradient(135deg,rgba(220,20,60,0.3),rgba(139,0,0,0.3))';btn.style.boxShadow='0 0 12px rgba(220,20,60,0.25)';});
       btn.addEventListener('mouseleave',function(){btn.style.background='linear-gradient(135deg,rgba(220,20,60,0.15),rgba(139,0,0,0.15))';btn.style.boxShadow='none';});
-      btn.addEventListener('click',async function(){
-        if(!confirm('Forcer une rotation manuelle des bannières IRP ?'))return;
+      btn.addEventListener('click',function(){
+        showConfirm('Forcer une rotation manuelle des bannières IRP ?',async function(){
         btn.disabled=true;btn.textContent='⟳ ROTATION...';
         try{
           /* Lire l'état actuel, avancer le pointer, persister */
@@ -189,6 +189,7 @@ function renderIRPBannersPage(banners){
         }finally{
           btn.disabled=false;btn.textContent='⟳ ROTATION MANUELLE';
         }
+        });
       });
       rot.appendChild(btn);
     }
@@ -695,13 +696,13 @@ function renderBanners(banners){
             <div class="banner-art-ov"></div>
             <span class="b-status ${live?'live':'next'}">${live?'● LIVE':'○ PROCHAINE'}</span>
             <div class="banner-art-title">
-              <div class="banner-name" style="color:${c}">${b.name}</div>
+              <div class="banner-name" style="color:${c}">${escHtml(b.name)}</div>
               <div class="banner-subtitle">${live?'BANNIÈRE ACTIVE':'EN ATTENTE'}</div>
             </div>
             <button class="banner-admin-edit" data-bid="${b.id}" title="Modifier l'image" aria-label="Modifier l image de la banniere">✏️</button>
           </div>
           <div class="banner-body">
-            <div class="banner-desc">${b.description||''}</div>
+            <div class="banner-desc">${escHtml(b.description||'')}</div>
             <div class="banner-rates">${chips}</div>
             ${featHtml}
             <div class="banner-actions">
@@ -711,9 +712,9 @@ function renderBanners(banners){
           </div>
           <!-- Per-banner image editor (admin only) -->
           <div class="banner-img-editor" id="bie-${b.id}">
-            <div class="banner-img-editor-title">⚙ IMAGE — ${b.name}</div>
+            <div class="banner-img-editor-title">⚙ IMAGE — ${escHtml(b.name)}</div>
             <img class="banner-img-editor-preview" id="bie-prev-${b.id}" alt="Apercu">
-            <input class="banner-img-editor-input" id="bie-url-${b.id}" placeholder="URL de l image (PNG, JPG, WEBP…)" value="${b.image||''}" spellcheck="false" autocomplete="off">
+            <input class="banner-img-editor-input" id="bie-url-${b.id}" placeholder="URL de l image (PNG, JPG, WEBP…)" value="${escHtml(b.image||'')}" spellcheck="false" autocomplete="off">
             <div class="banner-img-editor-actions">
               <button class="btn-save-img" data-save-bid="${b.id}">SAUVEGARDER</button>
               <button class="btn-cancel-img" onclick="event.stopPropagation();closeBannerImgEditor('${b.id}')">ANNULER</button>

@@ -811,7 +811,7 @@ window._loadCards=function(){
 
 /* ── IRP Mode — charge les personnages IRP en plus ── */
 let _irpCardsLoaded=false;
-let _unsubIRPChars=null;
+let _unsubIRPChars=null,_unsubFleshMarks=null;
 window._loadIRPCards=function(){
   if(_irpCardsLoaded)return;
   if(!window._irpMode)return;
@@ -819,7 +819,7 @@ window._loadIRPCards=function(){
   try{
     /* Also load flesh marks collection once */
     var _fleshMarksCache={};
-    onSnapshot(collection(db,'irp_flesh_marks'),snap=>{
+    _unsubFleshMarks=onSnapshot(collection(db,'irp_flesh_marks'),snap=>{
       snap.forEach(d=>{
         _fleshMarksCache[d.id]=d.data().marks||[];
       });

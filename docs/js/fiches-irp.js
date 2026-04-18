@@ -717,7 +717,7 @@ window.sortCards=function(mode,btn){
 
 /* ── Firebase loader ── */
 let _cardsLoaded=false;
-let _unsubChars=null,_unsubFiches=null;
+let _unsubChars=null,_unsubFiches=null,_unsubFleshMarks=null;
 window._loadCards=function(){
   if(_cardsLoaded)return;
   _cardsLoaded=true;
@@ -725,7 +725,7 @@ window._loadCards=function(){
   try{
     /* ── IRP Mode: load ONLY irp_characters ── */
     let _fleshMarksCache={};
-    onSnapshot(collection(db,'irp_flesh_marks'),snap=>{
+    _unsubFleshMarks=onSnapshot(collection(db,'irp_flesh_marks'),snap=>{
       snap.forEach(d=>{ _fleshMarksCache[d.id]=d.data().marks||[]; });
     },()=>{});
 

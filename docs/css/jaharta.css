@@ -196,7 +196,7 @@ body::before {
   padding: 0.5rem 1.5rem;
   border: 1px solid var(--cyan-dim);
   border-radius: 2px;
-  transition: all 0.3s;
+  transition: color 0.3s, border-color 0.3s, box-shadow 0.3s;
   position: relative;
   overflow: hidden;
 }
@@ -379,7 +379,7 @@ body::before {
   position: relative;
   overflow: hidden;
   box-shadow: var(--glow-md);
-  transition: all 0.4s;
+  transition: box-shadow 0.4s, transform 0.4s;
   opacity: 0;
   animation: fadeInUp 0.8s 1.5s forwards;
 }
@@ -574,7 +574,7 @@ body::before {
   padding: 2rem 1.8rem;
   position: relative;
   overflow: hidden;
-  transition: all 0.4s;
+  transition: border-color 0.4s, transform 0.4s, box-shadow 0.4s;
   backdrop-filter: blur(10px);
 }
 
@@ -804,7 +804,7 @@ body::before {
   padding: 6px 12px;
   border: 1px solid transparent;
   border-radius: 2px;
-  transition: all 0.3s;
+  transition: color 0.3s, border-color 0.3s, background 0.3s;
 }
 
 .nav-links a:hover {
@@ -941,7 +941,7 @@ body::before {
   flex-direction: column;
   position: relative;
   overflow: hidden;
-  transition: all 0.4s;
+  transition: transform 0.4s, border-color 0.4s, box-shadow 0.4s;
   backdrop-filter: blur(10px);
 }
 
@@ -1073,7 +1073,7 @@ body::before {
   display: inline-flex;
   align-items: center;
   gap: 9px;
-  transition: all 0.3s;
+  transition: background 0.3s, box-shadow 0.3s, transform 0.3s;
   white-space: nowrap;
   box-shadow: 0 0 16px rgba(114,137,218,0.15);
 }
@@ -1355,7 +1355,7 @@ header nav a {
   padding: 8px 13px;
   border: 1px solid transparent;
   border-radius: 2px;
-  transition: all 0.3s;
+  transition: color 0.3s, border-color 0.3s, background 0.3s;
   position: relative;
 }
 header nav a:hover {
@@ -1506,7 +1506,7 @@ header nav a.active::after {
   opacity: 0;
   transform: translateY(20px);
 }
-.section-head.revealed { opacity: 1; transform: translateY(0); transition: all 0.6s ease; }
+.section-head.revealed { opacity: 1; transform: translateY(0); transition: opacity 0.6s ease, transform 0.6s ease; }
 .sh-num {
   font-family: var(--font-h);
   font-size: 0.68rem;
@@ -1630,7 +1630,7 @@ footer .f-copy {
 [data-reveal].revealed {
   opacity: 1;
   transform: translateY(0);
-  transition: all 0.6s cubic-bezier(0.4,0,0.2,1);
+  transition: opacity 0.6s cubic-bezier(0.4,0,0.2,1), transform 0.6s cubic-bezier(0.4,0,0.2,1);
 }
 
 /* Discord banner in sub-pages (legacy .db class) */
@@ -1685,7 +1685,7 @@ footer .f-copy {
   text-decoration: none;
   padding: 13px 26px;
   border-radius: 2px;
-  transition: all 0.3s;
+  transition: background 0.3s, box-shadow 0.3s, transform 0.3s;
   white-space: nowrap;
   display: flex;
   align-items: center;
@@ -1890,7 +1890,7 @@ a.admin-badge:hover { border-color: rgba(0,255,136,0.6); box-shadow: 0 0 12px rg
   font-size: 0.65rem !important;
   letter-spacing: 0.15em !important;
   box-shadow: 0 0 12px rgba(0,240,255,0.2);
-  transition: all 0.3s !important;
+  transition: background 0.3s !important, box-shadow 0.3s !important, transform 0.3s !important;
 }
 .add-btn:hover {
   background: #fff !important;
@@ -2158,7 +2158,7 @@ a.admin-badge:hover { border-color: rgba(0,255,136,0.6); box-shadow: 0 0 12px rg
   background: rgba(8,10,22,0.85) !important;
   border: 1px solid rgba(255,255,255,0.05) !important;
   backdrop-filter: blur(12px) !important;
-  transition: all 0.4s cubic-bezier(0.16,1,0.3,1) !important;
+  transition: transform 0.4s cubic-bezier(0.16,1,0.3,1) !important, border-color 0.4s cubic-bezier(0.16,1,0.3,1) !important, box-shadow 0.4s cubic-bezier(0.16,1,0.3,1) !important;
 }
 .pnj-card:hover {
   transform: translateY(-6px) !important;
@@ -2190,7 +2190,7 @@ a.admin-badge:hover { border-color: rgba(0,255,136,0.6); box-shadow: 0 0 12px rg
   background: rgba(8,10,22,0.85) !important;
   border: 1px solid rgba(255,255,255,0.05) !important;
   backdrop-filter: blur(12px) !important;
-  transition: all 0.4s cubic-bezier(0.16,1,0.3,1) !important;
+  transition: transform 0.4s cubic-bezier(0.16,1,0.3,1) !important, border-color 0.4s cubic-bezier(0.16,1,0.3,1) !important, box-shadow 0.4s cubic-bezier(0.16,1,0.3,1) !important;
 }
 .featured-card:hover {
   transform: translateY(-6px) !important;
@@ -2335,7 +2335,7 @@ a.admin-badge:hover { border-color: rgba(0,255,136,0.6); box-shadow: 0 0 12px rg
   border-radius: 4px !important;
   border-width: 1px !important;
   border-style: solid !important;
-  transition: all 0.35s cubic-bezier(0.16,1,0.3,1) !important;
+  transition: transform 0.35s cubic-bezier(0.16,1,0.3,1) !important, box-shadow 0.35s cubic-bezier(0.16,1,0.3,1) !important, text-shadow 0.35s cubic-bezier(0.16,1,0.3,1) !important, background 0.35s cubic-bezier(0.16,1,0.3,1) !important;
   position: relative;
   overflow: hidden;
   background: rgba(0,0,0,0.3) !important;
@@ -2388,7 +2388,7 @@ a.admin-badge:hover { border-color: rgba(0,255,136,0.6); box-shadow: 0 0 12px rg
   border: 1px solid currentColor !important;
   border-color: inherit !important;
   backdrop-filter: blur(8px) !important;
-  transition: all 0.3s cubic-bezier(0.16,1,0.3,1) !important;
+  transition: background 0.3s cubic-bezier(0.16,1,0.3,1) !important, transform 0.3s cubic-bezier(0.16,1,0.3,1) !important, box-shadow 0.3s cubic-bezier(0.16,1,0.3,1) !important, text-shadow 0.3s cubic-bezier(0.16,1,0.3,1) !important;
   text-transform: uppercase !important;
 }
 .race-btn::before {
@@ -2419,7 +2419,7 @@ a.admin-badge:hover { border-color: rgba(0,255,136,0.6); box-shadow: 0 0 12px rg
   border-radius: 4px !important;
   background: rgba(0,0,0,0.25) !important;
   backdrop-filter: blur(8px) !important;
-  transition: all 0.3s cubic-bezier(0.16,1,0.3,1) !important;
+  transition: background 0.3s cubic-bezier(0.16,1,0.3,1) !important, transform 0.3s cubic-bezier(0.16,1,0.3,1) !important, box-shadow 0.3s cubic-bezier(0.16,1,0.3,1) !important, text-shadow 0.3s cubic-bezier(0.16,1,0.3,1) !important;
 }
 .rank-btn-v5:hover, .rank-btn-v5.active {
   background: rgba(255,255,255,0.04) !important;
@@ -2621,7 +2621,7 @@ a, button, [role="button"], [onclick],
 .jmd .jmd-h1{font-size:1.3rem}
 .jmd .jmd-h2{font-size:1.1rem}
 .jmd .jmd-h3{font-size:.95rem}
-.jmd .jmd-spoiler{background:rgba(255,255,255,0.12);color:transparent;border-radius:3px;padding:0 4px;cursor:pointer;transition:all .2s}
+.jmd .jmd-spoiler{background:rgba(255,255,255,0.12);color:transparent;border-radius:3px;padding:0 4px;cursor:pointer;transition:background .2s,color .2s}
 .jmd .jmd-spoiler.revealed,.jmd .jmd-spoiler:hover{color:var(--text2,#c5c8d4);background:rgba(255,255,255,0.06)}
 .jmd ul,.jmd ol{margin:6px 0;padding-left:20px}
 .jmd li{margin-bottom:4px}

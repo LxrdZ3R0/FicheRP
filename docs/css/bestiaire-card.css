@@ -422,7 +422,7 @@
   font-family:'Share Tech Mono',monospace; font-size:.55rem;
   letter-spacing:.12em; padding:5px 9px; border-radius:4px;
   cursor:pointer; background:rgba(2,7,19,0.78); backdrop-filter:blur(8px);
-  color:#fff; border:1px solid rgba(255,255,255,0.18); transition:all .2s;
+  color:#fff; border:1px solid rgba(255,255,255,0.18); transition:background .2s,border-color .2s,color .2s;
 }
 .bcard__admin .bcard__edit:hover { border-color:var(--neon); color:var(--neon); }
 .bcard__admin .bcard__del:hover { border-color:#ff3b5c; color:#ff3b5c; }

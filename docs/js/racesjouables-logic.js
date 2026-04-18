@@ -690,9 +690,9 @@
   .rp4-stat-input{font-family:'Orbitron',sans-serif;font-weight:700;font-size:13px;color:#4DA3FF;width:60px;text-align:center;background:rgba(0,229,255,0.03);border:1px solid rgba(0,229,255,0.12);border-radius:3px;padding:5px 3px}
   /* Power editor */
   .rp4-pw-row{display:flex;gap:8px;align-items:center;margin-bottom:6px;padding:8px 10px;background:rgba(0,229,255,0.02);border:1px solid rgba(0,229,255,0.06);border-radius:4px}
-  .rp4-pw-rm{width:26px;height:26px;flex-shrink:0;border:1px solid rgba(255,71,87,.15);background:rgba(255,71,87,.04);border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;color:rgba(255,71,87,.4);transition:all .2s}
+  .rp4-pw-rm{width:26px;height:26px;flex-shrink:0;border:1px solid rgba(255,71,87,.15);background:rgba(255,71,87,.04);border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;color:rgba(255,71,87,.4);transition:border-color .2s,color .2s,background .2s}
   .rp4-pw-rm:hover{border-color:rgba(255,71,87,.5);color:#FF4757;background:rgba(255,71,87,.1)}
-  .rp4-pw-add{width:100%;margin-top:6px;padding:8px;border:1px dashed rgba(0,229,255,.12);border-radius:4px;background:transparent;color:rgba(255,255,255,.3);font-family:'Rajdhani',sans-serif;font-size:11px;letter-spacing:.1em;cursor:pointer;transition:all .2s}
+  .rp4-pw-add{width:100%;margin-top:6px;padding:8px;border:1px dashed rgba(0,229,255,.12);border-radius:4px;background:transparent;color:rgba(255,255,255,.3);font-family:'Rajdhani',sans-serif;font-size:11px;letter-spacing:.1em;cursor:pointer;transition:border-color .2s,color .2s,background .2s}
   .rp4-pw-add:hover{border-color:rgba(77,163,255,.3);color:#4DA3FF;background:rgba(77,163,255,.02)}
 
   @media(max-width:700px){
