@@ -16,7 +16,6 @@
 <link rel="stylesheet" href="css/casino.css">
 
 <script src="js/debug.js"></script>
-<script src="js/constants.js"></script>
 </head>
 <body class="casino-body">
 <div class="page-transition-overlay" id="page-transition"><div class="pt-logo-wrap"><div class="pt-glow-ring"></div><div class="pt-scan"></div><img src="img/logo-jaharta.png" class="pt-img" alt="Jaharta"></div><div class="pt-bar-wrap"><div class="pt-bar-fill"></div></div><div class="pt-text">Chargement</div></div>
@@ -65,7 +64,7 @@
     <div class="closed-card">
       <div class="closed-icon">✖</div>
       <div class="closed-title">CASINO FERMÉ</div>
-      <p class="closed-desc">Le casino est actuellement fermé par le staff. Reviens plus tard.</p>
+      <p class="closed-desc" id="cc-reason">Le casino est actuellement fermé par le staff. Reviens plus tard.</p>
     </div>
   </section>
 
@@ -192,6 +191,7 @@
           <div class="rl-phase" id="rl-phase">
             <div class="rl-phase-label" id="rl-phase-label">BIENTÔT</div>
             <div class="rl-timer" id="rl-timer">--</div>
+            <div class="phase-bar-wrap"><div class="phase-bar" id="rl-phase-bar"></div></div>
           </div>
           <div class="rl-history">
             <div class="rl-hist-label">HISTORIQUE</div>
@@ -212,7 +212,7 @@
             <button class="rl-chip" data-chip="100">100</button>
             <button class="rl-chip-clear" id="rl-clear" title="Annuler mes mises">✖</button>
           </div>
-          <div class="rl-currency-row">
+          <div class="rl-currency-row normal-only">
             <label class="rl-currency-label">Devise (Normal) :</label>
             <select id="rl-currency" class="rl-select">
               <option value="bronze_kanite">🥉 Bronze Kanite</option>
@@ -239,6 +239,7 @@
           <div class="bj-timer" id="bj-timer">--</div>
           <button class="bj-sit-btn" id="bj-sit-btn" onclick="bjSit()">Prendre un siège</button>
           <button class="bj-leave-btn" id="bj-leave-btn" onclick="bjLeave()" style="display:none">Quitter le siège</button>
+          <div class="phase-bar-wrap topbar-bar"><div class="phase-bar" id="bj-phase-bar"></div></div>
         </div>
         <div class="bj-table">
           <div class="bj-dealer">
@@ -253,7 +254,7 @@
           <div class="bj-bet-panel" id="bj-bet-panel">
             <div class="bj-bet-label">MISE :</div>
             <input type="number" id="bj-bet-input" class="bj-bet-input" min="1" value="10">
-            <select id="bj-currency" class="bj-select">
+            <select id="bj-currency" class="bj-select normal-only">
               <option value="bronze_kanite">🥉 Bronze</option>
               <option value="silver_kanite" selected>🥈 Silver</option>
               <option value="gold_kanite">🥇 Gold</option>
@@ -276,10 +277,12 @@
       <div class="pk-layout">
         <div class="pk-topbar">
           <div class="pk-phase" id="pk-phase">CHARGEMENT…</div>
+          <div class="pk-timer" id="pk-timer" style="font-family:var(--font-m); font-size:1.15rem; color:var(--casino-accent); font-weight:700;">--</div>
           <div class="pk-pot">POT : <span id="pk-pot">0</span></div>
           <div class="pk-blinds">BLINDES : <span id="pk-sb">1</span>/<span id="pk-bb">2</span></div>
           <button class="pk-sit-btn" id="pk-sit-btn" onclick="pkSit()">Prendre un siège</button>
           <button class="pk-leave-btn" id="pk-leave-btn" onclick="pkLeave()" style="display:none">Quitter</button>
+          <div class="phase-bar-wrap topbar-bar"><div class="phase-bar" id="pk-phase-bar"></div></div>
         </div>
         <div class="pk-table">
           <div class="pk-dealer">
@@ -296,7 +299,7 @@
           <div class="pk-buyin" id="pk-buyin">
             <div class="pk-buyin-label">BUY-IN :</div>
             <input type="number" id="pk-buyin-input" class="pk-input" min="20" value="100">
-            <select id="pk-currency" class="pk-select">
+            <select id="pk-currency" class="pk-select normal-only">
               <option value="bronze_kanite">🥉 Bronze</option>
               <option value="silver_kanite" selected>🥈 Silver</option>
               <option value="gold_kanite">🥇 Gold</option>
@@ -375,13 +378,12 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script src="js/utils.js"></script>
+<script src="js/kanite-wallet.js"></script>
 <script src="js/casino-core.js"></script>
 <script src="js/casino-roulette.js"></script>
 <script src="js/casino-blackjack.js"></script>
 <script src="js/casino-poker.js"></script>
 <script src="js/casino-flip.js"></script>
 <script src="js/page-transition.js"></script>
-<script src="js/jaharta-motion.js"></script>
-<script src="js/music-player.js"></script>
 </body>
 </html>

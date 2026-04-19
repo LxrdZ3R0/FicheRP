@@ -40,6 +40,7 @@ function loadCasino(){
   _unsubs.casinoCfg=onSnapshot(doc(db,'casino_config','main'),snap=>{
     const d=snap.exists()?snap.data():{is_open:true};
     const open=d.is_open!==false;
+    const adminOnly=d.admin_only===true;
     const ind=document.getElementById('casino-state-indicator');
     const lbl=document.getElementById('casino-state-label');
     const btn=document.getElementById('btn-casino-toggle');
@@ -48,6 +49,19 @@ function loadCasino(){
     if(lbl)lbl.textContent=open?'CASINO OUVERT':'CASINO FERMÉ';
     if(btn){btn.textContent=open?'FERMER LE CASINO':'OUVRIR LE CASINO';btn.style.background=open?'linear-gradient(180deg,#ff6b78,#FF4757)':'linear-gradient(180deg,#5cf199,#44ff88)';btn.style.color=open?'#fff':'#0a2014';}
     if(bad){bad.textContent=open?'ON':'OFF';bad.style.background=open?'#44ff88':'#FF4757';bad.style.color=open?'#0a2014':'#fff';}
+    // Admin-only UI
+    const aInd=document.getElementById('casino-adminonly-ind');
+    const aLbl=document.getElementById('casino-adminonly-label');
+    const aBtn=document.getElementById('btn-casino-adminonly');
+    if(aInd){aInd.style.background=adminOnly?'#e8b04a':'#5a7a90';aInd.style.boxShadow='0 0 10px '+(adminOnly?'#e8b04a':'#5a7a90');}
+    if(aLbl)aLbl.textContent=adminOnly?'🛠 ACTIVÉ · MAINTENANCE':'DÉSACTIVÉ';
+    if(aBtn){aBtn.textContent=adminOnly?'DÉSACTIVER ADMIN-ONLY':'ACTIVER ADMIN-ONLY';aBtn.style.background=adminOnly?'linear-gradient(180deg,#ff6b78,#FF4757)':'linear-gradient(180deg,#5cf199,#44ff88)';aBtn.style.color=adminOnly?'#fff':'#0a2014';}
+    // Whitelist Discord IDs — ne pas écraser si l'utilisateur est en train d'éditer
+    const ta=document.getElementById('casino-admin-ids');
+    if(ta && document.activeElement!==ta){
+      const ids=Array.isArray(d.admin_discord_ids)?d.admin_discord_ids:[];
+      ta.value=ids.join('\n');
+    }
   },err=>window._dbg?.warn('[casino-cfg]',err.message));
   // Recent bets
   if(_unsubs.casinoLogs)_unsubs.casinoLogs();
@@ -90,6 +104,57 @@ window.toggleCasino=async function(){
     showToast(next?'Casino ouvert ✓':'Casino fermé ✖',next?'success':'error');
   }catch(e){showToast('Erreur : '+e.message,'error');}
 };
+
+// Bascule admin-only mode (seuls les discord IDs whitelistés peuvent jouer)
+window.toggleAdminOnly=async function(){
+  if(!currentAdmin||currentAdmin.role!=='admin'){showToast('Admin requis','error');return;}
+  try{
+    const snap=await getDoc(doc(db,'casino_config','main'));
+    const cur=snap.exists()?snap.data():{};
+    const next=!(cur.admin_only===true);
+    await setDoc(doc(db,'casino_config','main'),{admin_only:next,updated_by:currentAdmin.email,updated_at:_ts()},{merge:true});
+    await writeLog(next?'casino_adminonly_on':'casino_adminonly_off','main','Casino');
+    showToast(next?'Mode admin-only activé ✓':'Mode admin-only désactivé','success');
+  }catch(e){showToast('Erreur : '+e.message,'error');}
+};
+// Enregistre la whitelist Discord IDs (un par ligne, trim + filter vide)
+window.saveAdminIds=async function(){
+  if(!currentAdmin||currentAdmin.role!=='admin'){showToast('Admin requis','error');return;}
+  const ta=document.getElementById('casino-admin-ids');
+  if(!ta){showToast('Textarea introuvable','error');return;}
+  const ids=ta.value.split(/[\r\n,;]+/).map(s=>s.trim()).filter(s=>s && /^[0-9]{5,22}$/.test(s));
+  try{
+    await setDoc(doc(db,'casino_config','main'),{admin_discord_ids:ids,updated_by:currentAdmin.email,updated_at:_ts()},{merge:true});
+    await writeLog('casino_adminlist_save','main','Whitelist Discord ('+ids.length+')');
+    showToast('✓ Whitelist enregistrée : '+ids.length+' ID(s)','success');
+  }catch(e){showToast('Erreur : '+e.message,'error');}
+};
+
+// Reset brutal de toutes les tables (les 6 : 3 jeux × 2 modes normal/prime).
+// Utilisable si les tables sont bloquées avec des joueurs fantômes. Aucun refund.
+window.resetAllCasinoTables=async function(){
+  if(!currentAdmin||currentAdmin.role!=='admin'){showToast('Admin requis','error');return;}
+  if(!confirm('Reset brutal de TOUTES les tables (6 docs). Les mises en cours seront PERDUES. Continuer ?'))return;
+  const now=Date.now();
+  const tables=[
+    {id:'roulette_main_normal',data:{game:'roulette',phase:'betting',phase_started:now,phase_end:now+30000,currency:'silver_kanite',mode:'normal',bets:{},result:null,history:[],host:null,host_ping:0,payouts:null}},
+    {id:'roulette_main_prime', data:{game:'roulette',phase:'betting',phase_started:now,phase_end:now+30000,currency:'navarites',mode:'prime',bets:{},result:null,history:[],host:null,host_ping:0,payouts:null}},
+    {id:'blackjack_main_normal',data:{game:'blackjack',phase:'betting',phase_started:now,phase_end:now+25000,currency:'silver_kanite',mode:'normal',seats:Array(6).fill(null),dealer_hand:[],dealer_score:0,dealer_revealed:false,turn_seat:-1,turn_end:0,deck:[],host:null,host_ping:0,payouts:null}},
+    {id:'blackjack_main_prime', data:{game:'blackjack',phase:'betting',phase_started:now,phase_end:now+25000,currency:'navarites',mode:'prime',seats:Array(6).fill(null),dealer_hand:[],dealer_score:0,dealer_revealed:false,turn_seat:-1,turn_end:0,deck:[],host:null,host_ping:0,payouts:null}},
+    {id:'poker_main_normal',data:{game:'poker',phase:'waiting',phase_end:now+5000,currency:'silver_kanite',mode:'normal',seats:Array(6).fill(null),deck:[],board:[],pot:0,sb:1,bb:2,dealer_seat:-1,turn_seat:-1,turn_end:0,current_bet:0,min_raise:2,last_action:null,winners:null,host:null,host_ping:0}},
+    {id:'poker_main_prime', data:{game:'poker',phase:'waiting',phase_end:now+5000,currency:'navarites',mode:'prime',seats:Array(6).fill(null),deck:[],board:[],pot:0,sb:1,bb:2,dealer_seat:-1,turn_seat:-1,turn_end:0,current_bet:0,min_raise:2,last_action:null,winners:null,host:null,host_ping:0}}
+  ];
+  let done=0,errors=[];
+  for(const t of tables){
+    try{await setDoc(doc(db,'casino_tables',t.id),t.data);done++;}
+    catch(e){errors.push(t.id+' : '+e.message);}
+  }
+  // Reset aussi les heartbeats
+  for(const t of tables){try{await deleteDoc(doc(db,'casino_heartbeats',t.id));}catch{}}
+  await writeLog('casino_reset_all','main','Tables casino');
+  if(errors.length){showToast('Reset partiel — '+done+'/6 OK, erreurs : '+errors.join(' · '),'error');}
+  else{showToast('✓ Toutes les tables ont été reset ('+done+'/6)','success');}
+};
 window.deleteBestiaire=async function(id,name){if(!confirm('Supprimer "'+(name||'cette bête')+'" ?'))return;await deleteDoc(doc(db,'bestiaire',id));await writeLog('delete_best',id,name);showToast('Bête supprimée.','error');};
 window.submitBestiaireAdmin=async function(){
   const v=id=>document.getElementById(id).value.trim();
@@ -119,7 +184,7 @@ function showScreen(name){
     switchAdminTab('fiches');
   }
 }
-window._setAdminTab=(data)=>{const isAdm=data.role==='admin';const bl=document.getElementById('tab-btn-logs');if(bl)bl.style.display=isAdm?'':'none';const bc=document.getElementById('tab-btn-casino');if(bc)bc.style.display=isAdm?'':'none';};
+window._setAdminTab=(data)=>{const btn=document.getElementById('tab-btn-logs');if(btn)btn.style.display=(data.role==='admin')?'':'none';};
 
 /* ═══ LORE ═══ */
 const _ld={empires:[],organisations:[],dynasties:[],histoire:[],pantheon:[],chronologie:[],glossaire:[]};
@@ -357,7 +422,7 @@ function renderAdminHeader(){if(!currentAdmin)return;document.getElementById('ad
     <button class="admin-tab" data-tab="pnj" onclick="switchAdminTab('pnj')">PNJ <span class="tab-badge" id="badge-pnj" style="background:#b06eff"></span></button>
     <button class="admin-tab" data-tab="lore" onclick="switchAdminTab('lore')">Lore</button>
     <button class="admin-tab" data-tab="bestiaire" onclick="switchAdminTab('bestiaire')">Bestiaire <span class="tab-badge" id="cnt-best" style="background:#00e5ff;color:#04060f;display:inline">0</span></button>
-    <button class="admin-tab" data-tab="casino" id="tab-btn-casino" style="display:none" onclick="switchAdminTab('casino')">Casino <span class="tab-badge" id="badge-casino" style="background:#e8b04a;color:#1a1208;display:inline">—</span></button>
+    <button class="admin-tab" data-tab="casino" onclick="switchAdminTab('casino')">Casino <span class="tab-badge" id="badge-casino" style="background:#e8b04a;color:#1a1208;display:inline">—</span></button>
     <button class="admin-tab" data-tab="logs" id="tab-btn-logs" style="display:none" onclick="switchAdminTab('logs')">Logs</button>
   </div>
 
@@ -425,6 +490,36 @@ function renderAdminHeader(){if(!currentAdmin)return;document.getElementById('ad
         <label style="color:var(--muted);font-size:.7rem">
           Fermer le casino empêche toute nouvelle mise et affiche un écran "Casino fermé" aux joueurs. Les sessions en cours se terminent normalement.
         </label>
+      </div>
+
+      <div class="lf-row" style="margin-top:18px">
+        <label>Reset brutal des tables</label>
+        <div style="display:flex;gap:12px;align-items:center;padding:14px;background:rgba(0,0,0,.2);border:1px solid rgba(255,71,87,.3);border-radius:3px">
+          <button class="lore-submit" style="background:linear-gradient(180deg,#ff8888,#FF4757);color:#fff;padding:10px 22px;min-width:170px" onclick="resetAllCasinoTables()">⚠ RESET TOUTES LES TABLES</button>
+          <span style="flex:1;color:var(--muted);font-size:.65rem">
+            Vide les 6 tables (roulette/blackjack/poker × normal/prime) sans rembourser. À utiliser si les tables sont bloquées avec des joueurs fantômes.
+          </span>
+        </div>
+      </div>
+
+      <div class="lf-row" style="margin-top:18px">
+        <label>Mode admin-only (tests sans joueurs)</label>
+        <div style="display:flex;gap:12px;align-items:center;padding:14px;background:rgba(0,0,0,.2);border:1px solid rgba(232,176,74,.2);border-radius:3px">
+          <span id="casino-adminonly-ind" style="width:14px;height:14px;border-radius:50%;background:#5a7a90;box-shadow:0 0 10px #5a7a90"></span>
+          <span id="casino-adminonly-label" style="font-family:'Orbitron',sans-serif;font-weight:700;letter-spacing:.2em;font-size:.8rem">DÉSACTIVÉ</span>
+          <div style="flex:1"></div>
+          <button id="btn-casino-adminonly" class="lore-submit" style="background:linear-gradient(180deg,#5cf199,#44ff88);color:#0a2014;padding:10px 22px;min-width:170px" onclick="toggleAdminOnly()">ACTIVER ADMIN-ONLY</button>
+        </div>
+      </div>
+      <div class="lf-row">
+        <label>Whitelist Discord IDs (un par ligne)</label>
+        <textarea id="casino-admin-ids" rows="4" placeholder="123456789012345678&#10;987654321098765432" style="font-family:'Share Tech Mono',monospace;font-size:.75rem"></textarea>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button class="lore-submit" style="padding:8px 18px;font-size:.7rem" onclick="saveAdminIds()">💾 Enregistrer la whitelist</button>
+          <span style="flex:1;color:var(--muted);font-size:.62rem;align-self:center">
+            Quand le mode admin-only est ON, seuls les IDs Discord listés accèdent au casino (les autres voient l'écran maintenance).
+          </span>
+        </div>
       </div>
     </div>
 
