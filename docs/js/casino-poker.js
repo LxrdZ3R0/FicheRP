@@ -7,8 +7,11 @@
 
 (function () {
 
-const TABLE_ID = 'poker_main';
-const tableRef = () => db.collection(CC.CASINO_TABLES).doc(TABLE_ID);
+// Double tables : séparation normal / prime
+const TABLE_ID_BASE = 'poker_main';
+const tableId = () => TABLE_ID_BASE + '_' + (window.CASINO?.mode || 'normal');
+const tableRef = () => db.collection(CC.CASINO_TABLES).doc(tableId());
+const heartbeatRef = () => db.collection(CC.CASINO_HEARTBEATS).doc(tableId());
 const SEATS = 6;
 const TURN_MS = 25000;
 const SHOWDOWN_MS = 8000;
@@ -16,11 +19,15 @@ const INTERMISSION_MS = 5000;
 const SB_DEFAULT = 1, BB_DEFAULT = 2;
 
 let unsubTable = null;
+let unsubHeartbeat = null;
+let heartbeat = null;
 let state = null;
 let initialized = false;
 let hostTimer = null;
+let localTimerTimer = null;
 let mySeat = null;
 let _claimedRound = null;
+let _prevMyTurn = false;
 
 window._pkInit = function () {
   if (initialized) return;
@@ -32,18 +39,54 @@ window._pkInit = function () {
   const input = document.getElementById('pk-raise-input');
   slider.addEventListener('input', () => { input.value = slider.value; });
   input.addEventListener('input', () => { slider.value = input.value; });
+
+  if (!localTimerTimer) localTimerTimer = setInterval(renderPhaseTimer, 250);
 };
 
-window._pkOnModeChange = function () {};
+function renderPhaseTimer() {
+  if (!state) return;
+  const phaseEl = document.getElementById('pk-phase');
+  if (!phaseEl) return;
+  const isTurnPhase = ['preflop','flop','turn','river'].includes(state.phase);
+  const endTime = isTurnPhase ? state.turn_end : state.phase_end;
+  // Durée nominale par phase (approximation — les phases_started ne sont pas tracées)
+  const nominalDur =
+    isTurnPhase            ? TURN_MS :
+    state.phase === 'showdown'     ? SHOWDOWN_MS :
+    state.phase === 'intermission' ? INTERMISSION_MS :
+                                     5000;
+  const secLeft = Math.max(0, Math.ceil(((endTime || 0) - Date.now()) / 1000));
+  const timerEl = document.getElementById('pk-timer');
+  if (timerEl) timerEl.textContent = secLeft;
+  const barEl = document.getElementById('pk-phase-bar');
+  if (barEl && endTime) {
+    const pct = 100 - Math.max(0, Math.min(100, ((endTime - Date.now()) / nominalDur) * 100));
+    barEl.style.width = pct + '%';
+  }
+}
+
+window._pkOnModeChange = function () {
+  // Re-abonnement sur la table du mode courant.
+  if (unsubTable) { try { unsubTable(); } catch {} ; unsubTable = null; }
+  if (unsubHeartbeat) { try { unsubHeartbeat(); } catch {} ; unsubHeartbeat = null; }
+  if (hostTimer) { clearInterval(hostTimer); hostTimer = null; }
+  heartbeat = null;
+  state = null;
+  mySeat = null;
+  _prevMyTurn = false;
+  if (initialized) subscribeTable();
+};
 
 async function ensureTable() {
   const s = await tableRef().get();
   if (s.exists) return;
+  const mode = window.CASINO?.mode || 'normal';
   await tableRef().set({
     game: 'poker',
     phase: 'waiting', // waiting, preflop, flop, turn, river, showdown, intermission
     phase_end: Date.now() + 5000,
-    currency: 'silver_kanite',
+    currency: mode === 'prime' ? 'navarites' : 'silver_kanite',
+    mode,
     seats: Array(SEATS).fill(null),
     deck: [],
     board: [],
@@ -74,20 +117,33 @@ async function subscribeTable() {
     checkHost();
     if (state.phase === 'showdown' && mySeat !== null) maybeLogResult();
   });
+  if (unsubHeartbeat) { try { unsubHeartbeat(); } catch {} }
+  unsubHeartbeat = heartbeatRef().onSnapshot(snap => {
+    heartbeat = snap.exists ? snap.data() : null;
+    checkHost();
+  });
 }
 
+function hostPing() {
+  return (heartbeat && heartbeat.host_uid === state?.host) ? (heartbeat.ping || 0) : (state?.host_ping || 0);
+}
 function checkHost() {
+  if (!state) return;
   const now = Date.now();
-  const hostStale = !state.host || (now - (state.host_ping || 0) > 7000);
+  const ping = hostPing();
+  const hostStale = !state.host || (now - ping > 7000);
   if (hostStale) {
     setTimeout(async () => {
       try {
         await db.runTransaction(async tx => {
           const s = await tx.get(tableRef());
           const d = s.data();
-          if (d.host && (Date.now() - (d.host_ping || 0) < 7000)) return;
-          tx.update(tableRef(), { host: CASINO.uid, host_ping: Date.now() });
+          if (!d) return;
+          const livePing = (heartbeat && heartbeat.host_uid === d.host) ? (heartbeat.ping || 0) : (d.host_ping || 0);
+          if (d.host && (Date.now() - livePing < 7000)) return;
+          tx.update(tableRef(), { host: CASINO.uid });
         });
+        try { heartbeatRef().set({ host_uid: CASINO.uid, ping: Date.now() }); } catch {}
       } catch {}
     }, Math.random() * 500);
   }
@@ -100,7 +156,11 @@ function checkHost() {
 
 async function hostTick() {
   const now = Date.now();
-  try { tableRef().update({ host_ping: now }); } catch {}
+  // Heartbeat dans sous-doc — n'entraîne plus de re-render global de la table
+  try { heartbeatRef().set({ host_uid: CASINO.uid, ping: now }); } catch {}
+
+  // Casino fermé : aucune main ne démarre / n'avance
+  if (window.CASINO?.isOpen === false) return;
 
   const activeSeats = (state.seats || []).filter(s => s && s.stack > 0).length;
 
@@ -553,10 +613,20 @@ function findNextToAct(seats, dealer, postflop) {
 
 /* ═══ RENDER ═══ */
 function renderState() {
-  document.getElementById('pk-phase').textContent = phaseLabel(state.phase);
+  const phaseEl = document.getElementById('pk-phase');
+  phaseEl.textContent = phaseLabel(state.phase);
+  phaseEl.className = 'pk-phase ' + (state.phase || '');
   document.getElementById('pk-pot').textContent = window._fmtNum(state.pot || 0);
   document.getElementById('pk-sb').textContent = state.sb || SB_DEFAULT;
   document.getElementById('pk-bb').textContent = state.bb || BB_DEFAULT;
+
+  // Détection transition « À toi de jouer »
+  const myTurnNow = (['preflop','flop','turn','river'].includes(state.phase)
+                    && state.turn_seat === mySeat && mySeat !== null);
+  if (myTurnNow && !_prevMyTurn) {
+    try { showToast('🎯 À toi de jouer !', 'info', 3000); } catch {}
+  }
+  _prevMyTurn = myTurnNow;
 
   const dealerImgEl = document.getElementById('pk-dealer-avatar');
   if (dealerImgEl) {
@@ -717,5 +787,59 @@ function currencySymbol(c) {
 function escape(s) {
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
+
+/* ── Force close (casino fermé) ──────────────────────────────────────
+   Rembourse mon stack (s'il reste) + vide le siège + reset transactionnel
+   de la table. Les mises engagées dans le pot sont perdues côté joueurs
+   sortants — ce qui est cohérent avec la règle « la partie est coupée ». */
+async function forceClose() {
+  if (!state) return;
+  // 1) Si j'ai un siège avec stack > 0, rembourser le stack
+  let myStack = 0;
+  let myCurrency = state.currency || 'silver_kanite';
+  (state.seats || []).forEach(s => {
+    if (s && s.uid === CASINO.uid) {
+      myStack = Number(s.stack || 0);
+      myCurrency = s.currency || myCurrency;
+    }
+  });
+  if (myStack > 0) {
+    try {
+      await window._credit(myCurrency, myStack);
+      showToast('Stack remboursé : ' + window._fmtNum(myStack) + ' ' + window._currencyLabel(myCurrency), 'info', 4000);
+    } catch (e) { window._dbg?.warn('[pk-refund]', e?.message); }
+  }
+  // 2) Reset complet (premier client gagne)
+  try {
+    await db.runTransaction(async tx => {
+      const s = await tx.get(tableRef());
+      if (!s.exists) return;
+      const d = s.data();
+      const seatsEmpty = (d.seats || []).every(x => x === null);
+      const alreadyReset = d.phase === 'waiting' && seatsEmpty && !d.winners;
+      if (alreadyReset) return;
+      const now = Date.now();
+      tx.update(tableRef(), {
+        phase: 'waiting',
+        phase_end: now + 5000,
+        seats: Array(SEATS).fill(null),
+        deck: [],
+        board: [],
+        pot: 0,
+        dealer_seat: -1,
+        turn_seat: -1,
+        turn_end: 0,
+        current_bet: 0,
+        min_raise: d.bb || BB_DEFAULT,
+        last_action: null,
+        winners: null,
+        host: null
+      });
+    });
+  } catch (e) { window._dbg?.warn('[pk-reset]', e?.message); }
+  mySeat = null;
+  _prevMyTurn = false;
+}
+window._pkForceClose = forceClose;
 
 })();

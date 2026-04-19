@@ -25,6 +25,7 @@ const CC = {
   LINK:    'gacha_link_codes',
   CASINO_CFG: 'casino_config',
   CASINO_TABLES: 'casino_tables',
+  CASINO_HEARTBEATS: 'casino_heartbeats',
   CASINO_LOGS: 'casino_logs'
 };
 window._CC = CC;
@@ -161,44 +162,94 @@ function subscribeCasinoConfig() {
   if (CASINO.unsubs.cfg) { try { CASINO.unsubs.cfg(); } catch {} }
   CASINO.unsubs.cfg = db.collection(CC.CASINO_CFG).doc('main').onSnapshot(snap => {
     const cfg = snap.exists ? snap.data() : { is_open: true };
+    const wasOpen = CASINO.isOpen;
+    const wasLoaded = CASINO.configLoaded;
     CASINO.isOpen = cfg.is_open !== false;
     CASINO.config = cfg;
     CASINO.configLoaded = true;
     updateStatusBanner();
     evaluateAccess();
+    // Détection transition true → false : forcer la fermeture côté client
+    // (refund des mises en cours + reset de la table par le premier client actif).
+    if (wasLoaded && wasOpen && !CASINO.isOpen) {
+      onCasinoClosing();
+    }
   }, err => { window._dbg?.warn('[casino-cfg]', err?.message); CASINO.configLoaded = true; evaluateAccess(); });
 }
+
+// Appelé quand le casino passe ouvert → fermé.
+// Chaque client en jeu rembourse ses mises et quitte sa place. Le premier à
+// répondre remet la table en état vierge (transaction idempotente).
+function onCasinoClosing() {
+  try { showToast('Casino fermé — remboursement des mises en cours…', 'info', 4000); } catch {}
+  try { window._rlForceClose?.(); } catch (e) { window._dbg?.warn('[rl-close]', e?.message); }
+  try { window._bjForceClose?.(); } catch (e) { window._dbg?.warn('[bj-close]', e?.message); }
+  try { window._pkForceClose?.(); } catch (e) { window._dbg?.warn('[pk-close]', e?.message); }
+}
+window._onCasinoClosing = onCasinoClosing;
 
 function updateStatusBanner() {
   const bn = document.getElementById('casino-status-banner');
   const lbl = document.getElementById('cs-label');
+  const cfg = CASINO.config || {};
+  const adminOnly = cfg.admin_only === true;
   bn.style.display = 'inline-flex';
-  if (CASINO.isOpen) {
-    bn.className = 'casino-status-banner open';
-    lbl.textContent = 'CASINO OUVERT';
-  } else {
+  if (!CASINO.isOpen) {
     bn.className = 'casino-status-banner closed';
     lbl.textContent = 'CASINO FERMÉ';
+  } else if (adminOnly) {
+    bn.className = 'casino-status-banner maintenance';
+    lbl.textContent = '🛠 MAINTENANCE · ADMINS UNIQUEMENT';
+  } else {
+    bn.className = 'casino-status-banner open';
+    lbl.textContent = 'CASINO OUVERT';
   }
 }
+
+function isCasinoAdmin() {
+  const cfg = CASINO.config || {};
+  const list = Array.isArray(cfg.admin_discord_ids) ? cfg.admin_discord_ids : [];
+  // Comparaison en string — CASINO.uid est déjà stringifié au login
+  return list.map(String).includes(String(CASINO.uid));
+}
+window._isCasinoAdmin = isCasinoAdmin;
 
 function evaluateAccess() {
   if (!CASINO.uid) return;
   const main = document.getElementById('casino-main');
   const closed = document.getElementById('casino-closed');
+  const closedLabel = document.getElementById('cc-reason');
   // Wait for config to load before deciding open/closed (avoids flash)
   if (!CASINO.configLoaded) {
     main.classList.remove('active');
     closed.classList.remove('active');
     return;
   }
-  if (CASINO.isOpen) {
-    main.classList.add('active');
-    closed.classList.remove('active');
-  } else {
+
+  // Ordre d'évaluation :
+  // 1) Si casino explicitement fermé → écran "fermé" pour tout le monde
+  //    (les admins casino bypassent pour pouvoir tester au calme)
+  // 2) Sinon, si admin_only et je ne suis pas admin → écran fermé avec
+  //    raison "maintenance"
+  // 3) Sinon → accès normal
+  const cfg = CASINO.config || {};
+  const adminOnly = cfg.admin_only === true;
+  const amAdmin = isCasinoAdmin();
+
+  if (!CASINO.isOpen && !amAdmin) {
     main.classList.remove('active');
     closed.classList.add('active');
+    if (closedLabel) closedLabel.textContent = '🎰 Le casino est temporairement fermé.';
+    return;
   }
+  if (adminOnly && !amAdmin) {
+    main.classList.remove('active');
+    closed.classList.add('active');
+    if (closedLabel) closedLabel.textContent = '🛠 Casino en maintenance — accès réservé aux admins.';
+    return;
+  }
+  main.classList.add('active');
+  closed.classList.remove('active');
 }
 
 async function loadPlayer() {
@@ -365,9 +416,19 @@ async function debit(currency, amount) {
       const snap = await tx.get(ref);
       const data = snap.exists ? snap.data() : { personal: {} };
       const personal = data.personal || {};
-      const cur = Number(personal[currency] || 0);
-      if (cur < amount) throw Object.assign(new Error('Solde insuffisant'), { _u: true });
-      const newPersonal = { ...personal, [currency]: cur - amount };
+      // Conversion automatique : puise dans les paliers supérieurs/inférieurs si besoin.
+      const K = window.JKanite;
+      if (!K) {
+        const cur = Number(personal[currency] || 0);
+        if (cur < amount) throw Object.assign(new Error('Solde insuffisant'), { _u: true });
+        tx.set(ref, { personal: { ...personal, [currency]: cur - amount }, family: data.family || {}, royal: data.royal || {} }, { merge: true });
+        return;
+      }
+      const total = K.totalInBronze(personal);
+      const cost  = K.priceInBronze({ [currency]: amount });
+      if (total < cost) throw Object.assign(new Error('Solde insuffisant'), { _u: true });
+      const newPersonal = K.deductWithAutoConversion(personal, { [currency]: amount });
+      if (!newPersonal) throw Object.assign(new Error('Conversion impossible'), { _u: true });
       tx.set(ref, { personal: newPersonal, family: data.family || {}, royal: data.royal || {} }, { merge: true });
     });
   }
@@ -395,8 +456,11 @@ async function credit(currency, amount) {
       const snap = await tx.get(ref);
       const data = snap.exists ? snap.data() : { personal: {} };
       const personal = data.personal || {};
-      const cur = Number(personal[currency] || 0);
-      const newPersonal = { ...personal, [currency]: cur + amount };
+      // Crédit + compactage vers le haut (100 bronze → 1 silver, etc.)
+      const K = window.JKanite;
+      const newPersonal = K
+        ? K.addWithAutoConvertUp(personal, currency, amount)
+        : { ...personal, [currency]: Number(personal[currency] || 0) + amount };
       tx.set(ref, { personal: newPersonal, family: data.family || {}, royal: data.royal || {} }, { merge: true });
     });
   }

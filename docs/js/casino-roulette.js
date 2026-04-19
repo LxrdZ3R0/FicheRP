@@ -13,10 +13,16 @@ const BETTING_MS = 30000;
 const SPIN_MS    = 8000;
 const RESOLVE_MS = 5000;
 
-const TABLE_ID = 'roulette_main'; // shared global table
-const tableRef = () => db.collection(CC.CASINO_TABLES).doc(TABLE_ID);
+// Double tables : une table par mode (normal / prime) — séparation stricte
+// des joueurs et des mises. ID = 'roulette_main_normal' ou 'roulette_main_prime'.
+const TABLE_ID_BASE = 'roulette_main';
+const tableId = () => TABLE_ID_BASE + '_' + (window.CASINO?.mode || 'normal');
+const tableRef = () => db.collection(CC.CASINO_TABLES).doc(tableId());
+const heartbeatRef = () => db.collection(CC.CASINO_HEARTBEATS).doc(tableId());
 
 let unsubTable = null;
+let unsubHeartbeat = null;
+let heartbeat = null; // { host_uid, ping } — mis à jour hors render (anti-flash)
 let state = null;
 let localChip = 5;
 let localBets = {}; // { betKey: amount } — not yet committed
@@ -26,13 +32,34 @@ let initialized = false;
 
 /* ── Bet types ─────────────────────────────────────────────────────────
    betKey format:
-     'n:<num>'    straight (35:1)
+     'n:<num>'       straight (35:1)
+     's:<a>-<b>'     split/cheval — 2 num adjacents (17:1)
+     't:<low>'       street/transversale — 3 num d'une ligne (11:1)
+     'q:<low>'       corner/carré — 4 num en carré (8:1)
+     'x:<low>'       sixain/transversale double — 6 num (5:1)
      'red','black','even','odd','low','high'  (1:1)
      'd:1','d:2','d:3'  dozen (2:1)
      'c:1','c:2','c:3'  column (2:1)
    ────────────────────────────────────────────────────────────────────── */
 function payoutMultiplier(betKey, winNum) {
   if (betKey.startsWith('n:')) return Number(betKey.slice(2)) === winNum ? 35 : -1;
+  if (betKey.startsWith('s:')) {
+    const [a, b] = betKey.slice(2).split('-').map(Number);
+    return (winNum === a || winNum === b) ? 17 : -1;
+  }
+  if (betKey.startsWith('t:')) {
+    const lo = Number(betKey.slice(2));
+    return (winNum >= lo && winNum <= lo + 2) ? 11 : -1;
+  }
+  if (betKey.startsWith('q:')) {
+    const lo = Number(betKey.slice(2));
+    // Corner = {lo, lo+1, lo+3, lo+4}
+    return (winNum === lo || winNum === lo + 1 || winNum === lo + 3 || winNum === lo + 4) ? 8 : -1;
+  }
+  if (betKey.startsWith('x:')) {
+    const lo = Number(betKey.slice(2));
+    return (winNum >= lo && winNum <= lo + 5) ? 5 : -1;
+  }
   if (winNum === 0) return -1; // 0 loses all outside bets
   const red = RED_NUMS.has(winNum);
   switch (betKey) {
@@ -67,11 +94,39 @@ window._rlInit = function init() {
   drawWheel(0);
   subscribeTable();
   document.getElementById('rl-clear').onclick = clearLocalBets;
+  // Tick local (sans Firestore) pour le timer — maintenant que le heartbeat
+  // n'arrose plus la table, il faut rafraîchir l'affichage du compte à rebours.
+  if (!window._rlLocalTick) {
+    window._rlLocalTick = setInterval(renderPhaseTimer, 250);
+  }
 };
 
+function renderPhaseTimer() {
+  if (!state) return;
+  const timerEl = document.getElementById('rl-timer');
+  if (!timerEl) return;
+  const secLeft = Math.max(0, Math.ceil(((state.phase_end || 0) - Date.now()) / 1000));
+  timerEl.textContent = secLeft;
+  // Met à jour la barre de progression si présente (ajoutée au sprint E)
+  const barEl = document.getElementById('rl-phase-bar');
+  if (barEl) {
+    const dur = Math.max(1, (state.phase_end || 0) - (state.phase_started || 0));
+    const pct = 100 - Math.max(0, Math.min(100, ((state.phase_end - Date.now()) / dur) * 100));
+    barEl.style.width = pct + '%';
+  }
+}
+
 window._rlOnModeChange = function () {
-  // Clear local uncommitted bets when mode switches
+  // Re-abonnement à la table du mode courant (normal ↔ prime).
+  // On annule les listeners, on purge l'état local, puis on reconnecte.
   localBets = {};
+  if (unsubTable) { try { unsubTable(); } catch {} ; unsubTable = null; }
+  if (unsubHeartbeat) { try { unsubHeartbeat(); } catch {} ; unsubHeartbeat = null; }
+  if (hostTimer) { clearInterval(hostTimer); hostTimer = null; }
+  heartbeat = null;
+  state = null;
+  // Si déjà initialisé (tab roulette déjà ouvert) → réabonne tout de suite.
+  if (initialized) subscribeTable();
   renderLocalBets();
 };
 
@@ -86,14 +141,77 @@ function buildBoard() {
 
   // Numbers 1-36 in 3 rows × 12 columns (columns = bets c:1 top, c:2 mid, c:3 bottom)
   // Classic layout: top row = 3,6,9,...,36 (c:3); mid = 2,5,8,...,35 (c:2); bottom = 1,4,...,34 (c:1)
+  // numAt(col, row) : col 1..12, row 0..2
+  const numAt = (col, row) => col * 3 - row;
   for (let col = 1; col <= 12; col++) {
     for (let row = 0; row < 3; row++) {
-      const num = col * 3 - row; // row 0 → 3,6,9... row 1 → 2,5,8... row 2 → 1,4,7...
+      const num = numAt(col, row);
       const color = RED_NUMS.has(num) ? 'red' : 'black';
       const c = cell(color, String(num), { gridRow: (row + 1) + ' / span 1', gridColumn: (col + 1) + ' / span 1' });
       c.dataset.bet = 'n:' + num;
       board.appendChild(c);
     }
+  }
+
+  // ── Inter-cell markers (sprint F) ───────────────────────────────────
+  // Split (cheval) vertical — entre 2 numéros de la même colonne, lignes adjacentes
+  for (let col = 1; col <= 12; col++) {
+    for (let row = 0; row < 2; row++) {
+      const a = numAt(col, row + 1); // plus petit en bas
+      const b = numAt(col, row);     // plus grand en haut
+      const lo = Math.min(a, b), hi = Math.max(a, b);
+      const m = marker('split-v', `s:${lo}-${hi}`, `Cheval ${lo}/${hi} · 17:1`, {
+        gridRow: (row + 1) + ' / span 2',
+        gridColumn: (col + 1) + ' / span 1'
+      });
+      board.appendChild(m);
+    }
+  }
+  // Split (cheval) horizontal — entre 2 colonnes adjacentes, même ligne
+  for (let col = 1; col < 12; col++) {
+    for (let row = 0; row < 3; row++) {
+      const a = numAt(col, row);
+      const b = numAt(col + 1, row);
+      const lo = Math.min(a, b), hi = Math.max(a, b);
+      const m = marker('split-h', `s:${lo}-${hi}`, `Cheval ${lo}/${hi} · 17:1`, {
+        gridRow: (row + 1) + ' / span 1',
+        gridColumn: (col + 1) + ' / span 2'
+      });
+      board.appendChild(m);
+    }
+  }
+  // Corner (carré) — intersection 2×2
+  for (let col = 1; col < 12; col++) {
+    for (let row = 0; row < 2; row++) {
+      // 4 numéros : (col,row+1) en bas-gauche, (col+1,row+1) bas-droite,
+      // (col,row) haut-gauche, (col+1,row) haut-droite
+      const nums = [numAt(col, row + 1), numAt(col, row), numAt(col + 1, row + 1), numAt(col + 1, row)];
+      const lo = Math.min(...nums);
+      const m = marker('corner', `q:${lo}`, `Carré ${lo}/${lo+1}/${lo+3}/${lo+4} · 8:1`, {
+        gridRow: (row + 1) + ' / span 2',
+        gridColumn: (col + 1) + ' / span 2'
+      });
+      board.appendChild(m);
+    }
+  }
+  // Street (transversale) — 1 ligne de 3 numéros = 1 colonne visuelle.
+  // Marker placé sous la ligne basse (entre les numéros et les douzaines).
+  for (let col = 1; col <= 12; col++) {
+    const lo = numAt(col, 2); // row 2 = 1,4,7,…,34 (le plus bas)
+    const m = marker('street', `t:${lo}`, `Transversale ${lo}/${lo+1}/${lo+2} · 11:1`, {
+      gridRow: '3 / span 2', // bord entre ligne 3 (bas des numéros) et ligne 4 (douzaines)
+      gridColumn: (col + 1) + ' / span 1'
+    });
+    board.appendChild(m);
+  }
+  // Sixain (transversale double) — 2 colonnes visuelles adjacentes (6 numéros)
+  for (let col = 1; col < 12; col++) {
+    const lo = numAt(col, 2);
+    const m = marker('sixain', `x:${lo}`, `Sixain ${lo}→${lo+5} · 5:1`, {
+      gridRow: '3 / span 2',
+      gridColumn: (col + 1) + ' / span 2'
+    });
+    board.appendChild(m);
   }
   // Columns (right side)
   for (let i = 0; i < 3; i++) {
@@ -124,9 +242,9 @@ function buildBoard() {
     board.appendChild(c);
   });
 
-  // Delegate click
+  // Delegate click (cells + markers inter-cellules)
   board.onclick = (e) => {
-    const c = e.target.closest('.rl-cell');
+    const c = e.target.closest('.rl-cell, .rl-mark');
     if (!c || !c.dataset.bet) return;
     addLocalBet(c.dataset.bet);
   };
@@ -135,6 +253,16 @@ function cell(color, text, grid) {
   const d = document.createElement('div');
   d.className = 'rl-cell ' + color;
   d.textContent = text;
+  if (grid) Object.assign(d.style, grid);
+  return d;
+}
+// Markers inter-cellules (split/corner/street/sixain). Ils partagent data-bet
+// avec les cellules, donc le même clic + renderLocalBets() fonctionne.
+function marker(kind, betKey, title, grid) {
+  const d = document.createElement('div');
+  d.className = 'rl-mark rl-mark-' + kind;
+  d.dataset.bet = betKey;
+  d.title = title;
   if (grid) Object.assign(d.style, grid);
   return d;
 }
@@ -189,9 +317,10 @@ function renderLocalBets() {
   });
 
   // Clear existing stacks
-  document.querySelectorAll('.rl-cell .chip-stack').forEach(e => e.remove());
+  document.querySelectorAll('.rl-cell .chip-stack, .rl-mark .chip-stack').forEach(e => e.remove());
   chips.forEach((amount, betKey) => {
-    const cell = document.querySelector('.rl-cell[data-bet="' + CSS.escape(betKey) + '"]');
+    const sel = '.rl-cell[data-bet="' + CSS.escape(betKey) + '"], .rl-mark[data-bet="' + CSS.escape(betKey) + '"]';
+    const cell = document.querySelector(sel);
     if (cell) {
       const s = document.createElement('span');
       s.className = 'chip-stack';
@@ -256,18 +385,26 @@ async function subscribeTable() {
     renderState();
     checkHost();
   });
+  // Heartbeat séparé : mise à jour toutes les secondes côté host, mais
+  // n'appelle PAS renderState. Sert uniquement à l'élection / failover.
+  if (unsubHeartbeat) { try { unsubHeartbeat(); } catch {} }
+  unsubHeartbeat = heartbeatRef().onSnapshot(snap => {
+    heartbeat = snap.exists ? snap.data() : null;
+    checkHost();
+  });
 }
 
 async function ensureTable() {
   const s = await tableRef().get();
   if (s.exists) return;
+  const mode = window.CASINO?.mode || 'normal';
   await tableRef().set({
     game: 'roulette',
     phase: 'betting',
     phase_started: Date.now(),
     phase_end: Date.now() + BETTING_MS,
-    currency: 'silver_kanite', // default — first host determines
-    mode: 'normal',
+    currency: mode === 'prime' ? 'navarites' : 'silver_kanite',
+    mode,
     bets: {},
     result: null,
     history: [],
@@ -276,25 +413,32 @@ async function ensureTable() {
   });
 }
 
-/* ── Host system: first active bettor becomes host; heartbeat every 2s ── */
+/* ── Host system: heartbeat dans sous-doc pour ne pas déclencher de render ── */
+function hostPing() {
+  return (heartbeat && heartbeat.host_uid === state?.host) ? (heartbeat.ping || 0) : (state?.host_ping || 0);
+}
 function checkHost() {
   if (!state) return;
   const now = Date.now();
-  const isHost = state.host === CASINO.uid && (now - (state.host_ping || 0) < 7000);
-  const hostStale = !state.host || (now - (state.host_ping || 0) > 7000);
+  const ping = hostPing();
+  const isHost = state.host === CASINO.uid && (now - ping < 7000);
+  const hostStale = !state.host || (now - ping > 7000);
 
   // Become host if nobody is active
   if (hostStale) {
-    // Only elect me if I have bets or if nobody else has bets (to avoid races, random small delay)
     setTimeout(async () => {
       try {
         await db.runTransaction(async tx => {
           const s = await tx.get(tableRef());
           const d = s.data();
           if (!d) return;
-          if (d.host && (Date.now() - (d.host_ping || 0) < 7000)) return;
-          tx.update(tableRef(), { host: CASINO.uid, host_ping: Date.now() });
+          // Re-check via heartbeat si dispo
+          const livePing = (heartbeat && heartbeat.host_uid === d.host) ? (heartbeat.ping || 0) : (d.host_ping || 0);
+          if (d.host && (Date.now() - livePing < 7000)) return;
+          tx.update(tableRef(), { host: CASINO.uid });
         });
+        // Premier ping immédiat
+        try { heartbeatRef().set({ host_uid: CASINO.uid, ping: Date.now() }); } catch {}
       } catch {}
     }, Math.random() * 500);
   }
@@ -312,8 +456,12 @@ function checkHost() {
 async function hostTick() {
   if (!state) return;
   const now = Date.now();
-  // Heartbeat
-  try { tableRef().update({ host_ping: now }); } catch {}
+  // Heartbeat dans sous-doc : aucun snapshot sur la table principale
+  try { heartbeatRef().set({ host_uid: CASINO.uid, ping: now }); } catch {}
+
+  // Casino fermé : le host ne fait plus avancer les phases — la table est gelée
+  // en l'état jusqu'à réouverture (ou reset admin).
+  if (window.CASINO?.isOpen === false) return;
 
   if (state.phase === 'betting' && now >= state.phase_end) {
     // Move to spinning
@@ -569,5 +717,63 @@ setInterval(() => {
     if (el) el.textContent = secLeft;
   }
 }, 500);
+
+/* ── Force close (casino fermé) ──────────────────────────────────────
+   Rembourse mes mises committed, nettoie mes bets locaux, puis tente un
+   reset transactionnel de la table (premier client qui passe gagne). */
+async function forceClose() {
+  // 1) Nettoyer mes mises locales non committées
+  localBets = {};
+  renderLocalBets();
+
+  // 2) Rembourser mes mises committed dans la table courante
+  if (state && state.bets && state.bets[CASINO.uid]) {
+    const myBets = state.bets[CASINO.uid];
+    const refund = Number(myBets.total || 0);
+    const currency = state.currency || 'silver_kanite';
+    if (refund > 0) {
+      try {
+        await window._credit(currency, refund);
+        showToast('Mises remboursées : ' + window._fmtNum(refund) + ' ' + window._currencyLabel(currency), 'info', 4000);
+      } catch (e) { window._dbg?.warn('[rl-refund]', e?.message); }
+    }
+    // 3) Retirer mes bets de la table
+    try {
+      await db.runTransaction(async tx => {
+        const s = await tx.get(tableRef());
+        if (!s.exists) return;
+        const d = s.data();
+        const bets = { ...(d.bets || {}) };
+        delete bets[CASINO.uid];
+        tx.update(tableRef(), { bets });
+      });
+    } catch (e) { window._dbg?.warn('[rl-clear-bet]', e?.message); }
+  }
+
+  // 4) Reset table (premier client qui passe efface tout — idempotent via phase_started)
+  try {
+    await db.runTransaction(async tx => {
+      const s = await tx.get(tableRef());
+      if (!s.exists) return;
+      const d = s.data();
+      // Si le reset a déjà été fait (bets vide, result null, phase betting), on skip
+      const alreadyReset = d.phase === 'betting'
+        && (!d.bets || !Object.keys(d.bets).length)
+        && !d.result;
+      if (alreadyReset) return;
+      const now = Date.now();
+      tx.update(tableRef(), {
+        phase: 'betting',
+        phase_started: now,
+        phase_end: now + BETTING_MS,
+        bets: {},
+        result: null,
+        payouts: null,
+        host: null
+      });
+    });
+  } catch (e) { window._dbg?.warn('[rl-reset]', e?.message); }
+}
+window._rlForceClose = forceClose;
 
 })();

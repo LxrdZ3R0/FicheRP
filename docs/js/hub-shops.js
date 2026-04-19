@@ -720,93 +720,16 @@ function renderUshop(){
 
 // ═══ AUTO-CONVERSION CURRENCY SYSTEM ═══
 // Hierarchy: bronze_kanite < silver_kanite < gold_kanite < platinum_kanite
-// Each tier = 100 of the previous tier
-const CURRENCY_ORDER=['bronze_kanite','silver_kanite','gold_kanite','platinum_kanite'];
-const CURRENCY_RATE=100; // 1 silver = 100 bronze, etc.
+// Chaque palier vaut 100 du précédent.
+// Logique factorisée dans js/kanite-wallet.js (window.JKanite) — partagée
+// avec casino-core. Aliases locaux conservés pour compat avec le reste du fichier.
+const CURRENCY_ORDER = (window.JKanite && window.JKanite.ORDER) || ['bronze_kanite','silver_kanite','gold_kanite','platinum_kanite'];
+const CURRENCY_RATE  = (window.JKanite && window.JKanite.RATE)  || 100;
 
-function totalInBronze(personal){
-  let total=0;
-  CURRENCY_ORDER.forEach((c,i)=>{total+=(personal[c]||0)*Math.pow(CURRENCY_RATE,i);});
-  return total;
-}
-
-function priceInBronze(price){
-  let total=0;
-  Object.entries(price).forEach(([c,amt])=>{
-    const idx=CURRENCY_ORDER.indexOf(c);
-    if(idx>=0) total+=amt*Math.pow(CURRENCY_RATE,idx);
-    else total+=amt; // unknown currency, treat as bronze
-  });
-  return total;
-}
-
-// Compress a wallet UP: 100 bronze → 1 silver, etc. Mutates a copy and returns it.
-function autoConvertUp(personal){
-  const w={};
-  CURRENCY_ORDER.forEach(c=>{w[c]=Math.max(0,Math.floor(personal[c]||0));});
-  for(let i=0;i<CURRENCY_ORDER.length-1;i++){
-    const cur=CURRENCY_ORDER[i];
-    const next=CURRENCY_ORDER[i+1];
-    if(w[cur]>=CURRENCY_RATE){
-      const carry=Math.floor(w[cur]/CURRENCY_RATE);
-      w[cur]-=carry*CURRENCY_RATE;
-      w[next]+=carry;
-    }
-  }
-  return w;
-}
-
-function deductWithAutoConversion(personal,price){
-  // Convert everything to bronze, check, then redistribute
-  const wallet={};
-  CURRENCY_ORDER.forEach(c=>{wallet[c]=personal[c]||0;});
-  
-  // For each currency in the price, try to pay directly, then auto-convert
-  for(const[cur,amt] of Object.entries(price)){
-    let remaining=amt;
-    const idx=CURRENCY_ORDER.indexOf(cur);
-    if(idx<0) continue;
-    
-    // Try to pay with same currency first
-    const directPay=Math.min(wallet[cur],remaining);
-    wallet[cur]-=directPay;
-    remaining-=directPay;
-    
-    if(remaining<=0) continue;
-    
-    // Auto-convert from higher currencies (break down)
-    for(let hi=idx+1;hi<CURRENCY_ORDER.length&&remaining>0;hi++){
-      const hiCur=CURRENCY_ORDER[hi];
-      const rate=Math.pow(CURRENCY_RATE,hi-idx);
-      if(wallet[hiCur]>0){
-        // Break one higher currency unit into lower
-        const neededHi=Math.ceil(remaining/rate);
-        const useHi=Math.min(wallet[hiCur],neededHi);
-        wallet[hiCur]-=useHi;
-        const change=useHi*rate-remaining;
-        remaining=0;
-        // Give change back in the target currency
-        wallet[cur]+=(change>0?change:0);
-      }
-    }
-    
-    if(remaining>0){
-      // Try converting UP from lower currencies
-      for(let lo=idx-1;lo>=0&&remaining>0;lo--){
-        const loCur=CURRENCY_ORDER[lo];
-        const rate=Math.pow(CURRENCY_RATE,idx-lo);
-        const loNeeded=remaining*rate;
-        const loUse=Math.min(wallet[loCur],loNeeded);
-        const paidInTarget=Math.floor(loUse/rate);
-        wallet[loCur]-=paidInTarget*rate;
-        remaining-=paidInTarget;
-      }
-    }
-    
-    if(remaining>0) return null; // Can't afford
-  }
-  return wallet;
-}
+const totalInBronze            = (p)    => window.JKanite.totalInBronze(p);
+const priceInBronze            = (p)    => window.JKanite.priceInBronze(p);
+const autoConvertUp            = (p)    => window.JKanite.autoConvertUp(p);
+const deductWithAutoConversion = (p,pr) => window.JKanite.deductWithAutoConversion(p, pr);
 
 async function buyFromUshop(itemId){
   if(!UID||!CHAR_ID){showEquipToast('❌ Connecte-toi',true);return;}

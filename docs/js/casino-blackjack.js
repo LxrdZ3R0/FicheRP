@@ -6,8 +6,11 @@
 
 (function () {
 
-const TABLE_ID = 'blackjack_main';
-const tableRef = () => db.collection(CC.CASINO_TABLES).doc(TABLE_ID);
+// Double tables : séparation normal / prime
+const TABLE_ID_BASE = 'blackjack_main';
+const tableId = () => TABLE_ID_BASE + '_' + (window.CASINO?.mode || 'normal');
+const tableRef = () => db.collection(CC.CASINO_TABLES).doc(tableId());
+const heartbeatRef = () => db.collection(CC.CASINO_HEARTBEATS).doc(tableId());
 
 const BETTING_MS   = 25000;
 const DEAL_MS      = 1500;
@@ -16,11 +19,16 @@ const RESOLVE_MS   = 6000;
 const SEATS        = 6;
 
 let unsubTable = null;
+let unsubHeartbeat = null;
+let heartbeat = null;
 let state = null;
+let lastState = null; // pour le diff render (anti-flash)
 let initialized = false;
 let hostTimer = null;
+let localTimerTimer = null;
 let mySeat = null; // seat index
 let lastClaimedRound = null;
+let _prevMyTurn = false; // détection transition "à toi de jouer"
 
 /* ── Init ── */
 window._bjInit = function () {
@@ -29,20 +37,51 @@ window._bjInit = function () {
   subscribeTable();
   // Load The Fool dealer image (once, cached)
   window._loadDealerImage?.().then(() => { if (state) renderState(); });
+  // Timer tick local — la table principale ne recevant plus de heartbeat,
+  // le compte à rebours n'était plus rafraîchi entre les snapshots.
+  if (!localTimerTimer) localTimerTimer = setInterval(renderPhaseTimer, 250);
 };
 
-window._bjOnModeChange = function () { /* leaves handled by user manual */ };
+function renderPhaseTimer() {
+  if (!state) return;
+  const timerEl = document.getElementById('bj-timer');
+  const barEl = document.getElementById('bj-phase-bar');
+  const endTime = state.phase === 'playing' ? state.turn_end : state.phase_end;
+  const startTime = state.phase === 'playing' ? (state.turn_end - 20000) : state.phase_started;
+  const secLeft = Math.max(0, Math.ceil(((endTime || 0) - Date.now()) / 1000));
+  if (timerEl) timerEl.textContent = secLeft;
+  if (barEl && endTime && startTime) {
+    const dur = Math.max(1, endTime - startTime);
+    const pct = 100 - Math.max(0, Math.min(100, ((endTime - Date.now()) / dur) * 100));
+    barEl.style.width = pct + '%';
+  }
+}
+
+window._bjOnModeChange = function () {
+  // Re-abonnement sur la table du mode courant. L'état local est purgé pour
+  // que le render ne tente pas d'interpréter un state « mélangé ».
+  if (unsubTable) { try { unsubTable(); } catch {} ; unsubTable = null; }
+  if (unsubHeartbeat) { try { unsubHeartbeat(); } catch {} ; unsubHeartbeat = null; }
+  if (hostTimer) { clearInterval(hostTimer); hostTimer = null; }
+  heartbeat = null;
+  state = null;
+  lastState = null;
+  mySeat = null;
+  _prevMyTurn = false;
+  if (initialized) subscribeTable();
+};
 
 async function ensureTable() {
   const s = await tableRef().get();
   if (s.exists) return;
+  const mode = window.CASINO?.mode || 'normal';
   await tableRef().set({
     game: 'blackjack',
     phase: 'betting',
     phase_started: Date.now(),
     phase_end: Date.now() + BETTING_MS,
-    currency: 'silver_kanite',
-    mode: 'normal',
+    currency: mode === 'prime' ? 'navarites' : 'silver_kanite',
+    mode,
     seats: Array(SEATS).fill(null), // { uid, username, avatar, bet, currency, hand, score, status, doubled }
     dealer_hand: [],
     dealer_score: 0,
@@ -68,21 +107,35 @@ async function subscribeTable() {
     mySeat = null;
     (state.seats || []).forEach((s, i) => { if (s && s.uid === CASINO.uid) mySeat = i; });
   });
+  // Sous-doc heartbeat — mise à jour hors-snapshot pour ne pas re-render
+  if (unsubHeartbeat) { try { unsubHeartbeat(); } catch {} }
+  unsubHeartbeat = heartbeatRef().onSnapshot(snap => {
+    heartbeat = snap.exists ? snap.data() : null;
+    checkHost();
+  });
 }
 
 /* ── Host election + loop ── */
+function hostPing() {
+  return (heartbeat && heartbeat.host_uid === state?.host) ? (heartbeat.ping || 0) : (state?.host_ping || 0);
+}
 function checkHost() {
+  if (!state) return;
   const now = Date.now();
-  const hostStale = !state.host || (now - (state.host_ping || 0) > 7000);
+  const ping = hostPing();
+  const hostStale = !state.host || (now - ping > 7000);
   if (hostStale) {
     setTimeout(async () => {
       try {
         await db.runTransaction(async tx => {
           const s = await tx.get(tableRef());
           const d = s.data();
-          if (d.host && (Date.now() - (d.host_ping || 0) < 7000)) return;
-          tx.update(tableRef(), { host: CASINO.uid, host_ping: Date.now() });
+          if (!d) return;
+          const livePing = (heartbeat && heartbeat.host_uid === d.host) ? (heartbeat.ping || 0) : (d.host_ping || 0);
+          if (d.host && (Date.now() - livePing < 7000)) return;
+          tx.update(tableRef(), { host: CASINO.uid });
         });
+        try { heartbeatRef().set({ host_uid: CASINO.uid, ping: Date.now() }); } catch {}
       } catch {}
     }, Math.random() * 500);
   }
@@ -96,7 +149,11 @@ function checkHost() {
 async function hostTick() {
   if (!state) return;
   const now = Date.now();
-  try { tableRef().update({ host_ping: now }); } catch {}
+  // Heartbeat dans sous-doc — ne re-render pas la table
+  try { heartbeatRef().set({ host_uid: CASINO.uid, ping: now }); } catch {}
+
+  // Casino fermé : aucune phase ne progresse
+  if (window.CASINO?.isOpen === false) return;
 
   const seatedCount = (state.seats || []).filter(Boolean).length;
   const seatedWithBets = (state.seats || []).filter(s => s && s.bet > 0).length;
@@ -440,12 +497,20 @@ function renderState() {
   const leaveBtn = document.getElementById('bj-leave-btn');
 
   phaseEl.textContent = phaseLabel(state.phase);
+  phaseEl.className = 'bj-phase ' + (state.phase || '');
 
   const endTime =
     state.phase === 'playing' ? state.turn_end :
     state.phase_end;
   const secLeft = Math.max(0, Math.ceil(((endTime || 0) - Date.now()) / 1000));
   timerEl.textContent = secLeft;
+
+  // Détection transition « À toi de jouer » — toast une seule fois par tour
+  const myTurnNow = (state.phase === 'playing' && state.turn_seat === mySeat && mySeat !== null);
+  if (myTurnNow && !_prevMyTurn) {
+    try { showToast('🎯 À toi de jouer !', 'info', 3000); } catch {}
+  }
+  _prevMyTurn = myTurnNow;
 
   sitBtn.style.display = mySeat === null ? '' : 'none';
   leaveBtn.style.display = mySeat !== null ? '' : 'none';
@@ -584,13 +649,58 @@ function escape(s) {
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
-/* ── Timer tick ── */
-setInterval(() => {
-  if (state && document.getElementById('bj-timer')) {
-    const endTime = state.phase === 'playing' ? state.turn_end : state.phase_end;
-    const secLeft = Math.max(0, Math.ceil(((endTime || 0) - Date.now()) / 1000));
-    document.getElementById('bj-timer').textContent = secLeft;
+/* Timer tick global retiré — le setInterval de renderPhaseTimer (250ms) dans _bjInit s'en charge. */
+
+/* ── Force close (casino fermé) ──────────────────────────────────────
+   Rembourse mes mises (si j'étais assis avec un bet) + quitte le siège +
+   reset transactionnel de la table. */
+async function forceClose() {
+  if (!state) return;
+  // 1) Si j'ai un siège avec mise, rembourser
+  let myBet = 0;
+  let myCurrency = state.currency || 'silver_kanite';
+  const seats = state.seats || [];
+  seats.forEach(s => {
+    if (s && s.uid === CASINO.uid) {
+      myBet = Number(s.bet || 0);
+      myCurrency = s.currency || myCurrency;
+    }
+  });
+  if (myBet > 0) {
+    try {
+      await window._credit(myCurrency, myBet);
+      showToast('Mise remboursée : ' + window._fmtNum(myBet) + ' ' + window._currencyLabel(myCurrency), 'info', 4000);
+    } catch (e) { window._dbg?.warn('[bj-refund]', e?.message); }
   }
-}, 500);
+  // 2) Reset table (premier client gagne)
+  try {
+    await db.runTransaction(async tx => {
+      const s = await tx.get(tableRef());
+      if (!s.exists) return;
+      const d = s.data();
+      const seatsEmpty = (d.seats || []).every(x => x === null);
+      const alreadyReset = d.phase === 'betting' && seatsEmpty && !d.payouts;
+      if (alreadyReset) return;
+      const now = Date.now();
+      tx.update(tableRef(), {
+        phase: 'betting',
+        phase_started: now,
+        phase_end: now + BETTING_MS,
+        seats: Array(SEATS).fill(null),
+        dealer_hand: [],
+        dealer_score: 0,
+        dealer_revealed: false,
+        turn_seat: -1,
+        turn_end: 0,
+        deck: [],
+        payouts: null,
+        host: null
+      });
+    });
+  } catch (e) { window._dbg?.warn('[bj-reset]', e?.message); }
+  mySeat = null;
+  _prevMyTurn = false;
+}
+window._bjForceClose = forceClose;
 
 })();
