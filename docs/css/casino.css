@@ -20,6 +20,57 @@
 
 .casino-body { padding-top: 0; }
 
+/* Visibilité conditionnelle selon mode */
+body.mode-prime .normal-only { display: none !important; }
+
+/* ══ NAV — accent gold casino ══ */
+.nav{position:fixed;top:0;left:0;right:0;z-index:1000;padding:0 clamp(1rem,3vw,3rem);height:64px;display:flex;align-items:center;justify-content:space-between;background:rgba(2,5,14,0.95);backdrop-filter:blur(24px) saturate(1.6);border-bottom:1px solid rgba(232,176,74,0.08)}
+.nav::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(232,176,74,0.45),rgba(201,33,43,0.3),rgba(232,176,74,0.25),transparent)}
+.nav-logo{font-family:var(--font-h);font-weight:800;font-size:1rem;letter-spacing:.22em;color:#fff;text-decoration:none;display:flex;align-items:center;gap:10px;position:relative;z-index:1001}
+.nav-logo img{width:32px;height:32px;object-fit:contain;border-radius:4px;box-shadow:0 0 16px rgba(232,176,74,0.3)}
+.nav-links{display:none!important}
+
+/* Burger */
+.burger{display:flex;width:42px;height:42px;background:rgba(232,176,74,0.06);border:1px solid rgba(232,176,74,0.2);border-radius:8px;cursor:pointer;flex-direction:column;align-items:center;justify-content:center;gap:5px;transition:background .3s,border-color .3s,box-shadow .3s;position:relative;z-index:1001;padding:0}
+.burger:hover{border-color:rgba(232,176,74,0.5);background:rgba(232,176,74,0.1);box-shadow:0 0 16px rgba(232,176,74,0.2)}
+.burger-line{display:block;width:18px;height:1.5px;border-radius:2px;background:var(--casino-accent);transition:transform .4s cubic-bezier(0.76,0,0.24,1),opacity .4s cubic-bezier(0.76,0,0.24,1),background .4s cubic-bezier(0.76,0,0.24,1);transform-origin:center}
+.burger.active .burger-line:nth-child(1){transform:translateY(6.5px) rotate(45deg)}
+.burger.active .burger-line:nth-child(2){opacity:0;transform:scaleX(0)}
+.burger.active .burger-line:nth-child(3){transform:translateY(-6.5px) rotate(-45deg)}
+.burger.active{border-color:var(--casino-red);background:rgba(201,33,43,0.12);box-shadow:0 0 20px rgba(201,33,43,0.25)}
+.burger.active .burger-line{background:var(--casino-accent2)}
+
+/* Mobile menu overlay */
+.mobile-menu{position:fixed;top:0;left:0;right:0;bottom:0;z-index:999;display:flex;flex-direction:column;background:rgba(2,7,19,0.97);backdrop-filter:blur(40px);padding:80px 0 40px;opacity:0;visibility:hidden;transition:opacity .4s ease,visibility .4s;overflow-y:auto}
+.mobile-menu.open{opacity:1;visibility:visible}
+.mobile-menu::before{content:'';position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(232,176,74,0.015) 2px,rgba(232,176,74,0.015) 4px);z-index:0}
+.mobile-menu::after{content:'';position:absolute;top:10%;right:-10%;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(201,33,43,0.08),transparent 70%);pointer-events:none;z-index:0}
+.menu-inner{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;padding:0 clamp(2rem,6vw,4rem)}
+.menu-header-label{font-family:var(--font-m);font-size:.48rem;letter-spacing:.5em;color:var(--casino-accent);opacity:.6;margin-bottom:2rem;text-transform:uppercase}
+.menu-link{display:flex;align-items:center;gap:16px;text-decoration:none;padding:16px 0;border-bottom:1px solid rgba(232,176,74,0.06);transform:translateX(-30px);opacity:0;transition:transform .4s cubic-bezier(0.16,1,0.3,1),opacity .4s cubic-bezier(0.16,1,0.3,1)}
+.mobile-menu.open .menu-link{transform:translateX(0);opacity:1}
+.mobile-menu.open .menu-link:nth-child(1){transition-delay:.06s}
+.mobile-menu.open .menu-link:nth-child(2){transition-delay:.10s}
+.mobile-menu.open .menu-link:nth-child(3){transition-delay:.14s}
+.mobile-menu.open .menu-link:nth-child(4){transition-delay:.18s}
+.mobile-menu.open .menu-link:nth-child(5){transition-delay:.22s}
+.mobile-menu.open .menu-link:nth-child(6){transition-delay:.26s}
+.mobile-menu.open .menu-link:nth-child(7){transition-delay:.30s}
+.mobile-menu.open .menu-link:nth-child(8){transition-delay:.34s}
+.mobile-menu.open .menu-link:nth-child(9){transition-delay:.38s}
+.mobile-menu.open .menu-link:nth-child(10){transition-delay:.42s}
+.menu-link-index{font-family:var(--font-m);font-size:.5rem;color:rgba(232,176,74,0.4);min-width:28px;letter-spacing:.1em}
+.menu-link-text{font-family:var(--font-h);font-size:clamp(1.1rem,4vw,1.6rem);font-weight:700;letter-spacing:.12em;color:var(--text2);transition:color .3s;text-transform:uppercase}
+.menu-link:hover .menu-link-text,.menu-link.active .menu-link-text{color:#fff}
+.menu-link.active .menu-link-text{background:linear-gradient(90deg,var(--casino-accent),var(--casino-accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.menu-link-arrow{margin-left:auto;font-family:var(--font-m);font-size:.7rem;color:rgba(232,176,74,0.25);transition:color .3s,transform .3s}
+.menu-link:hover .menu-link-arrow{color:var(--casino-accent);transform:translateX(4px)}
+.menu-link.active .menu-link-arrow{color:var(--casino-accent2)}
+.menu-link::before{content:'';width:0;height:1px;background:linear-gradient(90deg,var(--casino-accent),transparent);transition:width .4s ease}
+.menu-link:hover::before{width:20px}
+.menu-deco{position:absolute;bottom:15%;left:5%;width:120px;height:120px;opacity:.04;border:1px solid var(--casino-accent);transform:rotate(45deg);z-index:0}
+.menu-deco::before{content:'';position:absolute;inset:12px;border:1px solid var(--casino-red)}
+
 /* ══ HERO ══ */
 .casino-hero {
   position: relative;
@@ -83,6 +134,7 @@
 }
 .casino-status-banner.open { color: var(--green); border-color: rgba(68,255,136,.3); }
 .casino-status-banner.closed { color: var(--red); border-color: rgba(255,71,87,.3); }
+.casino-status-banner.maintenance { color: var(--casino-accent); border-color: rgba(232,176,74,.5); background: rgba(232,176,74,.08); }
 .cs-dot {
   width: 8px; height: 8px; border-radius: 50%;
   background: currentColor;
@@ -90,18 +142,6 @@
   animation: cs-pulse 2s infinite;
 }
 @keyframes cs-pulse { 50% { opacity: .4; } }
-
-/* ══ SCROLL PROGRESS BAR ══ */
-.scroll-line {
-  position: fixed; top: 0; left: 0;
-  width: 0%; height: 2px;
-  background: linear-gradient(90deg, var(--casino-accent2), var(--casino-accent), var(--casino-red));
-  z-index: 10001;
-  box-shadow: 0 0 16px var(--gold-glow), 0 0 40px rgba(232,176,74,.2);
-}
-
-/* ══ SECTION HEAD — neutralise l'anim "reveal" globale (jaharta.css) ══ */
-.section-head { opacity: 1; transform: none; margin-bottom: 32px; }
 
 /* ══ WRAP ══ */
 .casino-wrap {
@@ -723,7 +763,8 @@
 .rl-cell.green { background: #1c9c42; }
 .rl-cell.split { font-size: .6rem; letter-spacing: .15em; background: var(--casino-felt-2); border: 1px solid rgba(232,176,74,.2); }
 .rl-cell:hover { filter: brightness(1.3); box-shadow: 0 0 10px var(--gold-glow); }
-.rl-cell .chip-stack {
+.rl-cell .chip-stack,
+.rl-mark .chip-stack {
   position: absolute;
   top: 50%; left: 50%;
   transform: translate(-50%, -50%);
@@ -739,7 +780,42 @@
   justify-content: center;
   box-shadow: 0 0 0 2px #fff, 0 3px 6px rgba(0,0,0,.5);
   pointer-events: none;
+  z-index: 4;
 }
+
+/* ══ MARKERS INTER-CELLULES (sprint F : split/corner/street/sixain) ══
+   Chaque marker couvre un span grid de 2 cellules et se centre pile sur le joint.
+   `pointer-events: auto` pour récupérer le clic ; hover visible ; z-index pour
+   passer au-dessus des bords des cellules voisines. */
+.rl-mark {
+  position: relative;
+  z-index: 2;
+  justify-self: center;
+  align-self: center;
+  cursor: pointer;
+  border-radius: 999px;
+  background: rgba(232,176,74,.0);
+  border: 1.5px dashed rgba(232,176,74,.35);
+  transition: background 140ms ease, transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
+}
+.rl-mark:hover {
+  background: rgba(232,176,74,.55);
+  border-color: var(--casino-accent);
+  box-shadow: 0 0 14px rgba(232,176,74,.7);
+  transform: scale(1.15);
+  z-index: 5;
+}
+/* Split vertical (entre 2 lignes d'une même colonne) = un ovale horizontal */
+.rl-mark-split-v { width: 70%; height: 14px; }
+/* Split horizontal (entre 2 colonnes d'une même ligne) = un ovale vertical */
+.rl-mark-split-h { width: 14px; height: 70%; }
+/* Corner (carré 2×2) = petit cercle centré sur l'intersection */
+.rl-mark-corner  { width: 16px; height: 16px; }
+/* Street (3 num) = barre fine horizontale sur le bord numéros/douzaines */
+.rl-mark-street  { width: 80%; height: 10px; border-radius: 4px; }
+/* Sixain (6 num) = barre plus large */
+.rl-mark-sixain  { width: 85%; height: 10px; border-radius: 4px; background: rgba(0,229,255,.0); border-color: rgba(0,229,255,.4); }
+.rl-mark-sixain:hover { background: rgba(0,229,255,.55); border-color: var(--cyan); box-shadow: 0 0 14px rgba(0,229,255,.7); }
 
 .rl-players {
   padding-top: 1rem;
@@ -1507,6 +1583,85 @@
 /* Bigger seat slots on wide tables */
 .bj-seats { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1.1rem; }
 .pk-seats { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.1rem; }
+
+/* ══ PHASE PROGRESS BAR (sprint E — phases claires) ══ */
+.phase-bar-wrap {
+  width: 100%;
+  max-width: 420px;
+  height: 6px;
+  background: rgba(232,176,74,.10);
+  border: 1px solid rgba(232,176,74,.18);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 8px;
+  position: relative;
+}
+.phase-bar-wrap.topbar-bar {
+  flex: 1 1 100%;
+  margin-top: 4px;
+  max-width: none;
+}
+.phase-bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--casino-accent), #ffd97a);
+  box-shadow: 0 0 10px rgba(232,176,74,.5);
+  transition: width 120ms linear, background 300ms ease;
+}
+.rl-phase-label.spinning ~ .phase-bar-wrap .phase-bar,
+.bj-phase.playing ~ .phase-bar-wrap .phase-bar,
+.pk-phase.playing ~ .phase-bar-wrap .phase-bar {
+  background: linear-gradient(90deg, #ff4757, #ffb347);
+}
+
+/* ══ "À TOI DE JOUER" — halo renforcé sur mon siège actif ══ */
+@keyframes my-turn-pulse {
+  0%, 100% { box-shadow: 0 0 25px rgba(255,214,10,.55), 0 0 45px rgba(255,214,10,.25); }
+  50%      { box-shadow: 0 0 40px rgba(255,214,10,.95), 0 0 70px rgba(255,214,10,.45); }
+}
+.bj-seat.me.active,
+.pk-seat.me.turn {
+  border-color: var(--gold) !important;
+  animation: my-turn-pulse 1s infinite ease-in-out !important;
+  position: relative;
+}
+.bj-seat.me.active::before,
+.pk-seat.me.turn::before {
+  content: "🎯 À TOI DE JOUER";
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(90deg, #ffd60a, #ffb347);
+  color: #1a1208;
+  font-family: var(--font-m);
+  font-size: .62rem;
+  letter-spacing: .2em;
+  font-weight: 900;
+  padding: 4px 12px;
+  border-radius: 10px;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(255,214,10,.5);
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* ══ Phase label explicite (highlight selon phase) ══ */
+.bj-phase, .pk-phase {
+  transition: color 200ms ease, text-shadow 200ms ease;
+}
+.bj-phase.betting, .pk-phase.waiting, .pk-phase.intermission {
+  color: var(--green);
+  text-shadow: 0 0 18px rgba(68,255,136,.4);
+}
+.bj-phase.playing, .pk-phase.preflop, .pk-phase.flop, .pk-phase.turn, .pk-phase.river {
+  color: var(--casino-accent);
+  text-shadow: 0 0 18px rgba(232,176,74,.5);
+}
+.bj-phase.dealer, .pk-phase.showdown, .bj-phase.resolve {
+  color: var(--cyan);
+  text-shadow: 0 0 18px rgba(0,229,255,.4);
+}
 
 /* ══ RESPONSIVE ══ */
 @media (max-width: 1200px) {
