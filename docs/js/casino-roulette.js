@@ -29,6 +29,7 @@ let localBets = {}; // { betKey: amount } — not yet committed
 let spinAnim = null;
 let hostTimer = null;
 let initialized = false;
+let _claimingHost = false;
 
 /* ── Bet types ─────────────────────────────────────────────────────────
    betKey format:
@@ -425,21 +426,24 @@ function checkHost() {
   const hostStale = !state.host || (now - ping > 7000);
 
   // Become host if nobody is active
-  if (hostStale) {
+  if (hostStale && !_claimingHost) {
+    _claimingHost = true;
     setTimeout(async () => {
       try {
         await db.runTransaction(async tx => {
           const s = await tx.get(tableRef());
+          const hb = await tx.get(heartbeatRef());
           const d = s.data();
           if (!d) return;
-          // Re-check via heartbeat si dispo
-          const livePing = (heartbeat && heartbeat.host_uid === d.host) ? (heartbeat.ping || 0) : (d.host_ping || 0);
+          // Re-check via heartbeat frais (lu dans la transaction)
+          const hbData = hb.exists ? hb.data() : null;
+          const livePing = (hbData && hbData.host_uid === d.host) ? (hbData.ping || 0) : (d.host_ping || 0);
           if (d.host && (Date.now() - livePing < 7000)) return;
           tx.update(tableRef(), { host: CASINO.uid });
         });
         // Premier ping immédiat
         try { heartbeatRef().set({ host_uid: CASINO.uid, ping: Date.now() }); } catch {}
-      } catch {}
+      } catch {} finally { _claimingHost = false; }
     }, Math.random() * 500);
   }
 

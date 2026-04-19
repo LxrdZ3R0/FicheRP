@@ -29,6 +29,7 @@ let localTimerTimer = null;
 let mySeat = null; // seat index
 let lastClaimedRound = null;
 let _prevMyTurn = false; // détection transition "à toi de jouer"
+let _claimingHost = false;
 
 /* ── Init ── */
 window._bjInit = function () {
@@ -124,19 +125,22 @@ function checkHost() {
   const now = Date.now();
   const ping = hostPing();
   const hostStale = !state.host || (now - ping > 7000);
-  if (hostStale) {
+  if (hostStale && !_claimingHost) {
+    _claimingHost = true;
     setTimeout(async () => {
       try {
         await db.runTransaction(async tx => {
           const s = await tx.get(tableRef());
+          const hb = await tx.get(heartbeatRef());
           const d = s.data();
           if (!d) return;
-          const livePing = (heartbeat && heartbeat.host_uid === d.host) ? (heartbeat.ping || 0) : (d.host_ping || 0);
+          const hbData = hb.exists ? hb.data() : null;
+          const livePing = (hbData && hbData.host_uid === d.host) ? (hbData.ping || 0) : (d.host_ping || 0);
           if (d.host && (Date.now() - livePing < 7000)) return;
           tx.update(tableRef(), { host: CASINO.uid });
         });
         try { heartbeatRef().set({ host_uid: CASINO.uid, ping: Date.now() }); } catch {}
-      } catch {}
+      } catch {} finally { _claimingHost = false; }
     }, Math.random() * 500);
   }
   if (state.host === CASINO.uid) {
@@ -515,15 +519,19 @@ function renderState() {
   sitBtn.style.display = mySeat === null ? '' : 'none';
   leaveBtn.style.display = mySeat !== null ? '' : 'none';
 
-  // Dealer
+  // Dealer — diff par signature pour ne pas rejouer l'animation .deal-in
   const dh = state.dealer_hand || [];
   const revealed = state.dealer_revealed;
   const dhEl = document.getElementById('bj-dealer-hand');
-  dhEl.innerHTML = '';
-  dh.forEach((c, i) => {
-    const hide = !revealed && i === 1;
-    dhEl.appendChild(buildCard(hide ? null : c));
-  });
+  const dhSig = (revealed ? 'R:' : 'H:') + dh.join(',');
+  if (dhEl.dataset.sig !== dhSig) {
+    dhEl.dataset.sig = dhSig;
+    dhEl.innerHTML = '';
+    dh.forEach((c, i) => {
+      const hide = !revealed && i === 1;
+      dhEl.appendChild(buildCard(hide ? null : c));
+    });
+  }
   document.getElementById('bj-dealer-score').textContent = revealed ? handScore(dh) : '';
 
   // Dealer avatar (The Fool)
@@ -537,38 +545,75 @@ function renderState() {
     }
   }
 
-  // Seats
+  // Seats — diff par sous-section pour ne pas rejouer les animations de cartes
   const seatsEl = document.getElementById('bj-seats');
-  seatsEl.innerHTML = '';
-  (state.seats || []).forEach((s, i) => {
-    const d = document.createElement('div');
+  const seats = state.seats || [];
+  while (seatsEl.children.length < seats.length) seatsEl.appendChild(document.createElement('div'));
+  while (seatsEl.children.length > seats.length) seatsEl.removeChild(seatsEl.lastChild);
+  seats.forEach((s, i) => {
+    const d = seatsEl.children[i];
     if (!s) {
-      d.className = 'bj-seat empty';
-      d.innerHTML = '<div class="seat-empty-label">Siège ' + (i + 1) + '<br><span>vide</span></div>';
-    } else {
-      const meCls = s.uid === CASINO.uid ? ' me' : '';
-      const turnCls = state.turn_seat === i ? ' active' : '';
-      const statusCls = s.status === 'bust' ? ' busted' : (s.status === 'won' ? ' won' : (s.status === 'push' ? ' push' : (s.status === 'lose' ? ' lost' : '')));
-      d.className = 'bj-seat' + meCls + turnCls + statusCls;
-      const handHtml = s.hand.map(c => `<div class="card ${isRed(c) ? 'red-suit' : 'black-suit'}"><span class="card-rank">${rank(c)}</span><span class="card-suit">${suit(c)}</span><span class="card-big-suit">${suit(c)}</span></div>`).join('');
-      const statusLabel = s.status === 'bj' ? 'BLACKJACK' : (s.status === 'bust' ? 'BUST' : (s.status === 'stand' ? 'STAND' : ''));
+      if (d.dataset.mode !== 'empty' || d.dataset.idx !== String(i)) {
+        d.dataset.mode = 'empty';
+        d.dataset.idx = String(i);
+        d.className = 'bj-seat empty';
+        d.innerHTML = '<div class="seat-empty-label">Siège ' + (i + 1) + '<br><span>vide</span></div>';
+      }
+      return;
+    }
+    const meCls = s.uid === CASINO.uid ? ' me' : '';
+    const turnCls = state.turn_seat === i ? ' active' : '';
+    const statusCls = s.status === 'bust' ? ' busted' : (s.status === 'won' ? ' won' : (s.status === 'push' ? ' push' : (s.status === 'lose' ? ' lost' : '')));
+    const className = 'bj-seat' + meCls + turnCls + statusCls;
+    if (d.dataset.mode !== 'occupied') {
+      d.dataset.mode = 'occupied';
+      d.innerHTML = '<div class="bj-seat-hand"></div><div class="bj-seat-score"></div><div class="bj-seat-player"></div><div class="bj-seat-status-wrap"></div>';
+    }
+    if (d.className !== className) d.className = className;
+
+    // Main — ne rebuild que si les cartes changent
+    const handArr = s.hand || [];
+    const handSig = handArr.join(',');
+    const handDiv = d.firstElementChild;
+    if (handDiv.dataset.sig !== handSig) {
+      handDiv.dataset.sig = handSig;
+      handDiv.innerHTML = handArr.map(c => `<div class="card ${isRed(c) ? 'red-suit' : 'black-suit'}"><span class="card-rank">${rank(c)}</span><span class="card-suit">${suit(c)}</span><span class="card-big-suit">${suit(c)}</span></div>`).join('');
+    }
+
+    // Score
+    const scoreSig = handArr.length ? String(s.score) : '';
+    const scoreDiv = handDiv.nextElementSibling;
+    if (scoreDiv.dataset.sig !== scoreSig) {
+      scoreDiv.dataset.sig = scoreSig;
+      scoreDiv.textContent = scoreSig;
+      scoreDiv.style.display = scoreSig ? '' : 'none';
+    }
+
+    // Joueur (avatar + nom + mise)
+    const avatarKey = s.avatar || ('ph:' + ((s.username || '?')[0] || '?'));
+    const playerSig = avatarKey + '|' + (s.username || '') + '|' + (s.bet || 0) + '|' + (s.currency || '');
+    const playerDiv = scoreDiv.nextElementSibling;
+    if (playerDiv.dataset.sig !== playerSig) {
+      playerDiv.dataset.sig = playerSig;
       const avatarHtml = s.avatar
         ? `<img class="seat-avatar" src="${escape(s.avatar)}" alt="" onerror="this.style.display='none'">`
         : `<div class="seat-avatar seat-avatar-ph">${escape((s.username || '?')[0].toUpperCase())}</div>`;
-      d.innerHTML = `
-        <div class="bj-seat-hand">${handHtml}</div>
-        ${s.hand.length ? `<div class="bj-seat-score">${s.score}</div>` : ''}
-        <div class="bj-seat-player">
-          ${avatarHtml}
-          <div class="bj-seat-meta">
-            <div class="bj-seat-name">${escape(s.username || 'Joueur')}</div>
-            <div class="bj-seat-bet">${window._fmtNum(s.bet || 0)} ${currencySymbol(s.currency)}</div>
-          </div>
-        </div>
-        ${statusLabel ? `<div class="bj-seat-status ${s.status}">${statusLabel}</div>` : ''}
-      `;
+      playerDiv.innerHTML = `
+        ${avatarHtml}
+        <div class="bj-seat-meta">
+          <div class="bj-seat-name">${escape(s.username || 'Joueur')}</div>
+          <div class="bj-seat-bet">${window._fmtNum(s.bet || 0)} ${currencySymbol(s.currency)}</div>
+        </div>`;
     }
-    seatsEl.appendChild(d);
+
+    // Statut (bj/bust/stand)
+    const statusLabel = s.status === 'bj' ? 'BLACKJACK' : (s.status === 'bust' ? 'BUST' : (s.status === 'stand' ? 'STAND' : ''));
+    const statusSig = statusLabel ? (s.status + '|' + statusLabel) : '';
+    const statusWrap = playerDiv.nextElementSibling;
+    if (statusWrap.dataset.sig !== statusSig) {
+      statusWrap.dataset.sig = statusSig;
+      statusWrap.innerHTML = statusLabel ? `<div class="bj-seat-status ${s.status}">${statusLabel}</div>` : '';
+    }
   });
 
   // Controls

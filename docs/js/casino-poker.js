@@ -28,6 +28,7 @@ let localTimerTimer = null;
 let mySeat = null;
 let _claimedRound = null;
 let _prevMyTurn = false;
+let _claimingHost = false;
 
 window._pkInit = function () {
   if (initialized) return;
@@ -132,19 +133,22 @@ function checkHost() {
   const now = Date.now();
   const ping = hostPing();
   const hostStale = !state.host || (now - ping > 7000);
-  if (hostStale) {
+  if (hostStale && !_claimingHost) {
+    _claimingHost = true;
     setTimeout(async () => {
       try {
         await db.runTransaction(async tx => {
           const s = await tx.get(tableRef());
+          const hb = await tx.get(heartbeatRef());
           const d = s.data();
           if (!d) return;
-          const livePing = (heartbeat && heartbeat.host_uid === d.host) ? (heartbeat.ping || 0) : (d.host_ping || 0);
+          const hbData = hb.exists ? hb.data() : null;
+          const livePing = (hbData && hbData.host_uid === d.host) ? (hbData.ping || 0) : (d.host_ping || 0);
           if (d.host && (Date.now() - livePing < 7000)) return;
           tx.update(tableRef(), { host: CASINO.uid });
         });
         try { heartbeatRef().set({ host_uid: CASINO.uid, ping: Date.now() }); } catch {}
-      } catch {}
+      } catch {} finally { _claimingHost = false; }
     }, Math.random() * 500);
   }
   if (state.host === CASINO.uid) {
@@ -645,57 +649,107 @@ function renderState() {
   document.getElementById('pk-leave-btn').style.display = mySeat !== null ? '' : 'none';
   document.getElementById('pk-buyin').style.display = mySeat === null ? '' : 'none';
 
-  // Community
+  // Community — diff par signature pour éviter de rejouer l'animation .deal-in
   const cEl = document.getElementById('pk-community');
-  cEl.innerHTML = '';
-  (state.board || []).forEach(c => cEl.appendChild(buildPokerCard(c)));
-  for (let i = (state.board || []).length; i < 5; i++) {
-    const d = document.createElement('div');
-    d.className = 'card back';
-    d.style.opacity = '.2';
-    cEl.appendChild(d);
+  const board = state.board || [];
+  const boardSig = board.join(',');
+  if (cEl.dataset.sig !== boardSig) {
+    cEl.dataset.sig = boardSig;
+    cEl.innerHTML = '';
+    board.forEach(c => cEl.appendChild(buildPokerCard(c)));
+    for (let i = board.length; i < 5; i++) {
+      const d = document.createElement('div');
+      d.className = 'card back';
+      d.style.opacity = '.2';
+      cEl.appendChild(d);
+    }
   }
 
-  // Seats
+  // Seats — chaque section du siège (cartes / joueur / mise / badges) a sa propre signature
   const seatsEl = document.getElementById('pk-seats');
-  seatsEl.innerHTML = '';
-  (state.seats || []).forEach((s, i) => {
-    const d = document.createElement('div');
+  const seats = state.seats || [];
+  while (seatsEl.children.length < seats.length) seatsEl.appendChild(document.createElement('div'));
+  while (seatsEl.children.length > seats.length) seatsEl.removeChild(seatsEl.lastChild);
+  seats.forEach((s, i) => {
+    const d = seatsEl.children[i];
     if (!s) {
-      d.className = 'pk-seat empty';
-      d.innerHTML = '<div class="seat-empty-label">Siège ' + (i + 1) + '<br><span>vide</span></div>';
-    } else {
-      const isMe = s.uid === CASINO.uid;
-      const meCls = isMe ? ' me' : '';
-      const turnCls = state.turn_seat === i && ['preflop','flop','turn','river'].includes(state.phase) ? ' turn' : '';
-      const foldCls = s.folded ? ' folded' : '';
-      d.className = 'pk-seat' + meCls + turnCls + foldCls;
-      const showHole = isMe || state.phase === 'showdown' && !s.folded;
-      const cardsHtml = (s.hole || []).map(c => showHole ? buildPokerCardHTML(c) : '<div class="card back"></div>').join('');
-      const badges = [];
-      if (state.dealer_seat === i) badges.push('<span class="pk-badge dealer">D</span>');
-      if (state.last_action?.seat === i && state.last_action?.action) {
-        const a = state.last_action.action;
-        const cls = ['fold','check','call','raise','allin'].includes(a) ? a : '';
-        badges.push('<span class="pk-seat-action ' + cls + '">' + a.toUpperCase() + '</span>');
+      if (d.dataset.mode !== 'empty' || d.dataset.idx !== String(i)) {
+        d.dataset.mode = 'empty';
+        d.dataset.idx = String(i);
+        d.className = 'pk-seat empty';
+        d.innerHTML = '<div class="seat-empty-label">Siège ' + (i + 1) + '<br><span>vide</span></div>';
       }
+      return;
+    }
+    const isMe = s.uid === CASINO.uid;
+    const meCls = isMe ? ' me' : '';
+    const turnCls = state.turn_seat === i && ['preflop','flop','turn','river'].includes(state.phase) ? ' turn' : '';
+    const foldCls = s.folded ? ' folded' : '';
+    const className = 'pk-seat' + meCls + turnCls + foldCls;
+    if (d.dataset.mode !== 'occupied') {
+      d.dataset.mode = 'occupied';
+      d.innerHTML = '<div class="pk-seat-cards"></div><div class="pk-seat-player"></div><div class="pk-seat-bet-wrap"></div><div class="pk-seat-badges"></div>';
+    }
+    if (d.className !== className) d.className = className;
+
+    // Cartes : ne rebuild que si la signature change (hole / showHole)
+    const showHole = isMe || (state.phase === 'showdown' && !s.folded);
+    const holeArr = s.hole || [];
+    const cardSig = showHole ? 'S:' + holeArr.join(',') : (holeArr.length ? 'B:' + holeArr.length : 'N');
+    const cardsDiv = d.firstElementChild;
+    if (cardsDiv.dataset.sig !== cardSig) {
+      cardsDiv.dataset.sig = cardSig;
+      cardsDiv.className = 'pk-seat-cards';
+      if (holeArr.length) {
+        cardsDiv.innerHTML = holeArr.map(c => showHole ? buildPokerCardHTML(c) : '<div class="card back"></div>').join('');
+      } else {
+        cardsDiv.innerHTML = '<div class="card back" style="opacity:.15"></div><div class="card back" style="opacity:.15"></div>';
+      }
+    }
+
+    // Player (avatar + nom + stack)
+    const avatarKey = s.avatar || ('ph:' + ((s.username || '?')[0] || '?'));
+    const playerSig = avatarKey + '|' + (s.username || '') + '|' + (s.stack || 0) + '|' + (s.currency || '');
+    const playerDiv = cardsDiv.nextElementSibling;
+    if (playerDiv.dataset.sig !== playerSig) {
+      playerDiv.dataset.sig = playerSig;
+      playerDiv.className = 'pk-seat-player';
       const avatarHtml = s.avatar
         ? `<img class="seat-avatar" src="${escape(s.avatar)}" alt="" onerror="this.style.display='none'">`
         : `<div class="seat-avatar seat-avatar-ph">${escape((s.username || '?')[0].toUpperCase())}</div>`;
-      d.innerHTML = `
-        <div class="pk-seat-cards">${cardsHtml || '<div class="card back" style="opacity:.15"></div>'.repeat(2)}</div>
-        <div class="pk-seat-player">
-          ${avatarHtml}
-          <div class="pk-seat-meta">
-            <div class="pk-seat-name">${escape(s.username || 'Joueur')}</div>
-            <div class="pk-seat-stack">${window._fmtNum(s.stack || 0)} ${currencySymbol(s.currency)}</div>
-          </div>
-        </div>
-        ${s.current_bet > 0 ? `<div class="pk-seat-bet">MISE : ${window._fmtNum(s.current_bet)} ${currencySymbol(s.currency)}</div>` : ''}
-        <div class="pk-seat-badges">${badges.join('')}</div>
-      `;
+      playerDiv.innerHTML = `
+        ${avatarHtml}
+        <div class="pk-seat-meta">
+          <div class="pk-seat-name">${escape(s.username || 'Joueur')}</div>
+          <div class="pk-seat-stack">${window._fmtNum(s.stack || 0)} ${currencySymbol(s.currency)}</div>
+        </div>`;
     }
-    seatsEl.appendChild(d);
+
+    // Mise en cours
+    const betSig = (s.current_bet || 0) + '|' + (s.currency || '');
+    const betWrap = playerDiv.nextElementSibling;
+    if (betWrap.dataset.sig !== betSig) {
+      betWrap.dataset.sig = betSig;
+      betWrap.innerHTML = s.current_bet > 0
+        ? `<div class="pk-seat-bet">MISE : ${window._fmtNum(s.current_bet)} ${currencySymbol(s.currency)}</div>`
+        : '';
+    }
+
+    // Badges (dealer + last_action)
+    const laMatch = state.last_action?.seat === i ? (state.last_action?.action || '') : '';
+    const badgesSig = (state.dealer_seat === i ? 'D' : '') + '|' + laMatch;
+    const badgesDiv = betWrap.nextElementSibling;
+    if (badgesDiv.dataset.sig !== badgesSig) {
+      badgesDiv.dataset.sig = badgesSig;
+      badgesDiv.className = 'pk-seat-badges';
+      const badges = [];
+      if (state.dealer_seat === i) badges.push('<span class="pk-badge dealer">D</span>');
+      if (laMatch) {
+        const cls = ['fold','check','call','raise','allin'].includes(laMatch) ? laMatch : '';
+        badges.push('<span class="pk-seat-action ' + cls + '">' + laMatch.toUpperCase() + '</span>');
+      }
+      badgesDiv.innerHTML = badges.join('');
+    }
   });
 
   // Actions
