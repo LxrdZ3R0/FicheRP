@@ -91,6 +91,18 @@
 }
 @keyframes cs-pulse { 50% { opacity: .4; } }
 
+/* ══ SCROLL PROGRESS BAR ══ */
+.scroll-line {
+  position: fixed; top: 0; left: 0;
+  width: 0%; height: 2px;
+  background: linear-gradient(90deg, var(--casino-accent2), var(--casino-accent), var(--casino-red));
+  z-index: 10001;
+  box-shadow: 0 0 16px var(--gold-glow), 0 0 40px rgba(232,176,74,.2);
+}
+
+/* ══ SECTION HEAD — neutralise l'anim "reveal" globale (jaharta.css) ══ */
+.section-head { opacity: 1; transform: none; margin-bottom: 32px; }
+
 /* ══ WRAP ══ */
 .casino-wrap {
   max-width: 1400px;
