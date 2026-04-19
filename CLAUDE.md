@@ -200,9 +200,8 @@ window.JImgCache.stats()                // {total, expired}
 - Si l'UID n'existe pas dans `/admins` → `auth.signOut()` immédiat + message "Accès refusé"
 - Rôle `admin` : supprimer fiches + voir logs
 - Rôle `modo` : lecture seule (fiches + PNJ)
-- Onglets : **Fiches** · **PNJ** · **Lore** · **Bestiaire** · **Casino** · **Logs** (Casino + Logs visibles admins uniquement, masqués pour modo)
-- `_setAdminTab` masque les onglets `tab-btn-logs` et `tab-btn-casino` si role !== 'admin'
-- Onglet **Casino** : indicateur d'état + bouton FERMER/OUVRIR (`toggleCasino()` → `casino_config/main.is_open`) + feed des 20 derniers paris ; double garde role==='admin' côté JS + Firestore rules (`isAdmin()` sur `casino_config`)
+- Onglets : **Fiches** · **PNJ** · **Logs** (Logs visible admins uniquement)
+- Alpine.js pour la réactivité des onglets (`logsVisible` contrôle l'onglet Logs)
 - **⚠ SUPPRIMÉ** : bypass VIP Discord IDs — `window._isAdmin` est exclusivement contrôlé par Firebase Auth
 - **⚠ SUPPRIMÉ** : onglet Gacha (API bot externe) + onglet Races (redondant)
 
@@ -304,8 +303,6 @@ Chaque page surcharge `--accent` dans son `<style>` inline.
 - **CSS rgba()** : utiliser `rgba(var(--cyan-rgb), 0.2)` — ne jamais hardcoder les triplets RGB dans hub.css.
 - **Images fiches** : `buildCard(ch, idx)` — les 4 premières cartes (idx < 4) utilisent `loading='eager'` + `fetchPriority='high'` pour le LCP ; le reste `loading='lazy'`.
 - **Toast** : `showToast()` ajoute `.show` (déclenche `jh-toast-in` via jaharta.css) puis remplace par `.jh-out` (déclenche `jh-toast-out`) avant de nettoyer.
-- **Trap `.section-head`** : la règle globale dans `jaharta.css` met `opacity:0; transform:translateY(20px)` et n'est révélée qu'avec `.revealed`. Or `jaharta-motion.js` ne révèle QUE `.jh-reveal`. Toute page utilisant `.section-head` DOIT soit la neutraliser dans son CSS (`opacity:1; transform:none`), soit ajouter `.jh-reveal` aux éléments + charger motion.js.
-- **Ordre scripts pages standard** : `debug.js` → `constants.js` → `utils.js` → Firebase → logique page → `page-transition.js` → `jaharta-motion.js` → `music-player.js`. Omettre motion.js casse `.section-head`, ripple, scroll-line, reveal animations.
 
 ---
 
