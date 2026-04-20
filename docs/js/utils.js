@@ -227,6 +227,26 @@ window.Skeleton = (function() {
     return card;
   }
 
+  /** Injecte le CSS skeleton inventaire (cellules carrées) */
+  function injectInvCSS() {
+    if (document.getElementById('sk-inv-styles')) return;
+    const style = document.createElement('style');
+    style.id = 'sk-inv-styles';
+    style.textContent = `
+      .sk-inv-cell {
+        aspect-ratio: 1/1;
+        min-height: 88px;
+        background: linear-gradient(90deg,
+          rgba(13,20,37,0.85) 25%, rgba(19,27,48,0.95) 50%, rgba(13,20,37,0.85) 75%);
+        background-size: 400px 100%;
+        border: 1px solid rgba(0,229,255,0.10);
+        border-radius: 8px;
+        animation: sk-shimmer 1.4s ease-in-out infinite;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
   return {
     /** Affiche N skeleton cards dans le conteneur ciblé */
     show(containerId, count = 6) {
@@ -238,11 +258,24 @@ window.Skeleton = (function() {
       }
     },
 
+    /** Affiche N cellules skeleton compactes (grille inventaire) */
+    showInv(containerId, count = 12) {
+      injectCSS();    /* Pour l'animation @keyframes sk-shimmer */
+      injectInvCSS();
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      for (let i = 0; i < count; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'sk-inv-cell';
+        container.appendChild(cell);
+      }
+    },
+
     /** Retire tous les skeletons du conteneur */
     hide(containerId) {
       const container = document.getElementById(containerId);
       if (!container) return;
-      container.querySelectorAll('.' + CLASS).forEach(el => el.remove());
+      container.querySelectorAll('.' + CLASS + ', .sk-inv-cell').forEach(el => el.remove());
     },
   };
 })();

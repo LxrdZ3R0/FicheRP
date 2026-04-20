@@ -258,9 +258,10 @@ async function dealInitial() {
   });
 }
 
-async function advanceTurn(firstTurn) {
-  const seats = [...(state.seats || [])];
-  let startIdx = firstTurn ? 0 : (state.turn_seat + 1);
+async function advanceTurn(firstTurn, freshState) {
+  const src = freshState || state;
+  const seats = [...(src.seats || [])];
+  let startIdx = firstTurn ? 0 : ((src.turn_seat ?? -1) + 1);
   let nextIdx = -1;
   for (let i = startIdx; i < SEATS; i++) {
     const s = seats[i];
@@ -290,8 +291,9 @@ async function seatStand(seatIdx, auto) {
   if (!seats[seatIdx]) return;
   seats[seatIdx] = { ...seats[seatIdx], status: 'stand' };
   await tableRef().update({ seats });
-  // Advance
-  await advanceTurn(false);
+  // Recharger l'état frais — onSnapshot peut ne pas avoir encore propagé
+  const cur = (await tableRef().get()).data();
+  await advanceTurn(false, cur);
 }
 
 async function dealerPlay() {
@@ -353,11 +355,8 @@ window.bjSit = async function () {
   if (mySeat !== null) { showToast('Tu as déjà un siège', 'info'); return; }
   // Allowed only during betting
   if (state.phase !== 'betting') { showToast('Attends la prochaine manche', 'error'); return; }
-  // Mode/currency match?
+  // Devise sélectionnée — la cohérence avec la table est vérifiée dans la transaction
   const selCurrency = CASINO.mode === 'prime' ? 'navarites' : (document.getElementById('bj-currency').value);
-  if (state.currency && !Object.values(state.seats || []).some(Boolean) && selCurrency !== state.currency) {
-    // If table empty, change currency
-  }
   try {
     await db.runTransaction(async tx => {
       const s = await tx.get(tableRef());
@@ -444,10 +443,10 @@ window.bjHit = async function () {
       seats[mySeat] = seat;
       tx.update(tableRef(), { seats, deck, turn_end: Date.now() + TURN_MS });
     });
-    // If busted, advance turn
+    // If busted, advance turn — utiliser la donnée fraîche (state via onSnapshot peut être stale)
     const cur = (await tableRef().get()).data();
-    if (cur.seats[mySeat].status === 'bust') {
-      await advanceTurn(false);
+    if (cur && cur.seats && cur.seats[mySeat] && cur.seats[mySeat].status === 'bust') {
+      await advanceTurn(false, cur);
     }
   } catch (e) { showToast(e.message, 'error'); }
 };
@@ -482,7 +481,9 @@ window.bjDouble = async function () {
       seats[mySeat] = sSeat;
       tx.update(tableRef(), { seats, deck });
     });
-    await advanceTurn(false);
+    // Recharger l'état frais avant d'enchaîner — onSnapshot peut ne pas avoir encore propagé
+    const cur = (await tableRef().get()).data();
+    await advanceTurn(false, cur);
   } catch (e) {
     try { await window._credit(seat.currency, seat.bet); } catch {}
     showToast(e.message, 'error');

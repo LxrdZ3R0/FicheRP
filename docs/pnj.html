@@ -599,7 +599,7 @@ body::before{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;
   </div>
 </section>
 
-<div class="page-wrap">
+<div class="page-wrap" role="main">
   <div class="section-head" data-reveal>
     <span class="sh-num">01 //</span>
     <h2 class="sh-title">Figures de Jaharta</h2>
@@ -615,8 +615,8 @@ body::before{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;
 </div>
 
 <!-- MODAL : CRÉER PNJ -->
-<div class="modal-overlay" id="pnj-modal" style="display:none">
-  <div class="modal"><div class="mac-magenta"></div><button class="mclose" onclick="closePNJModal()">✕</button>
+<div class="modal-overlay" id="pnj-modal" style="display:none" role="dialog" aria-modal="true" aria-labelledby="pnj-modal-title">
+  <div class="modal"><div class="mac-magenta"></div><button class="mclose" onclick="closePNJModal()" aria-label="Fermer">✕</button>
     <div class="mi">
       <div class="mt mag" id="pnj-modal-title">◆ Créer un PNJ</div>
       <p class="msub">Réservé aux administrateurs Jaharta.<br>Le PNJ apparaît immédiatement sur la page publique.</p>
@@ -631,10 +631,10 @@ body::before{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;
 </div>
 
 <!-- MODAL : NOUVEAU FILTRE -->
-<div class="modal-overlay" id="filter-modal" style="display:none">
-  <div class="modal sm"><div class="mac-cyan"></div><button class="mclose" onclick="closeFilterModal()">✕</button>
+<div class="modal-overlay" id="filter-modal" style="display:none" role="dialog" aria-modal="true" aria-labelledby="filter-modal-title">
+  <div class="modal sm"><div class="mac-cyan"></div><button class="mclose" onclick="closeFilterModal()" aria-label="Fermer">✕</button>
     <div class="mi">
-      <div class="mt cyan">◈ Nouveau Filtre</div>
+      <div class="mt cyan" id="filter-modal-title">◈ Nouveau Filtre</div>
       <p class="msub" style="border-left-color:rgba(0,240,255,0.4)">Créez un filtre personnalisé pour la barre de tri.</p>
       <div class="fg"><label class="fl">Nom du filtre <span class="req">*</span></label><input type="text" class="fi" id="new-filter-label" placeholder="Ex: Antagoniste, Gardien..."></div>
       <div class="fg color-row"><div class="fg" style="margin-bottom:0;flex:1"><label class="fl">Couleur</label><input type="text" class="fi" id="new-filter-color-hex" value="#b06eff" oninput="syncColor(this.value)"></div><div class="color-preview" id="color-preview-box" style="background:#b06eff"><input type="color" id="new-filter-color" value="#b06eff" oninput="syncHex(this.value)"></div></div>

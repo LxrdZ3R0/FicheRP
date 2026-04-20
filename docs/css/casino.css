@@ -1406,7 +1406,8 @@ body.mode-prime .normal-only { display: none !important; }
   pointer-events: none;
   box-shadow: 0 10px 30px rgba(0,0,0,.5);
 }
-.toast.show { opacity: 1; transform: translateX(0); pointer-events: auto; }
+.toast.show { opacity: 1; transform: translateX(0); pointer-events: auto; animation: none; }
+.toast.jh-out { animation: none; }
 .toast.success { border-color: var(--green); color: var(--green); }
 .toast.error { border-color: var(--red); color: var(--red); }
 .toast.info { border-color: var(--casino-accent); color: var(--casino-accent); }

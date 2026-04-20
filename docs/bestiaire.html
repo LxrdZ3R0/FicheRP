@@ -203,7 +203,7 @@ footer{border-top:1px solid rgba(255,255,255,0.04);padding:3rem clamp(1.5rem,4vw
   <p class="hero-sub-desc">Les créatures sauvages qui peuplent les terres de Jaharta, et les compagnons fidèles qui marchent aux côtés de leurs maîtres.</p>
 </section>
 
-<div class="page-wrap">
+<div class="page-wrap" role="main">
   <div class="best-tabs">
     <button class="best-tab active" data-section="sauvage" onclick="switchBestSection('sauvage')">
       ◈ Sauvages <span class="cnt" id="cnt-sauvage">0</span>
@@ -222,9 +222,9 @@ footer{border-top:1px solid rgba(255,255,255,0.04);padding:3rem clamp(1.5rem,4vw
 </div>
 
 <!-- MODAL CRÉATION / ÉDITION -->
-<div class="modal-overlay" id="best-modal">
+<div class="modal-overlay" id="best-modal" role="dialog" aria-modal="true" aria-labelledby="best-modal-title">
   <div class="modal-best">
-    <button class="mb-close" onclick="closeBestModal()">✕</button>
+    <button class="mb-close" onclick="closeBestModal()" aria-label="Fermer">✕</button>
     <h2 id="best-modal-title">◆ Nouvelle Bête</h2>
     <p class="msub">Réservé aux administrateurs · Apparaît en direct sur la page publique</p>
 

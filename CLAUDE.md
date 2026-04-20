@@ -136,7 +136,7 @@ const firebaseConfig = {
 | `economy/{uid_charId}` | Économie Kanites — `personal`, `family`, `royal` (modifiables client) |
 | `casino_config/main` | `is_open: bool` — ouverture/fermeture globale (admin only en écriture) |
 | `casino_tables/{tableId}` | Tables multijoueur (`roulette_main`, `blackjack_main`, `poker_main`) |
-| `casino_logs/{id}` | Historique paris casino — create public whitelisté, read admin |
+| `casino_logs/{id}` | Historique paris casino — create public whitelisté (types + bornes amount/profit), read admin |
 
 **Globals window exposés** dans les modules Firebase pour les scripts non-module :
 `window._db`, `window._storage`, `window._isAdmin`, `window._doc`, `window._updateDoc`, `window._deleteDoc`
@@ -192,6 +192,9 @@ window.JImgCache.stats()                // {total, expired}
 - **Suppression items** : bouton poubelle sur chaque carte au survol + bouton dans le panneau détail → `openDeleteModal(itemId, event)` → modal de confirmation avec contrôle quantité → `confirmDelete()` écrit Firestore `items` (sans toucher `equipped_assets`)
 - **Grille droite** : filtres catégorie/rareté/slot, recherche, tri, drag & drop (SortableJS), tooltips (Tippy.js)
 - **Portefeuille** : `PLAYER.golden_eggs` peut être un objet Firestore — extraction sécurisée via `Object.values(_ge).find(v=>typeof v==='number')`
+- **Skeleton dédié inventaire** : `Skeleton.showInv('inv-grid', 12)` (cells carrées 88px, aspect-ratio 1/1, shimmer) plutôt que `Skeleton.show()` (cards photo). Appelé dans `loadInventory()` (hub-core.js + hub-irp-core.js).
+- **Lazy-load images** : tous les `<img>` (slot cells, grid items, detail panel) ont `loading="lazy"` pour différer le chargement réseau hors viewport.
+- **XSS — escape attribut** : helper local `eAttr()` (escape + simple/double quotes + backtick) appliqué à tous les `${itemId}`, `${setId}`, `${slotId}` injectés dans `onclick="...('${id}')"`. Le helper global `e()` (hub-core.js) **n'échappe PAS les apostrophes** — toujours utiliser `eAttr()` pour les valeurs interpolées dans des attributs JS inline.
 - **Fonctions JS clés** : `renderInventory()`, `renderCharacterPanel()`, `initCharScanAnimation()`, `renderItemsGrid()`, `initDragDrop()`, `initTooltips()`, `toggleEquip()`, `showItemDetail()`, `closeItemDetail()`, `openDeleteModal()`, `closeDeleteModal()`, `confirmDelete()`
 
 ### Panel Admin (`admin.html`)
@@ -217,7 +220,7 @@ Module multijoueur temps réel — voir **[docs/CLAUDE-CASINO.md](docs/CLAUDE-CA
 - Transactions atomiques Firestore pour tous débits/crédits + `lastClaimedRound` anti double-crédit payouts
 - Admin : onglet **Casino** dans `admin.html` → toggle `casino_config.is_open` + feed des 20 derniers paris
 
-**⚠ Sécurité Firestore — point d'attention :** `casino_tables` et `players.navarites` sont écrits sans auth (règles `allow write: if true`), la logique métier repose sur les transactions client et les phase checks. Cela est **contournable** : tout client peut réécrire les tables ou se créditer. Durcissement prévu via Cloud Function ou Admin SDK côté bot.
+**⚠ Sécurité Firestore — defense-in-depth (2026-04-20) :** `casino_tables` et `casino_heartbeats` sont restreintes à une whitelist d'IDs (`roulette_main`, `blackjack_main`, `poker_main`) via la fonction `isCasinoTable()`. `casino_logs` valide types (`game in [...]`, `mode in [...]`) et bornes (`amount` 0-1M, `profit` ±1M). `players.navarites` reste écrivable sans auth — la logique métier repose sur les transactions client. **Limite résiduelle** : un client malveillant peut toujours écrire dans une table whitelistée et se créditer des navarites. Durcissement complet prévu via Cloud Function ou Admin SDK côté bot.
 
 ### Branche IRP (fork permanent assumé)
 
@@ -303,6 +306,10 @@ Chaque page surcharge `--accent` dans son `<style>` inline.
 - **CSS rgba()** : utiliser `rgba(var(--cyan-rgb), 0.2)` — ne jamais hardcoder les triplets RGB dans hub.css.
 - **Images fiches** : `buildCard(ch, idx)` — les 4 premières cartes (idx < 4) utilisent `loading='eager'` + `fetchPriority='high'` pour le LCP ; le reste `loading='lazy'`.
 - **Toast** : `showToast()` ajoute `.show` (déclenche `jh-toast-in` via jaharta.css) puis remplace par `.jh-out` (déclenche `jh-toast-out`) avant de nettoyer.
+- **Casino toast — animation neutralisée** : `casino.css` ajoute `animation: none` sur `.toast.show` et `.toast.jh-out`. Casino utilise son propre showToast (top-right, `transform: translateX(0)`) — sans cet override, l'animation `jh-toast-in` (`translateX(-50%)`) déplacerait le toast hors position.
+- **Accessibilité modals** : tout modal overlay doit avoir `role="dialog"` + `aria-modal="true"` + `aria-labelledby="<id-titre>"`. Le bouton de fermeture doit porter `aria-label="Fermer"`. Ne **pas** toggler `aria-hidden` via JS — `display:none` suffit à masquer de l'AT.
+- **Landmark principal** : chaque page publique doit avoir `role="main"` sur son `<div class="page-wrap">` (ou équivalent wrapper top-level du contenu).
+- **Reveal system** : `jaharta-motion.js` émet `.revealed` sur les éléments `.jh-reveal`. Les pages avec un système custom (ex: lore.html avec `.rv → .visible`) doivent ajouter une règle alias `.xxx.visible, .xxx.revealed { ... }` pour rester compatibles sans refacto.
 
 ---
 

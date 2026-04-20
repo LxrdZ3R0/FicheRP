@@ -96,6 +96,9 @@
     var overlay = document.createElement('div');
     overlay.id = 'race-popup-overlay';
     overlay.className = 'rp-overlay';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-labelledby', 'rp-name-title');
     overlay.innerHTML = buildPopupHTML(raceName, d, accent);
     document.body.appendChild(overlay);
 
@@ -193,12 +196,12 @@
 
     return '<div class="rp-popup">' +
       '<div class="rp-scanline"></div>' +
-      '<button class="rp-close">✕</button>' +
+      '<button class="rp-close" aria-label="Fermer">✕</button>' +
       '<div class="rp-accent-bar" style="background:linear-gradient(90deg,' + accent + ',' + accent + '40,transparent)"></div>' +
       '<div class="rp-header">' +
         '<div class="rp-icon" style="color:' + accent + ';text-shadow:0 0 16px ' + accent + '">◈</div>' +
         '<div>' +
-          '<h2 class="rp-name" style="color:' + accent + '">' + name + '</h2>' +
+          '<h2 class="rp-name" id="rp-name-title" style="color:' + accent + '">' + name + '</h2>' +
           '<div class="rp-meta">' + (d.category ? '<span>' + d.category + '</span>' : '') + accessBadge + '</div>' +
         '</div>' +
       '</div>' +

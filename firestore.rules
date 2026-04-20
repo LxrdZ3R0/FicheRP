@@ -204,28 +204,49 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isAdmin();
     }
+    // Helper : tables casino autorisées (whitelist d'IDs).
+    // Empêche la création arbitraire de tables ou la pollution de la collection.
+    function isCasinoTable(tableId) {
+      return tableId in ['roulette_main', 'blackjack_main', 'poker_main'];
+    }
     // casino_tables : lecture publique, écriture sans auth (host-driven via transactions).
-    // La logique de sécurité est dans le client (transactions atomiques, phase checks).
+    // Defense-in-depth :
+    //   - Whitelist d'IDs uniquement (pas de tables arbitraires)
+    //   - Suppression réservée aux admins
+    // La logique de sécurité métier reste dans le client (transactions atomiques,
+    // phase checks). Durcissement complet prévu via Cloud Function (TODO).
     match /casino_tables/{tableId} {
       allow read: if true;
-      allow create, update: if true;
+      allow create, update: if isCasinoTable(tableId);
       allow delete: if isAdmin();
     }
     // casino_heartbeats : heartbeat host séparé pour éviter que chaque ping
     // (1-2 Hz) ne déclenche des snapshots sur la table principale → re-renders
     // inutiles et flashs visuels chez les clients.
+    // Même whitelist d'IDs que casino_tables.
     match /casino_heartbeats/{tableId} {
       allow read: if true;
-      allow create, update: if true;
+      allow create, update: if isCasinoTable(tableId);
       allow delete: if isAdmin();
     }
     // casino_logs : lecture admin, création publique (log des paris côté client).
+    // Defense-in-depth : validation des types et bornes des champs critiques.
     match /casino_logs/{logId} {
       allow read: if isAdmin();
       allow create: if request.resource.data.keys().hasOnly([
                        'user_id','username','game','mode','currency',
                        'amount','profit','result','char_id','extra','at'
-                     ]);
+                     ])
+                    && request.resource.data.user_id is string
+                    && request.resource.data.game in ['roulette','blackjack','poker','flip']
+                    && request.resource.data.mode in ['normal','prime']
+                    && request.resource.data.currency is string
+                    && request.resource.data.amount is number
+                    && request.resource.data.amount >= 0
+                    && request.resource.data.amount <= 1000000
+                    && request.resource.data.profit is number
+                    && request.resource.data.profit >= -1000000
+                    && request.resource.data.profit <= 1000000;
       allow update, delete: if false;
     }
 

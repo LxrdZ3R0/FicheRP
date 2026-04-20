@@ -40,8 +40,8 @@
 
   /* ── Textes ── */
   --text:  #e2e6f0;
-  --text2: #7c84a0;
-  --text3: #3a4060;
+  --text2: #9ca3b8;  /* contraste AA sur --bg (#020713) ≈ 7:1 */
+  --text3: #6b7290;  /* contraste AA sur --bg ≈ 4.5:1 */
   --muted: #5a7a90;
 
   /* ── Polices ── */

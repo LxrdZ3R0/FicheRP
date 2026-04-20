@@ -35,6 +35,15 @@ let _tippyInstances=[];
 let _sortableGrid=null;
 let _sortableSlots={};
 
+/* Escape strict pour valeurs d'attributs HTML — couvre &, <, >, ", ' et `.
+   Indispensable car les itemId/setId proviennent d'INV_DATA (écriture user)
+   et sont injectés dans des onclick="...('${id}')" avec apostrophes. */
+function eAttr(s){
+  return String(s==null?'':s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/`/g,'&#96;');
+}
+
 /* ── Optimisation rendu ── */
 let _invLastHash='';      /* hash des ids+qtés pour éviter re-render inutile */
 let _invFirstRender=true; /* GSAP stagger uniquement au 1er affichage ou après filtre */
@@ -98,9 +107,10 @@ function renderCharacterPanel(){
       const itemId=occupants[i]||null;
       const it=itemId?ALL_ITEMS_DATA[itemId]||{}:{};
       if(itemId){
-        html+=`<div class="slot-cell occupied" data-item-id="${itemId}" data-slot="${slotId}" onclick="showItemDetail('${itemId}')" title="${e(it.name||itemId)}">${it.image?`<img src="${e(it.image)}" alt="${e(it.name||itemId)}" class="slot-cell-img">`:(it.emoji||'📦')}</div>`;
+        const safeId=eAttr(itemId), safeSlot=eAttr(slotId);
+        html+=`<div class="slot-cell occupied" data-item-id="${safeId}" data-slot="${safeSlot}" onclick="showItemDetail('${safeId}')" title="${e(it.name||itemId)}">${it.image?`<img src="${e(it.image)}" alt="${e(it.name||itemId)}" class="slot-cell-img" loading="lazy">`:(e(it.emoji)||'📦')}</div>`;
       } else {
-        html+=`<div class="slot-cell empty-cell" data-slot="${slotId}" data-index="${i}"></div>`;
+        html+=`<div class="slot-cell empty-cell" data-slot="${eAttr(slotId)}" data-index="${i}"></div>`;
       }
     }
     cellsCont.innerHTML=html;
@@ -199,19 +209,20 @@ function renderItemsGrid(){
       const rc=RARITY_COLORS[rarity]||'#6b7280';
       const slotLabel=it.slot?SLOT_LIMITS[it.slot]?.label||it.slot:'';
       const div=document.createElement('div');
+      const safeId=eAttr(id);
       div.className='inv-item rarity-'+rarity+(isEq?' equipped':'')+((_invDetailOpen===id)?' selected':'');
       div.dataset.itemId=id;
       div.dataset.rarity=rarity;
       div.dataset.slot=it.slot||'';
       div.draggable=true;
-      div.setAttribute('onclick',"showItemDetail('"+id+"')");
+      div.setAttribute('onclick',"showItemDetail('"+safeId+"')");
       div.innerHTML=
         (isEq?'<span class="inv-badge-equipped"></span>':'')+
         (id.startsWith('irp_')?'<span class="inv-badge-irp" style="position:absolute;top:4px;right:4px;font-family:var(--font-m);font-size:0.38rem;letter-spacing:0.08em;color:#dc143c;background:rgba(220,20,60,0.12);border:1px solid rgba(220,20,60,0.25);border-radius:3px;padding:1px 5px;pointer-events:none;z-index:2;white-space:nowrap">EXCLU IRP</span>':'')+
-        (qty>0?'<button class="inv-item-delete" onclick="openDeleteModal(\''+id+'\',event)" title="Supprimer de l\'inventaire" aria-label="Supprimer '+e(it.name||id)+'"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" width="10" height="10"><path d="M2 4h12M6 4V2h4v2M5 4l1 9h4l1-9"/></svg></button>':'')+
-        '<span class="inv-item-emoji">'+(it.image?'<img src="'+e(it.image)+'" alt="'+e(it.name||id)+'" class="inv-item-img">':(it.emoji||'📦'))+'</span>'+
+        (qty>0?'<button class="inv-item-delete" onclick="openDeleteModal(\''+safeId+'\',event)" title="Supprimer de l\'inventaire" aria-label="Supprimer '+e(it.name||id)+'"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" width="10" height="10"><path d="M2 4h12M6 4V2h4v2M5 4l1 9h4l1-9"/></svg></button>':'')+
+        '<span class="inv-item-emoji">'+(it.image?'<img src="'+e(it.image)+'" alt="'+e(it.name||id)+'" class="inv-item-img" loading="lazy">':(e(it.emoji)||'📦'))+'</span>'+
         '<div class="inv-item-name" style="color:'+rc+'">'+e(it.name||id)+'</div>'+
-        (slotLabel?'<div class="inv-item-slot">'+slotLabel+'</div>':'')+
+        (slotLabel?'<div class="inv-item-slot">'+e(slotLabel)+'</div>':'')+
         (qty>1?'<span class="inv-badge-qty">×'+qty+'</span>':'');
       frag.appendChild(div);
     });
@@ -328,22 +339,23 @@ function renderSetsPanel(){
     // Nb d'items du set équipables (dans l'inventaire, pas encore équipés)
     const equipable=setDef.items.filter(id=>!equipped.has(id)&&!!(INV_DATA.items||{})[id]).length;
 
+    const safeSet=eAttr(setId);
     return`<div class="set-card" style="border-left:3px solid ${color}">
-      <div class="set-header" onclick="toggleSetAccordion('${setId}')">
+      <div class="set-header" onclick="toggleSetAccordion('${safeSet}')">
         <div class="set-header-left">
           <span class="set-name" style="color:${color}">${e(setDef.name)}</span>
-          <span class="set-rarity-tag" style="color:${color}">${setDef.rarity.toUpperCase()}</span>
+          <span class="set-rarity-tag" style="color:${color}">${e(setDef.rarity.toUpperCase())}</span>
         </div>
         <div style="display:flex;align-items:center;gap:6px">
           <span class="set-count ${isActive?'active':'inactive'}">${equippedCount}/${total}</span>
-          <span class="set-chevron" id="chev-${setId}">▾</span>
+          <span class="set-chevron" id="chev-${safeSet}">▾</span>
         </div>
       </div>
-      <div class="set-body" id="setbody-${setId}">
+      <div class="set-body" id="setbody-${safeSet}">
         <div class="set-thresholds">${threshHtml}</div>
         ${bonusHtml?`<div class="set-bonus-list">${bonusHtml}</div>`:''}
         <div class="set-items">${piecesHtml}</div>
-        ${equipable>0?`<button class="set-equip-all-btn" onclick="event.stopPropagation();equipWholeSet('${setId}')">⚡ Équiper le set (${equipable} item${equipable>1?'s':''})</button>`:''}
+        ${equipable>0?`<button class="set-equip-all-btn" onclick="event.stopPropagation();equipWholeSet('${safeSet}')">⚡ Équiper le set (${equipable} item${equipable>1?'s':''})</button>`:''}
       </div>
     </div>`;
   }).join('');
@@ -446,18 +458,19 @@ function showItemDetail(itemId,animate=true){
       </div>`;
     }).join('')}`:'<div class="inv-detail-no-stats">Aucune statistique</div>';
 
+  const safeItemId=eAttr(itemId);
   const actionsHtml=(hasSlot?`
-    <button class="inv-detail-btn ${isEq?'unequip':'equip'}" onclick="toggleEquip('${itemId}')">
+    <button class="inv-detail-btn ${isEq?'unequip':'equip'}" onclick="toggleEquip('${safeItemId}')">
       ${isEq?'⊖ Déséquiper':'⊕ Équiper'}
     </button>
   `:(qty>0?`<div class="inv-detail-no-stats" style="margin-top:4px">Gérable depuis l'onglet Mon Shop</div>`:''))
-  +(qty>0?`<button class="inv-detail-btn delete" onclick="openDeleteModal('${itemId}',event)">⊗ Supprimer</button>`:'');
+  +(qty>0?`<button class="inv-detail-btn delete" onclick="openDeleteModal('${safeItemId}',event)">⊗ Supprimer</button>`:'');
 
   document.getElementById('inv-detail-content').innerHTML=`
-    ${it.image?`<img src="${e(it.image)}" alt="${e(it.name||itemId)}" class="inv-detail-img" style="width:64px;height:64px;object-fit:contain;border-radius:8px;margin-bottom:8px">`:`<span class="inv-detail-emoji" style="color:${rc}">${it.emoji||'📦'}</span>`}
+    ${it.image?`<img src="${e(it.image)}" alt="${e(it.name||itemId)}" class="inv-detail-img" style="width:64px;height:64px;object-fit:contain;border-radius:8px;margin-bottom:8px" loading="lazy">`:`<span class="inv-detail-emoji" style="color:${rc}">${e(it.emoji)||'📦'}</span>`}
     <div class="inv-detail-name" style="color:${rc}">${e(it.name||itemId)}</div>
-    <div class="inv-detail-rarity" style="color:${rc}">${rarity}</div>
-    ${slotLabel?`<div class="inv-detail-slot-tag">📍 ${slotLabel}</div>`:''}
+    <div class="inv-detail-rarity" style="color:${rc}">${e(rarity)}</div>
+    ${slotLabel?`<div class="inv-detail-slot-tag">📍 ${e(slotLabel)}</div>`:''}
     ${it.description?`<div class="inv-detail-desc" style="font-size:.38rem;color:var(--text3);margin:6px 0;line-height:1.4;font-style:italic">${e(it.description)}</div>`:''}
     <div class="inv-detail-sep"></div>
     ${statsHtml}

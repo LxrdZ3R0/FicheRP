@@ -112,7 +112,7 @@ body::before{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;
 
 /* Card shell */
 .lore-card{position:relative;border-radius:8px;overflow:hidden;display:flex;flex-direction:column;cursor:pointer;text-decoration:none;color:inherit;opacity:0;transform:translateY(24px);transition:transform .45s cubic-bezier(0.16,1,0.3,1),opacity .45s cubic-bezier(0.16,1,0.3,1)}
-.lore-card.visible{opacity:1;transform:translateY(0)}
+.lore-card.visible,.lore-card.revealed{opacity:1;transform:translateY(0)}
 .lore-card:hover{transform:translateY(-4px)}
 
 /* Rotating conic border */
@@ -396,7 +396,7 @@ body::before{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;
 .chrono-timeline{position:relative;padding-left:44px}
 .chrono-timeline::before{content:'';position:absolute;left:20px;top:0;bottom:0;width:2px;background:linear-gradient(180deg,var(--violet),var(--blue),var(--emerald),transparent)}
 .chrono-era{position:relative;margin-bottom:36px;padding-left:28px;opacity:0;transform:translateX(-20px);transition:opacity .5s cubic-bezier(0.16,1,0.3,1),transform .5s cubic-bezier(0.16,1,0.3,1)}
-.chrono-era.visible{opacity:1;transform:translateX(0)}
+.chrono-era.visible,.chrono-era.revealed{opacity:1;transform:translateX(0)}
 .chrono-era::before{content:'';position:absolute;left:-25px;top:8px;width:12px;height:12px;border-radius:50%;background:var(--ec,var(--violet));box-shadow:0 0 12px var(--ec,var(--violet));z-index:2}
 .chrono-era-tag{font-family:var(--font-m);font-size:.44rem;letter-spacing:.18em;text-transform:uppercase;color:var(--ec,var(--violet));margin-bottom:4px}
 .chrono-era-title{font-family:var(--font-h);font-weight:800;font-size:.95rem;letter-spacing:.06em;color:#fff;margin-bottom:8px}
@@ -525,7 +525,7 @@ body::before{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;
 <button class="sb-toggle" id="sb-toggle">&#x25C8;</button>
 
 <!-- CYBER POPUP -->
-<div class="cyber-overlay" id="cyber-overlay">
+<div class="cyber-overlay" id="cyber-overlay" role="dialog" aria-modal="true" aria-labelledby="cm-content">
   <div class="cyber-modal" id="cyber-modal">
     <div class="cm-body" id="cm-body">
       <div class="cm-body-bg"><div class="cm-corner"></div></div>

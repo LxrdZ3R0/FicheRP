@@ -124,6 +124,9 @@
     var overlay = document.createElement('div');
     overlay.id = 'rp-overlay';
     overlay.className = 'rp-ov';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-labelledby', 'rp4-title-id');
     overlay.innerHTML = buildHTML(raceName, data, accent);
     document.body.appendChild(overlay);
     document.body.style.overflow = 'hidden';
@@ -226,7 +229,7 @@
       +'<div class="rp4-ce tl"></div><div class="rp4-ce tr"></div>'
       +'<div class="rp4-ce bl"></div><div class="rp4-ce br"></div>'
       /* Close */
-      +'<button class="rp-x">\u2715</button>'
+      +'<button class="rp-x" aria-label="Fermer">\u2715</button>'
       /* Popup */
       +'<div class="rp4-popup">'
       /* Noise overlay */
@@ -268,7 +271,7 @@
           +'</div>'
           +'<div class="rp4-title-wrap">'
             +'<div class="rp4-title-glow" style="color:'+ac+'">'+name.toUpperCase()+'</div>'
-            +'<div class="rp4-title">'+name.toUpperCase()+'</div>'
+            +'<div class="rp4-title" id="rp4-title-id">'+name.toUpperCase()+'</div>'
           +'</div>'
           +(d.plural ? '<div class="rp4-subtitle">Pluriel : '+d.plural+'</div>' : '')
           +'<div class="rp4-meta-grid">'

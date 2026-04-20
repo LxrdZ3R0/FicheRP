@@ -489,7 +489,7 @@ async function loadPlayer(){
 async function loadInventory(){
   const grid=document.getElementById('inv-grid');
   if(!CHAR_ID){grid.innerHTML='<div class="empty">Aucun personnage actif</div>';return}
-  if(window.Skeleton) window.Skeleton.show('inv-grid',6);
+  if(window.Skeleton) window.Skeleton.showInv('inv-grid',12);
   try{
     const key=(window._getInventoryKey ? window._getInventoryKey() : `${UID}_${CHAR_ID}`);
     const[invData,cfgData]=await Promise.all([
