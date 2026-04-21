@@ -62,46 +62,64 @@ Une seconde expérience RP — **fork permanent** — coexiste avec la branche N
 
 > L'arborescence complète des scripts figure dans [CLAUDE.md § Structure](CLAUDE.md#structure--fichiers-clés). Vue d'ensemble :
 
+> **Restructure 2026-04-21** — Organisation par domaine (R1→R8). `index.html` reste à la racine de `docs/` (contrainte GitHub Pages).
+
 ```
 JahartaRP/
 │
-├── docs/                          ← Dossier servi par GitHub Pages
-│   ├── index.html                 ← Accueil NORMAL
-│   ├── index-irp.html             ← Accueil branche IRP (voir § Branche IRP)
-│   ├── fiches.html / fiches-irp.html        ← Personnages joueurs (PC)
-│   ├── pnj.html                   ← Personnages non-joueurs
-│   ├── portail.html               ← Portail ressources (Lore + Carte)
-│   ├── lore.html                  ← Lore complet
-│   ├── racesjouables.html         ← Encyclopédie des 42 races (7 groupes)
-│   ├── bestiaire.html             ← Bestiaire (créatures/monstres)
-│   ├── gacha.html / gacha-irp.html          ← Gacha Nexus
-│   ├── hub.html / hub-irp.html              ← Hub joueur (12 onglets, auth Discord)
-│   ├── admin.html                 ← Panel d'administration (login Google)
+├── docs/                             ← Dossier servi par GitHub Pages
+│   ├── index.html                    ← Accueil NORMAL (racine — contrainte Pages)
+│   ├── CNAME · CLAUDE-CASINO.md · SITE_ARCHITECTURE.md
 │   │
-│   ├── css/
-│   │   ├── jaharta.css            ← STYLES PARTAGÉS
-│   │   ├── hub.css                ← Styles hub
-│   │   ├── hub-achievements.css   ← Onglet Achievements
-│   │   ├── gacha.css              ← Styles gacha
-│   │   ├── bestiaire-card.css     ← Cartes bestiaire
-│   │   └── irp-theme.css          ← Overrides visuels IRP
+│   ├── pages/                        ← Pages HTML NORMAL
+│   │   └── fiches · pnj · portail · lore · racesjouables · bestiaire
+│   │       · gacha · hub · casino · admin (10 fichiers)
 │   │
-│   ├── js/                        ← ~30 modules (voir CLAUDE.md pour détail)
-│   │   ├── [shared]   constants, utils, debug, jaharta-nav, jaharta-cache, jaharta-img-cache, jaharta-motion, page-transition, music-player, auth-badge, kanji-blob, stats-caps, irp-mode, script
-│   │   ├── [fiches]   fiches.js, fiches-irp.js
-│   │   ├── [lore]     lore.js, racesjouables-logic.js, race-popup.js
-│   │   ├── [gacha]    gacha-logic, gacha-irp-logic, gacha-blob, gacha-fx
-│   │   └── [hub]      hub-core, hub-irp, hub-irp-core, hub-dashboard, hub-character, hub-inventory, hub-renders, hub-shops, hub-achievements
+│   ├── irp/                          ← Branche IRP (fork permanent)
+│   │   └── index-irp · fiches-irp · gacha-irp · hub-irp (4 fichiers)
 │   │
-│   ├── img/ + assets/             ← Images, logos, favicons, carte
-│   └── data/                      ← Fixtures / données statiques
+│   ├── features/<domain>/            ← Logique métier par domaine
+│   │   ├── fiches/     fiches.js, fiches-irp.js
+│   │   ├── gacha/      gacha-logic.js, gacha-irp-logic.js, gacha-blob.js, gacha-fx.js
+│   │   ├── hub/        hub-core, hub-irp, hub-irp-core, hub-dashboard,
+│   │   │               hub-character, hub-inventory, hub-renders, hub-shops, hub-achievements
+│   │   ├── casino/     casino-core, casino-roulette, casino-blackjack,
+│   │   │               casino-poker, casino-flip
+│   │   ├── lore/       lore.js, race-popup.js
+│   │   ├── races/      racesjouables-logic.js
+│   │   ├── landing/    script.js
+│   │   └── admin/      (ajouts futurs)
+│   │
+│   ├── shared/
+│   │   ├── lib/        constants · utils · debug · jaharta-cache
+│   │   │               jaharta-img-cache · stats-caps · irp-mode · kanite-wallet
+│   │   ├── components/ jaharta-nav · jaharta-motion · page-transition
+│   │   │               music-player · auth-badge · kanji-blob
+│   │   └── data/       Fixtures / données statiques
+│   │
+│   ├── styles/         jaharta · hub · hub-achievements · gacha
+│   │                   bestiaire-card · casino · irp-theme
+│   │
+│   └── assets/
+│       ├── img/        Images, logos, favicons, carte
+│       └── data/       (si applicable)
 │
-├── CLAUDE.md                      ← Guide pour Claude Code (IA) — source de vérité conventions
-├── docs/SITE_ARCHITECTURE.md      ← Guide rapide scripts par page + timings bot↔site
-├── firestore.rules                ← Règles sécurité Firestore
+├── .claude/archive/                  ← Docs archivées (AUDIT/RESTRUCTURE/MD-AUDIT-20260418)
+├── CLAUDE.md                         ← Guide conventions (source de vérité)
+├── firestore.rules
 ├── .gitignore
-└── README.md                      ← Ce fichier (doc humaine)
+└── README.md                         ← Ce fichier
 ```
+
+### Règle de chemins relatifs (path-aware)
+
+Les scripts `shared/components/jaharta-nav.js` et `shared/lib/irp-mode.js` détectent leur position via `location.pathname.split('/').filter(Boolean)` :
+
+| Depuis | Vers `shared/`, `features/`, `styles/`, `assets/` | Vers `index.html` | Siblings |
+|--------|---------------------------------------------------|-------------------|----------|
+| `docs/index.html` | `shared/...` | `index.html` | `pages/fiches.html` |
+| `docs/pages/*.html` | `../shared/...` | `../index.html` | `fiches.html` |
+| `docs/irp/*.html` | `../shared/...` | `../index.html` | `fiches-irp.html` (IRP), `../pages/fiches.html` (cross-branche) |
 
 ---
 
@@ -109,22 +127,24 @@ JahartaRP/
 
 Dans chaque page, les scripts doivent être inclus dans cet ordre :
 
+> Depuis `docs/pages/*.html` et `docs/irp/*.html`, préfixer par `../`. Depuis `docs/index.html` (racine), pas de préfixe.
+
 ```html
 <!-- 1. Debug logger (doit être en premier pour capturer toutes les erreurs) -->
-<script src="js/debug.js"></script>
+<script src="../shared/lib/debug.js"></script>
 
 <!-- 2. Constantes globales (RACES, RANKS, RACES_SPECIFIC) -->
-<script src="js/constants.js"></script>
+<script src="../shared/lib/constants.js"></script>
 
 <!-- 3. Utilitaires (sanitize, compressImage, AntiSpam, Skeleton, showToast) -->
-<script src="js/utils.js"></script>
+<script src="../shared/lib/utils.js"></script>
 
-<!-- 4. Module Firebase (type="module", ESM) -->
+<!-- 4. Module Firebase (type="module", ESM) — logique page-spécifique -->
 <script type="module"> ... </script>
 
 <!-- 5. Transition de page + micro-interactions (en fin de <body>) -->
-<script src="js/page-transition.js"></script>
-<script src="js/jaharta-motion.js"></script>
+<script src="../shared/components/page-transition.js"></script>
+<script src="../shared/components/jaharta-motion.js"></script>
 ```
 
 > `jaharta-motion.js` doit toujours être **après** `page-transition.js` et en fin de `<body>`. Il s'auto-initialise au `DOMContentLoaded` et ne dépend d'aucun autre script.

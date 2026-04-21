@@ -1,54 +1,89 @@
-# SITE_ARCHITECTURE.md — Guide rapide
+# SITE_ARCHITECTURE.md — Guide d'architecture
 
-## Architecture des pages
+> **Restructure 2026-04-21** — Organisation par domaine (voir commits R1→R8).
 
-### Branche NORMALE (aucun code IRP)
-| Page | Rôle |
-|------|------|
-| `index.html` | Accueil. Contient le bouton secret ◆ → modal code → redirige vers `index-irp.html` |
-| `hub.html` | Hub joueur (auth /link). 12 onglets. Zéro IRP. |
-| `gacha.html` | Gacha Nexus. Bannières normales. Zéro IRP. |
-| `fiches.html` | Fiches personnages joueurs |
-| `pnj.html` | PNJ |
-| `portail.html` | Portail lore + carte |
-| `racesjouables.html` | Encyclopédie races |
-| `bestiaire.html` | Bestiaire |
-| `lore.html` | Lore complet |
-| `admin.html` | Panel admin (whitelist Firebase) |
+## Arborescence
 
-### Branche IRP (complètement séparée)
-| Page | Rôle |
-|------|------|
-| `index-irp.html` | Accueil IRP. Thème violine. Nav pointe vers pages IRP. |
-| `hub-irp.html` | Hub IRP. Collections `irp_*`, Jahartites, onglets IRP. |
-| `gacha-irp.html` | Gacha IRP. Bannières IRP, Jahartites. |
+```
+docs/
+├── index.html                  Accueil NORMAL (reste racine — GitHub Pages)
+├── CNAME · CLAUDE-CASINO.md · SITE_ARCHITECTURE.md (ce fichier)
+│
+├── pages/                      Pages HTML NORMAL (fiches, pnj, portail, lore,
+│                               racesjouables, bestiaire, gacha, hub, casino, admin)
+├── irp/                        Branche IRP (index-irp, fiches-irp, gacha-irp, hub-irp)
+│
+├── features/<domain>/          Logique métier (fiches · gacha · hub · lore · races
+│                               casino · landing · admin)
+├── shared/lib/                 constants · utils · debug · jaharta-cache
+│                               jaharta-img-cache · stats-caps · irp-mode · kanite-wallet
+├── shared/components/          jaharta-nav · jaharta-motion · page-transition
+│                               music-player · auth-badge · kanji-blob
+├── styles/                     jaharta · hub · hub-achievements · gacha
+│                               bestiaire-card · casino · irp-theme
+└── assets/{img,data}/
+```
 
-**Seul point de contact:** bouton ◆ dans le footer de `index.html` → code `JAHARTA02irp` → `index-irp.html`
+## Règle de chemins relatifs
+
+| Depuis | Vers `shared/`, `features/`, `styles/`, `assets/` | Vers `index.html` | Siblings |
+|--------|---------------------------------------------------|-------------------|----------|
+| `index.html` (racine) | `shared/...` | `index.html` | `pages/fiches.html` |
+| `pages/*.html` | `../shared/...` | `../index.html` | `fiches.html` |
+| `irp/*.html` | `../shared/...` | `../index.html` | `fiches-irp.html`, croix-branche `../pages/fiches.html` |
+
+`shared/components/jaharta-nav.js` et `shared/lib/irp-mode.js` détectent automatiquement la position via `location.pathname.split('/').filter(Boolean)` → `parent === 'pages' || 'irp'` → `toRoot = '../'`. Les tableaux `PAGES_NORMAL`/`PAGES_IRP` sont construits dynamiquement : `toRoot + 'pages/<slug>.html'`.
+
+## Branches
+
+### NORMALE (aucun code IRP)
+| Page | Chemin | Rôle |
+|------|--------|------|
+| Accueil | `index.html` | Footer ◆ → modal code → redirige vers `irp/index-irp.html` |
+| Hub | `pages/hub.html` | Hub joueur (auth /link). 12 onglets. |
+| Gacha | `pages/gacha.html` | Gacha Nexus (bannières normales). |
+| Casino | `pages/casino.html` | Multijoueur temps réel. |
+| Fiches / PNJ / Portail / Races / Bestiaire / Lore / Admin | `pages/*.html` | |
+
+### IRP (fork permanent)
+| Page | Chemin | Rôle |
+|------|--------|------|
+| Accueil IRP | `irp/index-irp.html` | Thème violine, nav vers `irp/*`. |
+| Hub IRP | `irp/hub-irp.html` | Collections `irp_*`, Jahartites. |
+| Gacha IRP | `irp/gacha-irp.html` | Bannières IRP. |
+| Fiches IRP | `irp/fiches-irp.html` | |
+
+**Seul point de contact :** bouton ◆ dans footer de `index.html` → code `JAHARTA02irp` → `irp/index-irp.html`.
 
 ## Scripts par page
 
-### Commun à toutes les pages
-`debug.js` → `constants.js` → `utils.js` → `jaharta-nav.js` → `jaharta-cache.js`
+### Bootstrap commun (dans l'ordre, inclusions directes)
+`shared/lib/debug.js` → `shared/lib/constants.js` → `shared/lib/utils.js` → `shared/components/jaharta-nav.js` → `shared/lib/jaharta-cache.js`
 
-### hub.html (normal)
-`hub-dashboard.js` → `hub-character.js` → `hub-renders.js` → `hub-inventory.js` → `hub-shops.js` → `hub-achievements.js` → `hub-core.js` → `music-player.js`
+### `pages/hub.html`
+`features/hub/hub-dashboard.js` → `hub-character.js` → `hub-renders.js` → `hub-inventory.js` → `hub-shops.js` → `hub-achievements.js` → `hub-core.js` → `shared/components/music-player.js`
 
-### hub-irp.html
-Même stack que hub.html + `irp-mode.js` + `hub-irp.js` (qui override les collections)
+### `irp/hub-irp.html`
+Même stack que hub.html + `shared/lib/irp-mode.js` + `features/hub/hub-irp.js` (override collections).
 
-### gacha.html / gacha-irp.html
-`gacha-logic.js` → `gacha-fx.js` → `gacha-blob.js` / `kanji-blob.js`
-Sur gacha-irp.html: `window._irpMode = true` est forcé AVANT gacha-logic.js
+### Gacha (`pages/gacha.html` / `irp/gacha-irp.html`)
+`features/gacha/gacha-logic.js` (ou `gacha-irp-logic.js`) → `gacha-fx.js` → `gacha-blob.js` / `shared/components/kanji-blob.js`. Sur `gacha-irp.html`, `window._irpMode = true` est forcé avant `gacha-irp-logic.js`.
+
+### Casino (`pages/casino.html`)
+Firebase compat → `features/casino/casino-core.js` → `casino-roulette.js` → `casino-blackjack.js` → `casino-poker.js` → `casino-flip.js`. Voir [CLAUDE-CASINO.md](CLAUDE-CASINO.md).
 
 ## Firebase — Collections clés
+
 | Collection | Usage |
 |------------|-------|
-| `gacha_config/banners` | Bannières actives (push par bot, lu par site via onSnapshot) |
-| `config/achievements_config` | Définitions succès normal+IRP (push bot /15min) |
-| `config/achievements_icons` | URLs images custom (éditées par admin via hub) |
-| `achievements_user/{discord_id}` | Succès débloqués par joueur |
+| `fiches/{id}` · `pnj/{id}` · `admins/{uid}` · `logs/{id}` | Fiches / staff |
+| `users/{discordId}` · `players/{uid}` · `economy/{uid_charId}` | Joueurs / économie |
+| `casino_config/main` · `casino_tables/{id}` · `casino_logs/{id}` | Casino |
+| `gacha_config/banners` · `gacha_pulls/{id}` | Gacha (bot push onSnapshot) |
+| `config/achievements_config` · `achievements_user/{discord_id}` | Succès |
+| `irp_pnj` · `irp_bestiaire` · `irp_characters` · `irp_flesh_marks` | Branche IRP |
 
-## Timing synchronisation bot ↔ site
-- **Bot push:** h:00, h:15, h:30, h:45 (aligné aux quarts d'heure)
-- **Site refresh succès:** h:03, h:18, h:33, h:48 (3 min après le bot)
-- **Bannières gacha:** `onSnapshot` (temps réel, dès que le bot écrit)
+## Timing bot ↔ site
+- **Bot push :** h:00, h:15, h:30, h:45
+- **Site refresh succès :** h:03, h:18, h:33, h:48 (3 min après le bot)
+- **Bannières gacha :** `onSnapshot` (temps réel)

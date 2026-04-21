@@ -21,88 +21,85 @@ Hébergé sur GitHub Pages (`/docs`), backend Firebase, zéro framework JS.
 
 ## Structure — fichiers clés
 
+> **Restructure 2026-04-21** — Architecture par domaine. Voir [docs/SITE_ARCHITECTURE.md](docs/SITE_ARCHITECTURE.md) pour le détail complet. Historique d'audit archivé dans [.claude/archive/](.claude/archive/).
+
 ```
 docs/
-├── index.html            Accueil NORMAL + nav
-├── index-irp.html        Accueil branche IRP (voir § Branche IRP)
-├── fiches.html           Cartes personnages joueurs (PC) — branche NORMAL
-├── fiches-irp.html       idem — branche IRP
-├── pnj.html              Personnages non-joueurs
-├── portail.html          Portail lore + carte monde
-├── lore.html             Lore complet
-├── racesjouables.html    Encyclopédie des 42 races
-├── bestiaire.html        Bestiaire (créatures/monstres)
-├── gacha.html            Gacha Nexus NORMAL (auth requis)
-├── gacha-irp.html        Gacha IRP
-├── hub.html              Hub joueur NORMAL — 12 onglets (auth requis)
-├── hub-irp.html          Hub joueur IRP — collections irp_*
-├── casino.html           Casino Nexus — Roulette · Blackjack · Poker · Quitte ou Double (auth /link)
-├── admin.html            Panel staff (whitelist Firestore)
+├── index.html                  Accueil NORMAL (reste racine — GitHub Pages)
+├── CNAME                       Domaine custom
+├── CLAUDE-CASINO.md            Doc technique Casino
+├── SITE_ARCHITECTURE.md        Guide d'architecture
 │
-├── CLAUDE-CASINO.md      Doc technique dédiée au module Casino
+├── pages/                      Pages HTML NORMAL
+│   ├── fiches.html · pnj.html · portail.html · lore.html
+│   ├── racesjouables.html · bestiaire.html
+│   ├── gacha.html · hub.html · casino.html · admin.html
 │
-├── css/
-│   ├── jaharta.css           Thème global partagé (variables CSS + tokens animation)
-│   ├── hub.css               Styles hub (NORMAL + IRP)
-│   ├── hub-achievements.css  Styles onglet Achievements
-│   ├── gacha.css             Styles gacha
-│   ├── bestiaire-card.css    Styles cartes bestiaire
-│   ├── casino.css            Styles casino (thème gold/felt, cartes, roue, pièce)
-│   └── irp-theme.css         Overrides thème IRP
+├── irp/                        Branche IRP (fork permanent)
+│   └── index-irp.html · fiches-irp.html · gacha-irp.html · hub-irp.html
 │
-└── js/
-    ├── constants.js             window.RACES / window.RANKS / window.RACES_SPECIFIC
-    ├── utils.js                 sanitize(), compressImage(), AntiSpam, Skeleton, showToast()
-    ├── debug.js                 Logger flottant (window._dbg)
-    ├── jaharta-nav.js           Navbar injectée (PAGES_NORMAL + PAGES_IRP)
-    ├── jaharta-cache.js         Wrapper onSnapshot avec tracking unsub (_snapSubs)
-    ├── jaharta-img-cache.js     Cache localStorage URLs Firebase Storage (TTL 24h)
-    ├── jaharta-motion.js        Micro-interactions globales (ripple, reveal, press)
-    ├── page-transition.js       Overlay fade entre pages
-    ├── music-player.js          Lecteur audio flottant
-    ├── auth-badge.js            Badge utilisateur authentifié
-    ├── kanji-blob.js            Blob Three.js (gacha NORMAL + hub scan)
-    ├── stats-caps.js            Calcul plafonds de stats selon rang
-    ├── irp-mode.js              Flag localStorage + redirections NORMAL↔IRP
-    ├── script.js                Logique landing (index.html only)
-    │
-    ├── fiches.js                Firebase fiches joueurs (NORMAL)
-    ├── fiches-irp.js            Firebase fiches joueurs (IRP)
-    ├── lore.js                  Logique page lore
-    ├── racesjouables-logic.js   Popup races + filtres
-    ├── race-popup.js            Popup race (hub)
-    │
-    ├── gacha-logic.js           Logique tirages gacha NORMAL
-    ├── gacha-irp-logic.js       Logique tirages gacha IRP
-    ├── gacha-blob.js            Blob 3D gacha
-    ├── gacha-fx.js              Effets visuels gacha
-    │
-    ├── hub-core.js              Logique centrale hub NORMAL (tabs + fade)
-    ├── hub-irp.js               Override hub IRP (collections)
-    ├── hub-irp-core.js          Logique centrale hub IRP
-    ├── hub-dashboard.js         Onglet Dashboard
-    ├── hub-character.js         Onglet Personnage
-    ├── hub-inventory.js         Onglet Inventaire (UI Cyberpunk)
-    ├── hub-renders.js           Rendu cartes hub
-    ├── hub-shops.js             Onglets Shops
-    ├── hub-achievements.js      Onglet Achievements
-    │
-    ├── casino-core.js           Init Firebase, auth /link, session, wallet, mode, tabs, debit/credit, logs
-    ├── casino-roulette.js       Roulette européenne — table partagée, betting 30s, spin, payouts
-    ├── casino-blackjack.js      Blackjack 6 sièges — dealer hits soft 17, BJ 3:2, double
-    ├── casino-poker.js          Texas Hold'em 2-6 joueurs — évaluation main 7 cartes
-    └── casino-flip.js           Quitte ou Double (PRIME only) — solo, navarites, streak
+├── features/                   Logique métier par domaine
+│   ├── fiches/     fiches.js · fiches-irp.js
+│   ├── gacha/      gacha-logic.js · gacha-irp-logic.js · gacha-blob.js · gacha-fx.js
+│   ├── hub/        hub-core.js · hub-irp.js · hub-irp-core.js · hub-dashboard.js
+│   │               hub-character.js · hub-inventory.js · hub-renders.js
+│   │               hub-shops.js · hub-achievements.js
+│   ├── lore/       lore.js
+│   ├── races/      racesjouables-logic.js · race-popup.js
+│   ├── casino/     casino-core.js · casino-roulette.js · casino-blackjack.js
+│   │               casino-poker.js · casino-flip.js
+│   ├── landing/    script.js
+│   └── admin/      (modules extraits de admin.html — à venir)
+│
+├── shared/                     Code mutualisé NORMAL + IRP
+│   ├── lib/
+│   │   ├── constants.js        RACES, RANKS, RACES_SPECIFIC
+│   │   ├── utils.js            sanitize, compressImage, AntiSpam, Skeleton, showToast
+│   │   ├── debug.js            window._dbg (logger flottant)
+│   │   ├── jaharta-cache.js    Wrapper onSnapshot + unsub tracking
+│   │   ├── jaharta-img-cache.js Cache localStorage URLs Firebase Storage (TTL 24h)
+│   │   ├── stats-caps.js       Plafonds de stats par rang
+│   │   ├── irp-mode.js         Flag localStorage + redirections path-aware
+│   │   └── kanite-wallet.js    Portefeuille Kanites partagé hub/casino
+│   └── components/
+│       ├── jaharta-nav.js      Nav injectée (PAGES_NORMAL/IRP, path-aware)
+│       ├── jaharta-motion.js   Micro-interactions (ripple, reveal, press)
+│       ├── page-transition.js  Overlay fade entre pages
+│       ├── music-player.js     Lecteur audio flottant
+│       ├── auth-badge.js       Badge utilisateur authentifié
+│       └── kanji-blob.js       Blob Three.js (gacha + hub scan)
+│
+├── styles/
+│   ├── jaharta.css             Thème global (variables CSS + tokens)
+│   ├── hub.css · hub-achievements.css · gacha.css
+│   ├── bestiaire-card.css · casino.css · irp-theme.css
+│
+└── assets/
+    ├── img/                    banner, favicon(s), logo-jaharta, map-holographic
+    └── data/                   irp_gacha_banners.json, etc.
 ```
 
 ---
 
+## Chemins relatifs — règle path-aware
+
+**Racine** (`index.html`) → `styles/`, `shared/`, `features/`, `pages/fiches.html`
+**Dans `pages/*.html`** → `../styles/`, `../shared/`, `../features/`, `../index.html` (sibling = `fiches.html`)
+**Dans `irp/*.html`** → `../styles/`, `../shared/`, `../features/`, `../pages/fiches.html` (sibling IRP = `fiches-irp.html`)
+
+`shared/components/jaharta-nav.js` et `shared/lib/irp-mode.js` détectent dynamiquement `parent === 'pages' || 'irp'` pour calculer `toRoot = '../'`. Pour ajouter une nav link, modifier les tableaux `PAGES_NORMAL`/`PAGES_IRP` avec `toRoot + 'pages/<slug>.html'`.
+
 ## Ordre d'inclusion obligatoire des scripts
 
 ```html
-<script src="js/debug.js"></script>      <!-- 1. capture toutes les erreurs -->
-<script src="js/constants.js"></script>  <!-- 2. RACES, RANKS globaux -->
-<script src="js/utils.js"></script>      <!-- 3. sanitize, showToast, etc. -->
-<script type="module"> ... </script>     <!-- 4. Firebase ESM + logique page -->
+<!-- Depuis une page racine -->
+<script src="shared/lib/debug.js"></script>      <!-- 1. capture erreurs -->
+<script src="shared/lib/constants.js"></script>  <!-- 2. RACES, RANKS -->
+<script src="shared/lib/utils.js"></script>      <!-- 3. sanitize, showToast -->
+<script type="module"> ... </script>             <!-- 4. Firebase ESM + logique -->
+
+<!-- Depuis pages/ ou irp/, préfixer avec ../ -->
+<script src="../shared/lib/debug.js"></script>
 ```
 
 ---
