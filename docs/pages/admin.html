@@ -2,9 +2,9 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<link rel="icon" type="image/x-icon" href="assets/img/favicon.ico">
-<link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png">
-<link rel="apple-touch-icon" sizes="180x180" href="assets/img/favicon-180.png">
+<link rel="icon" type="image/x-icon" href="../assets/img/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="../assets/img/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../assets/img/favicon-180.png">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>JAHARTA // Panel Admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -246,7 +246,7 @@ window.submitLore=async function(cat){
 function renderAdminHeader(){if(!currentAdmin)return;document.getElementById('admin-name').textContent=currentAdmin.name;const rb=document.getElementById('role-badge');rb.textContent=currentAdmin.role.toUpperCase();rb.className='role-badge role-'+currentAdmin.role;}
 </script>
 
-<link rel="stylesheet" href="styles/jaharta.css">
+<link rel="stylesheet" href="../styles/jaharta.css">
 <style>
 :root{
   --accent:var(--gold);--accent-rgb:255,214,10;
@@ -352,9 +352,9 @@ function renderAdminHeader(){if(!currentAdmin)return;document.getElementById('ad
 
 </style>
 <!-- Alpine.js supprimé — tabs gérés en vanilla JS pour éviter race condition -->
-<script src="shared/lib/debug.js"></script>
-<script src="shared/lib/constants.js"></script>
-<script src="shared/lib/utils.js"></script>
+<script src="../shared/lib/debug.js"></script>
+<script src="../shared/lib/constants.js"></script>
+<script src="../shared/lib/utils.js"></script>
 </head>
 <body>
 <div class="page-transition-overlay" id="page-transition"><div class="pt-logo-wrap"><div class="pt-glow-ring"></div><div class="pt-scan"></div><svg class="pt-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" fill="none"><circle class="svg-ring-outer" cx="100" cy="100" r="68" stroke="#00f0ff" stroke-width="3.5"/><path class="svg-ring-inner" d="M 46 100 Q 100 58 154 100" stroke="#00f0ff" stroke-width="1.8" stroke-linecap="round" fill="none" opacity="0.5"/><path class="svg-ring-inner" d="M 46 100 Q 100 142 154 100" stroke="#00f0ff" stroke-width="1.8" stroke-linecap="round" fill="none" opacity="0.5"/><path class="svg-star" d="M 100 22 C 88 60 88 140 100 178 C 112 140 112 60 100 22 Z" fill="#00f0ff"/><path class="svg-star" d="M 22 100 C 60 88 140 88 178 100 C 140 112 60 112 22 100 Z" fill="#00f0ff"/><line class="svg-lines" x1="38" y1="38" x2="162" y2="162" stroke="#00f0ff" stroke-width="2.5" stroke-linecap="round"/><line class="svg-lines" x1="162" y1="38" x2="38" y2="162" stroke="#00f0ff" stroke-width="2.5" stroke-linecap="round"/><circle cx="100" cy="100" r="5" fill="#06060c"/><circle cx="100" cy="100" r="2.5" fill="#00f0ff"/></svg></div><div class="pt-bar-wrap"><div class="pt-bar-fill"></div></div><div class="pt-text">Chargement</div></div>
@@ -372,7 +372,7 @@ function renderAdminHeader(){if(!currentAdmin)return;document.getElementById('ad
       Se connecter avec Google
     </button>
     <div class="login-error" id="login-error"></div>
-    <div style="text-align:center;margin-top:18px;"><a href="index.html" style="font-family:'Rajdhani',sans-serif;font-size:.6rem;letter-spacing:.14em;color:var(--muted);text-decoration:none;border:1px solid var(--border);padding:9px 22px;display:inline-block;transition:color .2s,border-color .2s;" onmouseover="this.style.color='var(--cyan)';this.style.borderColor='rgba(0,240,255,0.35)'" onmouseout="this.style.color='';this.style.borderColor=''">← Retour à l'accueil</a></div>
+    <div style="text-align:center;margin-top:18px;"><a href="../index.html" style="font-family:'Rajdhani',sans-serif;font-size:.6rem;letter-spacing:.14em;color:var(--muted);text-decoration:none;border:1px solid var(--border);padding:9px 22px;display:inline-block;transition:color .2s,border-color .2s;" onmouseover="this.style.color='var(--cyan)';this.style.borderColor='rgba(0,240,255,0.35)'" onmouseout="this.style.color='';this.style.borderColor=''">← Retour à l'accueil</a></div>
     <div class="login-hint">▸ Créez les admins dans Firebase Authentication<br>▸ Puis ajoutez dans Firestore : <strong>admins/{uid}</strong><br>&nbsp;&nbsp;avec le champ <strong>role: "admin"</strong> ou <strong>"modo"</strong></div>
   </div>
 </div>
@@ -401,11 +401,11 @@ function renderAdminHeader(){if(!currentAdmin)return;document.getElementById('ad
 <!-- PANEL -->
 <div id="panel-screen">
   <div class="admin-header">
-    <div class="admin-logo"><img src="assets/img/logo-jaharta.png" alt="" style="width:32px;height:32px;object-fit:contain;vertical-align:middle;margin-right:8px;">JAHARTA <span>// ADMIN</span></div>
+    <div class="admin-logo"><img src="../assets/img/logo-jaharta.png" alt="" style="width:32px;height:32px;object-fit:contain;vertical-align:middle;margin-right:8px;">JAHARTA <span>// ADMIN</span></div>
     <div class="admin-meta">
       <span class="role-badge" id="role-badge">—</span>
       <div class="admin-user">Connecté : <strong id="admin-name"></strong></div>
-      <a href="index.html" class="back-link">← Site</a>
+      <a href="../index.html" class="back-link">← Site</a>
       <button class="logout-btn" onclick="adminLogout()">Déconnexion</button>
     </div>
   </div>
@@ -819,7 +819,7 @@ window.renderLogs = function(logs) {
 }
 
 </script>
-<script src="shared/components/page-transition.js"></script>
+<script src="../shared/components/page-transition.js"></script>
 
 <script>
 /* ── Vanilla JS tab switcher — remplace Alpine.js ──────────────────────── */

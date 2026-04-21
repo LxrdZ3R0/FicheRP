@@ -2,24 +2,29 @@
 /* Injecte nav + mobile-menu, détecte la page active, init le burger */
 /* Supporte le mode IRP : nav réduite (Index, Fiches, PNJ, Bestiaire, Gacha, Hub) */
 (function () {
+  /* Détecte la position relative de la page courante par rapport à /docs/ */
+  var segs = window.location.pathname.split('/').filter(Boolean);
+  var parent = segs[segs.length - 2] || '';
+  var toRoot = (parent === 'pages' || parent === 'irp') ? '../' : '';
+
   var PAGES_NORMAL = [
-    { href: 'index.html',          label: 'Accueil',   short: 'Accueil',  num: '01' },
-    { href: 'fiches.html',         label: 'Fiches RP', short: 'Fiches',   num: '02' },
-    { href: 'pnj.html',            label: 'PNJ',       short: 'PNJ',      num: '03' },
-    { href: 'portail.html',        label: 'Portail',   short: 'Portail',  num: '04' },
-    { href: 'racesjouables.html',  label: 'Races',     short: 'Races',    num: '05' },
-    { href: 'bestiaire.html',      label: 'Bestiaire', short: 'Bestiaire',num: '06' },
-    { href: 'lore.html',           label: 'Lore',      short: 'Lore',     num: '07' },
-    { href: 'gacha.html',          label: 'Gacha',     short: 'Gacha',    num: '08' },
-    { href: 'hub.html',            label: 'Hub',       short: 'Hub',      num: '09' },
-    { href: 'casino.html',         label: 'Casino',    short: 'Casino',   num: '10' }
+    { href: toRoot + 'index.html',             label: 'Accueil',   short: 'Accueil',  num: '01' },
+    { href: toRoot + 'pages/fiches.html',       label: 'Fiches RP', short: 'Fiches',   num: '02' },
+    { href: toRoot + 'pages/pnj.html',          label: 'PNJ',       short: 'PNJ',      num: '03' },
+    { href: toRoot + 'pages/portail.html',      label: 'Portail',   short: 'Portail',  num: '04' },
+    { href: toRoot + 'pages/racesjouables.html',label: 'Races',     short: 'Races',    num: '05' },
+    { href: toRoot + 'pages/bestiaire.html',    label: 'Bestiaire', short: 'Bestiaire',num: '06' },
+    { href: toRoot + 'pages/lore.html',         label: 'Lore',      short: 'Lore',     num: '07' },
+    { href: toRoot + 'pages/gacha.html',        label: 'Gacha',     short: 'Gacha',    num: '08' },
+    { href: toRoot + 'pages/hub.html',          label: 'Hub',       short: 'Hub',      num: '09' },
+    { href: toRoot + 'pages/casino.html',       label: 'Casino',    short: 'Casino',   num: '10' }
   ];
 
   var PAGES_IRP = [
-    { href: 'index-irp.html',      label: 'Accueil IRP',    short: 'Accueil',    num: '01' },
-    { href: 'fiches-irp.html',      label: 'Fiches IRP',     short: 'Fiches',     num: '02' },
-    { href: 'gacha-irp.html',      label: 'Gacha IRP',      short: 'Gacha',      num: '03' },
-    { href: 'hub-irp.html',        label: 'Hub IRP',        short: 'Hub',        num: '04' }
+    { href: toRoot + 'irp/index-irp.html',  label: 'Accueil IRP', short: 'Accueil', num: '01' },
+    { href: toRoot + 'irp/fiches-irp.html', label: 'Fiches IRP',  short: 'Fiches',  num: '02' },
+    { href: toRoot + 'irp/gacha-irp.html',  label: 'Gacha IRP',   short: 'Gacha',   num: '03' },
+    { href: toRoot + 'irp/hub-irp.html',    label: 'Hub IRP',     short: 'Hub',     num: '04' }
   ];
 
   var current = window.location.pathname.split('/').pop() || 'index.html';
@@ -31,10 +36,10 @@
   function buildNav(pages) {
     var isIRP = localStorage.getItem('jaharta_irp_mode') === 'true';
     var logoText = isIRP ? 'JAHARTA IRP' : 'JAHARTA';
-    var logoHref = isIRP ? 'index-irp.html' : 'index.html';
+    var logoHref = isIRP ? (toRoot + 'irp/index-irp.html') : (toRoot + 'index.html');
 
     var navLinks = pages.map(function (p) {
-      var active = p.href === current ? ' class="active"' : '';
+      var active = p.href.split('/').pop() === current ? ' class="active"' : '';
       return '<a href="' + p.href + '"' + active + '>' + p.label + '</a>';
     }).join('');
 
@@ -42,8 +47,8 @@
     var returnLink = '';
     var returnMenuLink = '';
     if (isIRP) {
-      returnLink = '<a href="index.html" onclick="localStorage.removeItem(\'jaharta_irp_mode\')" style="opacity:.55;font-size:.6rem">\u21A9 Site Normal</a>';
-      returnMenuLink = '<a href="index.html" class="menu-link" onclick="localStorage.removeItem(\'jaharta_irp_mode\')" style="opacity:.5;border-top:1px solid rgba(220,20,60,0.15);margin-top:8px;padding-top:12px">' +
+      returnLink = '<a href="' + toRoot + 'index.html" onclick="localStorage.removeItem(\'jaharta_irp_mode\')" style="opacity:.55;font-size:.6rem">\u21A9 Site Normal</a>';
+      returnMenuLink = '<a href="' + toRoot + 'index.html" class="menu-link" onclick="localStorage.removeItem(\'jaharta_irp_mode\')" style="opacity:.5;border-top:1px solid rgba(220,20,60,0.15);margin-top:8px;padding-top:12px">' +
         '<span class="menu-link-index">\u21A9</span>' +
         '<span class="menu-link-text">Site Normal</span>' +
         '<span class="menu-link-arrow">\u2192</span>' +
@@ -51,7 +56,7 @@
     }
 
     var menuLinks = pages.map(function (p) {
-      var cls = 'menu-link' + (p.href === current ? ' active' : '');
+      var cls = 'menu-link' + (p.href.split('/').pop() === current ? ' active' : '');
       return '<a href="' + p.href + '" class="' + cls + '">' +
         '<span class="menu-link-index">' + p.num + '</span>' +
         '<span class="menu-link-text">' + p.short + '</span>' +
@@ -61,7 +66,7 @@
 
     return '<nav class="nav" id="nav">' +
         '<a href="' + logoHref + '" class="nav-logo">' +
-          '<img src="assets/img/logo-jaharta.png" alt="Logo Jaharta">' + logoText +
+          '<img src="' + toRoot + 'assets/img/logo-jaharta.png" alt="Logo Jaharta">' + logoText +
         '</a>' +
         '<div class="nav-links" id="nav-links">' + navLinks + returnLink + '</div>' +
         '<button class="burger" id="burger" aria-label="Menu" aria-expanded="false">' +

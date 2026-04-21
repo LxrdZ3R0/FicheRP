@@ -2,15 +2,15 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<link rel="icon" type="image/x-icon" href="assets/img/favicon.ico">
-<link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png">
-<link rel="apple-touch-icon" sizes="180x180" href="assets/img/favicon-180.png">
+<link rel="icon" type="image/x-icon" href="../assets/img/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="../assets/img/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../assets/img/favicon-180.png">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>JAHARTA — Lore</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Exo+2:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles/jaharta.css">
+<link rel="stylesheet" href="../styles/jaharta.css">
 <style>
 :root{--cyan:#00e5cc;--rose:#ff6b9d;--sidebar-w:280px}
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
@@ -512,14 +512,14 @@ body::before{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;
 .admin-toast.success{border-color:rgba(68,255,136,.4);color:var(--emerald)}
 .admin-toast.error{border-color:rgba(255,71,87,.4);color:var(--red)}
 </style>
-<script src="shared/lib/debug.js"></script><script src="shared/lib/constants.js"></script><script src="shared/lib/utils.js"></script>
+<script src="../shared/lib/debug.js"></script><script src="../shared/lib/constants.js"></script><script src="../shared/lib/utils.js"></script>
 </head>
 
 <body>
-<div class="page-transition-overlay" id="page-transition"><div class="pt-logo-wrap"><div class="pt-glow-ring"></div><div class="pt-scan"></div><img src="assets/img/logo-jaharta.png" class="pt-img" alt="Jaharta"></div><div class="pt-bar-wrap"><div class="pt-bar-fill"></div></div><div class="pt-text">Chargement</div></div>
+<div class="page-transition-overlay" id="page-transition"><div class="pt-logo-wrap"><div class="pt-glow-ring"></div><div class="pt-scan"></div><img src="../assets/img/logo-jaharta.png" class="pt-img" alt="Jaharta"></div><div class="pt-bar-wrap"><div class="pt-bar-fill"></div></div><div class="pt-text">Chargement</div></div>
 <div class="scroll-line" id="scroll-line"></div>
 <div id="jaharta-nav"></div>
-<script src="shared/components/jaharta-nav.js"></script>
+<script src="../shared/components/jaharta-nav.js"></script>
 <div class="sb-overlay" id="sb-overlay"></div>
 <div class="admin-toast" id="admin-toast"></div>
 <button class="sb-toggle" id="sb-toggle">&#x25C8;</button>
@@ -616,7 +616,7 @@ window._loreUnsub=onSnapshot(collection(db,"lore"),snap=>{
   if(typeof window._renderAllLore==="function")window._renderAllLore();
 },err=>window._dbg?.warn("[lore]",err.message));
 </script>
-<script src="features/lore/lore.js"></script>
-<script src="shared/components/kanji-blob.js"></script><script type="module" src="shared/components/auth-badge.js"></script><script src="features/landing/script.js"></script><script src="shared/components/page-transition.js"></script><script src="shared/components/jaharta-motion.js"></script>
-<script src="shared/components/music-player.js"></script>
+<script src="../features/lore/lore.js"></script>
+<script src="../shared/components/kanji-blob.js"></script><script type="module" src="../shared/components/auth-badge.js"></script><script src="../features/landing/script.js"></script><script src="../shared/components/page-transition.js"></script><script src="../shared/components/jaharta-motion.js"></script>
+<script src="../shared/components/music-player.js"></script>
 </body></html>

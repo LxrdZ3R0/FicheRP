@@ -2,9 +2,9 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<link rel="icon" type="image/x-icon" href="assets/img/favicon.ico">
-<link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png">
-<link rel="apple-touch-icon" sizes="180x180" href="assets/img/favicon-180.png">
+<link rel="icon" type="image/x-icon" href="../assets/img/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="../assets/img/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../assets/img/favicon-180.png">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>JAHARTA — PNJ Importants</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -302,7 +302,7 @@ window._loadIRPPNJ=function(){
 
 </script>
 
-<link rel="stylesheet" href="styles/jaharta.css">
+<link rel="stylesheet" href="../styles/jaharta.css">
 <style>
 /* PREVIEW DESIGN */
 
@@ -566,22 +566,22 @@ body::before{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;
 .menu-deco::before{content:'';position:absolute;inset:12px;border:1px solid #8B5CF6}
 
 </style>
-<script src="shared/lib/debug.js"></script>
-<script src="shared/lib/constants.js"></script>
-<script src="shared/lib/utils.js"></script>
-<script src="shared/lib/stats-caps.js"></script>
-<script src="shared/lib/jaharta-cache.js"></script>
-<script src="shared/lib/jaharta-img-cache.js"></script>
-<script type="module" src="shared/components/auth-badge.js"></script>
+<script src="../shared/lib/debug.js"></script>
+<script src="../shared/lib/constants.js"></script>
+<script src="../shared/lib/utils.js"></script>
+<script src="../shared/lib/stats-caps.js"></script>
+<script src="../shared/lib/jaharta-cache.js"></script>
+<script src="../shared/lib/jaharta-img-cache.js"></script>
+<script type="module" src="../shared/components/auth-badge.js"></script>
 </head>
 <body>
-<div class="page-transition-overlay" id="page-transition"><div class="pt-logo-wrap"><div class="pt-glow-ring"></div><div class="pt-scan"></div><img src="assets/img/logo-jaharta.png" class="pt-img" alt="Jaharta"></div><div class="pt-bar-wrap"><div class="pt-bar-fill"></div></div><div class="pt-text">Chargement</div></div>
+<div class="page-transition-overlay" id="page-transition"><div class="pt-logo-wrap"><div class="pt-glow-ring"></div><div class="pt-scan"></div><img src="../assets/img/logo-jaharta.png" class="pt-img" alt="Jaharta"></div><div class="pt-bar-wrap"><div class="pt-bar-fill"></div></div><div class="pt-text">Chargement</div></div>
 <div class="scroll-progress" id="scroll-progress"></div>
 <div class="noise"></div>
 <div class="toast" id="toast"></div>
 
 <div id="jaharta-nav"></div>
-<script src="shared/components/jaharta-nav.js"></script>
+<script src="../shared/components/jaharta-nav.js"></script>
 
 <section class="hero-sub">
   <div class="hero-sub-overlay"></div>
@@ -648,7 +648,7 @@ body::before{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;
 
 <footer class="footer" style="border-top:1px solid rgba(255,255,255,0.04);padding:3rem clamp(1.5rem,4vw,3rem);display:flex;align-items:center;justify-content:space-between;gap:2rem;flex-wrap:wrap">
   <div style="font-family:var(--font-h);font-size:.7rem;font-weight:700;letter-spacing:.2em;color:var(--text3)">JAHARTA</div>
-  <div style="display:flex;gap:18px"><a href="index.html" style="font-size:.68rem;color:var(--text2);text-decoration:none">Accueil</a><a href="fiches.html" style="font-size:.68rem;color:var(--text2);text-decoration:none">Fiches RP</a><a href="portail.html" style="font-size:.68rem;color:var(--text2);text-decoration:none">Portail</a><a href="admin.html" style="font-size:.68rem;color:var(--text2);text-decoration:none">Admin</a><a href="https://discord.gg/Jaharta" target="_blank" style="font-size:.68rem;color:var(--text2);text-decoration:none">Discord ↗</a></div>
+  <div style="display:flex;gap:18px"><a href="../index.html" style="font-size:.68rem;color:var(--text2);text-decoration:none">Accueil</a><a href="fiches.html" style="font-size:.68rem;color:var(--text2);text-decoration:none">Fiches RP</a><a href="portail.html" style="font-size:.68rem;color:var(--text2);text-decoration:none">Portail</a><a href="admin.html" style="font-size:.68rem;color:var(--text2);text-decoration:none">Admin</a><a href="https://discord.gg/Jaharta" target="_blank" style="font-size:.68rem;color:var(--text2);text-decoration:none">Discord ↗</a></div>
   <div style="font-family:var(--font-m);font-size:.45rem;color:var(--text3);letter-spacing:.15em">© 2024 — 2026 JAHARTA</div>
 </footer>
 
@@ -679,13 +679,13 @@ const _origSaveFilter=window.saveFilter;window.saveFilter=async function(){await
 (function(){const toggle=document.getElementById('nav-toggle');const nav=document.getElementById('nav-links');const bd=document.getElementById('nav-backdrop');if(!toggle||!nav)return;toggle.dataset.navInit='1';function cl(){nav.classList.remove('open');bd&&bd.classList.remove('open');toggle.textContent='☰';}function op(){nav.classList.add('open');bd&&bd.classList.add('open');toggle.textContent='✕';}toggle.addEventListener('click',()=>{nav.classList.contains('open')?cl():op();});bd&&bd.addEventListener('click',cl);nav.querySelectorAll('a').forEach(a=>a.addEventListener('click',cl));})();
 (function(){const h=document.querySelector('header');if(!h)return;let s=false;window.addEventListener('scroll',()=>{const v=window.scrollY>80;if(v!==s){s=v;h.style.height=v?'56px':'';h.style.borderBottomColor=v?'rgba(0,240,255,.22)':'';}},{passive:true});})();
 </script>
-<script src="features/landing/script.js"></script>
+<script src="../features/landing/script.js"></script>
 
-<script src="shared/components/page-transition.js"></script>
-<script src="shared/components/jaharta-motion.js"></script>
+<script src="../shared/components/page-transition.js"></script>
+<script src="../shared/components/jaharta-motion.js"></script>
 
-<script src="shared/components/kanji-blob.js"></script>
-<script src="shared/components/music-player.js"></script>
+<script src="../shared/components/kanji-blob.js"></script>
+<script src="../shared/components/music-player.js"></script>
 
 <script>
 /* PNJ tilt 3D + reflet diagonal — attaché via MutationObserver */
