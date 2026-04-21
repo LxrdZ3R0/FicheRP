@@ -6,20 +6,20 @@
 <meta name="description" content="Jaharta RP — Hub Personnel">
 <meta name="theme-color" content="#020713">
 <title>JAHARTA IRP — Hub</title>
-<link rel="icon" type="image/x-icon" href="assets/img/favicon.ico">
-<link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png">
-<link rel="apple-touch-icon" sizes="180x180" href="assets/img/favicon-180.png">
+<link rel="icon" type="image/x-icon" href="../assets/img/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="../assets/img/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../assets/img/favicon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Exo+2:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles/jaharta.css">
+<link rel="stylesheet" href="../styles/jaharta.css">
 <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/dist/tippy.css">
-<link rel="stylesheet" href="styles/hub.css">
-<link rel="stylesheet" href="styles/hub-achievements.css">
-<link rel="stylesheet" href="styles/irp-theme.css">
+<link rel="stylesheet" href="../styles/hub.css">
+<link rel="stylesheet" href="../styles/hub-achievements.css">
+<link rel="stylesheet" href="../styles/irp-theme.css">
 </head>
 <body>
-<div class="page-transition-overlay" id="page-transition"><div class="pt-logo-wrap"><div class="pt-glow-ring"></div><div class="pt-scan"></div><img src="assets/img/logo-jaharta.png" class="pt-img" alt="Jaharta"></div><div class="pt-bar-wrap"><div class="pt-bar-fill"></div></div><div class="pt-text">Chargement</div></div>
+<div class="page-transition-overlay" id="page-transition"><div class="pt-logo-wrap"><div class="pt-glow-ring"></div><div class="pt-scan"></div><img src="../assets/img/logo-jaharta.png" class="pt-img" alt="Jaharta"></div><div class="pt-bar-wrap"><div class="pt-bar-fill"></div></div><div class="pt-text">Chargement</div></div>
 <div class="scroll-line" id="scroll-line"></div>
 <div id="toast" class="toast"></div>
 
@@ -43,13 +43,13 @@
 <div class="ambient-glow"></div>
 
 <nav class="nav" id="main-nav" style="display:none">
-  <a href="index-irp.html" class="nav-logo"><img src="assets/img/logo-jaharta.png" alt="Jaharta">JAHARTA IRP</a>
+  <a href="index-irp.html" class="nav-logo"><img src="../assets/img/logo-jaharta.png" alt="Jaharta">JAHARTA IRP</a>
   <div class="nav-links">
     <a href="index-irp.html">Accueil</a>
     <a href="fiches-irp.html">Fiches</a>
     <a href="gacha-irp.html">Gacha</a>
     <a href="hub-irp.html" class="active">Hub</a>
-    <a href="index.html" onclick="localStorage.removeItem('jaharta_irp_mode')" style="opacity:.55;font-size:.6rem">↩ Site Normal</a>
+    <a href="../index.html" onclick="localStorage.removeItem('jaharta_irp_mode')" style="opacity:.55;font-size:.6rem">↩ Site Normal</a>
   </div>
   <div class="nav-right">
     <img src="" alt="" class="nav-avatar" id="nav-avatar">
@@ -70,7 +70,7 @@
     <a href="fiches-irp.html" class="menu-link"><span class="menu-link-index">02</span><span class="menu-link-text">Fiches</span><span class="menu-link-arrow">→</span></a>
     <a href="gacha-irp.html" class="menu-link"><span class="menu-link-index">03</span><span class="menu-link-text">Gacha</span><span class="menu-link-arrow">→</span></a>
     <a href="hub-irp.html" class="menu-link active"><span class="menu-link-index">04</span><span class="menu-link-text">Hub</span><span class="menu-link-arrow">→</span></a>
-    <a href="index.html" class="menu-link" onclick="localStorage.removeItem('jaharta_irp_mode')" style="opacity:.5;border-top:1px solid rgba(220,20,60,0.15);margin-top:8px;padding-top:12px"><span class="menu-link-index">↩</span><span class="menu-link-text">Site Normal</span><span class="menu-link-arrow">→</span></a>
+    <a href="../index.html" class="menu-link" onclick="localStorage.removeItem('jaharta_irp_mode')" style="opacity:.5;border-top:1px solid rgba(220,20,60,0.15);margin-top:8px;padding-top:12px"><span class="menu-link-index">↩</span><span class="menu-link-text">Site Normal</span><span class="menu-link-arrow">→</span></a>
   </div>
   <div class="menu-user-section">
     <div>
@@ -85,7 +85,7 @@
 <!-- HUB MAIN -->
 <div class="hub-main" id="hub-main">
   <div class="hub-tabs">
-    <a href="index.html" class="tab-btn" style="text-decoration:none;border-bottom:none;opacity:.55" title="Retour au site normal" onclick="localStorage.removeItem('jaharta_irp_mode')">← <span class="tab-text">Site</span></a>
+    <a href="../index.html" class="tab-btn" style="text-decoration:none;border-bottom:none;opacity:.55" title="Retour au site normal" onclick="localStorage.removeItem('jaharta_irp_mode')">← <span class="tab-text">Site</span></a>
     <div style="width:1px;background:var(--border);margin:10px 0;flex-shrink:0"></div>
     <button class="tab-btn active" onclick="showTab('dashboard')" id="tab-dashboard">🏠 <span class="tab-text">Dashboard</span></button>
     <button class="tab-btn" onclick="showTab('personnage')" id="tab-personnage">👤 <span class="tab-text">Personnage</span></button>
@@ -437,7 +437,7 @@
     <div class="gacha-balance">
       <div class="gacha-bal-val" id="gacha-nav-val">—</div>
       <div class="gacha-bal-label">NAVARITES DISPONIBLES</div>
-      <a href="gacha.html" class="gacha-cta">🎰 Accéder au Gacha complet</a>
+      <a href="../pages/gacha.html" class="gacha-cta">🎰 Accéder au Gacha complet</a>
     </div>
     <div class="card"><div class="card-body">
       <div class="sh" style="margin-bottom:14px"><span class="sh-num">—</span><span class="sh-title">Compteurs Pity</span><div class="sh-line"></div></div>
@@ -572,32 +572,32 @@
 <script src="https://unpkg.com/@popperjs/core@2/dist/umd/popper.min.js"></script>
 <script src="https://unpkg.com/tippy.js@6/dist/tippy-bundle.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-<script src="shared/lib/debug.js"></script>
-<script src="shared/lib/constants.js"></script>
+<script src="../shared/lib/debug.js"></script>
+<script src="../shared/lib/constants.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-<script src="shared/lib/utils.js"></script>
-<script src="shared/lib/stats-caps.js"></script>
-<script src="shared/lib/jaharta-cache.js"></script>
-<script src="shared/lib/jaharta-img-cache.js"></script>
-<script src="shared/lib/kanite-wallet.js"></script>
-<script src="features/hub/hub-dashboard.js"></script>
-<script src="features/hub/hub-character.js"></script>
-<script src="features/hub/hub-renders.js"></script>
-<script src="features/hub/hub-inventory.js"></script>
-<script src="features/hub/hub-shops.js"></script>
-<script src="features/hub/hub-achievements.js"></script>
-<script src="features/hub/hub-irp-core.js"></script>
+<script src="../shared/lib/utils.js"></script>
+<script src="../shared/lib/stats-caps.js"></script>
+<script src="../shared/lib/jaharta-cache.js"></script>
+<script src="../shared/lib/jaharta-img-cache.js"></script>
+<script src="../shared/lib/kanite-wallet.js"></script>
+<script src="../features/hub/hub-dashboard.js"></script>
+<script src="../features/hub/hub-character.js"></script>
+<script src="../features/hub/hub-renders.js"></script>
+<script src="../features/hub/hub-inventory.js"></script>
+<script src="../features/hub/hub-shops.js"></script>
+<script src="../features/hub/hub-achievements.js"></script>
+<script src="../features/hub/hub-irp-core.js"></script>
 <script>
 /* Hub: Black Ops 2 only (index 2 in ALL_TRACKS) */
 window.JMP_CONFIG = { tracks: [2], autoTrack: 0 };
 </script>
-<script src="shared/components/music-player.js"></script>
-<script src="shared/components/page-transition.js"></script>
-<script src="shared/components/jaharta-motion.js"></script>
+<script src="../shared/components/music-player.js"></script>
+<script src="../shared/components/page-transition.js"></script>
+<script src="../shared/components/jaharta-motion.js"></script>
 
 
-<script type="module" src="shared/components/auth-badge.js"></script>
+<script type="module" src="../shared/components/auth-badge.js"></script>
 <script>
 // ═══ BURGER MENU ═══
 (function(){

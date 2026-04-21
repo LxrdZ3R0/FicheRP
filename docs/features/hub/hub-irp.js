@@ -107,7 +107,7 @@
       { id: 'parametres',  emoji: '⚙️', label: 'Paramètres' },
     ];
 
-    var tabsHTML = '<a href="index.html" class="tab-btn" style="text-decoration:none;border-bottom:none;opacity:.55" title="Retour au site">← <span class="tab-text">Site</span></a>';
+    var tabsHTML = '<a href="../index.html" class="tab-btn" style="text-decoration:none;border-bottom:none;opacity:.55" title="Retour au site">← <span class="tab-text">Site</span></a>';
     tabsHTML += '<div style="width:1px;background:var(--border);margin:10px 0;flex-shrink:0"></div>';
     IRP_TABS.forEach(function (t, i) {
       var active = i === 0 ? ' active' : '';

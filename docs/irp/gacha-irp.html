@@ -6,28 +6,28 @@
 <meta name="description" content="Jaharta RP — Gacha Nexus">
 <meta name="theme-color" content="#020713">
 <title>JAHARTA — Gacha Nexus</title>
-<link rel="icon" type="image/x-icon" href="assets/img/favicon.ico">
-<link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png">
-<link rel="apple-touch-icon" sizes="180x180" href="assets/img/favicon-180.png">
+<link rel="icon" type="image/x-icon" href="../assets/img/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="../assets/img/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../assets/img/favicon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Exo+2:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles/jaharta.css">
-<link rel="stylesheet" href="styles/gacha.css">
-<link rel="stylesheet" href="styles/irp-theme.css">
+<link rel="stylesheet" href="../styles/jaharta.css">
+<link rel="stylesheet" href="../styles/gacha.css">
+<link rel="stylesheet" href="../styles/irp-theme.css">
 
-<script src="shared/lib/debug.js"></script>
-<script type="module" src="shared/components/auth-badge.js"></script>
+<script src="../shared/lib/debug.js"></script>
+<script type="module" src="../shared/components/auth-badge.js"></script>
 </head>
 <body>
-<div class="page-transition-overlay" id="page-transition"><div class="pt-logo-wrap"><div class="pt-glow-ring"></div><div class="pt-scan"></div><img src="assets/img/logo-jaharta.png" class="pt-img" alt="Jaharta"></div><div class="pt-bar-wrap"><div class="pt-bar-fill"></div></div><div class="pt-text">Chargement</div></div>
+<div class="page-transition-overlay" id="page-transition"><div class="pt-logo-wrap"><div class="pt-glow-ring"></div><div class="pt-scan"></div><img src="../assets/img/logo-jaharta.png" class="pt-img" alt="Jaharta"></div><div class="pt-bar-wrap"><div class="pt-bar-fill"></div></div><div class="pt-text">Chargement</div></div>
 
 <div class="scroll-line" id="scroll-line"></div>
 
 <!-- NAV (same as all pages) -->
 <script>window._irpMode=true;localStorage.setItem("jaharta_irp_mode","true");</script>
 <div id="jaharta-nav"></div>
-<script src="shared/components/jaharta-nav.js"></script>
+<script src="../shared/components/jaharta-nav.js"></script>
 
 <!-- HERO SUB -->
 <section class="hero-sub">
@@ -102,7 +102,7 @@
 <div class="pull-overlay" id="po">
   <canvas id="blob-canvas"></canvas>
   <div class="blob-ui">
-    <img class="blob-logo" src="assets/img/logo-jaharta.png" alt="">
+    <img class="blob-logo" src="../assets/img/logo-jaharta.png" alt="">
     <div class="blob-status" id="pst">SYNCHRONIZING NEXUS</div>
     <div class="blob-bar"><div class="blob-bar-fill" id="bbar"></div></div>
   </div>
@@ -113,19 +113,19 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-<script src="shared/lib/constants.js"></script>
-<script src="shared/lib/utils.js"></script>
+<script src="../shared/lib/constants.js"></script>
+<script src="../shared/lib/utils.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/CustomEase.min.js"></script>
-<script src="features/gacha/gacha-blob.js"></script>
+<script src="../features/gacha/gacha-blob.js"></script>
 <script>
 // ═══ FIREBASE INIT ═══
 const firebaseConfig={apiKey:"AIzaSyAru7qZX8Gu_b8Y3oNDV-a5PmkrrkRjkcs",authDomain:"jaharta-rp.firebaseapp.com",projectId:"jaharta-rp",storageBucket:"jaharta-rp.firebasestorage.app",messagingSenderId:"217075417489",appId:"1:217075417489:web:4d1e2df422a5cd42411a30"};
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
 </script>
-<script src="shared/lib/jaharta-cache.js"></script>
+<script src="../shared/lib/jaharta-cache.js"></script>
 <script>
 /* ═══ GACHA MUSIC: Black Ops 2 default, 1/1000 chance SPECIALZ (1/100 for BOOSTED IDs) ═══ */
 (function(){
@@ -161,8 +161,8 @@ const db=firebase.firestore();
 window._irpMode = true;
 localStorage.setItem("jaharta_irp_mode","true");
 </script>
-<script src="features/gacha/gacha-irp-logic.js"></script>
-<script src="features/gacha/gacha-fx.js"></script>
+<script src="../features/gacha/gacha-irp-logic.js"></script>
+<script src="../features/gacha/gacha-fx.js"></script>
 <script>
 // ═══ INIT ═══
 FX.init();
@@ -272,9 +272,9 @@ window.addEventListener('scroll',()=>{const p=window.scrollY/(document.documentE
   draw();
 })();
 </script>
-<script src="shared/components/music-player.js"></script>
-<script src="shared/components/page-transition.js"></script>
-<script src="shared/components/jaharta-motion.js"></script>
+<script src="../shared/components/music-player.js"></script>
+<script src="../shared/components/page-transition.js"></script>
+<script src="../shared/components/jaharta-motion.js"></script>
 <!-- IRP mode native -->
 </body>
 </html>

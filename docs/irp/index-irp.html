@@ -6,9 +6,9 @@
 <meta name="description" content="Jaharta RP — Un monde où magie et technologie s'entrelacent.">
 <meta name="theme-color" content="#020713">
 <title>JAHARTA — Là où la magie rencontre la technologie</title>
-<link rel="icon" type="image/x-icon" href="assets/img/favicon.ico">
-<link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png">
-<link rel="apple-touch-icon" sizes="180x180" href="assets/img/favicon-180.png">
+<link rel="icon" type="image/x-icon" href="../assets/img/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="../assets/img/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../assets/img/favicon-180.png">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://www.jaharta.fr/">
 <meta property="og:title" content="JAHARTA">
@@ -17,8 +17,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Exo+2:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles/jaharta.css">
-<link rel="stylesheet" href="styles/irp-theme.css">
+<link rel="stylesheet" href="../styles/jaharta.css">
+<link rel="stylesheet" href="../styles/irp-theme.css">
 <style>
 
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
@@ -179,7 +179,7 @@ body::before {
 }
 .split-visual-img {
   position: absolute; inset: 0;
-  background: url("assets/img/map-holographic.png") center/cover no-repeat;
+  background: url("../assets/img/map-holographic.png") center/cover no-repeat;
   opacity: 0.12; transform: scale(1.1);
 }
 .split-visual-overlay {
@@ -473,12 +473,12 @@ body::before {
 .menu-deco::before{content:'';position:absolute;inset:12px;border:1px solid #8B5CF6}
 
 </style>
-<script src="shared/lib/debug.js"></script>
-<script src="shared/lib/constants.js"></script>
-<script src="shared/lib/utils.js"></script>
+<script src="../shared/lib/debug.js"></script>
+<script src="../shared/lib/constants.js"></script>
+<script src="../shared/lib/utils.js"></script>
 </head>
 <body>
-<div class="page-transition-overlay" id="page-transition"><div class="pt-logo-wrap"><div class="pt-glow-ring"></div><div class="pt-scan"></div><img src="assets/img/logo-jaharta.png" class="pt-img" alt="Jaharta"></div><div class="pt-bar-wrap"><div class="pt-bar-fill"></div></div><div class="pt-text">Chargement</div></div>
+<div class="page-transition-overlay" id="page-transition"><div class="pt-logo-wrap"><div class="pt-glow-ring"></div><div class="pt-scan"></div><img src="../assets/img/logo-jaharta.png" class="pt-img" alt="Jaharta"></div><div class="pt-bar-wrap"><div class="pt-bar-fill"></div></div><div class="pt-text">Chargement</div></div>
 
 
 <div class="scroll-line" id="scroll-line"></div>
@@ -487,7 +487,7 @@ body::before {
 <!-- NAV -->
 <script>window._irpMode=true;localStorage.setItem("jaharta_irp_mode","true");</script>
 <div id="jaharta-nav"></div>
-<script src="shared/components/jaharta-nav.js"></script>
+<script src="../shared/components/jaharta-nav.js"></script>
 
 <!-- HERO -->
 <section class="hero">
@@ -519,7 +519,7 @@ body::before {
       <div class="sect-tag">Votre histoire</div>
       <h2 class="sect-title">Un monde où rien n'est <em>interdit</em> — mais tout a un prix</h2>
       <p class="sect-body">Jaharta vous a accepté… sans forcément vous comprendre. Ici, une rune peut alimenter une machine, et un circuit peut canaliser un sort. Magie et technologie ne se contredisent pas : elles coexistent, s'entrelacent et parfois se déforment mutuellement.</p>
-      <a href="portail.html" class="sect-link">Découvrir le lore</a>
+      <a href="../pages/portail.html" class="sect-link">Découvrir le lore</a>
     </div>
   </div>
   <div class="split-visual">
@@ -536,7 +536,7 @@ body::before {
       <div class="sect-tag">La Cité-Strate</div>
       <h2 class="sect-title">Votre seconde chance débute à <em>Navari</em></h2>
       <p class="sect-body">Première puissance militaire et deuxième puissance économique de Jaharta. Le corps octroyé par le Nexus peut — ou non — être celui de votre vie antérieure. Au rythme de vos combats et négociations, vous reprendrez le contrôle grâce au Système.</p>
-      <a href="racesjouables.html" class="sect-link">Choisir votre race</a>
+      <a href="../pages/racesjouables.html" class="sect-link">Choisir votre race</a>
     </div>
   </div>
   <div class="split-visual" style="background:rgba(108,92,231,0.02)">
@@ -674,8 +674,8 @@ body::before {
   </div>
   <div class="explore-grid">
     <a href="fiches-irp.html" class="explore-card rv" style="--card-accent:#4DA3FF"><span class="icon">◈</span><h3>Base de Données RP</h3><p>Registre complet des personnages joueurs. Filtrez par race, consultez les fiches et rangs de puissance.</p><span class="arrow">Accéder →</span></a>
-    <a href="pnj.html" class="explore-card rv rv-d1" style="--card-accent:#FF4757"><span class="icon">◆</span><h3>Personnages PNJ</h3><p>Les figures importantes de Jaharta — entités mythiques, seigneurs de guerre et acteurs clés de l'univers.</p><span class="arrow">Découvrir →</span></a>
-    <a href="portail.html" class="explore-card rv rv-d2" style="--card-accent:#8B5CF6"><span class="icon">⬡</span><h3>Portail des Ressources</h3><p>Lore, cartes du monde, règles du RP et toutes les ressources essentielles pour votre histoire.</p><span class="arrow">Explorer →</span></a>
+    <a href="../pages/pnj.html" class="explore-card rv rv-d1" style="--card-accent:#FF4757"><span class="icon">◆</span><h3>Personnages PNJ</h3><p>Les figures importantes de Jaharta — entités mythiques, seigneurs de guerre et acteurs clés de l'univers.</p><span class="arrow">Découvrir →</span></a>
+    <a href="../pages/portail.html" class="explore-card rv rv-d2" style="--card-accent:#8B5CF6"><span class="icon">⬡</span><h3>Portail des Ressources</h3><p>Lore, cartes du monde, règles du RP et toutes les ressources essentielles pour votre histoire.</p><span class="arrow">Explorer →</span></a>
   </div>
 </section>
 
@@ -709,12 +709,12 @@ body::before {
   <div class="footer-brand">JAHARTA</div>
   <div class="footer-links">
     <a href="fiches-irp.html">Fiches</a>
-    <a href="pnj.html">PNJ</a>
-    <a href="portail.html">Portail</a>
-    <a href="racesjouables.html">Races</a>
+    <a href="../pages/pnj.html">PNJ</a>
+    <a href="../pages/portail.html">Portail</a>
+    <a href="../pages/racesjouables.html">Races</a>
     <a href="https://discord.gg/Jaharta" target="_blank">Discord ↗</a>
   </div>
-  <div class="footer-copy">© 2024 — 2026 JAHARTA RP <a href="admin.html" style="color:var(--text3);text-decoration:none;margin-left:14px;font-size:.42rem;letter-spacing:.12em;opacity:.4;transition:opacity .2s" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='.4'">⚙ STAFF</a></div>
+  <div class="footer-copy">© 2024 — 2026 JAHARTA RP <a href="../pages/admin.html" style="color:var(--text3);text-decoration:none;margin-left:14px;font-size:.42rem;letter-spacing:.12em;opacity:.4;transition:opacity .2s" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='.4'">⚙ STAFF</a></div>
 </footer>
 
 
@@ -776,14 +776,14 @@ body::before {
 })();
 
 </script>
-<script src="features/landing/script.js"></script>
-<script src="shared/components/page-transition.js"></script>
-<script src="shared/components/jaharta-motion.js"></script>
+<script src="../features/landing/script.js"></script>
+<script src="../shared/components/page-transition.js"></script>
+<script src="../shared/components/jaharta-motion.js"></script>
 <!-- IRP mode native -->
 <script>window._irpMode=true;localStorage.setItem("jaharta_irp_mode","true");</script>
-<script src="shared/components/kanji-blob.js"></script>
-<script src="shared/components/music-player.js"></script>
-<script type="module" src="shared/components/auth-badge.js"></script>
+<script src="../shared/components/kanji-blob.js"></script>
+<script src="../shared/components/music-player.js"></script>
+<script type="module" src="../shared/components/auth-badge.js"></script>
 
 <script>
 // Burger menu

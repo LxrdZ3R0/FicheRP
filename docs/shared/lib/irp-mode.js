@@ -11,6 +11,11 @@
   var _isIRPPage = /irp\.html/.test(location.pathname);
   if (!window._irpMode) window._irpMode = _isIRPPage;
 
+  /* Préfixe relatif vers la racine /docs/ selon la position de la page courante */
+  var _segs = location.pathname.split('/').filter(Boolean);
+  var _parent = _segs[_segs.length - 2] || '';
+  var _toRoot = (_parent === 'pages' || _parent === 'irp') ? '../' : '';
+
   /* ── CSS du mode IRP (injecté dynamiquement) ── */
   var IRP_THEME_CSS = [
     /* ── Palette complète IRP : violine / rouge écarlate / violet sombre ── */
@@ -452,7 +457,7 @@
       localStorage.removeItem(STORAGE_KEY);
       if (typeof showToast === 'function') showToast('Mode IRP désactivé', 'info');
       /* Redirect to normal site */
-      setTimeout(function () { location.href = 'index.html'; }, 500);
+      setTimeout(function () { location.href = _toRoot + 'index.html'; }, 500);
       return;
     }
 
@@ -488,7 +493,7 @@
           overlay.remove();
           localStorage.setItem(STORAGE_KEY, 'true');
           /* Redirect to dedicated IRP index */
-          location.href = 'index-irp.html';
+          location.href = _toRoot + 'irp/index-irp.html';
         }, 300);
       } else {
         input.classList.add('error');
