@@ -15,8 +15,8 @@
 <link rel="stylesheet" href="styles/jaharta.css">
 <link rel="stylesheet" href="styles/gacha.css">
 
-<script src="js/debug.js"></script>
-<script type="module" src="js/auth-badge.js"></script>
+<script src="shared/lib/debug.js"></script>
+<script type="module" src="shared/components/auth-badge.js"></script>
 </head>
 <body>
 <div class="page-transition-overlay" id="page-transition"><div class="pt-logo-wrap"><div class="pt-glow-ring"></div><div class="pt-scan"></div><img src="assets/img/logo-jaharta.png" class="pt-img" alt="Jaharta"></div><div class="pt-bar-wrap"><div class="pt-bar-fill"></div></div><div class="pt-text">Chargement</div></div>
@@ -25,7 +25,7 @@
 
 <!-- NAV (same as all pages) -->
 <div id="jaharta-nav"></div>
-<script src="js/jaharta-nav.js"></script>
+<script src="shared/components/jaharta-nav.js"></script>
 
 <!-- HERO SUB -->
 <section class="hero-sub">
@@ -111,8 +111,8 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-<script src="js/constants.js"></script>
-<script src="js/utils.js"></script>
+<script src="shared/lib/constants.js"></script>
+<script src="shared/lib/utils.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/CustomEase.min.js"></script>
@@ -123,7 +123,7 @@ const firebaseConfig={apiKey:"AIzaSyAru7qZX8Gu_b8Y3oNDV-a5PmkrrkRjkcs",authDomai
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
 </script>
-<script src="js/jaharta-cache.js"></script>
+<script src="shared/lib/jaharta-cache.js"></script>
 <script>
 /* ═══ GACHA MUSIC: Black Ops 2 default, 1/1000 chance SPECIALZ (1/100 for BOOSTED IDs) ═══ */
 (function(){
@@ -258,9 +258,9 @@ window.addEventListener('scroll',()=>{const p=window.scrollY/(document.documentE
   draw();
 })();
 </script>
-<script src="js/music-player.js"></script>
-<script src="js/page-transition.js"></script>
-<script src="js/jaharta-motion.js"></script>
+<script src="shared/components/music-player.js"></script>
+<script src="shared/components/page-transition.js"></script>
+<script src="shared/components/jaharta-motion.js"></script>
 
 </body>
 </html>
