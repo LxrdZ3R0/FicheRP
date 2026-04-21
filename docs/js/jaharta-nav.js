@@ -61,7 +61,7 @@
 
     return '<nav class="nav" id="nav">' +
         '<a href="' + logoHref + '" class="nav-logo">' +
-          '<img src="img/logo-jaharta.png" alt="Logo Jaharta">' + logoText +
+          '<img src="assets/img/logo-jaharta.png" alt="Logo Jaharta">' + logoText +
         '</a>' +
         '<div class="nav-links" id="nav-links">' + navLinks + returnLink + '</div>' +
         '<button class="burger" id="burger" aria-label="Menu" aria-expanded="false">' +
