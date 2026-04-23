@@ -578,7 +578,8 @@ function renderState() {
     const handDiv = d.firstElementChild;
     if (handDiv.dataset.sig !== handSig) {
       handDiv.dataset.sig = handSig;
-      handDiv.innerHTML = handArr.map(c => `<div class="card ${isRed(c) ? 'red-suit' : 'black-suit'}"><span class="card-rank">${rank(c)}</span><span class="card-suit">${suit(c)}</span><span class="card-big-suit">${suit(c)}</span></div>`).join('');
+      handDiv.innerHTML = handArr.map(c => window.JCards.html(c)).join('');
+      window.JCards.animateAll(handDiv);
     }
 
     // Score
@@ -672,15 +673,10 @@ function phaseLabel(p) {
 }
 
 function buildCard(c) {
-  const d = document.createElement('div');
-  if (!c) { d.className = 'card back'; return d; }
-  d.className = 'card deal-in ' + (isRed(c) ? 'red-suit' : 'black-suit');
-  d.innerHTML = `<span class="card-rank">${rank(c)}</span><span class="card-suit">${suit(c)}</span><span class="card-big-suit">${suit(c)}</span>`;
-  return d;
+  const el = window.JCards.build(c);
+  window.JCards.dealIn(el);
+  return el;
 }
-function rank(c) { return c.length === 3 ? c.slice(0, 2) : c[0]; }
-function suit(c) { return c[c.length - 1]; }
-function isRed(c) { const s = suit(c); return s === '♥' || s === '♦'; }
 
 function currencySymbol(c) {
   if (c === 'navarites') return '✦';

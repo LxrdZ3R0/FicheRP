@@ -1038,40 +1038,25 @@ body.mode-prime .normal-only { display: none !important; }
 .bj-btn:disabled, .pk-btn:disabled, .qd-btn:disabled { opacity: .4; cursor: not-allowed; }
 .bj-btn.bj-confirm { background: linear-gradient(180deg, #5cf199, var(--green)); }
 
-/* Cards */
+/* ── Cards (rendu SVG via window.JCards — Sprint 1) ── */
 .card {
   width: 56px; height: 80px;
   border-radius: 4px;
-  background: #fdfdfd;
-  border: 1px solid #888;
-  box-shadow: 0 4px 10px rgba(0,0,0,.35);
-  font-family: 'Georgia', serif;
+  box-shadow: 0 4px 10px rgba(0,0,0,.35), 0 1px 2px rgba(0,0,0,.4);
   position: relative;
-  display: inline-flex;
-  flex-direction: column;
-  padding: 4px 6px;
+  display: inline-block;
+  overflow: hidden;
   color: #111;
+  transition: transform var(--dur-fast), box-shadow var(--dur-fast);
 }
-.card.red-suit { color: #c9212b; }
+.card.red-suit   { color: #c9212b; }
 .card.black-suit { color: #111; }
-.card.back {
-  background:
-    repeating-linear-gradient(45deg, rgba(255,255,255,.08), rgba(255,255,255,.08) 4px, transparent 4px, transparent 8px),
-    linear-gradient(135deg, #3a1b5a, #1a0c30);
-  border-color: var(--casino-accent);
-}
-.card-rank { font-size: .9rem; font-weight: 700; line-height: 1; }
-.card-suit { font-size: 1rem; line-height: 1; margin-top: 2px; }
-.card-big-suit {
-  position: absolute;
-  bottom: 4px; right: 6px;
-  font-size: 1.4rem;
-  opacity: .85;
-}
-.card.deal-in { animation: deal 300ms var(--ease-out-expo); }
+.card-svg { display: block; width: 100%; height: 100%; }
+/* Fallback : activé uniquement si GSAP indisponible (bascule gérée dans casino-cards.js) */
+.card.deal-in { animation: deal 320ms var(--ease-out-expo); }
 @keyframes deal {
-  from { transform: translateY(-30px) rotate(-8deg); opacity: 0; }
-  to   { transform: translateY(0) rotate(0); opacity: 1; }
+  from { transform: translateY(-32px) rotate(-9deg) scale(.85); opacity: 0; }
+  to   { transform: translateY(0) rotate(0) scale(1); opacity: 1; }
 }
 
 /* ══════════════════════════════════════════════

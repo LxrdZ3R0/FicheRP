@@ -8,13 +8,14 @@ Référence pour les sessions de modification du système casino de Jaharta RP.
 
 | Fichier | Rôle |
 |---------|------|
-| `casino.html` | Page principale — auth gate, hero, panels jeux, mode toggle |
-| `css/casino.css` | Styles complets — thème gold/felt, cartes, roue, pièce, responsive |
-| `js/casino-core.js` | Init Firebase, auth /link, session, wallet, mode, tabs, debit/credit, logs |
-| `js/casino-roulette.js` | Roulette européenne — table partagée, betting 30s, spin, payouts |
-| `js/casino-blackjack.js` | Blackjack 6 sièges — dealer hits soft 17, BJ 3:2, double, phases |
-| `js/casino-poker.js` | Texas Hold'em 2-6 joueurs — évaluation main 7 cartes, side-pot simplifié |
-| `js/casino-flip.js` | Quitte ou Double (PRIME only) — solo, navarites, streak |
+| `pages/casino.html` | Page principale — auth gate, hero, panels jeux, mode toggle |
+| `styles/casino.css` | Styles complets — thème gold/felt, cartes SVG, roue, pièce, responsive |
+| `features/casino/casino-core.js` | Init Firebase, auth /link, session, wallet, mode, tabs, debit/credit, logs |
+| `features/casino/casino-cards.js` | **Rendu cartes SVG** — `window.JCards` (build/html/dealIn/animateAll) + sprite defs + GSAP deal |
+| `features/casino/casino-roulette.js` | Roulette européenne — table partagée, betting 30s, spin, payouts |
+| `features/casino/casino-blackjack.js` | Blackjack 6 sièges — dealer hits soft 17, BJ 3:2, double, phases |
+| `features/casino/casino-poker.js` | Texas Hold'em 2-6 joueurs — évaluation main 7 cartes, side-pot simplifié |
+| `features/casino/casino-flip.js` | Quitte ou Double (PRIME only) — solo, navarites, streak |
 
 ---
 
@@ -219,3 +220,41 @@ Admin panel → onglet Casino → bouton FERMER LE CASINO
 - **Host failover** : si `host_ping` > 7s, n'importe quel client peut devenir host
 - **CSS variables casino** : `--casino-accent` (#e8b04a gold), `--prime-accent` (#d946ef violet)
 - Le casino utilise Firebase **compat** (non-ESM) comme gacha.html et hub.html
+
+---
+
+## Rendu cartes (Sprint Design 1 — 2026-04-23)
+
+`casino-cards.js` expose `window.JCards` et centralise le rendu pour blackjack + poker.
+
+```js
+JCards.build(card)              // → HTMLElement  (div.card > svg)
+JCards.html(card)               // → string       (même contenu sérialisé)
+JCards.dealIn(el, {delay, dir}) // → GSAP fromTo  (fallback CSS .deal-in si no GSAP)
+JCards.animateAll(container, {stagger, baseDelay}) // → stagger sur les .card enfants
+JCards.parse("A♠")              // → {rank:'A', suit:'s'}   (supporte "10♦" et "Td")
+```
+
+**Formats acceptés :**
+- Blackjack : `"A♠" / "10♦" / "K♣"` (rank + unicode suit)
+- Poker     : `"As" / "Td" / "Kc"` (rank + suit letter) — `T` remplacé par `10` en affichage
+- `null` ou `''` → dos Jaharta
+
+**Sprite defs SVG** (injecté une fois dans `<body>`) :
+- `#jc-suit-h` `#jc-suit-d` `#jc-suit-s` `#jc-suit-c` — paths de pips
+- `#jc-back-bg` (linearGradient `#0a0f22 → #1a0c30`)
+- `#jc-back-hatch` (pattern 45°, gold 0.35 opacity)
+- `#jc-back-glow` (radialGradient gold soft)
+
+**Deal animation GSAP :** `fromTo({y:-42, x:±18, rotation:±10, scale:.82, opacity:0}, duration:.42, ease:'power3.out', clearProps:'transform,opacity')`. `clearProps` est critique pour ne pas conserver d'inline styles qui bloqueraient les layouts suivants.
+
+**Stagger poker community :** diff sur `cEl.dataset.count` → anime **uniquement les nouvelles** cartes depuis le dernier rendu (flop = 3 cartes séquentielles à 140ms, turn/river = 1 seule).
+
+**Ordre de chargement `casino.html`** (IMPORTANT) :
+```
+firebase-*-compat.js
+gsap.min.js                  ← CDN 3.12.5
+utils.js · kanite-wallet.js
+casino-cards.js              ← avant casino-core.js
+casino-core.js · casino-roulette.js · casino-blackjack.js · casino-poker.js · casino-flip.js
+```

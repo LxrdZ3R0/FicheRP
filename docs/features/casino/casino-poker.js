@@ -649,20 +649,24 @@ function renderState() {
   document.getElementById('pk-leave-btn').style.display = mySeat !== null ? '' : 'none';
   document.getElementById('pk-buyin').style.display = mySeat === null ? '' : 'none';
 
-  // Community — diff par signature pour éviter de rejouer l'animation .deal-in
+  // Community — diff par signature + stagger GSAP pour le flop/turn/river
   const cEl = document.getElementById('pk-community');
   const board = state.board || [];
   const boardSig = board.join(',');
   if (cEl.dataset.sig !== boardSig) {
+    const prevCount = cEl.dataset.count ? Number(cEl.dataset.count) : 0;
     cEl.dataset.sig = boardSig;
+    cEl.dataset.count = String(board.length);
     cEl.innerHTML = '';
-    board.forEach(c => cEl.appendChild(buildPokerCard(c)));
+    board.forEach(c => cEl.appendChild(window.JCards.build(c)));
     for (let i = board.length; i < 5; i++) {
-      const d = document.createElement('div');
-      d.className = 'card back';
+      const d = window.JCards.build(null);
       d.style.opacity = '.2';
       cEl.appendChild(d);
     }
+    // Stagger uniquement les nouvelles cartes (flop = 3, turn/river = 1)
+    const newFaces = Array.from(cEl.querySelectorAll(':scope > .card:not(.back)')).slice(prevCount);
+    newFaces.forEach((el, i) => window.JCards.dealIn(el, { delay: i * 0.14 }));
   }
 
   // Seats — chaque section du siège (cartes / joueur / mise / badges) a sa propre signature
@@ -700,11 +704,13 @@ function renderState() {
     if (cardsDiv.dataset.sig !== cardSig) {
       cardsDiv.dataset.sig = cardSig;
       cardsDiv.className = 'pk-seat-cards';
+      const ghostBack = window.JCards.html(null).replace('<div class="card back">', '<div class="card back" style="opacity:.15">');
       if (holeArr.length) {
-        cardsDiv.innerHTML = holeArr.map(c => showHole ? buildPokerCardHTML(c) : '<div class="card back"></div>').join('');
+        cardsDiv.innerHTML = holeArr.map(c => window.JCards.html(showHole ? c : null)).join('');
       } else {
-        cardsDiv.innerHTML = '<div class="card back" style="opacity:.15"></div><div class="card back" style="opacity:.15"></div>';
+        cardsDiv.innerHTML = ghostBack + ghostBack;
       }
+      window.JCards.animateAll(cardsDiv);
     }
 
     // Player (avatar + nom + stack)
@@ -818,18 +824,6 @@ function phaseLabel(p) {
   }
 }
 
-function buildPokerCard(c) {
-  const d = document.createElement('div');
-  d.className = 'card deal-in ' + (isRedPk(c) ? 'red-suit' : 'black-suit');
-  d.innerHTML = `<span class="card-rank">${displayRank(c)}</span><span class="card-suit">${displaySuit(c)}</span><span class="card-big-suit">${displaySuit(c)}</span>`;
-  return d;
-}
-function buildPokerCardHTML(c) {
-  return `<div class="card deal-in ${isRedPk(c) ? 'red-suit' : 'black-suit'}"><span class="card-rank">${displayRank(c)}</span><span class="card-suit">${displaySuit(c)}</span><span class="card-big-suit">${displaySuit(c)}</span></div>`;
-}
-function displayRank(c) { return c[0] === 'T' ? '10' : c[0]; }
-function displaySuit(c) { const m = { s: '♠', h: '♥', d: '♦', c: '♣' }; return m[c[1]] || c[1]; }
-function isRedPk(c) { return c[1] === 'h' || c[1] === 'd'; }
 function currencySymbol(c) {
   if (c === 'navarites') return '✦';
   if (c === 'bronze_kanite') return '🥉';

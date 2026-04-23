@@ -15,7 +15,7 @@ Hébergé sur GitHub Pages (`/docs`), backend Firebase, zéro framework JS.
 | Auth | Firebase Auth (Google uniquement — panel admin) |
 | Frontend | HTML5 / CSS3 / JS vanilla — aucun bundler |
 | Alpine.js 3.14 | **Uniquement** dans `admin.html` (onglets réactifs) |
-| Three.js + GSAP | Blob 3D + animations gacha (`kanji-blob.js`, `gacha.html`) + scan silhouette hub (`hub.html`) |
+| Three.js + GSAP | Blob 3D + animations gacha (`kanji-blob.js`, `gacha.html`) + scan silhouette hub (`hub.html`) + cartes SVG & deal casino (`casino-cards.js`, `casino.html`) |
 
 ---
 
@@ -46,8 +46,8 @@ docs/
 │   │               hub-shops.js · hub-achievements.js
 │   ├── lore/       lore.js
 │   ├── races/      racesjouables-logic.js · race-popup.js
-│   ├── casino/     casino-core.js · casino-roulette.js · casino-blackjack.js
-│   │               casino-poker.js · casino-flip.js
+│   ├── casino/     casino-core.js · casino-cards.js · casino-roulette.js
+│   │               casino-blackjack.js · casino-poker.js · casino-flip.js
 │   ├── landing/    script.js
 │   └── admin/      (modules extraits de admin.html — à venir)
 │
@@ -216,6 +216,21 @@ Module multijoueur temps réel — voir **[docs/CLAUDE-CASINO.md](docs/CLAUDE-CA
 - Architecture **host-driven** : élection client dynamique via `host_ping` (TTL 7s, failover auto)
 - Transactions atomiques Firestore pour tous débits/crédits + `lastClaimedRound` anti double-crédit payouts
 - Admin : onglet **Casino** dans `admin.html` → toggle `casino_config.is_open` + feed des 20 derniers paris
+
+#### Rendu cartes — `casino-cards.js` (Sprint 1 · 2026-04-23)
+
+Module partagé qui centralise le rendu des cartes à jouer (blackjack + poker). Remplace les anciens glyphes Unicode (`♠♥♦♣`) par des SVG vectoriels nets à toute échelle.
+
+- Chargé dans `casino.html` **avant** `casino-core.js`, après GSAP 3.12.5 CDN (requis pour `dealIn`)
+- Injecte un sprite `<svg id="jcards-defs">` en début de `<body>` (symbols `jc-suit-s/h/d/c`, linearGradient dos, pattern hatch)
+- API `window.JCards` :
+  - `build(card)` → `HTMLElement` (`<div class="card"><svg class="card-svg">…</svg></div>`) · `null` / `''` → dos Jaharta
+  - `html(card)` → string (pour `innerHTML`)
+  - `dealIn(el, { delay, dir })` → anim GSAP `power3.out` (fallback `.deal-in` CSS si pas de GSAP)
+  - `animateAll(container, { stagger, baseDelay })` → stagger tous les `.card` enfants
+  - `parse(card)` → `{ rank, suit }` · supporte les 2 formats du projet (`"A♠"` blackjack, `"As"` poker)
+- CSS nettoyé : `.card-rank`, `.card-suit`, `.card-big-suit`, `.card.back` (règle gradient) **supprimés** de `casino.css`. Ne restent que `.card` (container box + shadow), `.card-svg` (display block 100%), `.card.red-suit`/`.card.black-suit` (currentColor) et `.card.deal-in` (fallback keyframes)
+- Dos custom : losange triple Jaharta doré (#e8b04a) + "J" Orbitron centré + hatch 45° sur gradient `#0a0f22 → #1a0c30`
 
 **⚠ Sécurité Firestore — defense-in-depth (2026-04-20) :** `casino_tables` et `casino_heartbeats` sont restreintes à une whitelist d'IDs (`roulette_main`, `blackjack_main`, `poker_main`) via la fonction `isCasinoTable()`. `casino_logs` valide types (`game in [...]`, `mode in [...]`) et bornes (`amount` 0-1M, `profit` ±1M). `players.navarites` reste écrivable sans auth — la logique métier repose sur les transactions client. **Limite résiduelle** : un client malveillant peut toujours écrire dans une table whitelistée et se créditer des navarites. Durcissement complet prévu via Cloud Function ou Admin SDK côté bot.
 
