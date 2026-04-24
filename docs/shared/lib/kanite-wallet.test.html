@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Tests — kanite-wallet.js</title>
+<style>
+  body { font-family: 'Share Tech Mono', monospace; background: #020713; color: #e2e6f0; padding: 2rem; line-height: 1.6; }
+  h1 { color: #e8b04a; border-bottom: 1px solid #e8b04a; padding-bottom: .5rem; }
+  .test { margin: .3rem 0; padding: .5rem .8rem; border-left: 3px solid #5a7a90; background: #0c1228; }
+  .pass { border-color: #44ff88; color: #44ff88; }
+  .fail { border-color: #ff4757; color: #ff4757; background: #1a0a0e; }
+  .expected, .got { color: #9aa0b8; font-size: .9em; }
+  .summary { margin-top: 2rem; padding: 1rem; background: #070d1e; border: 2px solid #e8b04a; font-size: 1.2em; }
+</style>
+</head>
+<body>
+<h1>kanite-wallet — Tests unitaires</h1>
+<div id="out"></div>
+<div class="summary" id="summary"></div>
+
+<script src="kanite-wallet.js"></script>
+<script>
+const K = window.JKanite;
+const out = document.getElementById('out');
+let passed = 0, failed = 0;
+
+function eq(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
+
+function test(name, got, expected) {
+  const ok = eq(got, expected);
+  const d = document.createElement('div');
+  d.className = 'test ' + (ok ? 'pass' : 'fail');
+  d.innerHTML = (ok ? '✓ ' : '✗ ') + name
+    + (ok ? '' : `<br><span class="expected">expected: ${JSON.stringify(expected)}</span><br><span class="got">got: ${JSON.stringify(got)}</span>`);
+  out.appendChild(d);
+  ok ? passed++ : failed++;
+}
+
+/* === totalInBronze === */
+test('totalInBronze : wallet vide', K.totalInBronze({}), 0);
+test('totalInBronze : {bronze:50}', K.totalInBronze({bronze_kanite:50}), 50);
+test('totalInBronze : {silver:1}', K.totalInBronze({silver_kanite:1}), 100);
+test('totalInBronze : {gold:1}', K.totalInBronze({gold_kanite:1}), 10000);
+test('totalInBronze : {platinum:1}', K.totalInBronze({platinum_kanite:1}), 1000000);
+test('totalInBronze : mixed', K.totalInBronze({bronze_kanite:50, silver_kanite:2, gold_kanite:1, platinum_kanite:1}), 50 + 200 + 10000 + 1000000);
+
+/* === priceInBronze === */
+test('priceInBronze : 250 silver', K.priceInBronze({silver_kanite:250}), 25000);
+test('priceInBronze : {amount:250, currency:silver}', K.priceInBronze({amount:250, currency:'silver_kanite'}), 25000);
+test('priceInBronze : 1 platinum', K.priceInBronze({platinum_kanite:1}), 1000000);
+
+/* === autoConvertUp === */
+test('autoConvertUp : 150 bronze → 1 silver + 50 bronze', K.autoConvertUp({bronze_kanite:150}), {bronze_kanite:50, silver_kanite:1, gold_kanite:0, platinum_kanite:0});
+test('autoConvertUp : 100 silver → 1 gold', K.autoConvertUp({silver_kanite:100}), {bronze_kanite:0, silver_kanite:0, gold_kanite:1, platinum_kanite:0});
+test('autoConvertUp : cascade 10050 bronze → 1 gold + 0 silver + 50 bronze',
+  K.autoConvertUp({bronze_kanite:10050}),
+  {bronze_kanite:50, silver_kanite:0, gold_kanite:1, platinum_kanite:0});
+
+/* === deductWithAutoConversion === */
+
+// Scénario trivial
+test('deduct : 50 silver sur {silver:100}',
+  K.deductWithAutoConversion({silver_kanite:100}, {silver_kanite:50}),
+  {bronze_kanite:0, silver_kanite:50, gold_kanite:0, platinum_kanite:0});
+
+// Scénario direct exact
+test('deduct : 100 silver sur {silver:100}',
+  K.deductWithAutoConversion({silver_kanite:100}, {silver_kanite:100}),
+  {bronze_kanite:0, silver_kanite:0, gold_kanite:0, platinum_kanite:0});
+
+// Scénario casser 1 gold (suffit)
+test('deduct : 250 silver sur {silver:50, gold:2}',
+  K.deductWithAutoConversion({silver_kanite:50, gold_kanite:2}, {silver_kanite:250}),
+  {bronze_kanite:0, silver_kanite:0, gold_kanite:0, platinum_kanite:0});
+
+// === LE BUG P0-2 === : gold insuffisant seul mais platinum dispo
+test('deduct [BUG P0-2] : 250 silver sur {silver:50, gold:1, platinum:3}',
+  K.deductWithAutoConversion({silver_kanite:50, gold_kanite:1, platinum_kanite:3}, {silver_kanite:250}),
+  {bronze_kanite:0, silver_kanite:9900, gold_kanite:99, platinum_kanite:2});
+/*
+  Explication du résultat attendu :
+   - direct : 50 silver consommés, remaining 200 silver
+   - hi=gold : availHi = 100 < 200 → vider gold entièrement (gold:0), remaining = 100 silver
+   - hi=platinum : availHi = 10000 >= 100 → useHi = ceil(100/100) = 1 platinum consommé
+     (platinum:2), change = 100*100 - 100 = 9900 silver de monnaie rendue
+   Donc wallet final : silver:9900, gold:0+99(auto-convert)?
+
+   En fait non : 9900 silver ≠ convertible auto (on ne compacte pas ici).
+   Le résultat direct est : {silver:9900, gold:0, platinum:2}
+   Le compactage auto (addWithAutoConvertUp) n'est pas appelé dans debit.
+*/
+
+// Correction du test ci-dessus (on ne compacte pas)
+out.lastChild.remove();
+passed--;
+test('deduct [FIX P0-2] : 250 silver sur {silver:50, gold:1, platinum:3}',
+  K.deductWithAutoConversion({silver_kanite:50, gold_kanite:1, platinum_kanite:3}, {silver_kanite:250}),
+  {bronze_kanite:0, silver_kanite:9900, gold_kanite:0, platinum_kanite:2});
+
+// Scénario : casser 1 platinum sur wallet vide intermédiaire
+test('deduct : 250 silver sur {platinum:1}',
+  K.deductWithAutoConversion({platinum_kanite:1}, {silver_kanite:250}),
+  {bronze_kanite:0, silver_kanite:9750, gold_kanite:0, platinum_kanite:0});
+
+// Scénario : pas assez de tout
+test('deduct : 10000 silver sur {silver:50, gold:1} → null (insuffisant)',
+  K.deductWithAutoConversion({silver_kanite:50, gold_kanite:1}, {silver_kanite:10000}),
+  null);
+
+// Scénario : remonter depuis bronze (palier inférieur)
+test('deduct : 2 silver sur {bronze:300, silver:1}',
+  K.deductWithAutoConversion({bronze_kanite:300, silver_kanite:1}, {silver_kanite:2}),
+  {bronze_kanite:200, silver_kanite:0, gold_kanite:0, platinum_kanite:0});
+// direct silver:1 utilisé, remaining 1 silver
+// hi=gold vide, continue ; hi=platinum vide → fin boucle hi
+// lo=bronze : rateLo=100, loNeeded=100, loUse=min(300,100)=100, paid=1, bronze -= 100 → 200
+
+// Scénario : 50 platinum sur {platinum:100} (direct)
+test('deduct : 50 platinum sur {platinum:100}',
+  K.deductWithAutoConversion({platinum_kanite:100}, {platinum_kanite:50}),
+  {bronze_kanite:0, silver_kanite:0, gold_kanite:0, platinum_kanite:50});
+
+/* === addWithAutoConvertUp === */
+test('add : +150 bronze sur {} → compact',
+  K.addWithAutoConvertUp({}, 'bronze_kanite', 150),
+  {bronze_kanite:50, silver_kanite:1, gold_kanite:0, platinum_kanite:0});
+
+test('add : +1 silver sur {silver:99} → compact gold',
+  K.addWithAutoConvertUp({silver_kanite:99}, 'silver_kanite', 1),
+  {bronze_kanite:0, silver_kanite:0, gold_kanite:1, platinum_kanite:0});
+
+test('add : +50 bronze sur {silver:50}',
+  K.addWithAutoConvertUp({silver_kanite:50}, 'bronze_kanite', 50),
+  {bronze_kanite:50, silver_kanite:50, gold_kanite:0, platinum_kanite:0});
+
+/* === Summary === */
+const sum = document.getElementById('summary');
+sum.textContent = `${passed + failed} tests · ${passed} passed · ${failed} failed`;
+sum.style.color = failed === 0 ? '#44ff88' : '#ff4757';
+</script>
+</body>
+</html>

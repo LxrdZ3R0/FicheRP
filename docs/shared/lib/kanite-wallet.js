@@ -49,7 +49,12 @@
 
   /* Débit avec conversion automatique : paie directement si solde suffisant,
      sinon casse des paliers supérieurs (rend la monnaie) ou remonte des
-     paliers inférieurs. Retourne le wallet résultat, ou null si insuffisant. */
+     paliers inférieurs. Retourne le wallet résultat, ou null si insuffisant.
+
+     Fix 2026-04-24 (P0-2) : l'ancienne version forçait `remaining = 0` après
+     la 1ère itération hi non-vide et ignorait les paliers supérieurs suivants,
+     causant un sous-paiement silencieux (ex: wallet silver:50/gold:1/platinum:3
+     + mise 250 silver s'arrêtait après 1 gold sans aller au platinum). */
   function deductWithAutoConversion(personal, price) {
     var wallet = {};
     ORDER.forEach(function (c) { wallet[c] = personal[c] || 0; });
@@ -73,16 +78,26 @@
       remaining   -= direct;
       if (remaining <= 0) continue;
 
-      // 2) Casser un palier supérieur (rend la monnaie dans la devise cible)
+      // 2) Casser des paliers supérieurs, du plus proche au plus haut.
+      //    On consomme exactement la quantité nécessaire (avec monnaie rendue
+      //    dans la devise cible) ; si un tier ne suffit pas à clôturer, on
+      //    passe au suivant au lieu d'abandonner.
       for (var hi = idx + 1; hi < ORDER.length && remaining > 0; hi++) {
         if (wallet[ORDER[hi]] <= 0) continue;
-        var rateHi   = Math.pow(RATE, hi - idx);
-        var neededHi = Math.ceil(remaining / rateHi);
-        var useHi    = Math.min(wallet[ORDER[hi]], neededHi);
-        wallet[ORDER[hi]] -= useHi;
-        var change = useHi * rateHi - remaining;
-        remaining = 0;
-        if (change > 0) wallet[cur] += change;
+        var rateHi    = Math.pow(RATE, hi - idx);
+        var availHi   = wallet[ORDER[hi]] * rateHi; // valeur dispo en devise cible
+        if (availHi >= remaining) {
+          // Ce palier couvre le reste. On casse juste ce qu'il faut + monnaie.
+          var useHi   = Math.ceil(remaining / rateHi);
+          wallet[ORDER[hi]] -= useHi;
+          var change  = useHi * rateHi - remaining;
+          remaining   = 0;
+          if (change > 0) wallet[cur] += change;
+        } else {
+          // Ce palier ne suffit pas : on le vide entièrement et on continue.
+          wallet[ORDER[hi]] = 0;
+          remaining -= availHi;
+        }
       }
 
       // 3) Remonter depuis des paliers inférieurs (pas de perte, uniquement si entier)
