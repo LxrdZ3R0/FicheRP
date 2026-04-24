@@ -21,7 +21,7 @@
 <div class="page-transition-overlay" id="page-transition"><div class="pt-logo-wrap"><div class="pt-glow-ring"></div><div class="pt-scan"></div><img src="../assets/img/logo-jaharta.png" class="pt-img" alt="Jaharta"></div><div class="pt-bar-wrap"><div class="pt-bar-fill"></div></div><div class="pt-text">Chargement</div></div>
 
 <div class="scroll-line" id="scroll-line"></div>
-<div id="toast" class="toast"></div>
+<div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
 <!-- NAV -->
 <div id="jaharta-nav"></div>
@@ -203,6 +203,7 @@
             <div class="rl-bet-title">TA MISE</div>
             <div class="rl-bet-total" id="rl-bet-total">0</div>
           </div>
+          <div class="rl-chip-hint" id="rl-chip-hint" aria-live="polite">Chips en <span id="rl-chip-cur">🥈 Silver Kanite</span></div>
           <div class="rl-chip-row" id="rl-chip-row">
             <button class="rl-chip" data-chip="1">1</button>
             <button class="rl-chip active" data-chip="5">5</button>

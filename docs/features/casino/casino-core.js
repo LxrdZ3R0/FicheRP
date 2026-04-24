@@ -148,7 +148,7 @@ async function loadCasino() {
   await loadActiveCharacter();
 
   // Render header
-  document.getElementById('cu-avatar').src = CASINO.avatar || 'img/logo-jaharta.png';
+  document.getElementById('cu-avatar').src = CASINO.avatar || '../assets/img/logo-jaharta.png';
   document.getElementById('cu-name').textContent = CASINO.username;
   const charName = CASINO.charData ? ((CASINO.charData.first_name || CASINO.charData.firstname || '') + ' ' + (CASINO.charData.last_name || CASINO.charData.lastname || '')).trim() : '—';
   document.getElementById('cu-char').textContent = charName || '// PAS DE PERSO ACTIF';
@@ -489,29 +489,28 @@ function logBet(game, amount, currency, result, profit, extra) {
 }
 window._logBet = logBet;
 
-/* ═══ DEALER IMAGE — The Fool PNJ ═══ */
+/* ═══ DEALER IMAGE — The Fool PNJ ═══
+   Fix P2-2 (2026-04-24) : auparavant un `.get()` sur toute la collection pnj
+   + find client-side → coût Firestore proportionnel au nombre de PNJ. Remplacé
+   par des queries ciblées avec les deux conventions de champs observées
+   (prenom/nom FR vs first_name/last_name EN). Fallback sur read intégral
+   uniquement si aucune query ne trouve (cas où la casse diffère). */
 let _dealerImgUrl = null;
 let _dealerImgPromise = null;
 async function loadDealerImage() {
   if (_dealerImgUrl) return _dealerImgUrl;
   if (_dealerImgPromise) return _dealerImgPromise;
   _dealerImgPromise = (async () => {
+    const extract = (d) => d && (d.photoUrl || d.profile_image) || null;
+    const pnjRef = db.collection('pnj');
     try {
-      const snap = await db.collection('pnj').get();
-      let match = null;
-      snap.forEach(doc => {
-        const d = doc.data() || {};
-        const prenom = (d.prenom || d.first_name || '').toLowerCase();
-        const nom = (d.nom || d.last_name || '').toLowerCase();
-        const full = (prenom + ' ' + nom).trim();
-        if (full.includes('fool') || full.includes('the fool') || prenom === 'the' && nom === 'fool') {
-          match = d;
-        }
-      });
-      if (match) {
-        _dealerImgUrl = match.photoUrl || match.profile_image || null;
-      }
-    } catch (e) { window._dbg?.warn('[dealer-img]', e?.message); }
+      // Conv. FR (prenom/nom)
+      let q = await pnjRef.where('prenom', '==', 'The').where('nom', '==', 'Fool').limit(1).get();
+      if (!q.empty) { _dealerImgUrl = extract(q.docs[0].data()); return _dealerImgUrl; }
+      // Conv. EN (first_name/last_name)
+      q = await pnjRef.where('first_name', '==', 'The').where('last_name', '==', 'Fool').limit(1).get();
+      if (!q.empty) { _dealerImgUrl = extract(q.docs[0].data()); return _dealerImgUrl; }
+    } catch (e) { window._dbg?.warn('[dealer-img-query]', e?.message); }
     return _dealerImgUrl;
   })();
   return _dealerImgPromise;

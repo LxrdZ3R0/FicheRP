@@ -28,6 +28,7 @@ docs/
 ├── index.html                  Accueil NORMAL (reste racine — GitHub Pages)
 ├── CNAME                       Domaine custom
 ├── CLAUDE-CASINO.md            Doc technique Casino
+├── CASINO-ROADMAP.md           Backlog améliorations casino (audit 2026-04-24)
 ├── SITE_ARCHITECTURE.md        Guide d'architecture
 │
 ├── pages/                      Pages HTML NORMAL
@@ -134,6 +135,7 @@ const firebaseConfig = {
 | `casino_config/main` | `is_open: bool` — ouverture/fermeture globale (admin only en écriture) |
 | `casino_tables/{tableId}` | Tables multijoueur (`roulette_main`, `blackjack_main`, `poker_main`) |
 | `casino_logs/{id}` | Historique paris casino — create public whitelisté (types + bornes amount/profit), read admin |
+| `casino_flip_sessions/{uid}` | État persistant Quitte ou Double — `{initial, pot, streak, active, history}`, source de vérité pot (fix P0-3 2026-04-24) |
 
 **Globals window exposés** dans les modules Firebase pour les scripts non-module :
 `window._db`, `window._storage`, `window._isAdmin`, `window._doc`, `window._updateDoc`, `window._deleteDoc`
@@ -207,7 +209,30 @@ window.JImgCache.stats()                // {total, expired}
 
 ### Casino Nexus (`casino.html`)
 
-Module multijoueur temps réel — voir **[docs/CLAUDE-CASINO.md](docs/CLAUDE-CASINO.md)** pour la doc technique complète.
+Module multijoueur temps réel — voir **[docs/CLAUDE-CASINO.md](docs/CLAUDE-CASINO.md)** pour la doc technique et **[docs/CASINO-ROADMAP.md](docs/CASINO-ROADMAP.md)** pour le backlog post-audit (2026-04-24).
+
+**⚠ Audit 2026-04-24** (rapport complet : `.claude/archive/CASINO-AUDIT-20260424.md`, backlog : `docs/CASINO-ROADMAP.md`) — **Sprint fixes 2026-04-24** :
+
+| # | Fix | Statut |
+|---|-----|--------|
+| P0-1 | `isCasinoTable()` élargi aux IDs dual-mode (`<game>_main_{normal|prime}`) dans `firestore.rules` | ✅ fait — **à déployer Firebase** |
+| P0-2 | `deductWithAutoConversion` (`shared/lib/kanite-wallet.js`) : boucle hi-tier vide les paliers insuffisants au lieu d'abandonner après le 1er. Tests : `shared/lib/kanite-wallet.test.html` | ✅ fait |
+| P0-3 | Flip `session.pot` → état Firestore persisté (`casino_flip_sessions/{uid}`, rules whitelist + bornes) | ✅ fait — **à déployer Firebase** |
+| P1-3 | Dealer BJ hits soft 17 multi-ace (helper `isSoft17()`) dans `casino-blackjack.js` | ✅ fait |
+| P1-4 | `bjConfirmBet` rollback symétrique diff<0 → `_debit(-diff)` au catch | ✅ fait |
+| P1-5 | `pkLeave` mid-turn avance explicitement `turn_seat` + fold-win auto si 1 seul live | ✅ fait |
+| P2-1 | `casino-core.js` avatar fallback `../assets/img/logo-jaharta.png` (path post-R2) | ✅ fait |
+| P2-5 | Double `setInterval` timer roulette supprimé (seul `renderPhaseTimer` reste) | ✅ fait |
+| P2-2 | Dealer image (`The Fool`) : queries ciblées `.where().limit(1)` au lieu de read intégral `pnj` | ✅ fait |
+| P2-3 | Indicateur devise active au-dessus des chips roulette (`#rl-chip-cur`) | ✅ fait |
+| P2-9 | Toast casino ARIA : `role="status"` + `aria-live="polite"` + `aria-atomic="true"` | ✅ fait |
+| P3-1 | `escape()` dupliqué × 3 modules → alias 1-liner qui délègue à `window.escHtml` | ✅ fait |
+| P1-1 | Deck poker/blackjack publiquement lisible (hidden-info leak) | ⏳ nécessite Cloud Function |
+| P1-2 | Host roulette choisit `result` côté client (RNG manipulable) | ⏳ nécessite Cloud Function |
+
+**🔴 Action requise côté utilisateur** : déployer `firestore.rules` (fixes P0-1 + P0-3) via `firebase deploy --only firestore:rules`. Sans ce déploiement, le flip refusera de créer la session et (si les rules actuelles sont celles du repo) tout le casino restera bloqué.
+
+**Nouveau fichier** : `docs/shared/lib/kanite-wallet.test.html` (tests unitaires kanite-wallet — ouvrir en HTTP server pour exécuter).
 
 - Auth : même système `/link` Discord que gacha/hub (session 7 jours localStorage)
 - Firebase **compat** (non-ESM) — scripts chargés après `firebase-*-compat.js`

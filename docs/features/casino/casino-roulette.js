@@ -129,6 +129,7 @@ window._rlOnModeChange = function () {
   // Si déjà initialisé (tab roulette déjà ouvert) → réabonne tout de suite.
   if (initialized) subscribeTable();
   renderLocalBets();
+  renderChipCurrency();
 };
 
 /* ── Board UI ── */
@@ -275,6 +276,21 @@ function bindChips() {
       document.querySelectorAll('.rl-chip').forEach(x => x.classList.toggle('active', x === c));
     };
   });
+  // P2-3 : indicateur de devise active (lève l'ambiguïté "chip 100" qui vaut
+  // 100 bronze vs 100 platinum selon la sélection).
+  const sel = document.getElementById('rl-currency');
+  if (sel && !sel._rlBound) {
+    sel.addEventListener('change', renderChipCurrency);
+    sel._rlBound = true;
+  }
+  renderChipCurrency();
+}
+
+function renderChipCurrency() {
+  const el = document.getElementById('rl-chip-cur');
+  if (!el) return;
+  const cur = (state && state.currency) || window._currentCurrency('rl-currency');
+  el.textContent = window._currencyLabel ? window._currencyLabel(cur) : cur;
 }
 
 /* ── Local bet management (not yet committed) ── */
@@ -558,6 +574,7 @@ function renderState() {
 
   // Board chips
   renderLocalBets();
+  renderChipCurrency();
 
   // Spin animation trigger
   if (state.phase === 'spinning' && state.result != null) {
@@ -709,18 +726,13 @@ function runSpinAnimation(target) {
   requestAnimationFrame(frame);
 }
 
-function escape(s) {
-  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
+// Helper local — délègue à window.escHtml (utils.js, chargé avant ce module).
+// Fallback défensif si utils.js manque à l'init.
+const escape = (s) => (window.escHtml ? window.escHtml(s) : String(s == null ? '' : s)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'));
 
-/* ── Timer tick (1s) ── */
-setInterval(() => {
-  if (state && document.getElementById('rl-timer')) {
-    const secLeft = Math.max(0, Math.ceil(((state.phase_end || 0) - Date.now()) / 1000));
-    const el = document.getElementById('rl-timer');
-    if (el) el.textContent = secLeft;
-  }
-}, 500);
+/* Timer tick global retiré (P2-5) — renderPhaseTimer (250ms) dans _rlInit
+   gère déjà le timer + la barre de progression. */
 
 /* ── Force close (casino fermé) ──────────────────────────────────────
    Rembourse mes mises committed, nettoie mes bets locaux, puis tente un

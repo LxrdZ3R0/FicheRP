@@ -412,10 +412,50 @@ window.pkLeave = async function () {
       const seats = [...(d.seats || [])];
       const i = seats.findIndex(x => x && x.uid === CASINO.uid);
       if (i === -1) return;
-      // If mid-hand and player not folded, fold them first (forfeit total_bet)
       const active = ['preflop','flop','turn','river'].includes(d.phase);
+      const wasMyTurn = active && d.turn_seat === i;
+      // Fix P1-5 2026-04-24 : si on partait en plein tour, `seats[i]=null`
+      // fige la table (hostTick.autoAction bail sur `!seats[i]`). Maintenant
+      // on avance explicitement le tour AVANT de vider le siège. Si un seul
+      // autre joueur actif restait, on déclenche un fold-win en attribuant
+      // le pot à ce joueur (ancienne logique de actOn).
       if (active && !seats[i].folded) {
         seats[i].folded = true;
+      }
+      if (wasMyTurn) {
+        const liveSeats = seats.map((x, k) => ({ x, k }))
+          .filter(o => o.x && !o.x.folded && o.k !== i);
+        if (liveSeats.length === 1) {
+          // Fold-win pour le dernier joueur actif
+          const winnerIdx = liveSeats[0].k;
+          seats[winnerIdx].stack = (seats[winnerIdx].stack || 0) + (d.pot || 0);
+          seats[winnerIdx].status = 'winner';
+          seats[i] = null;
+          tx.update(tableRef(), {
+            phase: 'showdown',
+            phase_end: Date.now() + SHOWDOWN_MS,
+            seats,
+            pot: 0,
+            winners: [{ seat: winnerIdx, amount: d.pot || 0, hand_name: '(fold win)', hand_cards: [] }],
+            last_action: { seat: i, action: 'leave', amount: 0 }
+          });
+          return;
+        }
+        // Au moins 2 joueurs actifs → avancer le tour
+        let nextSeat = -1;
+        for (let n = 1; n <= SEATS; n++) {
+          const idx = (i + n) % SEATS;
+          const sx = seats[idx];
+          if (sx && !sx.folded && sx.stack > 0) { nextSeat = idx; break; }
+        }
+        seats[i] = null;
+        tx.update(tableRef(), {
+          seats,
+          turn_seat: nextSeat,
+          turn_end: Date.now() + TURN_MS,
+          last_action: { seat: i, action: 'leave', amount: 0 }
+        });
+        return;
       }
       seats[i] = null;
       tx.update(tableRef(), { seats });
@@ -832,9 +872,8 @@ function currencySymbol(c) {
   if (c === 'platinum_kanite') return '💎';
   return '';
 }
-function escape(s) {
-  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
+const escape = (s) => (window.escHtml ? window.escHtml(s) : String(s == null ? '' : s)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'));
 
 /* ── Force close (casino fermé) ──────────────────────────────────────
    Rembourse mon stack (s'il reste) + vide le siège + reset transactionnel

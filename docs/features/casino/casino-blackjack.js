@@ -237,6 +237,15 @@ function handScore(cards) {
 }
 function isBlackjack(cards) { return cards.length === 2 && handScore(cards) === 21; }
 
+// Soft 17 : main de 17 où AU MOINS un As est encore compté 11. Couvre les
+// cas multi-as (A+A+5 → hard 17 mais toujours soft car un as à 11).
+function isSoft17(cards) {
+  let total = 0, aces = 0;
+  cards.forEach(c => { const v = cardValue(c); total += v; if (v === 11) aces++; });
+  while (total > 21 && aces > 0) { total -= 10; aces--; }
+  return total === 17 && aces > 0;
+}
+
 async function dealInitial() {
   const deck = freshDeck();
   const seats = (state.seats || []).map(s => {
@@ -297,19 +306,19 @@ async function seatStand(seatIdx, auto) {
 }
 
 async function dealerPlay() {
-  // Dealer hits soft 17+? Standard: dealer hits on soft 17. We'll hit on <17 + soft 17.
+  // Standard casino : dealer hits on soft 17 (au moins un As encore compté 11
+  // après réduction). Fix P1-3 2026-04-24 : l'ancien check utilisait `total`
+  // brut (11 par as) qui ne valait 17 que pour des mains à 1 as (A+6). Pour
+  // A+A+5 (hard 17 multi-ace mais soft car un as encore à 11), le dealer
+  // n'hitait pas. Correction via `isSoft17()`.
   const anyStand = (state.seats || []).some(s => s && s.bet > 0 && s.status === 'stand');
   const deck = [...(state.deck || [])];
   let dh = [...(state.dealer_hand || [])];
   if (anyStand) {
     while (true) {
       const sc = handScore(dh);
-      // Check for soft 17
-      let aces = 0, total = 0;
-      dh.forEach(c => { const v = cardValue(c); total += v; if (v === 11) aces++; });
-      const soft = (total === 17 && aces > 0); // before reduction → soft 17 if has ace still at 11
       if (sc < 17) { dh.push(deck.pop()); continue; }
-      if (sc === 17 && soft) { dh.push(deck.pop()); continue; }
+      if (sc === 17 && isSoft17(dh)) { dh.push(deck.pop()); continue; }
       break;
     }
   }
@@ -420,8 +429,13 @@ window.bjConfirmBet = async function () {
     });
     showToast('Mise validée : ' + amount, 'success', 2000);
   } catch (e) {
-    // Refund if needed
-    if (diff > 0) { try { await window._credit(currency, diff); } catch {} }
+    // Rollback symétrique — P1-4 : avant, seul diff>0 était roolback.
+    // Avec diff<0 (joueur baisse sa mise), le credit était gardé par le joueur
+    // alors que la tx n'avait pas mis à jour le siège → duplication d'argent.
+    try {
+      if (diff > 0)      await window._credit(currency, diff);
+      else if (diff < 0) await window._debit(currency, -diff);
+    } catch {}
     showToast(e.message || 'Erreur', 'error');
   }
 };
@@ -687,9 +701,8 @@ function currencySymbol(c) {
   return '';
 }
 
-function escape(s) {
-  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
+const escape = (s) => (window.escHtml ? window.escHtml(s) : String(s == null ? '' : s)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'));
 
 /* Timer tick global retiré — le setInterval de renderPhaseTimer (250ms) dans _bjInit s'en charge. */
 

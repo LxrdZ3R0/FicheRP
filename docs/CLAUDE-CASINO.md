@@ -57,7 +57,12 @@ Chaque table a un "host" élu dynamiquement (premier joueur actif). Le host :
 **Règle :** lecture publique, écriture admin uniquement.
 
 ### `casino_tables/{tableId}`
-Tables disponibles : `roulette_main`, `blackjack_main`, `poker_main`
+Tables disponibles (double par mode depuis Sprint dual-table — séparation stricte kanites/navarites) :
+- `roulette_main_normal`, `roulette_main_prime`
+- `blackjack_main_normal`, `blackjack_main_prime`
+- `poker_main_normal`, `poker_main_prime`
+
+IDs legacy (`roulette_main`, `blackjack_main`, `poker_main`) conservés dans la whitelist rules pour rétro-compatibilité mais plus écrits par le code actuel.
 
 Structure commune :
 ```js
@@ -154,6 +159,8 @@ Chaque client lit `payouts[CASINO.uid]` et crédite son propre compte (une fois 
 - Mise initiale débitée au lancement
 - Chaque pile ou face : gagner = pot ×2, perdre = tout perdu
 - Encaisser à tout moment après un win
+
+**État persisté (fix P0-3 2026-04-24) :** `casino_flip_sessions/{discord_id}` stocke `{initial, pot, streak, active, history, created_at, last_flip_at}`. Les opérations start/flip/cashout sont transactionnelles et lisent `pot` depuis Firestore (pas depuis la RAM) → impossible de forger un pot arbitraire via devtools. Limite résiduelle : `Math.random()` reste côté client — un joueur peut patcher `Math.random` pour gagner systématiquement. Correctif complet via Cloud Function (voir CASINO-ROADMAP.md §1.1).
 
 ---
 
