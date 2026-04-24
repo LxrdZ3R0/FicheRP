@@ -274,7 +274,11 @@ service cloud.firestore {
                     && request.resource.data.pot is number
                     && request.resource.data.pot >= 0
                     && request.resource.data.pot <= resource.data.initial * 1048576;
-      allow delete: if isAdmin();
+      // Autoriser le client à supprimer son doc SI la session est terminée.
+      // Permet de relancer une nouvelle partie avec un initial différent
+      // (sans le delete, set() suivant serait un update → rules rejettent
+      // la mutation de initial/created_at).
+      allow delete: if isAdmin() || resource.data.active == false;
     }
     // casino_logs : lecture admin, création publique (log des paris côté client).
     // Defense-in-depth : validation des types et bornes des champs critiques.

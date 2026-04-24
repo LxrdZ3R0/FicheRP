@@ -73,6 +73,16 @@ window.qdStart = async function () {
     await window._debit('navarites', initial);
   } catch (e) { showToast(e.message || 'Débit impossible', 'error'); return; }
 
+  // Si un doc inactif subsiste (partie précédente terminée), le supprimer
+  // d'abord. Sinon set() serait traité comme UPDATE par Firestore et les
+  // rules rejettent la mutation de initial/created_at.
+  try {
+    const prev = await sessionRef().get();
+    if (prev.exists && prev.data().active === false) {
+      await sessionRef().delete();
+    }
+  } catch (e) { window._dbg?.warn('[flip-reset]', e?.message); }
+
   // Crée la session Firestore.
   try {
     await sessionRef().set({
