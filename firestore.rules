@@ -206,8 +206,16 @@ service cloud.firestore {
     }
     // Helper : tables casino autorisées (whitelist d'IDs).
     // Empêche la création arbitraire de tables ou la pollution de la collection.
+    // Double table par mode (normal/prime) depuis Sprint Casino dual-table.
+    // Les IDs plats legacy (`<game>_main`) sont conservés pour rétro-compatibilité
+    // au cas où d'anciennes tables subsisteraient.
     function isCasinoTable(tableId) {
-      return tableId in ['roulette_main', 'blackjack_main', 'poker_main'];
+      return tableId in [
+        'roulette_main', 'blackjack_main', 'poker_main',
+        'roulette_main_normal', 'roulette_main_prime',
+        'blackjack_main_normal', 'blackjack_main_prime',
+        'poker_main_normal', 'poker_main_prime'
+      ];
     }
     // casino_tables : lecture publique, écriture sans auth (host-driven via transactions).
     // Defense-in-depth :
@@ -227,6 +235,45 @@ service cloud.firestore {
     match /casino_heartbeats/{tableId} {
       allow read: if true;
       allow create, update: if isCasinoTable(tableId);
+      allow delete: if isAdmin();
+    }
+    // casino_flip_sessions : état persistant du jeu Quitte ou Double (P0-3 fix
+     // 2026-04-24). Avant, pot/streak vivaient en RAM client → exploit possible
+     // via devtools pour créditer un pot arbitraire. Désormais source de vérité
+     // côté Firestore, doc ID = discord_id du joueur.
+     //
+     // Validations :
+     //  - Create : structure whitelistée, initial>0 et <=1M, pot==initial, streak==0, active==true
+     //  - Update : même structure, pot monotone en multiplication par 2 ou reset à 0
+     //             (l'authorité finale reste la transaction client qui lit le doc frais)
+     //  - Delete : admin uniquement
+     //
+     // Limite résiduelle : Math.random() du flip est toujours côté client.
+     // Un joueur peut patcher Math.random pour gagner systématiquement. Fix
+     // complet nécessite une Cloud Function (voir CASINO-ROADMAP.md §1.1).
+     match /casino_flip_sessions/{uid} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly([
+                         'uid','initial','pot','streak','active','history','created_at','last_flip_at'
+                       ])
+                    && request.resource.data.initial is number
+                    && request.resource.data.initial > 0
+                    && request.resource.data.initial <= 1000000
+                    && request.resource.data.pot == request.resource.data.initial
+                    && request.resource.data.streak == 0
+                    && request.resource.data.active == true
+                    && request.resource.data.history is list;
+      allow update: if request.resource.data.keys().hasOnly([
+                         'uid','initial','pot','streak','active','history','created_at','last_flip_at'
+                       ])
+                    // Immuables post-création
+                    && request.resource.data.uid == resource.data.uid
+                    && request.resource.data.initial == resource.data.initial
+                    && request.resource.data.created_at == resource.data.created_at
+                    // Pot borné (defense-in-depth — évite injection lors update)
+                    && request.resource.data.pot is number
+                    && request.resource.data.pot >= 0
+                    && request.resource.data.pot <= resource.data.initial * 1048576;
       allow delete: if isAdmin();
     }
     // casino_logs : lecture admin, création publique (log des paris côté client).
