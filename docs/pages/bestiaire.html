@@ -24,10 +24,17 @@ window._addDoc=addDoc;window._collection=collection;window._doc=doc;window._getD
 window._updateDoc=updateDoc;window._deleteDoc=deleteDoc;window._serverTimestamp=serverTimestamp;
 window._ref=ref;window._uploadBytes=uploadBytes;window._getDownloadURL=getDownloadURL;
 window._isAdmin=false;
-onAuthStateChanged(auth,user=>{
-  window._isAdmin=!!user;
-  document.querySelectorAll('.admin-only').forEach(el=>el.style.display=user?'inline-flex':'none');
-  document.querySelectorAll('.bcard').forEach(c=>c.classList.toggle('is-admin',!!user));
+onAuthStateChanged(auth,async user=>{
+  let isAdmin=false;
+  if(user){
+    try{
+      const snap=await getDoc(doc(db,'admins',user.uid));
+      isAdmin=snap.exists();
+    }catch{isAdmin=false;}
+  }
+  window._isAdmin=isAdmin;
+  document.querySelectorAll('.admin-only').forEach(el=>el.style.display=isAdmin?'inline-flex':'none');
+  document.querySelectorAll('.bcard').forEach(c=>c.classList.toggle('is-admin',isAdmin));
 });
 
 window._loadBestiaire=function(){

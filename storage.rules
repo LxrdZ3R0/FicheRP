@@ -2,6 +2,23 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
 
+    function isFicheAttachment() {
+      return request.resource.size < 5 * 1024 * 1024
+          && request.resource.contentType is string
+          && (request.resource.contentType.matches('image/.*')
+              || request.resource.contentType in [
+                   'application/pdf',
+                   'application/msword',
+                   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                   'application/vnd.oasis.opendocument.text',
+                   'application/vnd.apple.pages',
+                   'application/x-iwork-pages-sffpages',
+                   'text/html',
+                   'text/markdown',
+                   'text/plain'
+                 ]);
+    }
+
     // ── Photos de personnages (fiches.html — soumission publique) ─────
     // Les joueurs n'ont PAS de compte Firebase Auth (auth Discord via code).
     // → write sans auth autorisé, mais borné en taille et content-type.
@@ -59,11 +76,10 @@ service firebase.storage {
     }
 
     // ── Fichiers attachés aux fiches personnages (soumission publique)
-    // Même contrainte que /photos/ — joueur sans Firebase Auth.
+    // Formats alignés avec l'input accept du formulaire de fiche.
     match /fiches/{allPaths=**} {
       allow read:  if true;
-      allow write: if request.resource.size < 5 * 1024 * 1024
-                && request.resource.contentType.matches('image/.*');
+      allow write: if isFicheAttachment();
     }
 
     // ── Fallback : tout chemin non déclaré → bloqué ───────────────────
