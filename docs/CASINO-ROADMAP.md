@@ -1,7 +1,7 @@
 # CASINO-ROADMAP.md — Jaharta RP Casino · Backlog d'améliorations
 
-> Suggestions priorisées produites après l'audit 2026-04-24 (voir [.claude/archive/CASINO-AUDIT-20260424.md](../.claude/archive/CASINO-AUDIT-20260424.md)).
-> Les bugs P0/P1/P2 de l'audit sont **préalables** à ce backlog — non dupliqués ici.
+> Suggestions priorisées produites après l'audit 2026-04-24.
+> Les bugs P0/P1/P2 de l'audit (résumés dans `CLAUDE.md`) sont **préalables** à ce backlog — non dupliqués ici.
 
 ---
 

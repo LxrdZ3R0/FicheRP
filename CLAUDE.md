@@ -21,7 +21,7 @@ Hébergé sur GitHub Pages (`/docs`), backend Firebase, zéro framework JS.
 
 ## Structure — fichiers clés
 
-> **Restructure 2026-04-21** — Architecture par domaine. Voir [docs/SITE_ARCHITECTURE.md](docs/SITE_ARCHITECTURE.md) pour le détail complet. Historique d'audit archivé dans [.claude/archive/](.claude/archive/).
+> **Restructure 2026-04-21** — Architecture par domaine. Voir [docs/SITE_ARCHITECTURE.md](docs/SITE_ARCHITECTURE.md) pour le détail complet.
 
 ```
 docs/
@@ -211,7 +211,7 @@ window.JImgCache.stats()                // {total, expired}
 
 Module multijoueur temps réel — voir **[docs/CLAUDE-CASINO.md](docs/CLAUDE-CASINO.md)** pour la doc technique et **[docs/CASINO-ROADMAP.md](docs/CASINO-ROADMAP.md)** pour le backlog post-audit (2026-04-24).
 
-**⚠ Audit 2026-04-24** (rapport complet : `.claude/archive/CASINO-AUDIT-20260424.md`, backlog : `docs/CASINO-ROADMAP.md`) — **Sprint fixes 2026-04-24** :
+**⚠ Audit 2026-04-24** (backlog : `docs/CASINO-ROADMAP.md`) — **Sprint fixes 2026-04-24** :
 
 | # | Fix | Statut |
 |---|-----|--------|

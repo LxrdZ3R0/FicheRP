@@ -104,7 +104,6 @@ JahartaRP/
 │       ├── img/        Images, logos, favicons, carte
 │       └── data/       (si applicable)
 │
-├── .claude/archive/                  ← Docs archivées (AUDIT/RESTRUCTURE/MD-AUDIT-20260418)
 ├── CLAUDE.md                         ← Guide conventions (source de vérité)
 ├── firestore.rules
 ├── .gitignore
